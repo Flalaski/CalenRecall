@@ -61,6 +61,62 @@ function playMechanicalClick(direction: 'up' | 'down'): void {
   }
 }
 
+// Shared audio context for micro blips - reuse to avoid creation overhead
+let sharedAudioContext: AudioContext | null = null;
+
+// Initialize audio context on first use
+function getAudioContext(): AudioContext | null {
+  if (!sharedAudioContext) {
+    try {
+      sharedAudioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+    } catch (error) {
+      console.debug('Audio context not available:', error);
+      return null;
+    }
+  }
+  
+  // Resume audio context if suspended (browsers require user interaction)
+  if (sharedAudioContext.state === 'suspended') {
+    sharedAudioContext.resume().catch(() => {
+      // Silently fail if resume is not possible
+    });
+  }
+  
+  return sharedAudioContext;
+}
+
+// Generate micro mechanical blip sound for date changes during dragging
+function playMicroBlip(): void {
+  const audioContext = getAudioContext();
+  if (!audioContext) return;
+  
+  try {
+    const oscillator = audioContext.createOscillator();
+    const gainNode = audioContext.createGain();
+    
+    // Create a very short, quiet mechanical blip - subtle tick sound
+    oscillator.type = 'sine';
+    const now = audioContext.currentTime;
+    oscillator.frequency.setValueAtTime(1000, now);
+    oscillator.frequency.exponentialRampToValueAtTime(600, now + 0.02);
+    
+    // Very short envelope for micro blip - quieter and shorter than main click
+    gainNode.gain.setValueAtTime(0, now);
+    gainNode.gain.linearRampToValueAtTime(0.08, now + 0.0005);
+    gainNode.gain.exponentialRampToValueAtTime(0.005, now + 0.02);
+    gainNode.gain.linearRampToValueAtTime(0, now + 0.04);
+    
+    oscillator.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+    
+    oscillator.start(now);
+    oscillator.stop(now + 0.04);
+  } catch (error) {
+    // Silently fail if audio creation fails
+    console.debug('Micro blip audio error:', error);
+  }
+}
+
 // Calculate color based on numerological patterns of content and time
 function calculateEntryColor(entry: JournalEntry): string {
   // Combine title and content for numerological calculation
@@ -117,6 +173,7 @@ export default function GlobalTimelineMinimap({
   const initialMovementRef = useRef<{ horizontal: number; vertical: number } | null>(null);
   const lastScaleChangeAccumulatorRef = useRef<number>(0); // Track accumulator value at last scale change
   const deadZoneRef = useRef<number>(0); // Dead zone threshold after scale change
+  const lastBlipDateRef = useRef<Date | null>(null); // Track last date that triggered a micro blip
   // Load entries for the timeline range
   useEffect(() => {
     const loadEntries = async () => {
@@ -599,6 +656,16 @@ export default function GlobalTimelineMinimap({
     initialMovementRef.current = { horizontal: 0, vertical: 0 };
     setHorizontalLocked(false);
     verticalMovementAccumulatorRef.current = 0;
+    lastBlipDateRef.current = null; // Reset blip tracking when dragging starts
+    
+    // Initialize audio context early to ensure it's ready for blips
+    // This also helps with browser autoplay policies
+    const audioContext = getAudioContext();
+    if (audioContext && audioContext.state === 'suspended') {
+      audioContext.resume().catch(() => {
+        // Silently fail if resume is not possible
+      });
+    }
     
     // Show radial dial at mouse position
     setRadialDial({ x: e.clientX, y: e.clientY });
@@ -719,8 +786,8 @@ export default function GlobalTimelineMinimap({
       
       // Calculate incremental vertical movement (scale change)
       const verticalDelta = e.clientY - lastVerticalPositionRef.current;
-      const verticalThreshold = 80; // Increased threshold for more deliberate movement
-      const deadZoneSize = 30; // Dead zone pixels after scale change
+      const verticalThreshold = 800; // Increased threshold for more deliberate movement
+      const deadZoneSize = 300; // Dead zone pixels after scale change
       
       // Accumulate vertical movement for mechanical feel
       verticalMovementAccumulatorRef.current += verticalDelta;
@@ -820,24 +887,59 @@ export default function GlobalTimelineMinimap({
       // Round to nearest day for smooth day-by-day progression
       const roundedDaysDelta = Math.round(daysDelta);
       
-      // Throttle updates - increase to 32ms to reduce update frequency
+      // Calculate new date by adding days to the initial drag position
+      // This ensures smooth day-by-day progression regardless of view mode
+      const targetDate = addDays(dragStartPositionRef.current.date, roundedDaysDelta);
+      
+      // Clamp to visible range
+      let finalDate: Date;
+      if (targetDate < currentTimelineData.startDate) {
+        finalDate = currentTimelineData.startDate;
+      } else if (targetDate > currentTimelineData.endDate) {
+        finalDate = currentTimelineData.endDate;
+      } else {
+        finalDate = targetDate;
+      }
+      
+      // Play micro blip for every date change during dragging
+      // Compare dates at day level (ignore time component) - check BEFORE throttling
+      // This ensures blips play immediately even if the update callback is throttled
+      const lastBlipDate = lastBlipDateRef.current;
+      const finalDateDay = new Date(finalDate.getFullYear(), finalDate.getMonth(), finalDate.getDate());
+      const lastBlipDateDay = lastBlipDate ? new Date(lastBlipDate.getFullYear(), lastBlipDate.getMonth(), lastBlipDate.getDate()) : null;
+      
+      // Detect ALL date changes, even if we skip some updates due to throttling
+      // If the date changed, play blip immediately (don't wait for throttle)
+      if (!lastBlipDateDay || finalDateDay.getTime() !== lastBlipDateDay.getTime()) {
+        // Date has changed - play micro blip immediately
+        // Try to resume audio context if suspended, but don't wait - play blip anyway
+        const audioContext = getAudioContext();
+        if (audioContext && audioContext.state === 'suspended') {
+          audioContext.resume().catch(() => {
+            // Silently fail - we'll try to play anyway
+          });
+        }
+        playMicroBlip();
+        
+        // Store normalized date (day level only) for accurate comparison
+        lastBlipDateRef.current = new Date(finalDateDay);
+      }
+      
+      // Throttle updates - but only for the actual date selection callback
+      // This allows blips to play immediately while still throttling expensive updates
       if (now - lastUpdateTimeRef.current < 32) {
         return;
       }
       
       lastUpdateTimeRef.current = now;
       
-      // Calculate new date by adding days to the initial drag position
-      // This ensures smooth day-by-day progression regardless of view mode
-      const targetDate = addDays(dragStartPositionRef.current.date, roundedDaysDelta);
-      
-      // Clamp to visible range
-      if (targetDate < currentTimelineData.startDate) {
+      // Update the selected date
+      if (finalDate < currentTimelineData.startDate) {
         currentOnTimePeriodSelect(currentTimelineData.startDate, currentViewMode);
-      } else if (targetDate > currentTimelineData.endDate) {
+      } else if (finalDate > currentTimelineData.endDate) {
         currentOnTimePeriodSelect(currentTimelineData.endDate, currentViewMode);
       } else {
-        currentOnTimePeriodSelect(targetDate, currentViewMode);
+        currentOnTimePeriodSelect(finalDate, currentViewMode);
       }
     };
 
@@ -854,6 +956,7 @@ export default function GlobalTimelineMinimap({
       initialMovementRef.current = null;
       lastScaleChangeAccumulatorRef.current = 0;
       deadZoneRef.current = 0;
+      lastBlipDateRef.current = null; // Reset blip tracking when dragging ends
     };
 
     window.addEventListener('mousemove', handleMouseMoveGlobal);
