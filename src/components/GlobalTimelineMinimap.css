@@ -257,6 +257,10 @@
   overflow: hidden;
   cursor: grab;
   user-select: none;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  -webkit-font-smoothing: none;
+  -moz-osx-font-smoothing: unset;
 }
 
 .minimap-container.dragging {
@@ -313,6 +317,9 @@
   height: 100%;
   pointer-events: none;
   opacity: 0.4;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  shape-rendering: crispEdges;
 }
 
 .timeline-path {
@@ -553,9 +560,102 @@
   transition: transform 0.3s ease;
 }
 
-.entry-indicator-wrapper:hover {
+.entry-indicator-wrapper:hover:not(.in-cluster) {
   transform: translate(-50%, -50%) scale(2);
   z-index: 5;
+}
+
+/* Cluster styling - staggered crystalline gems */
+.entry-indicator-wrapper.in-cluster {
+  /* Keep same size as single gems so they're clearly visible */
+  width: 16px;
+  height: 16px;
+  /* Add subtle pulsing animation for cluster effect */
+  animation: clusterPulse 4s ease-in-out infinite;
+}
+
+.entry-indicator-wrapper.in-cluster:hover {
+  /* Scale up more dramatically when hovering cluster gems - transform is set inline */
+  z-index: 10;
+}
+
+/* Staggered animation delays for cluster gems */
+.entry-indicator-wrapper.in-cluster[data-cluster-index="0"] {
+  animation-delay: 0s;
+}
+
+.entry-indicator-wrapper.in-cluster[data-cluster-index="1"] {
+  animation-delay: 0.4s;
+}
+
+.entry-indicator-wrapper.in-cluster[data-cluster-index="2"] {
+  animation-delay: 0.8s;
+}
+
+.entry-indicator-wrapper.in-cluster[data-cluster-index="3"] {
+  animation-delay: 1.2s;
+}
+
+.entry-indicator-wrapper.in-cluster[data-cluster-index="4"] {
+  animation-delay: 1.6s;
+}
+
+/* Enhanced glow for cluster gems - make them even more visible with vibrant saturation */
+.entry-indicator-wrapper.in-cluster .entry-indicator {
+  filter: brightness(1.3) saturate(2.6) 
+    drop-shadow(0 0 5px var(--gem-color))
+    drop-shadow(0 0 10px var(--gem-color))
+    drop-shadow(0 0 15px var(--gem-color))
+    drop-shadow(0 0 25px var(--gem-color))
+    drop-shadow(0 0 35px var(--gem-color))
+    drop-shadow(0 0 45px var(--gem-color));
+  box-shadow: 
+    /* Enhanced outer glow for cluster gems */
+    0 0 10px var(--gem-color),
+    0 0 20px var(--gem-color),
+    0 0 30px var(--gem-color),
+    0 0 40px var(--gem-color),
+    0 0 50px var(--gem-color),
+    0 0 60px var(--gem-color),
+    /* Enhanced inner lighting */
+    inset 0 -8px 20px rgba(255, 255, 255, 0.5),
+    inset 0 0 15px rgba(255, 255, 255, 0.3),
+    /* Enhanced inner shadows */
+    inset 0 8px 15px rgba(0, 0, 0, 0.8),
+    inset -4px -4px 12px rgba(0, 0, 0, 0.7),
+    /* Enhanced side highlights */
+    inset 4px 4px 10px rgba(255, 255, 255, 0.4),
+    inset -2px 2px 8px rgba(0, 0, 0, 0.5),
+    inset 2px -2px 6px rgba(255, 255, 255, 0.2);
+}
+
+.entry-indicator-wrapper.in-cluster:hover .entry-indicator {
+  filter: brightness(1.7) saturate(3.2) drop-shadow(0 0 16px var(--gem-color)) drop-shadow(0 0 32px var(--gem-color)) drop-shadow(0 0 48px var(--gem-color)) drop-shadow(0 0 64px var(--gem-color));
+  box-shadow: 
+    0 0 22px var(--gem-color),
+    0 0 44px var(--gem-color),
+    0 0 66px var(--gem-color),
+    0 0 88px var(--gem-color),
+    0 0 110px var(--gem-color),
+    inset 0 0 35px rgba(255, 255, 255, 0.6),
+    inset -6px -6px 14px rgba(0, 0, 0, 0.9),
+    inset 6px 6px 14px rgba(255, 255, 255, 0.5),
+    inset -4px 4px 10px rgba(0, 0, 0, 0.6);
+}
+
+/* Cluster pulse animation - creates a subtle breathing effect */
+/* Note: The transform is set inline in TSX, so we animate scale on the gem itself */
+.entry-indicator-wrapper.in-cluster .entry-indicator {
+  animation: gemGlow 3s ease-in-out infinite, clusterGemPulse 4s ease-in-out infinite;
+}
+
+@keyframes clusterGemPulse {
+  0%, 100% {
+    transform: rotate(45deg) scale(1);
+  }
+  50% {
+    transform: rotate(45deg) scale(1.15);
+  }
 }
 
 .entry-indicator {
@@ -564,9 +664,16 @@
   height: 100%;
   transform: rotate(45deg);
   transition: all 0.3s ease;
-  filter: brightness(1.2) saturate(1.4);
-  /* Create faceted gem shape - octagon for more facets like Diablo II gems */
-  clip-path: polygon(
+  /* Enhanced glow with multiple layers for physical crystal appearance - VIBRANT saturation */
+  filter: brightness(1.2) saturate(2.5) 
+    drop-shadow(0 0 4px var(--gem-color))
+    drop-shadow(0 0 8px var(--gem-color))
+    drop-shadow(0 0 12px var(--gem-color))
+    drop-shadow(0 0 20px var(--gem-color))
+    drop-shadow(0 0 30px var(--gem-color));
+  animation: gemGlow 3s ease-in-out infinite;
+  /* Create faceted gem shape - randomized polygon based on entry properties */
+  clip-path: var(--polygon-clip, polygon(
     30% 0%, 
     70% 0%, 
     100% 30%, 
@@ -575,43 +682,73 @@
     30% 100%, 
     0% 70%, 
     0% 30%
-  );
-  /* Base gem color with strong 3D gradient */
-  background: linear-gradient(
-    135deg,
-    rgba(255, 255, 255, 0.9) 0%,
-    var(--gem-color) 20%,
-    var(--gem-color) 40%,
-    rgba(0, 0, 0, 0.5) 60%,
-    var(--gem-color) 80%,
-    rgba(255, 255, 255, 0.3) 100%
-  );
+  ));
+  /* Enhanced 3D gradient for physical crystal depth - more vibrant */
+  background: 
+    /* Noise texture overlay for active noise effect */
+    url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.15'/%3E%3C/svg%3E"),
+    /* Base vibrant gradient */
+    linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.3) 0%,
+      var(--gem-color) 20%,
+      var(--gem-color) 40%,
+      rgba(0, 0, 0, 0.4) 55%,
+      var(--gem-color) 70%,
+      var(--gem-color) 85%,
+      rgba(255, 255, 255, 0.2) 100%
+    );
+  background-blend-mode: overlay, normal;
+  /* Multiple shadow layers for 3D depth and gradient fade glow border */
   box-shadow: 
+    /* Gradient fade glow border - outer layers with color */
+    0 0 6px var(--gem-color),
     0 0 12px var(--gem-color),
+    0 0 18px var(--gem-color),
     0 0 24px var(--gem-color),
-    0 0 36px var(--gem-color),
-    inset 0 0 25px rgba(255, 255, 255, 0.4),
-    inset -4px -4px 10px rgba(0, 0, 0, 0.7),
-    inset 4px 4px 10px rgba(255, 255, 255, 0.3),
-    inset -2px 2px 6px rgba(0, 0, 0, 0.4);
+    0 0 32px var(--gem-color),
+    0 0 40px var(--gem-color),
+    /* Inner lighting - subtle top highlight */
+    inset 0 -6px 15px rgba(255, 255, 255, 0.2),
+    inset 0 0 10px rgba(255, 255, 255, 0.15),
+    /* Inner shadows - bottom depth */
+    inset 0 8px 15px rgba(0, 0, 0, 0.6),
+    inset -4px -4px 12px rgba(0, 0, 0, 0.5),
+    /* Side highlights for faceted look */
+    inset 4px 4px 10px rgba(255, 255, 255, 0.2),
+    inset -2px 2px 8px rgba(0, 0, 0, 0.4);
 }
 
-/* Main highlight - bright top facet */
+/* Soft starburst effect - replaces blocking white shine dot */
 .entry-indicator::before {
   content: '';
   position: absolute;
-  top: 12%;
-  left: 22%;
-  width: 40%;
-  height: 40%;
-  background: linear-gradient(
-    135deg,
-    rgba(255, 255, 255, 1) 0%,
-    rgba(255, 255, 255, 0.9) 20%,
-    rgba(255, 255, 255, 0.6) 50%,
-    transparent 100%
-  );
-  clip-path: polygon(
+  top: 50%;
+  left: 50%;
+  width: 100%;
+  height: 100%;
+  transform: translate(-50%, -50%) rotate(-45deg);
+  pointer-events: none;
+  /* Create soft starburst using radial gradient with multiple rays */
+  background: 
+    /* Outer soft rays */
+    repeating-conic-gradient(
+      from 0deg at 50% 50%,
+      transparent 0deg,
+      rgba(255, 255, 255, 0.15) 2deg,
+      transparent 4deg,
+      transparent 8deg
+    ),
+    /* Inner soft glow */
+    radial-gradient(
+      circle at 50% 50%,
+      rgba(255, 255, 255, 0.25) 0%,
+      rgba(255, 255, 255, 0.15) 15%,
+      rgba(255, 255, 255, 0.08) 30%,
+      transparent 50%
+    );
+  /* Use the same polygon shape as the parent */
+  clip-path: var(--polygon-clip, polygon(
     30% 0%, 
     70% 0%, 
     100% 30%, 
@@ -620,29 +757,39 @@
     30% 100%, 
     0% 70%, 
     0% 30%
-  );
-  transform: rotate(-45deg);
-  pointer-events: none;
-  animation: gemShine 2.5s ease-in-out infinite;
-  filter: blur(0.3px);
+  ));
+  animation: starburstPulse 3s ease-in-out infinite;
+  filter: blur(1px);
+  opacity: 0.6;
+  mix-blend-mode: overlay;
 }
 
-/* Secondary bright spot - sparkle */
+/* Additional starburst layer for depth */
 .entry-indicator::after {
   content: '';
   position: absolute;
-  top: 22%;
-  left: 32%;
-  width: 24%;
-  height: 24%;
-  background: radial-gradient(
-    circle at 30% 30%,
-    rgba(255, 255, 255, 1) 0%,
-    rgba(255, 255, 255, 0.95) 25%,
-    rgba(255, 255, 255, 0.7) 50%,
-    transparent 75%
-  );
-  clip-path: polygon(
+  top: 50%;
+  left: 50%;
+  width: 80%;
+  height: 80%;
+  transform: translate(-50%, -50%) rotate(-45deg);
+  pointer-events: none;
+  /* Secondary starburst layer with color tint */
+  background: 
+    repeating-conic-gradient(
+      from 22.5deg at 50% 50%,
+      transparent 0deg,
+      var(--gem-color) 1deg,
+      transparent 2deg,
+      transparent 8deg
+    ),
+    radial-gradient(
+      circle at 50% 50%,
+      var(--gem-color) 0%,
+      transparent 40%
+    );
+  /* Use the same polygon shape as the parent */
+  clip-path: var(--polygon-clip, polygon(
     30% 0%, 
     70% 0%, 
     100% 30%, 
@@ -651,46 +798,89 @@
     30% 100%, 
     0% 70%, 
     0% 30%
-  );
-  transform: rotate(-45deg);
-  pointer-events: none;
-  animation: gemSparkle 1.8s ease-in-out infinite;
-  animation-delay: 0.4s;
+  ));
+  animation: starburstRotate 4s linear infinite;
+  filter: blur(0.8px);
+  opacity: 0.3;
+  mix-blend-mode: screen;
 }
 
 .entry-indicator-wrapper:hover .entry-indicator {
-  filter: brightness(1.6) saturate(1.7);
+  filter: brightness(1.6) saturate(3) 
+    drop-shadow(0 0 6px var(--gem-color))
+    drop-shadow(0 0 12px var(--gem-color))
+    drop-shadow(0 0 20px var(--gem-color))
+    drop-shadow(0 0 30px var(--gem-color))
+    drop-shadow(0 0 45px var(--gem-color))
+    drop-shadow(0 0 60px var(--gem-color));
   box-shadow: 
-    0 0 18px var(--gem-color),
+    /* Enhanced outer glow on hover */
+    0 0 12px var(--gem-color),
+    0 0 24px var(--gem-color),
     0 0 36px var(--gem-color),
-    0 0 54px var(--gem-color),
+    0 0 48px var(--gem-color),
+    0 0 60px var(--gem-color),
     0 0 72px var(--gem-color),
-    inset 0 0 30px rgba(255, 255, 255, 0.5),
-    inset -5px -5px 12px rgba(0, 0, 0, 0.8),
-    inset 5px 5px 12px rgba(255, 255, 255, 0.4),
-    inset -3px 3px 8px rgba(0, 0, 0, 0.5);
+    0 0 90px var(--gem-color),
+    /* Enhanced inner lighting */
+    inset 0 -10px 25px rgba(255, 255, 255, 0.6),
+    inset 0 0 20px rgba(255, 255, 255, 0.4),
+    /* Enhanced inner shadows */
+    inset 0 10px 20px rgba(0, 0, 0, 0.9),
+    inset -5px -5px 15px rgba(0, 0, 0, 0.8),
+    /* Enhanced side highlights */
+    inset 5px 5px 12px rgba(255, 255, 255, 0.5),
+    inset -3px 3px 10px rgba(0, 0, 0, 0.6),
+    inset 3px -3px 8px rgba(255, 255, 255, 0.3);
 }
 
-@keyframes gemShine {
-  0%, 100% {
-    opacity: 0.8;
-    transform: rotate(-45deg) scale(1);
-  }
-  50% {
-    opacity: 1;
-    transform: rotate(-45deg) scale(1.2);
-  }
-}
-
-@keyframes gemSparkle {
+@keyframes starburstPulse {
   0%, 100% {
     opacity: 0.5;
-    transform: rotate(-45deg) scale(0.9);
+    transform: translate(-50%, -50%) rotate(-45deg) scale(1);
   }
   50% {
-    opacity: 1;
-    transform: rotate(-45deg) scale(1.3);
+    opacity: 0.7;
+    transform: translate(-50%, -50%) rotate(-45deg) scale(1.1);
   }
+}
+
+@keyframes starburstRotate {
+  0% {
+    transform: translate(-50%, -50%) rotate(-45deg);
+    opacity: 0.2;
+  }
+  50% {
+    opacity: 0.4;
+  }
+  100% {
+    transform: translate(-50%, -50%) rotate(315deg);
+    opacity: 0.2;
+  }
+}
+
+@keyframes gemGlow {
+  0%, 100% {
+    filter: brightness(1.2) saturate(2.5) 
+      drop-shadow(0 0 4px var(--gem-color))
+      drop-shadow(0 0 8px var(--gem-color))
+      drop-shadow(0 0 12px var(--gem-color))
+      drop-shadow(0 0 20px var(--gem-color))
+      drop-shadow(0 0 30px var(--gem-color));
+  }
+  50% {
+    filter: brightness(1.4) saturate(2.8) 
+      drop-shadow(0 0 6px var(--gem-color))
+      drop-shadow(0 0 12px var(--gem-color))
+      drop-shadow(0 0 20px var(--gem-color))
+      drop-shadow(0 0 30px var(--gem-color))
+      drop-shadow(0 0 40px var(--gem-color))
+      drop-shadow(0 0 50px var(--gem-color));
+  }
+}
+
+.entry-indicator {
+  animation: gemGlow 3s ease-in-out infinite;
 }
 
 .scale-labels {
@@ -712,6 +902,11 @@
   white-space: nowrap;
   pointer-events: none;
   text-shadow: 0 1px 2px rgba(255, 255, 255, 0.8);
+  -webkit-font-smoothing: none;
+  -moz-osx-font-smoothing: unset;
+  font-smoothing: never;
+  text-rendering: optimizeSpeed;
+  image-rendering: pixelated;
 }
 
 .scale-label.decade-label {
@@ -789,6 +984,164 @@
   color: #4a90e2;
   font-weight: 700;
   font-size: 0.65rem;
+}
+
+/* Drag limits visualization - positioned relative to radial dial */
+.drag-limits-overlay {
+  position: fixed;
+  transform: translate(-50%, -50%);
+  width: 400px;
+  height: 2000px;
+  pointer-events: none;
+  z-index: 1001;
+  margin-left: -200px;
+  margin-top: -1000px;
+}
+
+.dead-zone-line {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 300px;
+  height: 2px;
+  background: repeating-linear-gradient(
+    to right,
+    rgba(255, 120, 120, 0.8) 0px,
+    rgba(255, 120, 120, 0.8) 4px,
+    transparent 4px,
+    transparent 8px
+  );
+  pointer-events: none;
+  z-index: 1002;
+  box-shadow: 0 0 3px rgba(255, 120, 120, 0.7);
+}
+
+.dead-zone-fill {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 300px;
+  background: repeating-linear-gradient(
+    90deg,
+    rgba(255, 120, 120, 0.1) 0px,
+    rgba(255, 120, 120, 0.1) 2px,
+    transparent 2px,
+    transparent 4px
+  );
+  pointer-events: none;
+  z-index: 1001;
+}
+
+.vertical-threshold-line {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 300px;
+  height: 2px;
+  background: repeating-linear-gradient(
+    to right,
+    rgba(150, 150, 150, 0.7) 0px,
+    rgba(150, 150, 150, 0.7) 3px,
+    transparent 3px,
+    transparent 6px
+  );
+  pointer-events: none;
+  z-index: 1002;
+  box-shadow: 0 0 2px rgba(150, 150, 150, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.threshold-label {
+  position: absolute;
+  left: 100%;
+  margin-left: 8px;
+  font-size: 0.7rem;
+  color: rgba(150, 150, 150, 0.8);
+  background: rgba(255, 255, 255, 0.9);
+  padding: 2px 6px;
+  border-radius: 3px;
+  white-space: nowrap;
+  pointer-events: none;
+  font-weight: 600;
+}
+
+.current-movement-indicator {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 2px;
+  height: 20px;
+  background: rgba(74, 144, 226, 0.8);
+  pointer-events: none;
+  z-index: 1003;
+  box-shadow: 0 0 4px rgba(74, 144, 226, 0.6);
+}
+
+.movement-label {
+  position: absolute;
+  left: 100%;
+  margin-left: 8px;
+  font-size: 0.7rem;
+  color: rgba(74, 144, 226, 0.9);
+  background: rgba(255, 255, 255, 0.95);
+  padding: 2px 6px;
+  border-radius: 3px;
+  white-space: nowrap;
+  pointer-events: none;
+  font-weight: 600;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.compact-scale-indicator {
+  position: absolute;
+  right: -140px;
+  top: -400px;
+  width: 120px;
+  height: 800px;
+  pointer-events: none;
+  z-index: 1004;
+  border-left: 1px solid rgba(200, 200, 200, 0.3);
+  padding-left: 8px;
+}
+
+.scale-line {
+  position: absolute;
+  left: 0;
+  width: 80px;
+  height: 1px;
+  background: rgba(200, 200, 200, 0.4);
+  pointer-events: none;
+}
+
+.scale-line.scale-center {
+  background: rgba(74, 144, 226, 0.6);
+  height: 2px;
+}
+
+.scale-line.scale-deadzone-top,
+.scale-line.scale-deadzone-bottom {
+  background: rgba(255, 120, 120, 0.6);
+  height: 2px;
+}
+
+.scale-line.scale-threshold-top,
+.scale-line.scale-threshold-bottom {
+  background: rgba(150, 150, 150, 0.5);
+}
+
+.scale-label {
+  position: absolute;
+  left: 85px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 0.65rem;
+  color: rgba(100, 100, 100, 0.8);
+  white-space: nowrap;
+  pointer-events: none;
+  font-weight: 500;
 }
 
 /* Responsive adjustments */

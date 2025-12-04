@@ -5,8 +5,10 @@ import PDFDocument from 'pdfkit';
 import {
   getEntries,
   getEntry,
+  getEntriesByDateAndRange,
   saveEntry,
   deleteEntry,
+  deleteEntryByDateAndRange,
   searchEntries,
   getEntriesByRange,
   getAllEntries,
@@ -27,6 +29,10 @@ export function setupIpcHandlers() {
     return getEntry(date, timeRange);
   });
 
+  ipcMain.handle('get-entries-by-date-range', async (_event, date: string, timeRange: TimeRange) => {
+    return getEntriesByDateAndRange(date, timeRange);
+  });
+
   ipcMain.handle('save-entry', async (_event, entry: JournalEntry) => {
     try {
       console.log('IPC save-entry handler called');
@@ -39,8 +45,12 @@ export function setupIpcHandlers() {
     }
   });
 
-  ipcMain.handle('delete-entry', async (_event, date: string, timeRange: TimeRange) => {
-    deleteEntry(date, timeRange);
+  ipcMain.handle('delete-entry', async (_event, id: number) => {
+    deleteEntry(id);
+  });
+
+  ipcMain.handle('delete-entry-by-date-range', async (_event, date: string, timeRange: TimeRange) => {
+    deleteEntryByDateAndRange(date, timeRange);
   });
 
   ipcMain.handle('search-entries', async (_event, query: string) => {

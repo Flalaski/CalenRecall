@@ -29,8 +29,14 @@ contextBridge.exposeInMainWorld('electronAPI', {
   saveEntry: (entry: JournalEntry): Promise<void> =>
     ipcRenderer.invoke('save-entry', entry),
   
-  deleteEntry: (date: string, timeRange: TimeRange): Promise<void> =>
-    ipcRenderer.invoke('delete-entry', date, timeRange),
+  deleteEntry: (id: number): Promise<void> =>
+    ipcRenderer.invoke('delete-entry', id),
+  
+  deleteEntryByDateRange: (date: string, timeRange: TimeRange): Promise<void> =>
+    ipcRenderer.invoke('delete-entry-by-date-range', date, timeRange),
+  
+  getEntriesByDateRange: (date: string, timeRange: TimeRange): Promise<JournalEntry[]> =>
+    ipcRenderer.invoke('get-entries-by-date-range', date, timeRange),
   
   searchEntries: (query: string): Promise<JournalEntry[]> =>
     ipcRenderer.invoke('search-entries', query),

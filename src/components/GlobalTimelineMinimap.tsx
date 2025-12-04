@@ -117,6 +117,102 @@ function playMicroBlip(): void {
   }
 }
 
+// Generate a polygon clip-path based on number of sides
+function generatePolygonClipPath(sides: number): string {
+  if (sides < 3) sides = 3; // Minimum triangle
+  if (sides > 12) sides = 12; // Maximum dodecagon
+  
+  const centerX = 50;
+  const centerY = 50;
+  const radius = 50;
+  const points: string[] = [];
+  
+  for (let i = 0; i < sides; i++) {
+    const angle = (Math.PI * 2 * i) / sides - (Math.PI / 2); // Start from top
+    const x = centerX + radius * Math.cos(angle);
+    const y = centerY + radius * Math.sin(angle);
+    points.push(`${x}% ${y}%`);
+  }
+  
+  return `polygon(${points.join(', ')})`;
+}
+
+// Numerological breakdown: reduce a number to a single digit by summing digits
+function numerologicalReduce(num: number): number {
+  while (num > 9) {
+    num = num.toString().split('').reduce((sum, digit) => sum + parseInt(digit, 10), 0);
+  }
+  return num;
+}
+
+// Calculate number of sides for a crystal based on numerological breakdown of entry
+function calculateCrystalSides(entry: JournalEntry): number {
+  // Extract all numbers from the entry
+  const titleNumbers = (entry.title || '').match(/\d+/g) || [];
+  const contentNumbers = (entry.content || '').match(/\d+/g) || [];
+  
+  // Sum all numbers found in title and content
+  let numberSum = 0;
+  titleNumbers.forEach(numStr => {
+    numberSum += parseInt(numStr, 10);
+  });
+  contentNumbers.forEach(numStr => {
+    numberSum += parseInt(numStr, 10);
+  });
+  
+  // Calculate numerological value from text (sum of character codes)
+  let textValue = 0;
+  const allText = (entry.title || '') + (entry.content || '');
+  for (let i = 0; i < allText.length; i++) {
+    const charCode = allText.charCodeAt(i);
+    // Weight characters differently
+    textValue += charCode * (i % 5 + 1);
+  }
+  
+  // Extract numbers from date (YYYY-MM-DD format)
+  const dateParts = entry.date.split('-');
+  const yearValue = parseInt(dateParts[0] || '0', 10);
+  const monthValue = parseInt(dateParts[1] || '0', 10);
+  const dayValue = parseInt(dateParts[2] || '0', 10);
+  
+  // Calculate numerological values
+  const yearNumerological = numerologicalReduce(yearValue);
+  const monthNumerological = numerologicalReduce(monthValue);
+  const dayNumerological = numerologicalReduce(dayValue);
+  const numberSumNumerological = numberSum > 0 ? numerologicalReduce(numberSum) : 0;
+  const textValueNumerological = numerologicalReduce(textValue);
+  
+  // TimeRange numerological mapping
+  const timeRangeNumerological = entry.timeRange === 'decade' ? 1 :
+                                entry.timeRange === 'year' ? 2 :
+                                entry.timeRange === 'month' ? 3 :
+                                entry.timeRange === 'week' ? 4 : 5;
+  
+  // ID numerological (if exists)
+  const idNumerological = entry.id ? numerologicalReduce(entry.id) : 0;
+  
+  // Combine all numerological values
+  const combinedNumerological = yearNumerological + 
+                               monthNumerological + 
+                               dayNumerological + 
+                               numberSumNumerological + 
+                               textValueNumerological + 
+                               timeRangeNumerological + 
+                               idNumerological;
+  
+  // Final numerological reduction
+  const finalNumerological = numerologicalReduce(combinedNumerological);
+  
+  // Map to 3-12 sides (0 maps to 3, 1-9 map to 4-12)
+  // This ensures every entry gets a unique shape based on its numerological essence
+  if (finalNumerological === 0) {
+    return 3; // Triangle
+  } else {
+    // Map 1-9 to 4-12 sides
+    return 3 + finalNumerological; // Results in 4-12 sides
+  }
+}
+
 // Calculate color based on numerological patterns of content and time
 function calculateEntryColor(entry: JournalEntry): string {
   // Combine title and content for numerological calculation
@@ -164,6 +260,13 @@ export default function GlobalTimelineMinimap({
   const [mechanicalClick, setMechanicalClick] = useState<{ scale: TimeRange; direction: 'up' | 'down' } | null>(null);
   const [horizontalLocked, setHorizontalLocked] = useState(false);
   const [radialDial, setRadialDial] = useState<{ x: number; y: number } | null>(null);
+  const [dragLimits, setDragLimits] = useState<{ 
+    deadZoneTop: number; 
+    deadZoneBottom: number; 
+    thresholdTop: number; 
+    thresholdBottom: number;
+    currentMovement?: number;
+  } | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const lastUpdateTimeRef = useRef<number>(0);
   const dragStartPositionRef = useRef<{ x: number; y: number; date: Date } | null>(null);
@@ -655,7 +758,7 @@ export default function GlobalTimelineMinimap({
     return ((Math.abs(hash) % (maxOffset * 2 + 1)) - maxOffset);
   };
 
-  // Calculate entry positions on the timeline with vertical variance
+  // Calculate entry positions on the timeline with vertical variance and clustering
   const entryPositions = useMemo(() => {
     if (!timelineData.startDate || !timelineData.endDate || entries.length === 0) {
       return [];
@@ -664,8 +767,8 @@ export default function GlobalTimelineMinimap({
     const totalTime = timelineData.endDate.getTime() - timelineData.startDate.getTime();
     const verticalVariance = 60; // Maximum vertical offset in pixels (30px up/down from center)
     
-    // Group entries by position to avoid overlap
-    const positionGroups = new Map<number, Array<{ entry: JournalEntry; position: number; color: string }>>();
+    // Group entries by date and timeRange to create clusters
+    const clusterGroups = new Map<string, Array<{ entry: JournalEntry; position: number; color: string }>>();
     
     entries.forEach(entry => {
       const entryDate = new Date(entry.date);
@@ -673,36 +776,71 @@ export default function GlobalTimelineMinimap({
       const position = (entryTime / totalTime) * 100;
       const clampedPosition = Math.max(0, Math.min(100, position));
       
-      // Round to nearest 0.1% to group nearby entries
-      const roundedPosition = Math.round(clampedPosition * 10) / 10;
+      // Create cluster key from date and timeRange (entries with same date/timeRange form a cluster)
+      const clusterKey = `${entry.date}-${entry.timeRange}`;
       
-      if (!positionGroups.has(roundedPosition)) {
-        positionGroups.set(roundedPosition, []);
+      if (!clusterGroups.has(clusterKey)) {
+        clusterGroups.set(clusterKey, []);
       }
-      positionGroups.get(roundedPosition)!.push({
+      clusterGroups.get(clusterKey)!.push({
         entry,
         position: clampedPosition,
         color: calculateEntryColor(entry),
       });
     });
     
-    // Calculate vertical offsets for each entry, avoiding overlaps
-    const result: Array<{ entry: JournalEntry; position: number; color: string; verticalOffset: number }> = [];
+    // Calculate positions for clusters and individual entries
+    const result: Array<{ 
+      entry: JournalEntry; 
+      position: number; 
+      color: string; 
+      verticalOffset: number;
+      clusterIndex?: number;
+      clusterSize?: number;
+      clusterAngle?: number;
+      polygonClipPath: string;
+      sides: number;
+    }> = [];
     
-    positionGroups.forEach((group) => {
+    clusterGroups.forEach((group) => {
       if (group.length === 1) {
-        // Single entry at this position - use hash-based offset
+        // Single entry - use hash-based offset
         const entry = group[0];
         const hashInput = `${entry.entry.date}-${entry.entry.timeRange}-${entry.entry.id || 0}`;
         const verticalOffset = hashToVerticalOffset(hashInput, verticalVariance);
-        result.push({ ...entry, verticalOffset });
+        const sides = calculateCrystalSides(entry.entry);
+        const polygonClipPath = generatePolygonClipPath(sides);
+        result.push({ ...entry, verticalOffset, polygonClipPath, sides });
       } else {
-        // Multiple entries at same position - distribute them vertically
+        // Multiple entries - create staggered crystalline cluster
+        // Increase radius significantly so individual crystals are clearly visible
+        const clusterRadius = 12 + (group.length * 4); // Larger radius for better visibility
+        const angleStep = (2 * Math.PI) / group.length; // Distribute evenly in circle
+        
         group.forEach((entry, idx) => {
-          // Distribute evenly across vertical space
-          const spacing = (verticalVariance * 2) / (group.length + 1);
-          const verticalOffset = -verticalVariance + (idx + 1) * spacing;
-          result.push({ ...entry, verticalOffset });
+          // Calculate angle for this gem in the cluster (staggered around center)
+          const angle = idx * angleStep;
+          // Add slight rotation offset for more organic feel
+          const rotationOffset = (entry.entry.id || idx) % 3 - 1; // -1, 0, or 1
+          const finalAngle = angle + (rotationOffset * 0.15);
+          
+          // Calculate horizontal and vertical offsets from center
+          const horizontalOffset = Math.cos(finalAngle) * clusterRadius;
+          const verticalOffset = Math.sin(finalAngle) * clusterRadius;
+          
+          // Each crystal in cluster gets its own polygon shape
+          const sides = calculateCrystalSides(entry.entry);
+          const polygonClipPath = generatePolygonClipPath(sides);
+          
+          result.push({ 
+            ...entry, 
+            verticalOffset,
+            clusterIndex: idx,
+            clusterSize: group.length,
+            clusterAngle: finalAngle,
+            polygonClipPath,
+            sides,
+          });
         });
       }
     });
@@ -754,6 +892,15 @@ export default function GlobalTimelineMinimap({
     
     // Show radial dial at mouse position
     setRadialDial({ x: e.clientX, y: e.clientY });
+    
+    // Initialize drag limits visualization
+    setDragLimits({
+      deadZoneTop: 0,
+      deadZoneBottom: 0,
+      thresholdTop: -800,
+      thresholdBottom: 800,
+      currentMovement: 0,
+    });
     
     setIsDragging(true);
     e.preventDefault();
@@ -879,6 +1026,32 @@ export default function GlobalTimelineMinimap({
       
       // Check if we're in the dead zone (must move back toward center after scale change)
       const inDeadZone = Math.abs(verticalMovementAccumulatorRef.current - lastScaleChangeAccumulatorRef.current) < deadZoneSize;
+      
+      // Update drag limits visualization relative to radial dial position
+      if (dragStartPositionRef.current) {
+        // Calculate dead zone boundaries relative to start position
+        // Dead zone is relative to the last scale change accumulator value
+        // The accumulator tracks total vertical movement from start
+        const deadZoneCenter = lastScaleChangeAccumulatorRef.current;
+        const deadZoneTop = -(deadZoneCenter + deadZoneSize); // Negative = above dial
+        const deadZoneBottom = -(deadZoneCenter - deadZoneSize); // Negative = above dial
+        
+        // Vertical threshold lines (800px from start)
+        // These represent the actual pixel distances, but we'll show them scaled for visibility
+        const thresholdTop = -800; // Above dial
+        const thresholdBottom = 800; // Below dial
+        
+        // Calculate current vertical movement from start
+        const currentVerticalMovement = verticalMovementAccumulatorRef.current;
+        
+        setDragLimits({
+          deadZoneTop: deadZoneTop,
+          deadZoneBottom: deadZoneBottom,
+          thresholdTop: thresholdTop,
+          thresholdBottom: thresholdBottom,
+          currentMovement: currentVerticalMovement, // Track current position for visual feedback
+        });
+      }
       
       // Handle vertical movement for scale changes with lock-in mechanism and dead zone
       if (!scaleChangeLockRef.current && !inDeadZone && Math.abs(verticalMovementAccumulatorRef.current) > verticalThreshold) {
@@ -1032,6 +1205,7 @@ export default function GlobalTimelineMinimap({
       setIsDragging(false);
       setHorizontalLocked(false);
       setRadialDial(null);
+      setDragLimits(null);
       horizontalLockedRef.current = false;
       dragStartPositionRef.current = null;
       lastUpdateTimeRef.current = 0;
@@ -1107,6 +1281,100 @@ export default function GlobalTimelineMinimap({
 
   return (
     <div className="global-timeline-minimap">
+      {/* Drag limits visualization - positioned relative to radial dial */}
+      {isDragging && dragLimits && radialDial && (
+        <div 
+          className="drag-limits-overlay"
+          style={{
+            left: `${radialDial.x}px`,
+            top: `${radialDial.y}px`,
+          }}
+        >
+          {/* Dead zone indicators - show when dead zone is active */}
+          {lastScaleChangeAccumulatorRef.current !== 0 && (
+            <>
+              <div 
+                className="dead-zone-line dead-zone-top"
+                style={{ top: `${dragLimits.deadZoneTop}px` }}
+              />
+              <div 
+                className="dead-zone-line dead-zone-bottom"
+                style={{ top: `${dragLimits.deadZoneBottom}px` }}
+              />
+              {/* Dead zone fill */}
+              {Math.abs(dragLimits.deadZoneBottom - dragLimits.deadZoneTop) > 0 && (
+                <div 
+                  className="dead-zone-fill"
+                  style={{ 
+                    top: `${Math.min(dragLimits.deadZoneTop, dragLimits.deadZoneBottom)}px`,
+                    height: `${Math.abs(dragLimits.deadZoneBottom - dragLimits.deadZoneTop)}px`
+                  }}
+                />
+              )}
+            </>
+          )}
+          {/* Vertical threshold indicators - show the 800px threshold boundaries */}
+          <div 
+            className="vertical-threshold-line vertical-threshold-top"
+            style={{ top: `${dragLimits.thresholdTop}px` }}
+          >
+            <span className="threshold-label">800px</span>
+          </div>
+          <div 
+            className="vertical-threshold-line vertical-threshold-bottom"
+            style={{ top: `${dragLimits.thresholdBottom}px` }}
+          >
+            <span className="threshold-label">800px</span>
+          </div>
+          {/* Current position indicator */}
+          {dragLimits.currentMovement !== undefined && (
+            <>
+              <div 
+                className="current-movement-indicator"
+                style={{ top: `${-dragLimits.currentMovement}px` }}
+              >
+                <span className="movement-label">
+                  {Math.abs(dragLimits.currentMovement).toFixed(0)}px / 800px
+                </span>
+              </div>
+              {/* Compact scale indicator showing relative distances */}
+              <div className="compact-scale-indicator">
+                <div className="scale-line scale-center" style={{ top: '0px' }}>
+                  <span className="scale-label">Start</span>
+                </div>
+                {lastScaleChangeAccumulatorRef.current !== 0 && (
+                  <>
+                    <div 
+                      className="scale-line scale-deadzone-top" 
+                      style={{ top: `${dragLimits.deadZoneTop}px` }}
+                    >
+                      <span className="scale-label">Dead Zone</span>
+                    </div>
+                    <div 
+                      className="scale-line scale-deadzone-bottom" 
+                      style={{ top: `${dragLimits.deadZoneBottom}px` }}
+                    >
+                      <span className="scale-label">Dead Zone</span>
+                    </div>
+                  </>
+                )}
+                <div 
+                  className="scale-line scale-threshold-top" 
+                  style={{ top: `${dragLimits.thresholdTop}px` }}
+                >
+                  <span className="scale-label">800px</span>
+                </div>
+                <div 
+                  className="scale-line scale-threshold-bottom" 
+                  style={{ top: `${dragLimits.thresholdBottom}px` }}
+                >
+                  <span className="scale-label">800px</span>
+                </div>
+              </div>
+            </>
+          )}
+        </div>
+      )}
       {/* Radial dial for directional movement */}
       {radialDial && isDragging && (
         <div 
@@ -1156,7 +1424,13 @@ export default function GlobalTimelineMinimap({
         onWheel={handleWheel}
       >
         {/* Fractal web background pattern */}
-        <svg className="fractal-web" viewBox="0 0 1000 200" preserveAspectRatio="none">
+        <svg 
+          className="fractal-web" 
+          viewBox="0 0 1000 200" 
+          preserveAspectRatio="none"
+          shapeRendering="crispEdges"
+          style={{ imageRendering: 'pixelated', imageRendering: 'crisp-edges' }}
+        >
           <defs>
             <pattern id="fractalGrid" x="0" y="0" width="15" height="15" patternUnits="userSpaceOnUse">
               <circle cx="7.5" cy="7.5" r="0.4" fill="#c0c0c0" opacity="0.4" />
@@ -1194,14 +1468,15 @@ export default function GlobalTimelineMinimap({
 
           {/* Infinity tree trunk centered on the current indicator */}
           <line
-            x1={centerX}
-            y1="0"
-            x2={centerX}
-            y2="200"
+            x1={Math.round(centerX) + 0.5}
+            y1="0.5"
+            x2={Math.round(centerX) + 0.5}
+            y2="200.5"
             stroke="#4a90e2"
-            strokeWidth="1.5"
+            strokeWidth="2"
             opacity="0.55"
             className="infinity-tree-trunk"
+            shapeRendering="crispEdges"
           />
 
           {/* Fractaline crystalline web "infinity tree" branches for each time scale */}
@@ -1253,36 +1528,38 @@ export default function GlobalTimelineMinimap({
           {allScaleMarkings.decade.major
             .filter(mark => Math.abs(mark.position - currentIndicatorPosition) <= LOCALIZATION_RANGE)
             .map((mark, idx) => {
-            const x = (mark.position / 100) * 1000;
+            const x = Math.round((mark.position / 100) * 1000) + 0.5;
             const isCurrentScale = viewMode === 'decade';
             return (
               <line
                 key={`decade-major-${idx}`}
                 x1={x}
-                y1="0"
+                y1="0.5"
                 x2={x}
-                y2="40"
+                y2="40.5"
                 stroke={isCurrentScale ? "#4a90e2" : "#333"}
                 strokeWidth={isCurrentScale ? "4" : "3"}
                 opacity={isCurrentScale ? "0.9" : "0.8"}
+                shapeRendering="crispEdges"
               />
             );
           })}
           {allScaleMarkings.decade.minor
             .filter(mark => Math.abs(mark.position - currentIndicatorPosition) <= LOCALIZATION_RANGE)
             .map((mark, idx) => {
-            const x = (mark.position / 100) * 1000;
+            const x = Math.round((mark.position / 100) * 1000) + 0.5;
             const isCurrentScale = viewMode === 'decade';
             return (
               <line
                 key={`decade-minor-${idx}`}
                 x1={x}
-                y1="0"
+                y1="0.5"
                 x2={x}
-                y2="30"
+                y2="30.5"
                 stroke={isCurrentScale ? "#6ab7ff" : "#555"}
-                strokeWidth={isCurrentScale ? "2.5" : "2"}
+                strokeWidth={isCurrentScale ? "3" : "2"}
                 opacity={isCurrentScale ? "0.7" : "0.6"}
+                shapeRendering="crispEdges"
               />
             );
           })}
@@ -1291,36 +1568,38 @@ export default function GlobalTimelineMinimap({
           {allScaleMarkings.year.major
             .filter(mark => Math.abs(mark.position - currentIndicatorPosition) <= LOCALIZATION_RANGE)
             .map((mark, idx) => {
-            const x = (mark.position / 100) * 1000;
+            const x = Math.round((mark.position / 100) * 1000) + 0.5;
             const isCurrentScale = viewMode === 'year';
             return (
               <line
                 key={`year-major-${idx}`}
                 x1={x}
-                y1="40"
+                y1="40.5"
                 x2={x}
-                y2="80"
+                y2="80.5"
                 stroke={isCurrentScale ? "#4a90e2" : "#444"}
-                strokeWidth={isCurrentScale ? "3.5" : "3"}
+                strokeWidth={isCurrentScale ? "4" : "3"}
                 opacity={isCurrentScale ? "0.85" : "0.75"}
+                shapeRendering="crispEdges"
               />
             );
           })}
           {allScaleMarkings.year.minor
             .filter(mark => Math.abs(mark.position - currentIndicatorPosition) <= LOCALIZATION_RANGE)
             .map((mark, idx) => {
-            const x = (mark.position / 100) * 1000;
+            const x = Math.round((mark.position / 100) * 1000) + 0.5;
             const isCurrentScale = viewMode === 'year';
             return (
               <line
                 key={`year-minor-${idx}`}
                 x1={x}
-                y1="40"
+                y1="40.5"
                 x2={x}
-                y2="70"
+                y2="70.5"
                 stroke={isCurrentScale ? "#6ab7ff" : "#666"}
-                strokeWidth={isCurrentScale ? "2" : "1.5"}
+                strokeWidth={isCurrentScale ? "2" : "2"}
                 opacity={isCurrentScale ? "0.6" : "0.5"}
+                shapeRendering="crispEdges"
               />
             );
           })}
@@ -1329,36 +1608,38 @@ export default function GlobalTimelineMinimap({
           {allScaleMarkings.month.major
             .filter(mark => Math.abs(mark.position - currentIndicatorPosition) <= LOCALIZATION_RANGE)
             .map((mark, idx) => {
-            const x = (mark.position / 100) * 1000;
+            const x = Math.round((mark.position / 100) * 1000) + 0.5;
             const isCurrentScale = viewMode === 'month';
             return (
               <line
                 key={`month-major-${idx}`}
                 x1={x}
-                y1="80"
+                y1="80.5"
                 x2={x}
-                y2="120"
+                y2="120.5"
                 stroke={isCurrentScale ? "#4a90e2" : "#555"}
-                strokeWidth={isCurrentScale ? "3.5" : "2.5"}
+                strokeWidth={isCurrentScale ? "4" : "3"}
                 opacity={isCurrentScale ? "0.9" : "0.7"}
+                shapeRendering="crispEdges"
               />
             );
           })}
           {allScaleMarkings.month.minor
             .filter(mark => Math.abs(mark.position - currentIndicatorPosition) <= LOCALIZATION_RANGE)
             .map((mark, idx) => {
-            const x = (mark.position / 100) * 1000;
+            const x = Math.round((mark.position / 100) * 1000) + 0.5;
             const isCurrentScale = viewMode === 'month';
             return (
               <line
                 key={`month-minor-${idx}`}
                 x1={x}
-                y1="80"
+                y1="80.5"
                 x2={x}
-                y2="110"
+                y2="110.5"
                 stroke={isCurrentScale ? "#6ab7ff" : "#777"}
-                strokeWidth={isCurrentScale ? "1.5" : "1"}
+                strokeWidth={isCurrentScale ? "2" : "1"}
                 opacity={isCurrentScale ? "0.7" : "0.5"}
+                shapeRendering="crispEdges"
               />
             );
           })}
@@ -1367,36 +1648,38 @@ export default function GlobalTimelineMinimap({
           {allScaleMarkings.week.major
             .filter(mark => Math.abs(mark.position - currentIndicatorPosition) <= LOCALIZATION_RANGE)
             .map((mark, idx) => {
-            const x = (mark.position / 100) * 1000;
+            const x = Math.round((mark.position / 100) * 1000) + 0.5;
             const isCurrentScale = viewMode === 'week';
             return (
               <line
                 key={`week-major-${idx}`}
                 x1={x}
-                y1="120"
+                y1="120.5"
                 x2={x}
-                y2="160"
+                y2="160.5"
                 stroke={isCurrentScale ? "#4a90e2" : "#555"}
-                strokeWidth={isCurrentScale ? "3" : "2.5"}
+                strokeWidth={isCurrentScale ? "3" : "3"}
                 opacity={isCurrentScale ? "0.8" : "0.6"}
+                shapeRendering="crispEdges"
               />
             );
           })}
           {allScaleMarkings.week.minor
             .filter(mark => Math.abs(mark.position - currentIndicatorPosition) <= LOCALIZATION_RANGE)
             .map((mark, idx) => {
-            const x = (mark.position / 100) * 1000;
+            const x = Math.round((mark.position / 100) * 1000) + 0.5;
             const isCurrentScale = viewMode === 'week';
             return (
               <line
                 key={`week-minor-${idx}`}
                 x1={x}
-                y1="120"
+                y1="120.5"
                 x2={x}
-                y2="150"
+                y2="150.5"
                 stroke={isCurrentScale ? "#6ab7ff" : "#888"}
-                strokeWidth={isCurrentScale ? "1.2" : "0.8"}
+                strokeWidth={isCurrentScale ? "1" : "1"}
                 opacity={isCurrentScale ? "0.6" : "0.4"}
+                shapeRendering="crispEdges"
               />
             );
           })}
@@ -1405,35 +1688,37 @@ export default function GlobalTimelineMinimap({
           {allScaleMarkings.day.major
             .filter(mark => Math.abs(mark.position - currentIndicatorPosition) <= LOCALIZATION_RANGE)
             .map((mark, idx) => {
-            const x = (mark.position / 100) * 1000;
+            const x = Math.round((mark.position / 100) * 1000) + 0.5;
             const isCurrentScale = viewMode === 'day';
             return (
               <line
                 key={`day-major-${idx}`}
                 x1={x}
-                y1="160"
+                y1="160.5"
                 x2={x}
-                y2="200"
+                y2="200.5"
                 stroke={isCurrentScale ? "#4a90e2" : "#666"}
-                strokeWidth={isCurrentScale ? "2.5" : "2"}
+                strokeWidth={isCurrentScale ? "3" : "2"}
                 opacity={isCurrentScale ? "0.7" : "0.5"}
+                shapeRendering="crispEdges"
               />
             );
           })}
           {allScaleMarkings.day.minor
             .filter(mark => Math.abs(mark.position - currentIndicatorPosition) <= LOCALIZATION_RANGE)
             .map((mark, idx) => {
-            const x = (mark.position / 100) * 1000;
+            const x = Math.round((mark.position / 100) * 1000) + 0.5;
             return (
               <line
                 key={`day-minor-${idx}`}
                 x1={x}
-                y1="160"
+                y1="160.5"
                 x2={x}
-                y2="190"
+                y2="190.5"
                 stroke="#999"
-                strokeWidth="0.8"
+                strokeWidth="1"
                 opacity="0.3"
+                shapeRendering="crispEdges"
               />
             );
           })}
@@ -1574,7 +1859,7 @@ export default function GlobalTimelineMinimap({
 
         {/* Entry indicators */}
         <div className="entry-indicators">
-          {entryPositions.map(({ entry, position, color, verticalOffset }, idx) => {
+          {entryPositions.map(({ entry, position, color, verticalOffset, clusterIndex, clusterSize, clusterAngle, polygonClipPath, sides }, idx) => {
             const handleClick = (e: React.MouseEvent) => {
               e.stopPropagation();
               const entryDate = new Date(entry.date);
@@ -1585,22 +1870,51 @@ export default function GlobalTimelineMinimap({
               }
             };
             
+            const isInCluster = clusterSize !== undefined && clusterSize > 1;
+            const clusterRadius = isInCluster ? (8 + (clusterSize! * 2)) : 0;
+            const horizontalOffset = isInCluster && clusterAngle !== undefined 
+              ? Math.cos(clusterAngle) * clusterRadius 
+              : 0;
+            const clusterVerticalOffset = isInCluster && clusterAngle !== undefined
+              ? Math.sin(clusterAngle) * clusterRadius
+              : 0;
+            
             return (
               <div
                 key={entry.id || idx}
-                className="entry-indicator-wrapper"
+                className={`entry-indicator-wrapper ${isInCluster ? 'in-cluster' : ''}`}
                 style={{
                   left: `${position}%`,
                   top: `calc(50% + ${verticalOffset}px)`,
+                  transform: isInCluster 
+                    ? `translate(calc(-50% + ${horizontalOffset}px), calc(-50% + ${clusterVerticalOffset}px))`
+                    : 'translate(-50%, -50%)',
+                  zIndex: isInCluster ? (clusterIndex || 0) + 4 : 4,
+                  transition: 'transform 0.3s ease, z-index 0.3s ease',
                 }}
                 onClick={handleClick}
-                title={`${entry.title} (${entry.timeRange})`}
+                title={`${entry.title} (${entry.timeRange})${isInCluster ? ` - ${clusterSize} entries` : ''}`}
+                data-cluster-size={isInCluster ? clusterSize : undefined}
+                data-cluster-index={isInCluster ? clusterIndex : undefined}
+                onMouseEnter={(e) => {
+                  if (isInCluster) {
+                    e.currentTarget.style.transform = `translate(calc(-50% + ${horizontalOffset}px), calc(-50% + ${clusterVerticalOffset}px)) scale(2.5)`;
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (isInCluster) {
+                    e.currentTarget.style.transform = `translate(calc(-50% + ${horizontalOffset}px), calc(-50% + ${clusterVerticalOffset}px))`;
+                  }
+                }}
               >
                 <div
                   className="entry-indicator"
                   style={{
                     '--gem-color': color,
-                  } as React.CSSProperties & { '--gem-color': string }}
+                    '--polygon-clip': polygonClipPath,
+                    animationDelay: isInCluster ? `${(clusterIndex || 0) * 0.2}s` : '0s',
+                  } as React.CSSProperties & { '--gem-color': string; '--polygon-clip': string }}
+                  data-sides={sides}
                 />
               </div>
             );

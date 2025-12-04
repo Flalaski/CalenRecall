@@ -86,6 +86,7 @@ export default function JournalEditor({
       const defaultTitle = getDefaultTitle();
       
       const entry: JournalEntry = {
+        id: currentEntry?.id, // Preserve ID if editing existing entry
         date: formatDate(canonicalDate),
         timeRange: viewMode,
         title: title.trim() || defaultTitle,
@@ -147,17 +148,21 @@ export default function JournalEditor({
   };
 
   const handleDelete = async () => {
+    if (!currentEntry || !currentEntry.id) {
+      alert('Cannot delete entry: entry ID not found');
+      return;
+    }
+
     if (!confirm('Are you sure you want to delete this entry?')) {
       return;
     }
 
     try {
-      await deleteJournalEntry(date, viewMode);
+      await deleteJournalEntry(currentEntry.id);
       setCurrentEntry(null);
       setTitle('');
       setContent('');
       setTags([]);
-      setCurrentEntry(null);
       // Trigger a custom event to refresh calendar and list
       window.dispatchEvent(new CustomEvent('journalEntrySaved'));
       // Notify parent

@@ -263,7 +263,7 @@ export default function EntryViewer({
           <div className="period-entries-list">
             {periodEntries.map((periodEntry) => (
               <div
-                key={`${periodEntry.date}-${periodEntry.timeRange}`}
+                key={periodEntry.id || `${periodEntry.date}-${periodEntry.timeRange}-${periodEntry.createdAt}`}
                 className="period-entry-item"
                 onClick={() => onEntrySelect(periodEntry)}
               >

@@ -54,14 +54,14 @@ function migrateDatabase(database: Database.Database) {
         UPDATE journal_entries SET time_range = 'day' WHERE time_range IS NULL OR time_range = '';
       `);
       
-      // Create unique index on (date, time_range)
-      // This will allow multiple entries per date with different time_ranges
+      // Create non-unique index on (date, time_range)
+      // This allows multiple entries per date/time_range combination
       try {
         database.exec(`
-          CREATE UNIQUE INDEX IF NOT EXISTS idx_date_time_range ON journal_entries(date, time_range);
+          CREATE INDEX IF NOT EXISTS idx_date_time_range ON journal_entries(date, time_range);
         `);
       } catch (e) {
-        console.log('Note: Unique index may already exist');
+        console.log('Note: Index may already exist');
       }
       
       // Create index on time_range if it doesn't exist
@@ -86,22 +86,39 @@ export function initDatabase() {
   const tableExists = checkTableExists(db, 'journal_entries');
   const hasTimeRange = tableExists ? checkColumnExists(db, 'journal_entries', 'time_range') : false;
   
-  // Check if there's an old unique constraint on just 'date' column
+  // Check if there's an old unique constraint on (date, time_range) or just 'date'
   let hasOldUniqueConstraint = false;
   if (tableExists) {
     try {
-      const tableInfo = db.prepare(`PRAGMA table_info(journal_entries)`).all() as any[];
       // Check if there's a unique constraint in the table definition
       const createTableSql = db.prepare(`
         SELECT sql FROM sqlite_master WHERE type='table' AND name='journal_entries'
       `).get() as { sql: string } | undefined;
       
       if (createTableSql?.sql) {
-        // Check if there's UNIQUE(date) but not UNIQUE(date, time_range)
         const sql = createTableSql.sql.toLowerCase();
-        if (sql.includes('unique(date)') && !sql.includes('unique(date, time_range)')) {
+        // Check if there's UNIQUE(date, time_range) or UNIQUE(date) - both need to be removed
+        if (sql.includes('unique(date, time_range)') || sql.includes('unique(date,time_range)') || 
+            (sql.includes('unique(date)') && !sql.includes('unique(date, time_range)'))) {
           hasOldUniqueConstraint = true;
-          console.log('Detected old unique constraint on date column');
+          console.log('Detected old unique constraint on date/time_range columns');
+        }
+      }
+      
+      // Also check for unique indexes (including the specific one we used to create)
+      const indexes = db.prepare(`
+        SELECT name, sql FROM sqlite_master 
+        WHERE type='index' AND tbl_name='journal_entries' AND (sql LIKE '%UNIQUE%' OR name = 'idx_date_time_range')
+      `).all() as Array<{ name: string; sql: string | null }>;
+      
+      for (const idx of indexes) {
+        // Check if it's the unique index on date/time_range or if it's named idx_date_time_range
+        if (idx.name === 'idx_date_time_range' || 
+            (idx.sql && idx.sql.toLowerCase().includes('unique') && 
+             idx.sql.toLowerCase().includes('date') && idx.sql.toLowerCase().includes('time_range'))) {
+          hasOldUniqueConstraint = true;
+          console.log(`Detected unique index: ${idx.name}`);
+          break;
         }
       }
     } catch (e) {
@@ -109,7 +126,7 @@ export function initDatabase() {
     }
   }
   
-  // If table exists but doesn't have time_range, or has old constraint, migrate it
+  // If table exists but doesn't have time_range, or has old unique constraint, migrate it
   if (tableExists && (!hasTimeRange || hasOldUniqueConstraint)) {
     try {
       if (hasOldUniqueConstraint) {
@@ -177,8 +194,76 @@ export function initDatabase() {
       }
     }
   } else {
-    // Create tables with new schema (if they don't exist)
-    createTables(db);
+    // Table exists and has time_range - always check for and remove unique constraint
+    if (tableExists && hasTimeRange) {
+      // Always check for and remove any unique constraints/indexes on date/time_range
+      try {
+        // First, try to drop the specific unique index if it exists
+        try {
+          db.exec(`DROP INDEX IF EXISTS idx_date_time_range`);
+          console.log('Dropped idx_date_time_range index if it existed');
+        } catch (e) {
+          // Ignore if it doesn't exist
+        }
+        
+        // Check for any other unique indexes on date/time_range
+        const indexes = db.prepare(`
+          SELECT name, sql FROM sqlite_master 
+          WHERE type='index' AND tbl_name='journal_entries' AND sql LIKE '%UNIQUE%'
+        `).all() as Array<{ name: string; sql: string | null }>;
+        
+        for (const idx of indexes) {
+          if (idx.sql && idx.sql.toLowerCase().includes('date') && idx.sql.toLowerCase().includes('time_range')) {
+            console.log(`Dropping unique index: ${idx.name}`);
+            db.exec(`DROP INDEX IF EXISTS ${idx.name}`);
+          }
+        }
+        
+        // Check table definition for UNIQUE constraint - if found, recreate table
+        const createTableSql = db.prepare(`
+          SELECT sql FROM sqlite_master WHERE type='table' AND name='journal_entries'
+        `).get() as { sql: string } | undefined;
+        
+        if (createTableSql?.sql) {
+          const sql = createTableSql.sql.toLowerCase();
+          // Check for UNIQUE constraint in table definition (various formats)
+          if (sql.includes('unique(date, time_range)') || sql.includes('unique(date,time_range)') ||
+              sql.match(/unique\s*\(\s*date\s*,\s*time_range\s*\)/i)) {
+            console.log('Table has UNIQUE constraint in definition - recreating table');
+            // Backup entries
+            const oldEntries = db.prepare('SELECT * FROM journal_entries').all() as any[];
+            // Drop and recreate
+            db.exec('DROP TABLE IF EXISTS journal_entries');
+            // Recreate with new schema
+            createTables(db);
+            // Restore entries
+            if (oldEntries.length > 0) {
+              const insertStmt = db.prepare(`
+                INSERT INTO journal_entries (date, time_range, title, content, tags, created_at, updated_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+              `);
+              for (const entry of oldEntries) {
+                insertStmt.run(
+                  entry.date,
+                  entry.time_range || 'day',
+                  entry.title,
+                  entry.content,
+                  entry.tags || null,
+                  entry.created_at,
+                  entry.updated_at
+                );
+              }
+            }
+            console.log('Database recreated without unique constraint');
+          }
+        }
+      } catch (e) {
+        console.log('Note: Could not check/remove unique constraints:', e);
+      }
+    } else {
+      // Create tables with new schema (if they don't exist)
+      createTables(db);
+    }
   }
   
   return db;
@@ -194,14 +279,13 @@ function createTables(database: Database.Database) {
       content TEXT NOT NULL,
       tags TEXT,
       created_at TEXT NOT NULL,
-      updated_at TEXT NOT NULL,
-      UNIQUE(date, time_range)
+      updated_at TEXT NOT NULL
     );
     
     CREATE INDEX IF NOT EXISTS idx_date ON journal_entries(date);
     CREATE INDEX IF NOT EXISTS idx_time_range ON journal_entries(time_range);
     CREATE INDEX IF NOT EXISTS idx_created_at ON journal_entries(created_at);
-    CREATE UNIQUE INDEX IF NOT EXISTS idx_date_time_range ON journal_entries(date, time_range);
+    CREATE INDEX IF NOT EXISTS idx_date_time_range ON journal_entries(date, time_range);
     
     CREATE TABLE IF NOT EXISTS preferences (
       key TEXT PRIMARY KEY,
@@ -209,7 +293,7 @@ function createTables(database: Database.Database) {
     );
   `);
   
-  // Remove any old unique constraint on just the date column
+  // Remove any old unique constraints/indexes
   // SQLite doesn't support DROP CONSTRAINT directly, so we check indexes
   try {
     const indexes = database.prepare(`
@@ -218,12 +302,9 @@ function createTables(database: Database.Database) {
     `).all() as Array<{ name: string }>;
     
     for (const idx of indexes) {
-      // If there's a unique index on just date (not date+time_range), drop it
-      const indexInfo = database.prepare(`SELECT sql FROM sqlite_master WHERE name = ?`).get(idx.name) as { sql: string } | undefined;
-      if (indexInfo?.sql && indexInfo.sql.includes('date') && !indexInfo.sql.includes('time_range')) {
-        console.log(`Dropping old unique index: ${idx.name}`);
-        database.exec(`DROP INDEX IF EXISTS ${idx.name}`);
-      }
+      // Drop any unique indexes (we now allow multiple entries per date/time_range)
+      console.log(`Dropping old unique index: ${idx.name}`);
+      database.exec(`DROP INDEX IF EXISTS ${idx.name}`);
     }
   } catch (e) {
     console.log('Note: Could not check/remove old indexes:', e);
@@ -283,13 +364,17 @@ export function getEntries(startDate: string, endDate: string): JournalEntry[] {
 }
 
 export function getEntry(date: string, timeRange: 'decade' | 'year' | 'month' | 'week' | 'day'): JournalEntry | null {
+  // For backward compatibility, return the first entry found
+  const entries = getEntriesByDateAndRange(date, timeRange);
+  return entries.length > 0 ? entries[0] : null;
+}
+
+export function getEntriesByDateAndRange(date: string, timeRange: 'decade' | 'year' | 'month' | 'week' | 'day'): JournalEntry[] {
   const database = getDatabase();
-  const stmt = database.prepare('SELECT * FROM journal_entries WHERE date = ? AND time_range = ?');
-  const row = stmt.get(date, timeRange) as any;
+  const stmt = database.prepare('SELECT * FROM journal_entries WHERE date = ? AND time_range = ? ORDER BY created_at DESC');
+  const rows = stmt.all(date, timeRange) as any[];
   
-  if (!row) return null;
-  
-  return {
+  return rows.map(row => ({
     id: row.id,
     date: row.date,
     timeRange: row.time_range || 'day',
@@ -298,7 +383,7 @@ export function getEntry(date: string, timeRange: 'decade' | 'year' | 'month' | 
     tags: row.tags ? JSON.parse(row.tags) : [],
     createdAt: row.created_at,
     updatedAt: row.updated_at,
-  };
+  }));
 }
 
 export function saveEntry(entry: JournalEntry): void {
@@ -306,27 +391,26 @@ export function saveEntry(entry: JournalEntry): void {
   const now = new Date().toISOString();
   
   try {
-    console.log('saveEntry called with:', { date: entry.date, timeRange: entry.timeRange, title: entry.title });
+    console.log('saveEntry called with:', { id: entry.id, date: entry.date, timeRange: entry.timeRange, title: entry.title });
     
-    const existing = getEntry(entry.date, entry.timeRange);
-    
-    if (existing) {
-      console.log('Updating existing entry');
+    // If entry has an ID, update that specific entry
+    if (entry.id) {
+      console.log('Updating existing entry by ID');
       const stmt = database.prepare(`
         UPDATE journal_entries 
         SET title = ?, content = ?, tags = ?, updated_at = ?
-        WHERE date = ? AND time_range = ?
+        WHERE id = ?
       `);
       stmt.run(
         entry.title,
         entry.content,
         JSON.stringify(entry.tags || []),
         now,
-        entry.date,
-        entry.timeRange
+        entry.id
       );
       console.log('Entry updated successfully');
     } else {
+      // If no ID, always insert a new entry (allows multiple entries per date/timeRange)
       console.log('Inserting new entry');
       const stmt = database.prepare(`
         INSERT INTO journal_entries (date, time_range, title, content, tags, created_at, updated_at)
@@ -344,51 +428,6 @@ export function saveEntry(entry: JournalEntry): void {
       console.log('Entry inserted successfully');
     }
   } catch (error: any) {
-    // If we get a UNIQUE constraint error on just 'date', the database needs to be fixed
-    if (error?.message && error.message.includes('UNIQUE constraint failed: journal_entries.date') && 
-        !error.message.includes('journal_entries.date, journal_entries.time_range')) {
-      console.error('Database has old unique constraint on date column. Attempting to fix...');
-      try {
-        // Try to fix the database schema
-        fixDatabaseSchema(database);
-        // Retry the insert
-        const existing = getEntry(entry.date, entry.timeRange);
-        if (existing) {
-          const stmt = database.prepare(`
-            UPDATE journal_entries 
-            SET title = ?, content = ?, tags = ?, updated_at = ?
-            WHERE date = ? AND time_range = ?
-          `);
-          stmt.run(
-            entry.title,
-            entry.content,
-            JSON.stringify(entry.tags || []),
-            now,
-            entry.date,
-            entry.timeRange
-          );
-        } else {
-          const stmt = database.prepare(`
-            INSERT INTO journal_entries (date, time_range, title, content, tags, created_at, updated_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
-          `);
-          stmt.run(
-            entry.date,
-            entry.timeRange,
-            entry.title,
-            entry.content,
-            JSON.stringify(entry.tags || []),
-            entry.createdAt || now,
-            now
-          );
-        }
-        console.log('Entry saved after fixing database schema');
-        return;
-      } catch (fixError) {
-        console.error('Failed to fix database schema:', fixError);
-        throw new Error('Database schema needs to be fixed. Please restart the application.');
-      }
-    }
     console.error('Error in saveEntry:', error);
     throw error;
   }
@@ -430,7 +469,13 @@ function fixDatabaseSchema(database: Database.Database): void {
   console.log('Database schema fixed successfully');
 }
 
-export function deleteEntry(date: string, timeRange: 'decade' | 'year' | 'month' | 'week' | 'day'): void {
+export function deleteEntry(id: number): void {
+  const database = getDatabase();
+  const stmt = database.prepare('DELETE FROM journal_entries WHERE id = ?');
+  stmt.run(id);
+}
+
+export function deleteEntryByDateAndRange(date: string, timeRange: 'decade' | 'year' | 'month' | 'week' | 'day'): void {
   const database = getDatabase();
   const stmt = database.prepare('DELETE FROM journal_entries WHERE date = ? AND time_range = ?');
   stmt.run(date, timeRange);

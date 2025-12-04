@@ -17,13 +17,20 @@ export async function saveJournalEntry(entry: JournalEntry): Promise<void> {
   await window.electronAPI.saveEntry(entry);
 }
 
-export async function deleteJournalEntry(date: Date, timeRange: TimeRange): Promise<void> {
+export async function deleteJournalEntry(id: number): Promise<void> {
+  if (!window.electronAPI) {
+    throw new Error('Electron API not available');
+  }
+  await window.electronAPI.deleteEntry(id);
+}
+
+export async function getEntriesForDate(date: Date, timeRange: TimeRange): Promise<JournalEntry[]> {
   if (!window.electronAPI) {
     throw new Error('Electron API not available');
   }
   const canonicalDate = getCanonicalDate(date, timeRange);
   const dateStr = formatDate(canonicalDate);
-  await window.electronAPI.deleteEntry(dateStr, timeRange);
+  return await window.electronAPI.getEntriesByDateRange(dateStr, timeRange);
 }
 
 export async function searchJournalEntries(query: string): Promise<JournalEntry[]> {

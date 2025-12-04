@@ -35,8 +35,10 @@ declare global {
     electronAPI: {
       getEntries: (startDate: string, endDate: string) => Promise<JournalEntry[]>;
       getEntry: (date: string, timeRange: TimeRange) => Promise<JournalEntry | null>;
+      getEntriesByDateRange: (date: string, timeRange: TimeRange) => Promise<JournalEntry[]>;
       saveEntry: (entry: JournalEntry) => Promise<void>;
-      deleteEntry: (date: string, timeRange: TimeRange) => Promise<void>;
+      deleteEntry: (id: number) => Promise<void>;
+      deleteEntryByDateRange: (date: string, timeRange: TimeRange) => Promise<void>;
       searchEntries: (query: string) => Promise<JournalEntry[]>;
       getEntriesByRange: (range: TimeRange, value: number) => Promise<JournalEntry[]>;
       exportEntries: (
