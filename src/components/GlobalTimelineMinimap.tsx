@@ -1,6 +1,6 @@
 import { useMemo, useState, useEffect, useRef } from 'react';
 import { TimeRange, JournalEntry } from '../types';
-import { formatDate, getWeekStart, getMonthStart, getZodiacColor, getZodiacColorForDecade } from '../utils/dateUtils';
+import { formatDate, getWeekStart, getMonthStart, getZodiacColor, getZodiacColorForDecade, getCanonicalDate } from '../utils/dateUtils';
 import { addDays, addWeeks, addMonths, addYears, getYear, getMonth, getDate } from 'date-fns';
 import './GlobalTimelineMinimap.css';
 
@@ -553,16 +553,21 @@ export default function GlobalTimelineMinimap({
   // }, [timelineData]);
 
   // Calculate current period indicator position (where the blue bar is)
+  // Use the start of the period that the calendar is actually showing, not the exact selectedDate
   const currentIndicatorPosition = useMemo(() => {
     if (!timelineData.startDate || !timelineData.endDate) return 50;
     const totalTime = timelineData.endDate.getTime() - timelineData.startDate.getTime();
     if (totalTime <= 0 || !isFinite(totalTime)) return 50; // Handle zero or invalid totalTime
-    const selectedTime = selectedDate.getTime() - timelineData.startDate.getTime();
+    
+    // Get the canonical/start date of the period that the calendar is showing
+    // This ensures the minimap indicator aligns with what the calendar view displays
+    const periodStartDate = getCanonicalDate(selectedDate, viewMode);
+    const selectedTime = periodStartDate.getTime() - timelineData.startDate.getTime();
     const position = (selectedTime / totalTime) * 100;
     // Ensure we return a valid number between 0 and 100
     if (!isFinite(position) || isNaN(position)) return 50;
     return Math.max(0, Math.min(100, position));
-  }, [selectedDate, timelineData]);
+  }, [selectedDate, viewMode, timelineData]);
 
   // Localization range - only show scales within ±20% of the current indicator
   const LOCALIZATION_RANGE = 20; // percentage of timeline width

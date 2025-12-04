@@ -1,6 +1,6 @@
 import { app, BrowserWindow, ipcMain, Menu } from 'electron';
 import * as path from 'path';
-import { initDatabase, getAllPreferences, setPreference } from './database';
+import { initDatabase, getAllPreferences, setPreference, closeDatabase } from './database';
 import { setupIpcHandlers } from './ipc-handlers';
 
 let mainWindow: BrowserWindow | null = null;
@@ -56,6 +56,15 @@ function createWindow() {
 
   mainWindow.on('closed', () => {
     mainWindow = null;
+  });
+
+  // Ensure window is properly destroyed on close
+  mainWindow.on('close', (event) => {
+    // On macOS, keep the app running even when all windows are closed
+    if (process.platform === 'darwin' && !isQuitting) {
+      event.preventDefault();
+      mainWindow?.hide();
+    }
   });
 }
 
@@ -167,6 +176,12 @@ function createPreferencesWindow() {
   preferencesWindow.on('closed', () => {
     preferencesWindow = null;
   });
+
+  // Ensure window is properly destroyed on close
+  preferencesWindow.on('close', (event) => {
+    // Allow normal close behavior
+    preferencesWindow = null;
+  });
 }
 
 app.whenReady().then(() => {
@@ -200,9 +215,77 @@ app.whenReady().then(() => {
   });
 });
 
+// Track if app is quitting to prevent multiple cleanup calls
+let isQuitting = false;
+
+// Cleanup function to release all resources
+function cleanup() {
+  if (isQuitting) {
+    return; // Prevent multiple cleanup calls
+  }
+  isQuitting = true;
+
+  console.log('Cleaning up application resources...');
+
+  // Close database connection first (before destroying windows)
+  closeDatabase();
+
+  // Close all windows
+  const allWindows = BrowserWindow.getAllWindows();
+  allWindows.forEach(window => {
+    if (!window.isDestroyed()) {
+      window.destroy();
+    }
+  });
+
+  // Remove IPC handlers to prevent memory leaks
+  ipcMain.removeAllListeners();
+
+  console.log('Cleanup completed');
+}
+
+// Handle application quit - cleanup before quitting
+app.on('before-quit', () => {
+  if (!isQuitting) {
+    cleanup();
+  }
+});
+
+app.on('will-quit', () => {
+  if (!isQuitting) {
+    cleanup();
+  }
+});
+
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
+    // Trigger cleanup before quitting
+    cleanup();
     app.quit();
   }
+});
+
+// Handle app termination signals (SIGTERM, SIGINT, etc.)
+process.on('SIGTERM', () => {
+  cleanup();
+  process.exit(0);
+});
+
+process.on('SIGINT', () => {
+  cleanup();
+  process.exit(0);
+});
+
+// Handle uncaught exceptions and unhandled rejections
+process.on('uncaughtException', (error) => {
+  console.error('Uncaught exception:', error);
+  cleanup();
+  process.exit(1);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('Unhandled rejection at:', promise, 'reason:', reason);
+  cleanup();
+  process.exit(1);
 });
 

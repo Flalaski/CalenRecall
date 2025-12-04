@@ -734,3 +734,20 @@ export function resetPreferences(): void {
   database.exec('DELETE FROM preferences');
 }
 
+/**
+ * Close the database connection and release all resources.
+ * This should be called when the application is shutting down.
+ */
+export function closeDatabase(): void {
+  if (db) {
+    try {
+      db.close();
+      console.log('Database connection closed');
+    } catch (error) {
+      console.error('Error closing database:', error);
+    } finally {
+      db = null;
+    }
+  }
+}
+
