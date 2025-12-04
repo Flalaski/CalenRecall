@@ -652,14 +652,6 @@ export default function GlobalTimelineMinimap({
     return { position, width };
   }, [selectedDate, viewMode, timelineData]);
 
-  // Localization range - only show scales within ±20% of the current indicator
-  const LOCALIZATION_RANGE = 20; // percentage of timeline width
-
-  // Center of the minimap in SVG coordinates (0–1000) for the "infinity tree" web
-  const centerX = useMemo(() => {
-    return (currentIndicatorMetrics.position / 100) * 1000;
-  }, [currentIndicatorMetrics.position]);
-
   // Get color for current view mode
   const getViewModeColor = (mode: TimeRange): string => {
     switch (mode) {
@@ -671,6 +663,134 @@ export default function GlobalTimelineMinimap({
       default: return '#4a90e2';
     }
   };
+
+  // Calculate micro indicators for finer time scales within the main period
+  const microIndicators = useMemo(() => {
+    if (!timelineData.startDate || !timelineData.endDate) {
+      return [];
+    }
+
+    const totalTime = timelineData.endDate.getTime() - timelineData.startDate.getTime();
+    if (totalTime <= 0 || !isFinite(totalTime)) {
+      return [];
+    }
+
+    // Get the main period boundaries
+    const periodStartDate = getCanonicalDate(selectedDate, viewMode);
+    let periodEndDate: Date;
+    
+    switch (viewMode) {
+      case 'decade':
+        periodEndDate = getDecadeEnd(selectedDate);
+        break;
+      case 'year':
+        periodEndDate = getYearEnd(selectedDate);
+        break;
+      case 'month':
+        periodEndDate = getMonthEnd(selectedDate);
+        break;
+      case 'week':
+        periodEndDate = getWeekEnd(selectedDate);
+        break;
+      case 'day':
+        periodEndDate = new Date(periodStartDate);
+        periodEndDate.setHours(23, 59, 59, 999);
+        break;
+      default:
+        periodEndDate = new Date(periodStartDate);
+        periodEndDate.setHours(23, 59, 59, 999);
+    }
+
+    const periodDuration = periodEndDate.getTime() - periodStartDate.getTime();
+    if (periodDuration <= 0 || !isFinite(periodDuration)) {
+      return [];
+    }
+
+    const timeScaleOrder: TimeRange[] = ['decade', 'year', 'month', 'week', 'day'];
+    const currentScaleIndex = timeScaleOrder.indexOf(viewMode);
+    
+    // Only show micro indicators for finer scales (those after current in the order)
+    const finerScales = timeScaleOrder.slice(currentScaleIndex + 1);
+    
+    const indicators: Array<{
+      scale: TimeRange;
+      left: number; // Percentage from left edge of main indicator (0-100)
+      width: number; // Percentage of main indicator width (0-100)
+      color: string;
+    }> = [];
+
+    finerScales.forEach(scale => {
+      // Get the start and end of this finer time period
+      const finerPeriodStart = getCanonicalDate(selectedDate, scale);
+      let finerPeriodEnd: Date;
+      
+      switch (scale) {
+        case 'decade':
+          finerPeriodEnd = getDecadeEnd(selectedDate);
+          break;
+        case 'year':
+          finerPeriodEnd = getYearEnd(selectedDate);
+          break;
+        case 'month':
+          finerPeriodEnd = getMonthEnd(selectedDate);
+          break;
+        case 'week':
+          finerPeriodEnd = getWeekEnd(selectedDate);
+          break;
+        case 'day':
+          finerPeriodEnd = new Date(finerPeriodStart);
+          finerPeriodEnd.setHours(23, 59, 59, 999);
+          break;
+        default:
+          finerPeriodEnd = new Date(finerPeriodStart);
+          finerPeriodEnd.setHours(23, 59, 59, 999);
+      }
+
+      // Calculate position relative to main period start
+      const finerStartTime = finerPeriodStart.getTime() - periodStartDate.getTime();
+      const finerEndTime = finerPeriodEnd.getTime() - periodStartDate.getTime();
+      
+      // If the finer period is completely outside the main period, skip it
+      if (finerEndTime < 0 || finerStartTime > periodDuration) {
+        return;
+      }
+
+      // Clip the finer period to the main period boundaries
+      const clippedStartTime = Math.max(0, finerStartTime);
+      const clippedEndTime = Math.min(periodDuration, finerEndTime);
+      
+      // Calculate left position as percentage of main period width
+      const leftPercent = (clippedStartTime / periodDuration) * 100;
+      
+      // Calculate width as percentage of main period width (using clipped duration)
+      const clippedDuration = clippedEndTime - clippedStartTime;
+      const widthPercent = (clippedDuration / periodDuration) * 100;
+      
+      // Clamp values to 0-100
+      const left = Math.max(0, Math.min(100, leftPercent));
+      const width = Math.max(0.1, Math.min(100, widthPercent)); // Minimum 0.1% width for visibility
+      
+      // Get color for this scale
+      const color = getViewModeColor(scale);
+      
+      indicators.push({
+        scale,
+        left,
+        width,
+        color,
+      });
+    });
+
+    return indicators;
+  }, [selectedDate, viewMode, timelineData]);
+
+  // Localization range - only show scales within ±20% of the current indicator
+  const LOCALIZATION_RANGE = 20; // percentage of timeline width
+
+  // Center of the minimap in SVG coordinates (0–1000) for the "infinity tree" web
+  const centerX = useMemo(() => {
+    return (currentIndicatorMetrics.position / 100) * 1000;
+  }, [currentIndicatorMetrics.position]);
 
   const activeColor = getViewModeColor(viewMode);
 
@@ -1081,12 +1201,52 @@ export default function GlobalTimelineMinimap({
     }
 
     const totalTime = timelineData.endDate.getTime() - timelineData.startDate.getTime();
+    if (totalTime <= 0 || !isFinite(totalTime)) {
+      return [];
+    }
+    
     const verticalVariance = 60; // Maximum vertical offset in pixels (30px up/down from center)
+    
+    // OPTIMIZATION: Pre-calculate timeline boundaries for quick range checks
+    const timelineStartTime = timelineData.startDate.getTime();
+    const timelineEndTime = timelineData.endDate.getTime();
+    
+    // OPTIMIZATION: Filter entries early - only process entries that could be in the timeline range
+    // For decade view, we can quickly check if an entry's year falls within the decade range
+    // This avoids expensive date parsing and canonical date calculations for entries outside the range
+    const filteredEntries: JournalEntry[] = [];
+    
+    for (const entry of entries) {
+      // Quick pre-check: parse just the year to see if entry could be in range
+      const dateParts = entry.date.split('-');
+      if (dateParts.length < 3) continue; // Skip invalid dates
+      
+      const year = parseInt(dateParts[0], 10);
+      if (isNaN(year)) continue;
+      
+      // Quick year-based range check (works for all timeRanges, but especially efficient for decade view)
+      // Create a rough date range for this entry's year
+      const entryYearStart = new Date(year, 0, 1).getTime();
+      const entryYearEnd = new Date(year, 11, 31, 23, 59, 59, 999).getTime();
+      
+      // Check if this entry's year overlaps with the timeline range
+      // If the entry's year is completely outside the timeline, skip it
+      if (entryYearEnd < timelineStartTime || entryYearStart > timelineEndTime) {
+        continue; // Skip entries outside the timeline range
+      }
+      
+      filteredEntries.push(entry);
+    }
+    
+    // If no entries are in range, return early
+    if (filteredEntries.length === 0) {
+      return [];
+    }
     
     // Group entries by date and timeRange to create clusters
     const clusterGroups = new Map<string, Array<{ entry: JournalEntry; position: number; color: string }>>();
     
-    entries.forEach(entry => {
+    filteredEntries.forEach(entry => {
       // Parse date string (YYYY-MM-DD) as local date to avoid timezone issues
       // new Date("2025-12-04") interprets as UTC, but we need local time
       const dateParts = entry.date.split('-');
@@ -1097,7 +1257,13 @@ export default function GlobalTimelineMinimap({
       
       // Use canonical date for the entry's timeRange to match how timeline segments are positioned
       const entryDate = getCanonicalDate(rawEntryDate, entry.timeRange);
-      const entryTime = entryDate.getTime() - timelineData.startDate!.getTime();
+      const entryTime = entryDate.getTime() - timelineStartTime;
+      
+      // Final range check: ensure entry is actually within timeline after canonical date calculation
+      if (entryTime < 0 || entryTime > totalTime) {
+        return; // Skip entries outside the timeline after canonical date calculation
+      }
+      
       const position = (entryTime / totalTime) * 100;
       const clampedPosition = Math.max(0, Math.min(100, position));
       
@@ -1114,13 +1280,15 @@ export default function GlobalTimelineMinimap({
       });
     });
     
-    // Debug: Log cluster information
-    console.log(`[TimelineMinimap] Processing ${entries.length} entries into ${clusterGroups.size} clusters`);
-    clusterGroups.forEach((group, key) => {
-      if (group.length > 1) {
-        console.log(`[TimelineMinimap] Cluster ${key}: ${group.length} entries`);
-      }
-    });
+    // Debug: Log cluster information (only if we have entries to process)
+    if (clusterGroups.size > 0) {
+      console.log(`[TimelineMinimap] Processing ${filteredEntries.length} entries (filtered from ${entries.length} total) into ${clusterGroups.size} clusters`);
+      clusterGroups.forEach((group, key) => {
+        if (group.length > 1) {
+          console.log(`[TimelineMinimap] Cluster ${key}: ${group.length} entries`);
+        }
+      });
+    }
     
     // Calculate positions for clusters and individual entries
     const result: Array<{ 
@@ -2809,7 +2977,22 @@ export default function GlobalTimelineMinimap({
               left: `${currentIndicatorMetrics.position}%`,
               width: currentIndicatorMetrics.width,
             }}
-          />
+          >
+            {/* Micro indicators for finer time scales */}
+            {microIndicators.map((indicator, idx) => (
+              <div
+                key={`micro-indicator-${indicator.scale}-${idx}`}
+                className={`micro-indicator micro-indicator-${indicator.scale}`}
+                style={{
+                  left: `${indicator.left}%`,
+                  width: `${indicator.width}%`,
+                  backgroundColor: indicator.color,
+                  borderColor: indicator.color,
+                }}
+                title={indicator.scale}
+              />
+            ))}
+          </div>
         )}
       </div>
     </div>
