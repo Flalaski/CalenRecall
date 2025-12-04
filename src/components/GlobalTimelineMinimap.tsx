@@ -296,6 +296,7 @@ export default function GlobalTimelineMinimap({
   minimapSize = 'medium',
 }: GlobalTimelineMinimapProps) {
   const [entries, setEntries] = useState<JournalEntry[]>([]);
+  const [timelineRangeKey, setTimelineRangeKey] = useState(0); // Track timeline range changes to trigger entry reloading
   const [isDragging, setIsDragging] = useState(false);
   const [mechanicalClick, setMechanicalClick] = useState<{ scale: TimeRange; direction: 'up' | 'down' } | null>(null);
   const [horizontalLocked, setHorizontalLocked] = useState(false);
@@ -362,10 +363,9 @@ export default function GlobalTimelineMinimap({
     return () => {
       window.removeEventListener('journalEntrySaved', handleEntrySaved);
     };
-    // Only reload entries when viewMode changes (which updates the range) or when entries are saved
-    // Don't reload when selectedDate changes - that would cause unnecessary reloads during dragging
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [viewMode]);
+    // Reload entries when viewMode changes, when timeline range expands, or when entries are saved
+    // timelineRangeKey increments when the range expands, triggering reload for new date ranges
+  }, [viewMode, timelineRangeKey]);
 
   // Calculate the time range to display based on view mode
   // The timeline range should only change when viewMode changes, NOT when selectedDate changes
@@ -449,6 +449,8 @@ export default function GlobalTimelineMinimap({
         viewMode,
       };
       isInitialLoadRef.current = false;
+      // Increment key to trigger entry reloading when range changes
+      setTimelineRangeKey(prev => prev + 1);
     }
   }, [viewMode, selectedDate]);
   
