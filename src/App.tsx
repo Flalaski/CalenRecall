@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import TimelineView from './components/TimelineView';
 import JournalEditor from './components/JournalEditor';
 import EntryViewer from './components/EntryViewer';
@@ -25,9 +25,36 @@ function App() {
           const prefs = await window.electronAPI.getAllPreferences();
           setPreferences(prefs);
           
-          // Apply default view mode
-          if (prefs.defaultViewMode) {
-            setViewMode(prefs.defaultViewMode);
+          // Restore last viewed position if enabled, otherwise use default view mode
+          if (prefs.restoreLastView && prefs.lastViewedDate && prefs.lastViewedMode) {
+            const lastDate = new Date(prefs.lastViewedDate);
+            const validTimeRanges: TimeRange[] = ['decade', 'year', 'month', 'week', 'day'];
+            const isValidDate = !isNaN(lastDate.getTime());
+            const isValidMode = validTimeRanges.includes(prefs.lastViewedMode);
+            
+            if (isValidDate && isValidMode) {
+              // Validate date is reasonable (not before year 1000 or after year 3000)
+              const year = lastDate.getFullYear();
+              if (year >= 1000 && year <= 3000) {
+                setSelectedDate(lastDate);
+                setViewMode(prefs.lastViewedMode);
+              } else {
+                // Date out of reasonable range, fall back to default
+                if (prefs.defaultViewMode) {
+                  setViewMode(prefs.defaultViewMode);
+                }
+              }
+            } else {
+              // Invalid date or mode, fall back to default
+              if (prefs.defaultViewMode) {
+                setViewMode(prefs.defaultViewMode);
+              }
+            }
+          } else {
+            // Apply default view mode
+            if (prefs.defaultViewMode) {
+              setViewMode(prefs.defaultViewMode);
+            }
           }
           
           // Apply theme
@@ -65,13 +92,15 @@ function App() {
     };
     
     // Check for preference updates periodically (when preferences window closes)
+    // NOTE: Do NOT reset viewMode to default - default view mode only applies on initial load
     const interval = setInterval(() => {
       if (window.electronAPI) {
         window.electronAPI.getAllPreferences().then(prefs => {
           setPreferences(prefs);
-          if (prefs.defaultViewMode && prefs.defaultViewMode !== viewMode) {
-            setViewMode(prefs.defaultViewMode);
-          }
+          // Removed: Don't reset viewMode to default - user's current view should be preserved
+          // if (prefs.defaultViewMode && prefs.defaultViewMode !== viewMode) {
+          //   setViewMode(prefs.defaultViewMode);
+          // }
           const theme = prefs.theme || 'light';
           document.documentElement.setAttribute('data-theme', theme);
           
@@ -89,6 +118,37 @@ function App() {
     
     return () => clearInterval(interval);
   }, []);
+
+  // Save last viewed position when date or view mode changes (if restoreLastView is enabled)
+  // Use a ref to track if we're in the initial restore phase to avoid saving during restoration
+  const isRestoringRef = useRef(true);
+  
+  useEffect(() => {
+    // After preferences are loaded, allow saving
+    if (preferencesLoaded) {
+      // Small delay to ensure restoration has completed
+      const timer = setTimeout(() => {
+        isRestoringRef.current = false;
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [preferencesLoaded]);
+
+  useEffect(() => {
+    // Only save if preferences are loaded, restore is enabled, and we're not in the restoration phase
+    if (preferencesLoaded && !isRestoringRef.current && preferences.restoreLastView && window.electronAPI) {
+      try {
+        const dateString = selectedDate.toISOString().split('T')[0];
+        // Validate date string format (YYYY-MM-DD)
+        if (/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
+          window.electronAPI.setPreference('lastViewedDate', dateString).catch(console.error);
+          window.electronAPI.setPreference('lastViewedMode', viewMode).catch(console.error);
+        }
+      } catch (error) {
+        console.error('Error saving last viewed position:', error);
+      }
+    }
+  }, [selectedDate, viewMode, preferencesLoaded, preferences.restoreLastView]);
 
   // Load entry for current date/viewMode when they change
   useEffect(() => {
@@ -121,12 +181,13 @@ function App() {
   };
 
   const handleEntrySelect = (entry: JournalEntry) => {
+    // Navigate to the entry's date and time range, then select the entry
+    const entryDate = new Date(entry.date);
+    setSelectedDate(entryDate);
+    setViewMode(entry.timeRange);
     setSelectedEntry(entry);
     setIsNewEntry(false);
     setIsEditing(false);
-    // Update selectedDate to match the entry's date
-    const entryDate = new Date(entry.date);
-    setSelectedDate(entryDate);
   };
 
   const handleNewEntry = () => {
@@ -159,6 +220,7 @@ function App() {
           viewMode={viewMode}
           onTimePeriodSelect={handleTimePeriodSelect}
           onEntrySelect={handleEntrySelect}
+          minimapSize={preferences.minimapSize || 'medium'}
         />
       )}
       <NavigationBar

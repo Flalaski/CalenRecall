@@ -1,7 +1,7 @@
 import { useMemo, useState, useEffect, useRef } from 'react';
 import { TimeRange, JournalEntry } from '../types';
 import { formatDate, getWeekStart, getMonthStart, getZodiacColor, getZodiacColorForDecade } from '../utils/dateUtils';
-import { addDays, addWeeks, addMonths, getYear, getMonth, getDate } from 'date-fns';
+import { addDays, addWeeks, addMonths, addYears, getYear, getMonth, getDate } from 'date-fns';
 import './GlobalTimelineMinimap.css';
 
 interface GlobalTimelineMinimapProps {
@@ -9,6 +9,7 @@ interface GlobalTimelineMinimapProps {
   viewMode: TimeRange;
   onTimePeriodSelect: (date: Date, viewMode: TimeRange) => void;
   onEntrySelect?: (entry: JournalEntry) => void;
+  minimapSize?: 'small' | 'medium' | 'large';
 }
 
 // Generate mechanical click sound using Web Audio API
@@ -242,8 +243,9 @@ function calculateEntryColor(entry: JournalEntry): string {
   const combinedValue = (textValue + timeValue + timeRangeValue) % 360; // Use modulo 360 for hue
   
   // Calculate hue, saturation, and lightness with more variation
+  // Increased base saturation for vibrant colors (CSS filter will multiply this)
   const hue = combinedValue; // 0-360 degrees
-  const saturation = 55 + (textValue % 25); // 55-80% saturation (more vibrant)
+  const saturation = 75 + (textValue % 20); // 75-95% saturation (very vibrant base)
   const lightness = 45 + (timeValue % 15); // 45-60% lightness (more visible)
   
   return `hsl(${hue}, ${saturation}%, ${lightness}%)`;
@@ -254,6 +256,7 @@ export default function GlobalTimelineMinimap({
   viewMode,
   onTimePeriodSelect,
   onEntrySelect,
+  minimapSize = 'medium',
 }: GlobalTimelineMinimapProps) {
   const [entries, setEntries] = useState<JournalEntry[]>([]);
   const [isDragging, setIsDragging] = useState(false);
@@ -269,7 +272,7 @@ export default function GlobalTimelineMinimap({
   } | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const lastUpdateTimeRef = useRef<number>(0);
-  const dragStartPositionRef = useRef<{ x: number; y: number; date: Date } | null>(null);
+  const dragStartPositionRef = useRef<{ x: number; y: number; date: Date; timelinePosition: number } | null>(null);
   const lastVerticalPositionRef = useRef<number>(0);
   const scaleChangeLockRef = useRef<boolean>(false);
   const verticalMovementAccumulatorRef = useRef<number>(0);
@@ -277,52 +280,32 @@ export default function GlobalTimelineMinimap({
   const lastScaleChangeAccumulatorRef = useRef<number>(0); // Track accumulator value at last scale change
   const deadZoneRef = useRef<number>(0); // Dead zone threshold after scale change
   const lastBlipDateRef = useRef<Date | null>(null); // Track last date that triggered a micro blip
+  const currentDragTargetDateRef = useRef<Date | null>(null); // Track the target date we're moving toward
   // Load entries for the timeline range
+  // Use the fixed timeline range, not recalculated based on selectedDate
   useEffect(() => {
     const loadEntries = async () => {
       try {
-        // Calculate the visible date range based on view mode
-        let rangeStart: Date;
-        let rangeEnd: Date;
-        
-        switch (viewMode) {
-          case 'decade': {
-            const currentDecade = Math.floor(getYear(selectedDate) / 10) * 10;
-            rangeStart = new Date(currentDecade - 50, 0, 1);
-            rangeEnd = new Date(currentDecade + 60, 11, 31);
-            break;
-          }
-          case 'year': {
-            const currentYear = getYear(selectedDate);
-            rangeStart = new Date(currentYear - 5, 0, 1);
-            rangeEnd = new Date(currentYear + 6, 11, 31);
-            break;
-          }
-          case 'month': {
-            const monthStart = getMonthStart(selectedDate);
-            rangeStart = addMonths(monthStart, -6);
-            rangeEnd = addMonths(monthStart, 7);
-            break;
-          }
-          case 'week': {
-            const weekStart = getWeekStart(selectedDate);
-            rangeStart = addWeeks(weekStart, -8);
-            rangeEnd = addWeeks(weekStart, 9);
-            break;
-          }
-          case 'day': {
-            const dayStart = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate());
-            rangeStart = addDays(dayStart, -14);
-            rangeEnd = addDays(dayStart, 15);
-            break;
-          }
+        // Use the fixed timeline range (same as what's displayed)
+        const range = timelineRangeRef.current;
+        if (!range) {
+          return; // Wait for range to be initialized
         }
+        
+        const { startDate, endDate } = range;
         
         // Use the electron API to get entries for the date range
         if (window.electronAPI) {
-          const startDateStr = formatDate(rangeStart);
-          const endDateStr = formatDate(rangeEnd);
+          const startDateStr = formatDate(startDate);
+          const endDateStr = formatDate(endDate);
           const loadedEntries = await window.electronAPI.getEntries(startDateStr, endDateStr);
+          console.log(`[TimelineMinimap] Loaded ${loadedEntries.length} entries from ${startDateStr} to ${endDateStr}`);
+          // Log entries for selected date for debugging
+          const selectedStr = formatDate(selectedDate);
+          const selectedEntries = loadedEntries.filter(e => e.date === selectedStr);
+          if (selectedEntries.length > 0) {
+            console.log(`[TimelineMinimap] Found ${selectedEntries.length} entries for ${selectedStr}:`, selectedEntries.map(e => ({ id: e.id, title: e.title, timeRange: e.timeRange })));
+          }
           setEntries(loadedEntries);
         }
       } catch (error) {
@@ -342,22 +325,89 @@ export default function GlobalTimelineMinimap({
     return () => {
       window.removeEventListener('journalEntrySaved', handleEntrySaved);
     };
-  }, [selectedDate, viewMode]);
+    // Only reload entries when viewMode changes (which updates the range) or when entries are saved
+    // Don't reload when selectedDate changes - that would cause unnecessary reloads during dragging
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [viewMode]);
 
   // Calculate the time range to display based on view mode
-  const timelineData = useMemo(() => {
+  // The timeline range should only change when viewMode changes, NOT when selectedDate changes
+  // This prevents automatic recentering during dragging or navigation
+  const timelineRangeRef = useRef<{ startDate: Date; endDate: Date; viewMode: TimeRange } | null>(null);
+  const isInitialLoadRef = useRef(true);
+  
+  // Calculate timeline range - only recalculate when viewMode changes or on initial load
+  const calculateTimelineRange = (date: Date, mode: TimeRange) => {
     let startDate: Date;
     let endDate: Date;
+
+    switch (mode) {
+      case 'decade': {
+        const currentDecade = Math.floor(getYear(date) / 10) * 10;
+        startDate = new Date(currentDecade - 50, 0, 1);
+        endDate = new Date(currentDecade + 60, 11, 31);
+        break;
+      }
+      case 'year': {
+        const currentYear = getYear(date);
+        startDate = new Date(currentYear - 5, 0, 1);
+        endDate = new Date(currentYear + 6, 11, 31);
+        break;
+      }
+      case 'month': {
+        const monthStart = getMonthStart(date);
+        startDate = addMonths(monthStart, -6);
+        endDate = addMonths(monthStart, 7);
+        break;
+      }
+      case 'week': {
+        const weekStart = getWeekStart(date);
+        startDate = addWeeks(weekStart, -8);
+        endDate = addWeeks(weekStart, 9);
+        break;
+      }
+      case 'day': {
+        const dayStart = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+        startDate = addDays(dayStart, -14);
+        endDate = addDays(dayStart, 15);
+        break;
+      }
+    }
+    
+    return { startDate, endDate };
+  };
+  
+  // Update timeline range only when viewMode changes or on initial load
+  // selectedDate is only used for the initial calculation, not for updates
+  useEffect(() => {
+    if (isInitialLoadRef.current || timelineRangeRef.current?.viewMode !== viewMode) {
+      const range = calculateTimelineRange(selectedDate, viewMode);
+      timelineRangeRef.current = {
+        ...range,
+        viewMode,
+      };
+      isInitialLoadRef.current = false;
+    }
+    // Only depend on viewMode - selectedDate changes should NOT trigger recalculation
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [viewMode]);
+  
+  const timelineData = useMemo(() => {
+    // Use the fixed timeline range (doesn't change based on selectedDate)
+    const range = timelineRangeRef.current || calculateTimelineRange(selectedDate, viewMode);
+    const { startDate, endDate } = range;
+    
+    // Calculate segments based on the fixed range (not recalculated from selectedDate)
     let segments: Array<{ date: Date; label: string; isCurrent: boolean; viewMode: TimeRange }> = [];
     let currentPosition: number = 0;
 
     switch (viewMode) {
       case 'decade': {
-        const currentDecade = Math.floor(getYear(selectedDate) / 10) * 10;
-        startDate = new Date(currentDecade - 50, 0, 1);
-        endDate = new Date(currentDecade + 60, 11, 31);
+        // Use the fixed range, but calculate segments from startDate
+        const startDecade = Math.floor(getYear(startDate) / 10) * 10;
+        const endDecade = Math.floor(getYear(endDate) / 10) * 10;
         
-        for (let year = currentDecade - 50; year <= currentDecade + 60; year += 10) {
+        for (let year = startDecade; year <= endDecade; year += 10) {
           const decadeDate = new Date(year, 0, 1);
           const isCurrent = Math.floor(getYear(selectedDate) / 10) * 10 === year;
           segments.push({
@@ -373,11 +423,10 @@ export default function GlobalTimelineMinimap({
         break;
       }
       case 'year': {
-        const currentYear = getYear(selectedDate);
-        startDate = new Date(currentYear - 5, 0, 1);
-        endDate = new Date(currentYear + 6, 11, 31);
+        const startYear = getYear(startDate);
+        const endYear = getYear(endDate);
         
-        for (let year = currentYear - 5; year <= currentYear + 6; year++) {
+        for (let year = startYear; year <= endYear; year++) {
           const yearDate = new Date(year, 0, 1);
           const isCurrent = getYear(selectedDate) === year;
           segments.push({
@@ -393,16 +442,13 @@ export default function GlobalTimelineMinimap({
         break;
       }
       case 'month': {
-        const monthStart = getMonthStart(selectedDate);
-        startDate = addMonths(monthStart, -6);
-        endDate = addMonths(monthStart, 7);
-        
         let current = new Date(startDate);
         let idx = 0;
+        const monthStart = getMonthStart(selectedDate);
         while (current <= endDate) {
-          const isCurrent = current.getTime() === monthStart.getTime();
+          const isCurrent = getMonthStart(current).getTime() === monthStart.getTime();
           segments.push({
-            date: new Date(current),
+            date: new Date(getMonthStart(current)),
             label: formatDate(current, 'MMM yyyy'),
             isCurrent,
             viewMode: 'month',
@@ -416,12 +462,9 @@ export default function GlobalTimelineMinimap({
         break;
       }
       case 'week': {
-        const weekStart = getWeekStart(selectedDate);
-        startDate = addWeeks(weekStart, -8);
-        endDate = addWeeks(weekStart, 9);
-        
         let current = new Date(startDate);
         let idx = 0;
+        const weekStart = getWeekStart(selectedDate);
         while (current <= endDate) {
           const weekStartDate = getWeekStart(current);
           const isCurrent = weekStartDate.getTime() === weekStart.getTime();
@@ -440,17 +483,15 @@ export default function GlobalTimelineMinimap({
         break;
       }
       case 'day': {
-        const dayStart = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate());
-        startDate = addDays(dayStart, -14);
-        endDate = addDays(dayStart, 15);
-        
         let current = new Date(startDate);
         let idx = 0;
+        const dayStart = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate());
         while (current <= endDate) {
-          const isCurrent = current.getTime() === dayStart.getTime();
+          const currentDay = new Date(current.getFullYear(), current.getMonth(), current.getDate());
+          const isCurrent = currentDay.getTime() === dayStart.getTime();
           segments.push({
-            date: new Date(current),
-            label: formatDate(current, 'MMM d'),
+            date: currentDay,
+            label: formatDate(currentDay, 'MMM d'),
             isCurrent,
             viewMode: 'day',
           });
@@ -478,8 +519,12 @@ export default function GlobalTimelineMinimap({
   const currentIndicatorPosition = useMemo(() => {
     if (!timelineData.startDate || !timelineData.endDate) return 50;
     const totalTime = timelineData.endDate.getTime() - timelineData.startDate.getTime();
+    if (totalTime <= 0 || !isFinite(totalTime)) return 50; // Handle zero or invalid totalTime
     const selectedTime = selectedDate.getTime() - timelineData.startDate.getTime();
-    return (selectedTime / totalTime) * 100;
+    const position = (selectedTime / totalTime) * 100;
+    // Ensure we return a valid number between 0 and 100
+    if (!isFinite(position) || isNaN(position)) return 50;
+    return Math.max(0, Math.min(100, position));
   }, [selectedDate, timelineData]);
 
   // Localization range - only show scales within ±20% of the current indicator
@@ -490,17 +535,124 @@ export default function GlobalTimelineMinimap({
     return (currentIndicatorPosition / 100) * 1000;
   }, [currentIndicatorPosition]);
 
+  // Get color for current view mode
+  const getViewModeColor = (mode: TimeRange): string => {
+    switch (mode) {
+      case 'decade': return '#9c27b0';
+      case 'year': return '#0277bd';
+      case 'month': return '#ef6c00';
+      case 'week': return '#2e7d32';
+      case 'day': return '#4a90e2';
+      default: return '#4a90e2';
+    }
+  };
+
+  const activeColor = getViewModeColor(viewMode);
+
+  // Calculate gradient stop positions for separator lines
+  // Return numeric values (0-1 range) for arithmetic operations
+  const gradientStops = useMemo(() => {
+    // Ensure currentIndicatorPosition is valid
+    const center = isFinite(currentIndicatorPosition) && !isNaN(currentIndicatorPosition) 
+      ? currentIndicatorPosition / 100  // Convert percentage to 0-1 range
+      : 0.5; // Default to center if invalid
+    
+    const fadeStart = Math.max(0, Math.min(1, center - 0.15));
+    const colorStart = Math.max(0, Math.min(1, center - 0.05));
+    const colorEnd = Math.max(0, Math.min(1, center + 0.05));
+    const fadeEnd = Math.max(0, Math.min(1, center + 0.15));
+    
+    return {
+      fadeStart,
+      colorStart,
+      center,
+      colorEnd,
+      fadeEnd,
+    };
+  }, [currentIndicatorPosition]);
+
   // Ordered time scales for branch generation
   const timeScaleOrder: TimeRange[] = ['decade', 'year', 'month', 'week', 'day'];
 
-  // Vertical anchoring for each scale level in SVG coordinates
-  const scaleYPositions: Record<TimeRange, number> = {
-    decade: 20,
-    year: 60,
-    month: 100,
-    week: 140,
-    day: 180,
-  };
+  // Calculate container height and scale factor based on minimap size
+  const minimapDimensions = useMemo(() => {
+    const baseHeight = 200; // Medium size
+    const heights = {
+      small: 120,
+      medium: 200,
+      large: 280,
+    };
+    const height = heights[minimapSize] || baseHeight;
+    const scaleFactor = height / baseHeight;
+    
+    return { height, scaleFactor };
+  }, [minimapSize]);
+
+  // Calculate dynamic Y positions that expand focused section and shrink others
+  const scaleYPositions = useMemo(() => {
+    const focusedExpansion = 25 * minimapDimensions.scaleFactor; // Extra pixels for focused section
+    const compressionFactor = 0.75; // How much other sections compress (0.75 = 75% of original)
+    
+    // Calculate spacing between sections (each section is ~40px tall at base)
+    const baseSpacing = 40 * minimapDimensions.scaleFactor;
+    const focusedSpacing = baseSpacing + focusedExpansion;
+    const compressedSpacing = baseSpacing * compressionFactor;
+    
+    const focusedIndex = timeScaleOrder.indexOf(viewMode);
+    const scaled: Record<TimeRange, number> = {} as Record<TimeRange, number>;
+    
+    let currentY = baseSpacing / 2; // Start at center of first section
+    
+    timeScaleOrder.forEach((range, idx) => {
+      scaled[range] = currentY;
+      
+      // Move to next section's center
+      if (idx < timeScaleOrder.length - 1) {
+        const spacing = idx === focusedIndex ? focusedSpacing : compressedSpacing;
+        currentY += spacing;
+      }
+    });
+    
+    return scaled;
+  }, [viewMode, minimapDimensions.scaleFactor]);
+
+  // Calculate separator line positions between sections (must match background band calculation exactly)
+  const separatorPositions = useMemo(() => {
+    const baseHeight = 40 * minimapDimensions.scaleFactor;
+    const focusedExpansion = 25 * minimapDimensions.scaleFactor;
+    const compressionFactor = 0.75;
+    
+    const positions: number[] = [];
+    
+    // Use the same calculation logic as background bands
+    timeScaleOrder.forEach((range, idx) => {
+      // Calculate section top position (same logic as background bands)
+      let sectionTop = 0;
+      timeScaleOrder.forEach((r, i) => {
+        if (i < idx) {
+          const prevIsFocused = r === viewMode;
+          const prevBaseHeight = 40 * minimapDimensions.scaleFactor;
+          const prevHeight = prevIsFocused 
+            ? prevBaseHeight + focusedExpansion 
+            : prevBaseHeight * compressionFactor;
+          sectionTop += prevHeight;
+        }
+      });
+      
+      // Calculate section height
+      const isFocused = range === viewMode;
+      const sectionHeight = isFocused 
+        ? baseHeight + focusedExpansion 
+        : baseHeight * compressionFactor;
+      
+      // Separator is at the bottom of this section (top + height = bottom boundary)
+      if (idx < timeScaleOrder.length - 1) {
+        positions.push(sectionTop + sectionHeight);
+      }
+    });
+    
+    return positions;
+  }, [viewMode, minimapDimensions.scaleFactor]);
 
   // Build a crystalline, lightning-like branch path for a given scale and side
   const buildInfinityBranchPath = (scale: TimeRange, direction: 'left' | 'right'): string => {
@@ -789,6 +941,14 @@ export default function GlobalTimelineMinimap({
       });
     });
     
+    // Debug: Log cluster information
+    console.log(`[TimelineMinimap] Processing ${entries.length} entries into ${clusterGroups.size} clusters`);
+    clusterGroups.forEach((group, key) => {
+      if (group.length > 1) {
+        console.log(`[TimelineMinimap] Cluster ${key}: ${group.length} entries`);
+      }
+    });
+    
     // Calculate positions for clusters and individual entries
     const result: Array<{ 
       entry: JournalEntry; 
@@ -824,8 +984,7 @@ export default function GlobalTimelineMinimap({
           const rotationOffset = (entry.entry.id || idx) % 3 - 1; // -1, 0, or 1
           const finalAngle = angle + (rotationOffset * 0.15);
           
-          // Calculate horizontal and vertical offsets from center
-          const horizontalOffset = Math.cos(finalAngle) * clusterRadius;
+          // Calculate vertical offset from center for cluster positioning
           const verticalOffset = Math.sin(finalAngle) * clusterRadius;
           
           // Each crystal in cluster gets its own polygon shape
@@ -861,20 +1020,27 @@ export default function GlobalTimelineMinimap({
     }
 
     const rect = containerRef.current.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const percentage = Math.max(0, Math.min(100, (x / rect.width) * 100));
     
-    // Calculate the date at the mouse start position
+    // Use the current selected date as the starting point for drag calculations
+    // This prevents jumping when clicking far from center
     const totalTime = timelineData.endDate.getTime() - timelineData.startDate.getTime();
-    const timeOffset = (percentage / 100) * totalTime;
-    const startDate = new Date(timelineData.startDate.getTime() + timeOffset);
+    const currentTimeOffset = selectedDate.getTime() - timelineData.startDate.getTime();
+    const currentTimelinePosition = (currentTimeOffset / totalTime) * 100;
     
-    // Store the initial drag position and date
+    // Calculate center indicator's screen position (where the blue bar is)
+    const centerIndicatorScreenX = rect.left + (currentTimelinePosition / 100) * rect.width;
+    
+    // Store the initial drag position - use center indicator's screen position as reference
+    // This ensures consistent haptic interaction regardless of where user starts drag
     dragStartPositionRef.current = {
-      x: e.clientX,
+      x: centerIndicatorScreenX, // Center indicator's screen X position, not mouse click position
       y: e.clientY,
-      date: startDate,
+      date: selectedDate, // Start from current selected date, not where user clicked
+      timelinePosition: currentTimelinePosition, // Store timeline position (0-100)
     };
+    
+    // Initialize target date to current selected date
+    currentDragTargetDateRef.current = selectedDate;
     lastVerticalPositionRef.current = e.clientY;
     initialMovementRef.current = { horizontal: 0, vertical: 0 };
     setHorizontalLocked(false);
@@ -889,6 +1055,8 @@ export default function GlobalTimelineMinimap({
         // Silently fail if resume is not possible
       });
     }
+    
+    // Timeline range is already locked via timelineRangeRef - no need to lock again
     
     // Show radial dial at mouse position
     setRadialDial({ x: e.clientX, y: e.clientY });
@@ -967,6 +1135,7 @@ export default function GlobalTimelineMinimap({
   const selectedDateRef = useRef(selectedDate);
   const onTimePeriodSelectRef = useRef(onTimePeriodSelect);
   const horizontalLockedRef = useRef(horizontalLocked);
+  const allScaleMarkingsRef = useRef(allScaleMarkings);
 
   // Update refs when values change
   useEffect(() => {
@@ -975,7 +1144,91 @@ export default function GlobalTimelineMinimap({
     selectedDateRef.current = selectedDate;
     onTimePeriodSelectRef.current = onTimePeriodSelect;
     horizontalLockedRef.current = horizontalLocked;
-  }, [timelineData, viewMode, selectedDate, onTimePeriodSelect, horizontalLocked]);
+    allScaleMarkingsRef.current = allScaleMarkings;
+  }, [timelineData, viewMode, selectedDate, onTimePeriodSelect, horizontalLocked, allScaleMarkings]);
+
+  // Handle keyboard arrow key navigation
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Don't handle keys if user is typing in an input, textarea, or contenteditable element
+      const target = e.target as HTMLElement;
+      if (
+        target.tagName === 'INPUT' ||
+        target.tagName === 'TEXTAREA' ||
+        target.isContentEditable ||
+        (target.closest('input') || target.closest('textarea') || target.closest('[contenteditable="true"]'))
+      ) {
+        return;
+      }
+
+      // Only handle arrow keys
+      if (!['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(e.key)) {
+        return;
+      }
+
+      // Prevent default scrolling behavior
+      e.preventDefault();
+
+      const currentViewMode = viewModeRef.current;
+      const currentSelectedDate = selectedDateRef.current;
+      const currentOnTimePeriodSelect = onTimePeriodSelectRef.current;
+
+      if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+        // Navigate time horizontally (earlier/later)
+        const direction = e.key === 'ArrowLeft' ? -1 : 1;
+        let newDate: Date;
+
+        switch (currentViewMode) {
+          case 'decade':
+            newDate = addYears(currentSelectedDate, direction * 10);
+            break;
+          case 'year':
+            newDate = addYears(currentSelectedDate, direction);
+            break;
+          case 'month':
+            newDate = addMonths(currentSelectedDate, direction);
+            break;
+          case 'week':
+            newDate = addWeeks(currentSelectedDate, direction);
+            break;
+          case 'day':
+            newDate = addDays(currentSelectedDate, direction);
+            break;
+          default:
+            return;
+        }
+
+        // Play micro blip for date change
+        playMicroBlip();
+        currentOnTimePeriodSelect(newDate, currentViewMode);
+      } else if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+        // Change time scale (zoom in/out)
+        const scaleOrder: TimeRange[] = ['decade', 'year', 'month', 'week', 'day'];
+        const currentIndex = scaleOrder.indexOf(currentViewMode);
+
+        if (e.key === 'ArrowUp' && currentIndex < scaleOrder.length - 1) {
+          // Zoom in (more detail)
+          const newViewMode = scaleOrder[currentIndex + 1];
+          playMechanicalClick('up');
+          setMechanicalClick({ scale: newViewMode, direction: 'up' });
+          setTimeout(() => setMechanicalClick(null), 300);
+          currentOnTimePeriodSelect(currentSelectedDate, newViewMode);
+        } else if (e.key === 'ArrowDown' && currentIndex > 0) {
+          // Zoom out (less detail)
+          const newViewMode = scaleOrder[currentIndex - 1];
+          playMechanicalClick('down');
+          setMechanicalClick({ scale: newViewMode, direction: 'down' });
+          setTimeout(() => setMechanicalClick(null), 300);
+          currentOnTimePeriodSelect(currentSelectedDate, newViewMode);
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, []); // Empty deps - we use refs to access current values
 
   // Set up global mouse event listeners for dragging
   useEffect(() => {
@@ -1074,6 +1327,7 @@ export default function GlobalTimelineMinimap({
           setMechanicalClick({ scale: newViewMode, direction: 'up' });
           setTimeout(() => setMechanicalClick(null), 300);
           
+          // View mode change will trigger timeline range recalculation via useEffect
           currentOnTimePeriodSelect(currentSelectedDate, newViewMode);
           
           // Update drag start position to maintain relative position
@@ -1103,6 +1357,7 @@ export default function GlobalTimelineMinimap({
           setMechanicalClick({ scale: newViewMode, direction: 'down' });
           setTimeout(() => setMechanicalClick(null), 300);
           
+          // View mode change will trigger timeline range recalculation via useEffect
           currentOnTimePeriodSelect(currentSelectedDate, newViewMode);
           
           // Update drag start position to maintain relative position
@@ -1135,40 +1390,118 @@ export default function GlobalTimelineMinimap({
         return;
       }
       
-      // Calculate horizontal movement (time navigation) - always increment at day level for smoothness
-      // Convert pixel movement to days based on visible range
+      // Calculate horizontal movement (time navigation) - smooth and fluid with fret-like resistance
+      // Movement is relative to center indicator's position for consistent haptic interaction
       const totalTime = currentTimelineData.endDate.getTime() - currentTimelineData.startDate.getTime();
-      const totalDays = totalTime / (1000 * 60 * 60 * 24); // Convert milliseconds to days
-      const daysPerPixel = totalDays / rect.width;
-      const daysDelta = totalHorizontalDelta * daysPerPixel;
       
-      // Round to nearest day for smooth day-by-day progression
-      const roundedDaysDelta = Math.round(daysDelta);
+      if (!dragStartPositionRef.current) {
+        return;
+      }
       
-      // Calculate new date by adding days to the initial drag position
-      // This ensures smooth day-by-day progression regardless of view mode
-      const targetDate = addDays(dragStartPositionRef.current.date, roundedDaysDelta);
+      // Calculate horizontal delta from center indicator's position (not from click position)
+      // dragStartPositionRef.current.x is the center indicator's screen X position when drag started
+      const horizontalDelta = e.clientX - dragStartPositionRef.current.x;
       
-      // Clamp to visible range
-      let finalDate: Date;
-      if (targetDate < currentTimelineData.startDate) {
-        finalDate = currentTimelineData.startDate;
-      } else if (targetDate > currentTimelineData.endDate) {
-        finalDate = currentTimelineData.endDate;
+      // Convert pixel delta to timeline percentage (0-1)
+      const deltaPercentage = horizontalDelta / rect.width;
+      
+      // Get the starting timeline position (center indicator position when drag started)
+      const startTimelinePosition = dragStartPositionRef.current.timelinePosition / 100; // Convert to 0-1
+      
+      // Calculate current selected date position (may have changed during drag)
+      const currentTimeOffset = currentSelectedDate.getTime() - currentTimelineData.startDate.getTime();
+      const currentTimelinePosition = (currentTimeOffset / totalTime);
+      
+      // Calculate target position by applying delta relative to center indicator's current position
+      // This ensures consistent haptic interaction regardless of where user started drag
+      const rawTargetPosition = currentTimelinePosition + deltaPercentage;
+      
+      // Calculate distance from center when drag started (for dampening adjustment)
+      const distanceFromCenter = Math.abs(startTimelinePosition - 0.5);
+      
+      // Apply distance-based dampening: the further from center, the more dampening
+      // Scale from 0.02 (at edges) to 0.05 (at center) for molasses-like mechanical lever feel
+      const baseDampening = 0.05 - (distanceFromCenter * 0.06); // Range: 0.05 at center, 0.02 at edges
+      
+      // Additional dampening for large distances to prevent fast jumps
+      const distanceMagnitude = Math.abs(deltaPercentage);
+      const distanceMultiplier = distanceMagnitude > 0.3 ? 0.6 : 1.0; // Extra dampening for large movements
+      
+      const combinedDampening = baseDampening * distanceMultiplier;
+      
+      // Apply fret-like resistance: deeper valleys between time points require more drag
+      // Get all time points (frets) for the current view mode
+      const currentAllScaleMarkings = allScaleMarkingsRef.current;
+      const allMarks = currentAllScaleMarkings[currentViewMode];
+      const allTimePoints = [...allMarks.major, ...allMarks.minor]
+        .map(mark => mark.position / 100) // Convert to 0-1 range
+        .sort((a, b) => a - b); // Sort for easier valley calculation
+      
+      // Calculate target position with gradual movement and fret resistance
+      let targetMousePosition = rawTargetPosition;
+      
+      if (allTimePoints.length > 0) {
+        // Find the two nearest time points (frets) to determine which valley we're in
+        let leftFret = 0;
+        let rightFret = 1;
+        
+        for (let i = 0; i < allTimePoints.length; i++) {
+          if (allTimePoints[i] <= rawTargetPosition) {
+            leftFret = allTimePoints[i];
+          }
+          if (allTimePoints[i] >= rawTargetPosition && rightFret === 1) {
+            rightFret = allTimePoints[i];
+            break;
+          }
+        }
+        
+        // Calculate position within the valley (between two frets)
+        const valleyWidth = rightFret - leftFret;
+        if (valleyWidth > 0) {
+          const positionInValley = (rawTargetPosition - leftFret) / valleyWidth; // 0 to 1
+          
+          // Apply resistance curve: valleys require more drag - stronger curve for molasses-like mechanical lever feel
+          const resistanceCurve = Math.pow(positionInValley, 5.0);
+          
+          // Map the resisted position back to timeline coordinates
+          targetMousePosition = leftFret + (resistanceCurve * valleyWidth);
+        }
+      }
+      
+      // Gradually move from current position toward target position
+      // Use current selected date position as the reference, not the start position
+      const targetPosition = currentTimelinePosition + (targetMousePosition - currentTimelinePosition) * combinedDampening;
+      
+      // Clamp the target position
+      const clampedTargetPosition = Math.max(0, Math.min(1, targetPosition));
+      
+      // Calculate time from target position
+      const timeOffset = clampedTargetPosition * totalTime;
+      const targetTime = currentTimelineData.startDate.getTime() + timeOffset;
+      
+      // Create date from time with resistance applied
+      const finalDate = new Date(targetTime);
+      
+      // Clamp to visible range (shouldn't be necessary but safety check)
+      let clampedDate: Date;
+      if (finalDate < currentTimelineData.startDate) {
+        clampedDate = currentTimelineData.startDate;
+      } else if (finalDate > currentTimelineData.endDate) {
+        clampedDate = currentTimelineData.endDate;
       } else {
-        finalDate = targetDate;
+        clampedDate = finalDate;
       }
       
       // Play micro blip for every date change during dragging
       // Compare dates at day level (ignore time component) - check BEFORE throttling
       // This ensures blips play immediately even if the update callback is throttled
       const lastBlipDate = lastBlipDateRef.current;
-      const finalDateDay = new Date(finalDate.getFullYear(), finalDate.getMonth(), finalDate.getDate());
+      const clampedDateDay = new Date(clampedDate.getFullYear(), clampedDate.getMonth(), clampedDate.getDate());
       const lastBlipDateDay = lastBlipDate ? new Date(lastBlipDate.getFullYear(), lastBlipDate.getMonth(), lastBlipDate.getDate()) : null;
       
       // Detect ALL date changes, even if we skip some updates due to throttling
       // If the date changed, play blip immediately (don't wait for throttle)
-      if (!lastBlipDateDay || finalDateDay.getTime() !== lastBlipDateDay.getTime()) {
+      if (!lastBlipDateDay || clampedDateDay.getTime() !== lastBlipDateDay.getTime()) {
         // Date has changed - play micro blip immediately
         // Try to resume audio context if suspended, but don't wait - play blip anyway
         const audioContext = getAudioContext();
@@ -1180,25 +1513,19 @@ export default function GlobalTimelineMinimap({
         playMicroBlip();
         
         // Store normalized date (day level only) for accurate comparison
-        lastBlipDateRef.current = new Date(finalDateDay);
+        lastBlipDateRef.current = new Date(clampedDateDay);
       }
       
-      // Throttle updates - but only for the actual date selection callback
-      // This allows blips to play immediately while still throttling expensive updates
-      if (now - lastUpdateTimeRef.current < 32) {
+      // Reduced throttling for smoother movement - 16ms for ~60fps
+      // This allows smooth fluid movement while still preventing excessive updates
+      if (now - lastUpdateTimeRef.current < 16) {
         return;
       }
       
       lastUpdateTimeRef.current = now;
       
-      // Update the selected date
-      if (finalDate < currentTimelineData.startDate) {
-        currentOnTimePeriodSelect(currentTimelineData.startDate, currentViewMode);
-      } else if (finalDate > currentTimelineData.endDate) {
-        currentOnTimePeriodSelect(currentTimelineData.endDate, currentViewMode);
-      } else {
-        currentOnTimePeriodSelect(finalDate, currentViewMode);
-      }
+      // Update the selected date with smooth continuous movement
+      currentOnTimePeriodSelect(clampedDate, currentViewMode);
     };
 
     const handleMouseUpGlobal = () => {
@@ -1216,6 +1543,8 @@ export default function GlobalTimelineMinimap({
       lastScaleChangeAccumulatorRef.current = 0;
       deadZoneRef.current = 0;
       lastBlipDateRef.current = null; // Reset blip tracking when dragging ends
+      currentDragTargetDateRef.current = null; // Reset drag target tracking
+      // Timeline range remains locked - it only updates when viewMode changes
     };
 
     window.addEventListener('mousemove', handleMouseMoveGlobal);
@@ -1419,17 +1748,52 @@ export default function GlobalTimelineMinimap({
       )}
       <div 
         ref={containerRef}
-        className={`minimap-container ${isDragging ? 'dragging' : ''} ${mechanicalClick ? 'mechanical-click-active' : ''} ${horizontalLocked ? 'horizontal-locked' : ''}`}
+        className={`minimap-container minimap-size-${minimapSize} ${isDragging ? 'dragging' : ''} ${mechanicalClick ? 'mechanical-click-active' : ''} ${horizontalLocked ? 'horizontal-locked' : ''}`}
         onMouseDown={handleMouseDown}
         onWheel={handleWheel}
       >
+        {/* Edge labels for time sections - positioned at center of each visual band */}
+        <div className="edge-labels edge-labels-left">
+          <div className="edge-label edge-label-decade" style={{ top: `${scaleYPositions.decade}px` }}>
+            Decade
+          </div>
+          <div className="edge-label edge-label-year" style={{ top: `${scaleYPositions.year}px` }}>
+            Year
+          </div>
+          <div className="edge-label edge-label-month" style={{ top: `${scaleYPositions.month}px` }}>
+            Month
+          </div>
+          <div className="edge-label edge-label-week" style={{ top: `${scaleYPositions.week}px` }}>
+            Week
+          </div>
+          <div className="edge-label edge-label-day" style={{ top: `${scaleYPositions.day}px` }}>
+            Day
+          </div>
+        </div>
+        <div className="edge-labels edge-labels-right">
+          <div className="edge-label edge-label-decade" style={{ top: `${scaleYPositions.decade}px` }}>
+            Decade
+          </div>
+          <div className="edge-label edge-label-year" style={{ top: `${scaleYPositions.year}px` }}>
+            Year
+          </div>
+          <div className="edge-label edge-label-month" style={{ top: `${scaleYPositions.month}px` }}>
+            Month
+          </div>
+          <div className="edge-label edge-label-week" style={{ top: `${scaleYPositions.week}px` }}>
+            Week
+          </div>
+          <div className="edge-label edge-label-day" style={{ top: `${scaleYPositions.day}px` }}>
+            Day
+          </div>
+        </div>
         {/* Fractal web background pattern */}
         <svg 
           className="fractal-web" 
-          viewBox="0 0 1000 200" 
+          viewBox={`0 0 1000 ${minimapDimensions.height}`}
           preserveAspectRatio="none"
           shapeRendering="crispEdges"
-          style={{ imageRendering: 'pixelated', imageRendering: 'crisp-edges' }}
+          style={{ imageRendering: 'crisp-edges' }}
         >
           <defs>
             <pattern id="fractalGrid" x="0" y="0" width="15" height="15" patternUnits="userSpaceOnUse">
@@ -1461,23 +1825,152 @@ export default function GlobalTimelineMinimap({
               <line x1="40" y1="40" x2="23.43" y2="56.57" stroke="#909090" strokeWidth="0.5" opacity="0.15" />
               <line x1="40" y1="40" x2="23.43" y2="23.43" stroke="#909090" strokeWidth="0.5" opacity="0.15" />
             </pattern>
+            
+            {/* Gradient definitions for separator lines - wider vibrant region for stronger minimap color focus */}
+            {/* Colors based on viewMode to reflect the active time level, wider color region */}
+            <linearGradient id="separatorGradient1" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stopColor="#999" stopOpacity="0.2" />
+              <stop offset={`${gradientStops.fadeStart * 100}%`} stopColor="#999" stopOpacity="0.2" />
+              {/* Expand colorStart/End so the colored center covers a much wider band */}
+              <stop offset={`${Math.max(0, gradientStops.colorStart - 0.11) * 100}%`} stopColor={activeColor} stopOpacity="0.5" />
+              <stop offset={`${Math.max(0, gradientStops.colorStart) * 100}%`} stopColor={activeColor} stopOpacity="0.8" />
+              <stop offset={`${Math.max(0, gradientStops.center - 0.065) * 100}%`} stopColor={activeColor} stopOpacity="1" />
+              <stop offset={`${gradientStops.center * 100}%`} stopColor={activeColor} stopOpacity="1" />
+              <stop offset={`${Math.min(1, gradientStops.center + 0.065) * 100}%`} stopColor={activeColor} stopOpacity="1" />
+              <stop offset={`${Math.min(1, gradientStops.colorEnd) * 100}%`} stopColor={activeColor} stopOpacity="0.8" />
+              <stop offset={`${Math.min(1, gradientStops.colorEnd + 0.11) * 100}%`} stopColor={activeColor} stopOpacity="0.5" />
+              <stop offset={`${gradientStops.fadeEnd * 100}%`} stopColor="#999" stopOpacity="0.2" />
+              <stop offset="100%" stopColor="#999" stopOpacity="0.2" />
+            </linearGradient>
+            <linearGradient id="separatorGradient2" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stopColor="#999" stopOpacity="0.2" />
+              <stop offset={`${gradientStops.fadeStart * 100}%`} stopColor="#999" stopOpacity="0.2" />
+              <stop offset={`${Math.max(0, gradientStops.colorStart - 0.11) * 100}%`} stopColor={activeColor} stopOpacity="0.5" />
+              <stop offset={`${Math.max(0, gradientStops.colorStart) * 100}%`} stopColor={activeColor} stopOpacity="0.8" />
+              <stop offset={`${Math.max(0, gradientStops.center - 0.065) * 100}%`} stopColor={activeColor} stopOpacity="1" />
+              <stop offset={`${gradientStops.center * 100}%`} stopColor={activeColor} stopOpacity="1" />
+              <stop offset={`${Math.min(1, gradientStops.center + 0.065) * 100}%`} stopColor={activeColor} stopOpacity="1" />
+              <stop offset={`${Math.min(1, gradientStops.colorEnd) * 100}%`} stopColor={activeColor} stopOpacity="0.8" />
+              <stop offset={`${Math.min(1, gradientStops.colorEnd + 0.11) * 100}%`} stopColor={activeColor} stopOpacity="0.5" />
+              <stop offset={`${gradientStops.fadeEnd * 100}%`} stopColor="#999" stopOpacity="0.2" />
+              <stop offset="100%" stopColor="#999" stopOpacity="0.2" />
+            </linearGradient>
+            <linearGradient id="separatorGradient3" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stopColor="#999" stopOpacity="0.2" />
+              <stop offset={`${gradientStops.fadeStart * 100}%`} stopColor="#999" stopOpacity="0.2" />
+              <stop offset={`${Math.max(0, gradientStops.colorStart - 0.11) * 100}%`} stopColor={activeColor} stopOpacity="0.5" />
+              <stop offset={`${Math.max(0, gradientStops.colorStart) * 100}%`} stopColor={activeColor} stopOpacity="0.8" />
+              <stop offset={`${Math.max(0, gradientStops.center - 0.065) * 100}%`} stopColor={activeColor} stopOpacity="1" />
+              <stop offset={`${gradientStops.center * 100}%`} stopColor={activeColor} stopOpacity="1" />
+              <stop offset={`${Math.min(1, gradientStops.center + 0.065) * 100}%`} stopColor={activeColor} stopOpacity="1" />
+              <stop offset={`${Math.min(1, gradientStops.colorEnd) * 100}%`} stopColor={activeColor} stopOpacity="0.8" />
+              <stop offset={`${Math.min(1, gradientStops.colorEnd + 0.11) * 100}%`} stopColor={activeColor} stopOpacity="0.5" />
+              <stop offset={`${gradientStops.fadeEnd * 100}%`} stopColor="#999" stopOpacity="0.2" />
+              <stop offset="100%" stopColor="#999" stopOpacity="0.2" />
+            </linearGradient>
+            <linearGradient id="separatorGradient4" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stopColor="#999" stopOpacity="0.2" />
+              <stop offset={`${gradientStops.fadeStart * 100}%`} stopColor="#999" stopOpacity="0.2" />
+              <stop offset={`${Math.max(0, gradientStops.colorStart - 0.11) * 100}%`} stopColor={activeColor} stopOpacity="0.5" />
+              <stop offset={`${Math.max(0, gradientStops.colorStart) * 100}%`} stopColor={activeColor} stopOpacity="0.8" />
+              <stop offset={`${Math.max(0, gradientStops.center - 0.065) * 100}%`} stopColor={activeColor} stopOpacity="1" />
+              <stop offset={`${gradientStops.center * 100}%`} stopColor={activeColor} stopOpacity="1" />
+              <stop offset={`${Math.min(1, gradientStops.center + 0.065) * 100}%`} stopColor={activeColor} stopOpacity="1" />
+              <stop offset={`${Math.min(1, gradientStops.colorEnd) * 100}%`} stopColor={activeColor} stopOpacity="0.8" />
+              <stop offset={`${Math.min(1, gradientStops.colorEnd + 0.11) * 100}%`} stopColor={activeColor} stopOpacity="0.5" />
+              <stop offset={`${gradientStops.fadeEnd * 100}%`} stopColor="#999" stopOpacity="0.2" />
+              <stop offset="100%" stopColor="#999" stopOpacity="0.2" />
+            </linearGradient>
           </defs>
           <rect width="100%" height="100%" fill="url(#fractalGrid)" />
           <rect width="100%" height="100%" fill="url(#fractalWeb)" />
           <rect width="100%" height="100%" fill="url(#fractalStrands)" />
+          
+          {/* Background bands for each time section - expand when focused */}
+          {timeScaleOrder.map((range, idx) => {
+            const isFocused = range === viewMode;
+            const baseHeight = 40 * minimapDimensions.scaleFactor;
+            const focusedHeight = baseHeight + (25 * minimapDimensions.scaleFactor);
+            const compressedHeight = baseHeight * 0.75;
+            const sectionHeight = isFocused ? focusedHeight : compressedHeight;
+            
+            // Calculate Y position for this section's top
+            let sectionTop = 0;
+            timeScaleOrder.forEach((r, i) => {
+              if (i < idx) {
+                const prevIsFocused = r === viewMode;
+                const prevBaseHeight = 40 * minimapDimensions.scaleFactor;
+                const prevHeight = prevIsFocused ? prevBaseHeight + (25 * minimapDimensions.scaleFactor) : prevBaseHeight * 0.75;
+                sectionTop += prevHeight;
+              }
+            });
+            
+            const sectionColor = getViewModeColor(range);
+            const opacity = isFocused ? 0.15 : 0.08;
+            
+            return (
+              <rect
+                key={`section-band-${range}`}
+                x="0"
+                y={sectionTop}
+                width="1000"
+                height={sectionHeight}
+                fill={sectionColor}
+                opacity={opacity}
+                style={{
+                  transition: 'height 0.5s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.5s ease, y 0.5s cubic-bezier(0.4, 0, 0.2, 1)'
+                }}
+              />
+            );
+          })}
 
           {/* Infinity tree trunk centered on the current indicator */}
           <line
             x1={Math.round(centerX) + 0.5}
             y1="0.5"
             x2={Math.round(centerX) + 0.5}
-            y2="200.5"
+            y2={`${minimapDimensions.height - 0.5}`}
             stroke="#4a90e2"
             strokeWidth="2"
             opacity="0.55"
             className="infinity-tree-trunk"
             shapeRendering="crispEdges"
           />
+
+          {/* Horizontal separator lines between time sections - dynamically positioned, full width */}
+          {separatorPositions.map((yPos, idx) => {
+            const gradientId = `separatorGradient${Math.min(idx + 1, 4)}`; // Use gradient 1-4
+            const yPosFormatted = yPos + 0.5; // Add 0.5 for crisp pixel alignment
+            
+            return (
+              <g key={`separator-${idx}`}>
+                {/* Base line with gradient - spans full width */}
+                <line
+                  x1="0"
+                  y1={yPosFormatted}
+                  x2="1000"
+                  y2={yPosFormatted}
+                  stroke={`url(#${gradientId})`}
+                  strokeWidth="1"
+                  shapeRendering="crispEdges"
+                />
+                {/* Thicker center overlay for light-catching effect - spans full width */}
+                <line
+                  x1="0"
+                  y1={yPosFormatted}
+                  x2="1000"
+                  y2={yPosFormatted}
+                  stroke={activeColor}
+                  strokeWidth="2"
+                  opacity="0.8"
+                  shapeRendering="crispEdges"
+                  style={{ 
+                    filter: `drop-shadow(0 0 2px ${activeColor})`
+                  }}
+                />
+              </g>
+            );
+          })}
 
           {/* Fractaline crystalline web "infinity tree" branches for each time scale */}
           <g className="infinity-tree">
@@ -1859,7 +2352,7 @@ export default function GlobalTimelineMinimap({
 
         {/* Entry indicators */}
         <div className="entry-indicators">
-          {entryPositions.map(({ entry, position, color, verticalOffset, clusterIndex, clusterSize, clusterAngle, polygonClipPath, sides }, idx) => {
+          {entryPositions.map(({ entry, position, color, clusterIndex, clusterSize, clusterAngle, polygonClipPath, sides }, idx) => {
             const handleClick = (e: React.MouseEvent) => {
               e.stopPropagation();
               const entryDate = new Date(entry.date);
@@ -1879,18 +2372,28 @@ export default function GlobalTimelineMinimap({
               ? Math.sin(clusterAngle) * clusterRadius
               : 0;
             
+            // Check if this entry's time section is currently focused
+            const isFocusedSection = entry.timeRange === viewMode;
+            
+            // Position entry based on its timeRange - convert SVG Y coordinate to percentage
+            // Position entry based on its timeRange - scaleYPositions are scaled based on minimap size
+            const baseYPosition = scaleYPositions[entry.timeRange];
+            const yPositionPercent = (baseYPosition / minimapDimensions.height) * 100;
+            
             return (
               <div
                 key={entry.id || idx}
-                className={`entry-indicator-wrapper ${isInCluster ? 'in-cluster' : ''}`}
+                className={`entry-indicator-wrapper ${isInCluster ? 'in-cluster' : ''} ${isFocusedSection ? 'focused-section' : ''}`}
                 style={{
                   left: `${position}%`,
-                  top: `calc(50% + ${verticalOffset}px)`,
+                  top: isInCluster 
+                    ? `calc(${yPositionPercent}% + ${clusterVerticalOffset}px)`
+                    : `${yPositionPercent}%`,
                   transform: isInCluster 
-                    ? `translate(calc(-50% + ${horizontalOffset}px), calc(-50% + ${clusterVerticalOffset}px))`
-                    : 'translate(-50%, -50%)',
-                  zIndex: isInCluster ? (clusterIndex || 0) + 4 : 4,
-                  transition: 'transform 0.3s ease, z-index 0.3s ease',
+                    ? `translate(calc(-50% + ${horizontalOffset}px), -50%) ${isFocusedSection ? 'scale(1.4)' : 'scale(1)'}`
+                    : `translate(-50%, -50%) ${isFocusedSection ? 'scale(1.4)' : 'scale(1)'}`,
+                  zIndex: isInCluster ? (clusterIndex || 0) + 4 : (isFocusedSection ? 5 : 4),
+                  transition: 'transform 0.5s cubic-bezier(0.4, 0, 0.2, 1), z-index 0.5s ease',
                 }}
                 onClick={handleClick}
                 title={`${entry.title} (${entry.timeRange})${isInCluster ? ` - ${clusterSize} entries` : ''}`}
@@ -1898,12 +2401,12 @@ export default function GlobalTimelineMinimap({
                 data-cluster-index={isInCluster ? clusterIndex : undefined}
                 onMouseEnter={(e) => {
                   if (isInCluster) {
-                    e.currentTarget.style.transform = `translate(calc(-50% + ${horizontalOffset}px), calc(-50% + ${clusterVerticalOffset}px)) scale(2.5)`;
+                    e.currentTarget.style.transform = `translate(calc(-50% + ${horizontalOffset}px), -50%) scale(2.5)`;
                   }
                 }}
                 onMouseLeave={(e) => {
                   if (isInCluster) {
-                    e.currentTarget.style.transform = `translate(calc(-50% + ${horizontalOffset}px), calc(-50% + ${clusterVerticalOffset}px))`;
+                    e.currentTarget.style.transform = `translate(calc(-50% + ${horizontalOffset}px), -50%)`;
                   }
                 }}
               >

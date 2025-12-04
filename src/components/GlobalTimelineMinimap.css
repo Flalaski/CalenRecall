@@ -263,6 +263,19 @@
   -moz-osx-font-smoothing: unset;
 }
 
+/* Minimap size variants */
+.minimap-container.minimap-size-small {
+  height: 120px;
+}
+
+.minimap-container.minimap-size-medium {
+  height: 200px;
+}
+
+.minimap-container.minimap-size-large {
+  height: 280px;
+}
+
 .minimap-container.dragging {
   cursor: grabbing;
 }
@@ -557,7 +570,21 @@
   cursor: pointer;
   pointer-events: all;
   z-index: 4;
-  transition: transform 0.3s ease;
+  transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1), z-index 0.5s ease;
+}
+
+/* Scale up crystals in focused time section */
+.entry-indicator-wrapper.focused-section {
+  z-index: 5;
+}
+
+.entry-indicator-wrapper.focused-section .entry-indicator {
+  filter: brightness(1.4) saturate(3) 
+    drop-shadow(0 0 6px var(--gem-color))
+    drop-shadow(0 0 12px var(--gem-color))
+    drop-shadow(0 0 20px var(--gem-color))
+    drop-shadow(0 0 30px var(--gem-color))
+    drop-shadow(0 0 45px var(--gem-color));
 }
 
 .entry-indicator-wrapper:hover:not(.in-cluster) {
@@ -904,7 +931,6 @@
   text-shadow: 0 1px 2px rgba(255, 255, 255, 0.8);
   -webkit-font-smoothing: none;
   -moz-osx-font-smoothing: unset;
-  font-smoothing: never;
   text-rendering: optimizeSpeed;
   image-rendering: pixelated;
 }
@@ -1142,6 +1168,139 @@
   white-space: nowrap;
   pointer-events: none;
   font-weight: 500;
+}
+
+/* Edge labels for time sections */
+.edge-labels {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  pointer-events: none;
+  z-index: 5;
+}
+
+.edge-labels-left {
+  left: 0;
+  padding-left: 8px;
+}
+
+.edge-labels-right {
+  right: 0;
+  padding-right: 8px;
+}
+
+.edge-label {
+  position: absolute;
+  transform: translateY(-50%);
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #4a90e2;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  white-space: nowrap;
+  opacity: 0;
+  text-shadow: 
+    0 1px 3px rgba(255, 255, 255, 1),
+    0 0 6px rgba(74, 144, 226, 0.8),
+    0 0 12px rgba(74, 144, 226, 0.4);
+  -webkit-font-smoothing: none;
+  -moz-osx-font-smoothing: unset;
+  background: linear-gradient(to right, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.7));
+  padding: 2px 8px;
+  border-radius: 3px;
+}
+
+.edge-labels-left .edge-label {
+  text-align: left;
+  padding-right: 40px;
+  background: linear-gradient(to right, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.9) 60%, rgba(255, 255, 255, 0.7) 80%, rgba(255, 255, 255, 0.4) 95%, transparent 100%);
+}
+
+.edge-labels-right .edge-label {
+  text-align: right;
+  padding-left: 40px;
+  right: 8px;
+  background: linear-gradient(to left, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.9) 60%, rgba(255, 255, 255, 0.7) 80%, rgba(255, 255, 255, 0.4) 95%, transparent 100%);
+}
+
+/* Staggered fade-in animation for each label */
+.edge-labels-left .edge-label,
+.edge-labels-right .edge-label {
+  animation-duration: 1.5s;
+  animation-fill-mode: forwards;
+  animation-timing-function: ease-out;
+}
+
+.edge-labels-left .edge-label:nth-child(1),
+.edge-labels-right .edge-label:nth-child(1) {
+  animation-delay: 0.1s;
+}
+
+.edge-labels-left .edge-label:nth-child(2),
+.edge-labels-right .edge-label:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.edge-labels-left .edge-label:nth-child(3),
+.edge-labels-right .edge-label:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+.edge-labels-left .edge-label:nth-child(4),
+.edge-labels-right .edge-label:nth-child(4) {
+  animation-delay: 0.4s;
+}
+
+.edge-labels-left .edge-label:nth-child(5),
+.edge-labels-right .edge-label:nth-child(5) {
+  animation-delay: 0.5s;
+}
+
+@keyframes edgeLabelFadeIn {
+  0% {
+    opacity: 0;
+    transform: translateY(-50%) translateX(0);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(-50%) translateX(0);
+  }
+}
+
+.edge-labels-left .edge-label {
+  animation-name: edgeLabelFadeInLeft;
+}
+
+.edge-labels-right .edge-label {
+  animation-name: edgeLabelFadeInRight;
+}
+
+@keyframes edgeLabelFadeInLeft {
+  0% {
+    opacity: 0;
+    transform: translateY(-50%) translateX(-20px);
+  }
+  50% {
+    opacity: 0.8;
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(-50%) translateX(0);
+  }
+}
+
+@keyframes edgeLabelFadeInRight {
+  0% {
+    opacity: 0;
+    transform: translateY(-50%) translateX(20px);
+  }
+  50% {
+    opacity: 0.8;
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(-50%) translateX(0);
+  }
 }
 
 /* Responsive adjustments */

@@ -128,11 +128,24 @@ export default function PreferencesComponent() {
         <div className="preferences-section">
           <h2>General</h2>
           <div className="preference-item">
+            <label>
+              <input
+                type="checkbox"
+                checked={preferences.restoreLastView === true}
+                onChange={(e) => updatePreference('restoreLastView', e.target.checked)}
+              />
+              Restore last viewed position on startup
+            </label>
+            <small>When enabled, the app will automatically restore the date and view mode you were last viewing when you restart the app.</small>
+          </div>
+
+          <div className="preference-item">
             <label htmlFor="defaultViewMode">Default View Mode</label>
             <select
               id="defaultViewMode"
               value={preferences.defaultViewMode || 'month'}
               onChange={(e) => updatePreference('defaultViewMode', e.target.value as Preferences['defaultViewMode'])}
+              disabled={preferences.restoreLastView === true}
             >
               <option value="decade">Decade</option>
               <option value="year">Year</option>
@@ -140,6 +153,9 @@ export default function PreferencesComponent() {
               <option value="week">Week</option>
               <option value="day">Day</option>
             </select>
+            {preferences.restoreLastView === true && (
+              <small>Disabled when "Restore last viewed position" is enabled.</small>
+            )}
           </div>
 
           <div className="preference-item">

@@ -28,6 +28,9 @@ export interface Preferences {
   showMinimap?: boolean;
   minimapPosition?: 'left' | 'right' | 'top' | 'bottom';
   minimapSize?: 'small' | 'medium' | 'large';
+  restoreLastView?: boolean;
+  lastViewedDate?: string;
+  lastViewedMode?: 'decade' | 'year' | 'month' | 'week' | 'day';
 }
 
 declare global {

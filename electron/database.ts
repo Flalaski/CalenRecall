@@ -650,6 +650,9 @@ export interface Preferences {
   showMinimap?: boolean;
   minimapPosition?: 'left' | 'right' | 'top' | 'bottom';
   minimapSize?: 'small' | 'medium' | 'large';
+  restoreLastView?: boolean;
+  lastViewedDate?: string;
+  lastViewedMode?: 'decade' | 'year' | 'month' | 'week' | 'day';
 }
 
 const DEFAULT_PREFERENCES: Preferences = {
@@ -665,6 +668,7 @@ const DEFAULT_PREFERENCES: Preferences = {
   showMinimap: true,
   minimapPosition: 'top',
   minimapSize: 'medium',
+  restoreLastView: false,
 };
 
 export function getPreference<K extends keyof Preferences>(key: K): Preferences[K] {
