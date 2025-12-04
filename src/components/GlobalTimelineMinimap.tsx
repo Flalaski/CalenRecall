@@ -14,51 +14,70 @@ interface GlobalTimelineMinimapProps {
 
 // Generate mechanical click sound using Web Audio API
 function playMechanicalClick(direction: 'up' | 'down'): void {
+  const audioContext = getAudioContext();
+  if (!audioContext) return;
+  
+  // Check if context is in a valid state
+  if (audioContext.state === 'closed') {
+    return;
+  }
+  
   try {
-    const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+    const now = audioContext.currentTime;
     const oscillator = audioContext.createOscillator();
     const gainNode = audioContext.createGain();
     
     // Create a mechanical click sound - sharp transient with resonance
     oscillator.type = 'sine';
-    oscillator.frequency.setValueAtTime(direction === 'up' ? 800 : 600, audioContext.currentTime);
-    oscillator.frequency.exponentialRampToValueAtTime(direction === 'up' ? 400 : 300, audioContext.currentTime + 0.05);
+    oscillator.frequency.setValueAtTime(direction === 'up' ? 800 : 600, now);
+    oscillator.frequency.exponentialRampToValueAtTime(direction === 'up' ? 400 : 300, now + 0.05);
     
     // Envelope for click sound
-    gainNode.gain.setValueAtTime(0, audioContext.currentTime);
-    gainNode.gain.linearRampToValueAtTime(0.3, audioContext.currentTime + 0.001);
-    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.05);
-    gainNode.gain.linearRampToValueAtTime(0, audioContext.currentTime + 0.1);
+    gainNode.gain.setValueAtTime(0, now);
+    gainNode.gain.linearRampToValueAtTime(0.3, now + 0.001);
+    gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.05);
+    gainNode.gain.linearRampToValueAtTime(0, now + 0.1);
     
     oscillator.connect(gainNode);
     gainNode.connect(audioContext.destination);
     
-    oscillator.start(audioContext.currentTime);
-    oscillator.stop(audioContext.currentTime + 0.1);
+    oscillator.start(now);
+    oscillator.stop(now + 0.1);
     
     // Add a second click for mechanical feel
     setTimeout(() => {
-      const oscillator2 = audioContext.createOscillator();
-      const gainNode2 = audioContext.createGain();
+      // Re-check context state in case it changed
+      if (!audioContext || audioContext.state === 'closed') {
+        return;
+      }
       
-      oscillator2.type = 'sine';
-      oscillator2.frequency.setValueAtTime(direction === 'up' ? 1200 : 900, audioContext.currentTime);
-      oscillator2.frequency.exponentialRampToValueAtTime(direction === 'up' ? 500 : 400, audioContext.currentTime + 0.03);
-      
-      gainNode2.gain.setValueAtTime(0, audioContext.currentTime);
-      gainNode2.gain.linearRampToValueAtTime(0.2, audioContext.currentTime + 0.001);
-      gainNode2.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.03);
-      gainNode2.gain.linearRampToValueAtTime(0, audioContext.currentTime + 0.08);
-      
-      oscillator2.connect(gainNode2);
-      gainNode2.connect(audioContext.destination);
-      
-      oscillator2.start(audioContext.currentTime);
-      oscillator2.stop(audioContext.currentTime + 0.08);
+      try {
+        const now2 = audioContext.currentTime;
+        const oscillator2 = audioContext.createOscillator();
+        const gainNode2 = audioContext.createGain();
+        
+        oscillator2.type = 'sine';
+        oscillator2.frequency.setValueAtTime(direction === 'up' ? 1200 : 900, now2);
+        oscillator2.frequency.exponentialRampToValueAtTime(direction === 'up' ? 500 : 400, now2 + 0.03);
+        
+        gainNode2.gain.setValueAtTime(0, now2);
+        gainNode2.gain.linearRampToValueAtTime(0.2, now2 + 0.001);
+        gainNode2.gain.exponentialRampToValueAtTime(0.01, now2 + 0.03);
+        gainNode2.gain.linearRampToValueAtTime(0, now2 + 0.08);
+        
+        oscillator2.connect(gainNode2);
+        gainNode2.connect(audioContext.destination);
+        
+        oscillator2.start(now2);
+        oscillator2.stop(now2 + 0.08);
+      } catch (error) {
+        // Silently fail if second click cannot be created
+        console.debug('Second click audio error:', error);
+      }
     }, 20);
   } catch (error) {
     // Silently fail if audio context is not available
-    console.debug('Audio context not available:', error);
+    console.debug('Mechanical click audio error:', error);
   }
 }
 
@@ -76,10 +95,23 @@ function getAudioContext(): AudioContext | null {
     }
   }
   
+  // Check if context was closed (shouldn't happen, but handle gracefully)
+  if (sharedAudioContext.state === 'closed') {
+    // Reset and try to create a new one
+    sharedAudioContext = null;
+    try {
+      sharedAudioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+    } catch (error) {
+      console.debug('Audio context recreation failed:', error);
+      return null;
+    }
+  }
+  
   // Resume audio context if suspended (browsers require user interaction)
   if (sharedAudioContext.state === 'suspended') {
-    sharedAudioContext.resume().catch(() => {
+    sharedAudioContext.resume().catch((error) => {
       // Silently fail if resume is not possible
+      console.debug('Audio context resume failed:', error);
     });
   }
   
@@ -90,6 +122,11 @@ function getAudioContext(): AudioContext | null {
 function playMicroBlip(): void {
   const audioContext = getAudioContext();
   if (!audioContext) return;
+  
+  // Check if context is in a valid state
+  if (audioContext.state === 'closed') {
+    return;
+  }
   
   try {
     const oscillator = audioContext.createOscillator();

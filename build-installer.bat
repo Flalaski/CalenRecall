@@ -13,9 +13,7 @@ timeout /t 3 /nobreak >nul
 
 REM Clean release folder and locked files
 echo Cleaning previous build files...
-if exist "release" (
-    rd /s /q "release" >nul 2>&1
-)
+call npm run clean:release
 if exist "node_modules\better-sqlite3\build" (
     rd /s /q "node_modules\better-sqlite3\build" >nul 2>&1
 )

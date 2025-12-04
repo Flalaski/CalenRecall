@@ -13,9 +13,7 @@ timeout /t 3 /nobreak >nul
 
 REM Clean release folder and locked files
 echo Cleaning previous build files...
-if exist "release" (
-    rd /s /q "release" >nul 2>&1
-)
+call npm run clean:release
 if exist "node_modules\better-sqlite3\build" (
     rd /s /q "node_modules\better-sqlite3\build" >nul 2>&1
 )
@@ -44,9 +42,16 @@ if errorlevel 1 (
 echo.
 
 echo Creating Windows distribution (both installer and portable)...
-call npm run dist:win
+REM Kill any processes that might have started during build
+taskkill /F /IM electron.exe >nul 2>&1
+taskkill /F /IM node.exe >nul 2>&1
+wmic process where "name like '%%electron%%' or name like '%%node%%'" delete >nul 2>&1
+timeout /t 5 /nobreak >nul
+call npm run dist:win:pack
 if errorlevel 1 (
+    echo.
     echo ERROR: Distribution build failed
+    echo Check the output above for details.
     pause
     exit /b 1
 )

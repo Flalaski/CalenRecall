@@ -15,10 +15,16 @@
     "build": "npm run rebuild && npm run build:react && npm run build:electron",
     "build:react": "vite build",
     "build:electron": "tsc -p electron",
-    "dist": "npm run build && electron-builder",
-    "dist:win": "npm run build && electron-builder --win --x64 && npm run open:release",
-    "dist:win:installer": "npm run build && electron-builder --win nsis --x64 && npm run open:release",
-    "dist:win:portable": "npm run build && electron-builder --win portable --x64 && npm run open:release",
+    "clean:release": "node scripts/clean-release.js",
+    "dist": "npm run build && npm run clean:release && electron-builder",
+    "dist:win": "npm run build && npm run clean:release && electron-builder --win --x64 && npm run open:release",
+    "dist:win:pack": "npm run clean:release && npm run dist:win:pack:prebuild && npm run dist:win:pack:nsis && npm run dist:win:pack:cleanup && npm run dist:win:pack:portable",
+    "dist:win:pack:prebuild": "node scripts/pre-build-cleanup.js",
+    "dist:win:pack:nsis": "electron-builder --win nsis --x64",
+    "dist:win:pack:portable": "electron-builder --win portable --x64",
+    "dist:win:pack:cleanup": "node scripts/clean-release-partial.js",
+    "dist:win:installer": "npm run build && npm run clean:release && electron-builder --win nsis --x64 && npm run open:release",
+    "dist:win:portable": "npm run build && npm run clean:release && electron-builder --win portable --x64 && npm run open:release",
     "open:release": "node scripts/open-release.js",
     "preview": "vite preview"
   },
@@ -68,8 +74,7 @@
             "x64"
           ]
         }
-      ],
-      "icon": "assets/icon.png"
+      ]
     },
     "nsis": {
       "oneClick": false,
