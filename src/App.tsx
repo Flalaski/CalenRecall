@@ -1,10 +1,11 @@
-import { useState } from 'react';
-import CalendarView from './components/CalendarView';
+import { useState, useEffect } from 'react';
+import TimelineView from './components/TimelineView';
 import JournalEditor from './components/JournalEditor';
-import JournalList from './components/JournalList';
+import EntryViewer from './components/EntryViewer';
 import NavigationBar from './components/NavigationBar';
+import GlobalTimelineMinimap from './components/GlobalTimelineMinimap';
 import { TimeRange, JournalEntry } from './types';
-import { getCanonicalDate } from './utils/dateUtils';
+import { getEntryForDate } from './services/journalService';
 import './App.css';
 
 function App() {
@@ -12,23 +13,42 @@ function App() {
   const [viewMode, setViewMode] = useState<TimeRange>('month');
   const [selectedEntry, setSelectedEntry] = useState<JournalEntry | null>(null);
   const [isNewEntry, setIsNewEntry] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+
+  // Load entry for current date/viewMode when they change
+  useEffect(() => {
+    if (!isNewEntry && !isEditing) {
+      loadCurrentEntry();
+    }
+  }, [selectedDate, viewMode, isNewEntry, isEditing]);
+
+  const loadCurrentEntry = async () => {
+    try {
+      const entry = await getEntryForDate(selectedDate, viewMode);
+      setSelectedEntry(entry);
+    } catch (error) {
+      console.error('Error loading entry:', error);
+      setSelectedEntry(null);
+    }
+  };
 
   const handleTimePeriodSelect = (date: Date, newViewMode: TimeRange) => {
     setSelectedDate(date);
     setViewMode(newViewMode);
-    setSelectedEntry(null);
+    setIsEditing(false);
     setIsNewEntry(false);
   };
 
   const handleViewModeChange = (mode: TimeRange) => {
     setViewMode(mode);
-    setSelectedEntry(null);
+    setIsEditing(false);
     setIsNewEntry(false);
   };
 
   const handleEntrySelect = (entry: JournalEntry) => {
     setSelectedEntry(entry);
     setIsNewEntry(false);
+    setIsEditing(false);
     // Update selectedDate to match the entry's date
     const entryDate = new Date(entry.date);
     setSelectedDate(entryDate);
@@ -37,16 +57,28 @@ function App() {
   const handleNewEntry = () => {
     setSelectedEntry(null);
     setIsNewEntry(true);
+    setIsEditing(true);
+  };
+
+  const handleEdit = () => {
+    setIsEditing(true);
+    setIsNewEntry(false);
   };
 
   const handleEntrySaved = () => {
-    // Clear selection after saving
-    setSelectedEntry(null);
+    // Reload the entry after saving
+    setIsEditing(false);
     setIsNewEntry(false);
+    loadCurrentEntry();
   };
 
   return (
     <div className="app">
+      <GlobalTimelineMinimap
+        selectedDate={selectedDate}
+        viewMode={viewMode}
+        onTimePeriodSelect={handleTimePeriodSelect}
+      />
       <NavigationBar
         viewMode={viewMode}
         onViewModeChange={handleViewModeChange}
@@ -54,29 +86,37 @@ function App() {
         onDateChange={setSelectedDate}
       />
       <div className="app-content">
-        <div className="calendar-section">
-          <CalendarView
+        <div className="timeline-section">
+          <TimelineView
             selectedDate={selectedDate}
             viewMode={viewMode}
             onTimePeriodSelect={handleTimePeriodSelect}
-          />
-        </div>
-        <div className="journal-list-section">
-          <JournalList
-            selectedDate={selectedDate}
-            viewMode={viewMode}
             onEntrySelect={handleEntrySelect}
-            onNewEntry={handleNewEntry}
           />
         </div>
-        <div className="journal-section">
-          <JournalEditor
-            date={selectedDate}
-            viewMode={viewMode}
-            selectedEntry={selectedEntry}
-            isNewEntry={isNewEntry}
-            onEntrySaved={handleEntrySaved}
-          />
+        <div className="editor-section">
+          {isEditing || isNewEntry ? (
+            <JournalEditor
+              date={selectedDate}
+              viewMode={viewMode}
+              selectedEntry={selectedEntry}
+              isNewEntry={isNewEntry}
+              onEntrySaved={handleEntrySaved}
+              onCancel={() => {
+                setIsEditing(false);
+                setIsNewEntry(false);
+                loadCurrentEntry();
+              }}
+            />
+          ) : (
+            <EntryViewer
+              entry={selectedEntry}
+              date={selectedDate}
+              viewMode={viewMode}
+              onEdit={handleEdit}
+              onNewEntry={handleNewEntry}
+            />
+          )}
         </div>
       </div>
     </div>

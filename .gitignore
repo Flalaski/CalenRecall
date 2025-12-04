@@ -29,3 +29,6 @@ release
 *.db-shm
 *.db-wal
 
+# Batch files (optional - uncomment if you don't want to track them)
+# *.bat
+

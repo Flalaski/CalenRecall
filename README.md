@@ -66,6 +66,20 @@ This creates a portable `.exe` file that can be run directly without installatio
 npm run dist:win
 ```
 
+**Using Batch Files (Windows):**
+
+For convenience, you can also use the provided batch files:
+
+- `build-release.bat` - Builds portable .exe only
+- `build-installer.bat` - Builds installer .exe only  
+- `build-all.bat` - Builds both installer and portable
+
+Simply double-click the batch file or run it from the command line. The batch files will:
+1. Check and install dependencies if needed
+2. Build the application
+3. Create the distribution files
+4. Open the `release` folder when complete
+
 All builds are created in the `release` directory, and the folder will automatically open in Windows Explorer when the build completes. The applications are self-contained and don't require any additional dependencies.
 
 ### Project Structure

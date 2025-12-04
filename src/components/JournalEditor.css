@@ -16,15 +16,41 @@
 
 .editor-header {
   padding: 1rem 1.5rem;
-  border-bottom: 1px solid #e0e0e0;
-  background: #f9f9f9;
+  border-bottom: 2px solid #e0e0e0;
+  background: linear-gradient(to bottom, #ffffff, #f5f5f5);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.header-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
 }
 
 .editor-header h3 {
-  margin: 0 0 0.5rem 0;
-  font-size: 1.1rem;
+  margin: 0;
+  font-size: 1.2rem;
   color: #333;
+  font-weight: 700;
+}
+
+.new-entry-button-header {
+  padding: 0.4rem 0.8rem;
+  background: #4a90e2;
+  color: white;
+  border-radius: 4px;
+  font-size: 0.85rem;
   font-weight: 600;
+  transition: all 0.2s;
+}
+
+.new-entry-button-header:hover {
+  background: #357abd;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 .entry-meta {
@@ -182,6 +208,27 @@
   border-top: 1px solid #e0e0e0;
   background: #f9f9f9;
   gap: 0.5rem;
+}
+
+.footer-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-left: auto;
+}
+
+.cancel-button {
+  padding: 0.5rem 1rem;
+  background: #f5f5f5;
+  color: #333;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  transition: all 0.2s;
+}
+
+.cancel-button:hover {
+  background: #e8e8e8;
+  border-color: #bbb;
 }
 
 .delete-button {

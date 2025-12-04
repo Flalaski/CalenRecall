@@ -10,6 +10,7 @@ interface JournalEditorProps {
   selectedEntry?: JournalEntry | null;
   isNewEntry?: boolean;
   onEntrySaved?: () => void;
+  onCancel?: () => void;
 }
 
 export default function JournalEditor({
@@ -18,6 +19,7 @@ export default function JournalEditor({
   selectedEntry: propSelectedEntry,
   isNewEntry = false,
   onEntrySaved,
+  onCancel,
 }: JournalEditorProps) {
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
@@ -215,7 +217,9 @@ export default function JournalEditor({
   return (
     <div className="journal-editor-inline">
       <div className="editor-header">
-        <h3>{getDateLabel()}</h3>
+        <div className="header-top">
+          <h3>{getDateLabel()}</h3>
+        </div>
         {currentEntry && (
           <div className="entry-meta">
             <small>Created: {formatDate(new Date(currentEntry.createdAt), 'MMM d, yyyy')}</small>
@@ -277,13 +281,20 @@ export default function JournalEditor({
             Delete Entry
           </button>
         )}
-        <button
-          className="save-button"
-          onClick={handleSave}
-          disabled={saving || (!title.trim() && !content.trim())}
-        >
-          {saving ? 'Saving...' : 'Save (Ctrl+Enter)'}
-        </button>
+        <div className="footer-actions">
+          {onCancel && (
+            <button className="cancel-button" onClick={onCancel}>
+              Cancel
+            </button>
+          )}
+          <button
+            className="save-button"
+            onClick={handleSave}
+            disabled={saving || (!title.trim() && !content.trim())}
+          >
+            {saving ? 'Saving...' : 'Save (Ctrl+Enter)'}
+          </button>
+        </div>
       </div>
     </div>
   );
