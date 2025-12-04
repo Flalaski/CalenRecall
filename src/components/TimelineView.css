@@ -100,10 +100,12 @@
 .cell-entries {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 3px;
   padding: 0.25rem;
   max-height: calc(100% - 30px);
   overflow-y: auto;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .cell-entries-vertical {
@@ -117,7 +119,7 @@
 
 .entry-badge {
   font-size: 0.7rem;
-  padding: 0.2rem 0.4rem;
+  padding: 0.25rem 0.4rem;
   border-radius: 3px;
   cursor: pointer;
   display: flex;
@@ -126,6 +128,9 @@
   gap: 0.25rem;
   transition: all 0.15s;
   border-left: 3px solid;
+  width: 100%;
+  min-width: 0; /* Allow flex items to shrink below their content size */
+  box-sizing: border-box;
 }
 
 .entry-badge:hover {
@@ -136,31 +141,48 @@
 .entry-decade {
   background: #f3e5f5;
   border-left-color: #9c27b0;
+  border-left-width: 4px;
+  border-left-style: double;
   color: #6a1b9a;
+  border-radius: 0;
 }
 
 .entry-year {
   background: #e1f5fe;
   border-left-color: #0277bd;
+  border-left-width: 4px;
+  border-left-style: solid;
   color: #01579b;
+  border-radius: 2px;
 }
 
 .entry-month {
   background: #fff3e0;
   border-left-color: #ef6c00;
+  border-left-width: 3px;
+  border-left-style: solid;
   color: #e65100;
+  border-radius: 3px;
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
 }
 
 .entry-week {
   background: #e8f5e9;
   border-left-color: #2e7d32;
+  border-left-width: 3px;
+  border-left-style: dashed;
   color: #1b5e20;
+  border-radius: 4px;
 }
 
 .entry-day {
   background: #fce4ec;
   border-left-color: #c2185b;
+  border-left-width: 3px;
+  border-left-style: solid;
   color: #880e4f;
+  border-radius: 6px;
 }
 
 .badge-title {
@@ -168,6 +190,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  min-width: 0; /* Allow text to truncate properly */
 }
 
 .badge-tag-count {
@@ -203,22 +226,39 @@
 
 .entry-card.entry-decade {
   border-left-color: #9c27b0;
+  border-left-width: 6px;
+  border-left-style: double;
+  border-radius: 0;
 }
 
 .entry-card.entry-year {
   border-left-color: #0277bd;
+  border-left-width: 5px;
+  border-left-style: solid;
+  border-radius: 2px;
 }
 
 .entry-card.entry-month {
   border-left-color: #ef6c00;
+  border-left-width: 4px;
+  border-left-style: solid;
+  border-radius: 4px;
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
 }
 
 .entry-card.entry-week {
   border-left-color: #2e7d32;
+  border-left-width: 3px;
+  border-left-style: dashed;
+  border-radius: 6px;
 }
 
 .entry-card.entry-day {
   border-left-color: #c2185b;
+  border-left-width: 3px;
+  border-left-style: solid;
+  border-radius: 8px;
 }
 
 .card-title {
@@ -291,27 +331,44 @@
 
 .entry-card-full.entry-decade {
   border-left-color: #9c27b0;
+  border-left-width: 8px;
+  border-left-style: double;
   background: #faf5ff;
+  border-radius: 0;
 }
 
 .entry-card-full.entry-year {
   border-left-color: #0277bd;
+  border-left-width: 6px;
+  border-left-style: solid;
   background: #f0f9ff;
+  border-radius: 4px;
 }
 
 .entry-card-full.entry-month {
   border-left-color: #ef6c00;
+  border-left-width: 5px;
+  border-left-style: solid;
   background: #fffbf5;
+  border-radius: 6px;
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
 }
 
 .entry-card-full.entry-week {
   border-left-color: #2e7d32;
+  border-left-width: 4px;
+  border-left-style: dashed;
   background: #f5fff5;
+  border-radius: 8px;
 }
 
 .entry-card-full.entry-day {
   border-left-color: #c2185b;
+  border-left-width: 4px;
+  border-left-style: solid;
   background: #fff5f9;
+  border-radius: 10px;
 }
 
 .card-header {

@@ -601,28 +601,71 @@ export default function GlobalTimelineMinimap({
   }, [timelineData]);
 
 
-  // Calculate entry positions on the timeline
+  // Simple hash function to generate consistent vertical offset from entry date/id
+  const hashToVerticalOffset = (str: string, maxOffset: number): number => {
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+      const char = str.charCodeAt(i);
+      hash = ((hash << 5) - hash) + char;
+      hash = hash & hash; // Convert to 32-bit integer
+    }
+    // Return a value between -maxOffset and maxOffset
+    return ((Math.abs(hash) % (maxOffset * 2 + 1)) - maxOffset);
+  };
+
+  // Calculate entry positions on the timeline with vertical variance
   const entryPositions = useMemo(() => {
     if (!timelineData.startDate || !timelineData.endDate || entries.length === 0) {
       return [];
     }
 
     const totalTime = timelineData.endDate.getTime() - timelineData.startDate.getTime();
+    const verticalVariance = 60; // Maximum vertical offset in pixels (30px up/down from center)
     
-    return entries.map(entry => {
+    // Group entries by position to avoid overlap
+    const positionGroups = new Map<number, Array<{ entry: JournalEntry; position: number; color: string }>>();
+    
+    entries.forEach(entry => {
       const entryDate = new Date(entry.date);
       const entryTime = entryDate.getTime() - timelineData.startDate!.getTime();
       const position = (entryTime / totalTime) * 100;
-      
-      // Clamp position to 0-100%
       const clampedPosition = Math.max(0, Math.min(100, position));
       
-      return {
+      // Round to nearest 0.1% to group nearby entries
+      const roundedPosition = Math.round(clampedPosition * 10) / 10;
+      
+      if (!positionGroups.has(roundedPosition)) {
+        positionGroups.set(roundedPosition, []);
+      }
+      positionGroups.get(roundedPosition)!.push({
         entry,
         position: clampedPosition,
         color: calculateEntryColor(entry),
-      };
+      });
     });
+    
+    // Calculate vertical offsets for each entry, avoiding overlaps
+    const result: Array<{ entry: JournalEntry; position: number; color: string; verticalOffset: number }> = [];
+    
+    positionGroups.forEach((group) => {
+      if (group.length === 1) {
+        // Single entry at this position - use hash-based offset
+        const entry = group[0];
+        const hashInput = `${entry.entry.date}-${entry.entry.timeRange}-${entry.entry.id || 0}`;
+        const verticalOffset = hashToVerticalOffset(hashInput, verticalVariance);
+        result.push({ ...entry, verticalOffset });
+      } else {
+        // Multiple entries at same position - distribute them vertically
+        group.forEach((entry, idx) => {
+          // Distribute evenly across vertical space
+          const spacing = (verticalVariance * 2) / (group.length + 1);
+          const verticalOffset = -verticalVariance + (idx + 1) * spacing;
+          result.push({ ...entry, verticalOffset });
+        });
+      }
+    });
+    
+    return result;
   }, [entries, timelineData]);
 
   // Handle mouse down for dragging
@@ -1460,7 +1503,7 @@ export default function GlobalTimelineMinimap({
 
         {/* Entry indicators */}
         <div className="entry-indicators">
-          {entryPositions.map(({ entry, position, color }, idx) => {
+          {entryPositions.map(({ entry, position, color, verticalOffset }, idx) => {
             const handleClick = (e: React.MouseEvent) => {
               e.stopPropagation();
               const entryDate = new Date(entry.date);
@@ -1474,15 +1517,21 @@ export default function GlobalTimelineMinimap({
             return (
               <div
                 key={entry.id || idx}
-                className="entry-indicator"
+                className="entry-indicator-wrapper"
                 style={{
                   left: `${position}%`,
-                  backgroundColor: color,
-                  boxShadow: `0 0 6px ${color}40, 0 0 12px ${color}20`,
+                  top: `calc(50% + ${verticalOffset}px)`,
                 }}
                 onClick={handleClick}
-                title={entry.title}
-              />
+                title={`${entry.title} (${entry.timeRange})`}
+              >
+                <div
+                  className="entry-indicator"
+                  style={{
+                    '--gem-color': color,
+                  } as React.CSSProperties & { '--gem-color': string }}
+                />
+              </div>
             );
           })}
         </div>

@@ -4,6 +4,7 @@ import JournalEditor from './components/JournalEditor';
 import EntryViewer from './components/EntryViewer';
 import NavigationBar from './components/NavigationBar';
 import GlobalTimelineMinimap from './components/GlobalTimelineMinimap';
+import PreferencesComponent from './components/Preferences';
 import { TimeRange, JournalEntry } from './types';
 import { getEntryForDate } from './services/journalService';
 import './App.css';
@@ -14,6 +15,15 @@ function App() {
   const [selectedEntry, setSelectedEntry] = useState<JournalEntry | null>(null);
   const [isNewEntry, setIsNewEntry] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+  const [showPreferences, setShowPreferences] = useState(false);
+
+  // Check if we're in preferences mode (for preferences window)
+  useEffect(() => {
+    const hash = window.location.hash;
+    if (hash === '#/preferences') {
+      setShowPreferences(true);
+    }
+  }, []);
 
   // Load entry for current date/viewMode when they change
   useEffect(() => {
@@ -72,6 +82,11 @@ function App() {
     loadCurrentEntry();
   };
 
+  // If showing preferences, render only preferences component
+  if (showPreferences) {
+    return <PreferencesComponent />;
+  }
+
   return (
     <div className="app">
       <GlobalTimelineMinimap
@@ -85,6 +100,11 @@ function App() {
         onViewModeChange={handleViewModeChange}
         selectedDate={selectedDate}
         onDateChange={setSelectedDate}
+        onOpenPreferences={() => {
+          if (window.electronAPI) {
+            window.electronAPI.openPreferences();
+          }
+        }}
       />
       <div className="app-content">
         <div className="timeline-section">

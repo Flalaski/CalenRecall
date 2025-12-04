@@ -471,25 +471,155 @@
   z-index: 3;
 }
 
-.entry-indicator {
+.entry-indicator-wrapper {
   position: absolute;
-  top: 50%;
   transform: translate(-50%, -50%);
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  border: 2px solid rgba(255, 255, 255, 0.8);
+  width: 16px;
+  height: 16px;
   cursor: pointer;
   pointer-events: all;
-  transition: all 0.2s ease;
   z-index: 4;
+  transition: transform 0.3s ease;
 }
 
-.entry-indicator:hover {
-  transform: translate(-50%, -50%) scale(1.5);
+.entry-indicator-wrapper:hover {
+  transform: translate(-50%, -50%) scale(2);
   z-index: 5;
-  border-width: 3px;
-  box-shadow: 0 0 10px currentColor, 0 0 20px currentColor !important;
+}
+
+.entry-indicator {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transform: rotate(45deg);
+  transition: all 0.3s ease;
+  filter: brightness(1.2) saturate(1.4);
+  /* Create faceted gem shape - octagon for more facets like Diablo II gems */
+  clip-path: polygon(
+    30% 0%, 
+    70% 0%, 
+    100% 30%, 
+    100% 70%, 
+    70% 100%, 
+    30% 100%, 
+    0% 70%, 
+    0% 30%
+  );
+  /* Base gem color with strong 3D gradient */
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.9) 0%,
+    var(--gem-color) 20%,
+    var(--gem-color) 40%,
+    rgba(0, 0, 0, 0.5) 60%,
+    var(--gem-color) 80%,
+    rgba(255, 255, 255, 0.3) 100%
+  );
+  box-shadow: 
+    0 0 12px var(--gem-color),
+    0 0 24px var(--gem-color),
+    0 0 36px var(--gem-color),
+    inset 0 0 25px rgba(255, 255, 255, 0.4),
+    inset -4px -4px 10px rgba(0, 0, 0, 0.7),
+    inset 4px 4px 10px rgba(255, 255, 255, 0.3),
+    inset -2px 2px 6px rgba(0, 0, 0, 0.4);
+}
+
+/* Main highlight - bright top facet */
+.entry-indicator::before {
+  content: '';
+  position: absolute;
+  top: 12%;
+  left: 22%;
+  width: 40%;
+  height: 40%;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 1) 0%,
+    rgba(255, 255, 255, 0.9) 20%,
+    rgba(255, 255, 255, 0.6) 50%,
+    transparent 100%
+  );
+  clip-path: polygon(
+    30% 0%, 
+    70% 0%, 
+    100% 30%, 
+    100% 70%, 
+    70% 100%, 
+    30% 100%, 
+    0% 70%, 
+    0% 30%
+  );
+  transform: rotate(-45deg);
+  pointer-events: none;
+  animation: gemShine 2.5s ease-in-out infinite;
+  filter: blur(0.3px);
+}
+
+/* Secondary bright spot - sparkle */
+.entry-indicator::after {
+  content: '';
+  position: absolute;
+  top: 22%;
+  left: 32%;
+  width: 24%;
+  height: 24%;
+  background: radial-gradient(
+    circle at 30% 30%,
+    rgba(255, 255, 255, 1) 0%,
+    rgba(255, 255, 255, 0.95) 25%,
+    rgba(255, 255, 255, 0.7) 50%,
+    transparent 75%
+  );
+  clip-path: polygon(
+    30% 0%, 
+    70% 0%, 
+    100% 30%, 
+    100% 70%, 
+    70% 100%, 
+    30% 100%, 
+    0% 70%, 
+    0% 30%
+  );
+  transform: rotate(-45deg);
+  pointer-events: none;
+  animation: gemSparkle 1.8s ease-in-out infinite;
+  animation-delay: 0.4s;
+}
+
+.entry-indicator-wrapper:hover .entry-indicator {
+  filter: brightness(1.6) saturate(1.7);
+  box-shadow: 
+    0 0 18px var(--gem-color),
+    0 0 36px var(--gem-color),
+    0 0 54px var(--gem-color),
+    0 0 72px var(--gem-color),
+    inset 0 0 30px rgba(255, 255, 255, 0.5),
+    inset -5px -5px 12px rgba(0, 0, 0, 0.8),
+    inset 5px 5px 12px rgba(255, 255, 255, 0.4),
+    inset -3px 3px 8px rgba(0, 0, 0, 0.5);
+}
+
+@keyframes gemShine {
+  0%, 100% {
+    opacity: 0.8;
+    transform: rotate(-45deg) scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: rotate(-45deg) scale(1.2);
+  }
+}
+
+@keyframes gemSparkle {
+  0%, 100% {
+    opacity: 0.5;
+    transform: rotate(-45deg) scale(0.9);
+  }
+  50% {
+    opacity: 1;
+    transform: rotate(-45deg) scale(1.3);
+  }
 }
 
 .scale-labels {

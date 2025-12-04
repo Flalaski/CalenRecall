@@ -7,6 +7,7 @@ interface NavigationBarProps {
   onViewModeChange: (mode: TimeRange) => void;
   selectedDate: Date;
   onDateChange: (date: Date) => void;
+  onOpenPreferences?: () => void;
 }
 
 export default function NavigationBar({
@@ -14,6 +15,7 @@ export default function NavigationBar({
   onViewModeChange,
   selectedDate,
   onDateChange,
+  onOpenPreferences,
 }: NavigationBarProps) {
   const navigate = (direction: 'prev' | 'next') => {
     let newDate: Date;
@@ -108,6 +110,15 @@ export default function NavigationBar({
         >
           Day
         </button>
+        {onOpenPreferences && (
+          <button
+            className="view-mode-button preferences-button"
+            onClick={onOpenPreferences}
+            title="Preferences"
+          >
+            ⚙️
+          </button>
+        )}
       </div>
     </div>
   );

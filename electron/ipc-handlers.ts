@@ -6,6 +6,11 @@ import {
   deleteEntry,
   searchEntries,
   getEntriesByRange,
+  getPreference,
+  setPreference,
+  getAllPreferences,
+  resetPreferences,
+  Preferences,
 } from './database';
 import { JournalEntry, TimeRange } from './types';
 
@@ -40,6 +45,25 @@ export function setupIpcHandlers() {
 
   ipcMain.handle('get-entries-by-range', async (_event, range: TimeRange, value: number) => {
     return getEntriesByRange(range, value);
+  });
+
+  // Preferences handlers
+  ipcMain.handle('get-preference', async (_event, key: keyof Preferences) => {
+    return getPreference(key);
+  });
+
+  ipcMain.handle('set-preference', async (_event, key: keyof Preferences, value: any) => {
+    setPreference(key, value);
+    return { success: true };
+  });
+
+  ipcMain.handle('get-all-preferences', async () => {
+    return getAllPreferences();
+  });
+
+  ipcMain.handle('reset-preferences', async () => {
+    resetPreferences();
+    return { success: true };
   });
 }
 

@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { JournalEntry, TimeRange } from '../types';
-import { getEntriesForRange } from '../services/journalService';
-import { formatDate, getDaysInMonth, getDaysInWeek, isToday } from '../utils/dateUtils';
+import { formatDate, getDaysInMonth, getDaysInWeek, isToday, getWeekStart, getWeekEnd } from '../utils/dateUtils';
 import './TimelineView.css';
 
 interface TimelineViewProps {
@@ -37,10 +36,66 @@ export default function TimelineView({
   const loadEntries = async () => {
     setLoading(true);
     try {
-      const loadedEntries = await getEntriesForRange(viewMode, selectedDate);
-      setEntries(loadedEntries);
+      // Load entries for all time ranges that could be relevant to the current view
+      // This ensures we can show indicators for entries regardless of their timeRange
+      let startDate: Date;
+      let endDate: Date;
+      
+      switch (viewMode) {
+        case 'decade':
+          const decadeStart = Math.floor(selectedDate.getFullYear() / 10) * 10;
+          startDate = new Date(decadeStart, 0, 1);
+          endDate = new Date(decadeStart + 9, 11, 31);
+          break;
+        case 'year':
+          startDate = new Date(selectedDate.getFullYear(), 0, 1);
+          endDate = new Date(selectedDate.getFullYear(), 11, 31);
+          break;
+        case 'month':
+          startDate = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1);
+          endDate = new Date(selectedDate.getFullYear(), selectedDate.getMonth() + 1, 0);
+          break;
+        case 'week':
+          startDate = getWeekStart(selectedDate);
+          endDate = getWeekEnd(selectedDate);
+          // Expand to include full month(s) to catch month entries
+          const weekStartMonth = new Date(startDate.getFullYear(), startDate.getMonth(), 1);
+          const weekEndMonth = new Date(endDate.getFullYear(), endDate.getMonth() + 1, 0);
+          if (weekStartMonth < startDate) startDate = weekStartMonth;
+          if (weekEndMonth > endDate) endDate = weekEndMonth;
+          break;
+        case 'day':
+          // Load entries for the full month to catch month/week entries
+          startDate = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1);
+          endDate = new Date(selectedDate.getFullYear(), selectedDate.getMonth() + 1, 0);
+          break;
+        default:
+          startDate = selectedDate;
+          endDate = selectedDate;
+      }
+      
+      // Load ALL entries in this date range using the database's getEntries function
+      if (!window.electronAPI) {
+        throw new Error('Electron API not available');
+      }
+      
+      const startDateStr = formatDate(startDate);
+      const endDateStr = formatDate(endDate);
+      
+      console.log(`[TimelineView] Loading entries from ${startDateStr} to ${endDateStr} for ${viewMode} view`);
+      
+      const allEntries = await window.electronAPI.getEntries(startDateStr, endDateStr);
+      
+      console.log(`[TimelineView] Loaded ${allEntries.length} entries:`, allEntries.map(e => ({
+        date: e.date,
+        timeRange: e.timeRange,
+        title: e.title
+      })));
+      
+      setEntries(allEntries);
     } catch (error) {
-      console.error('Error loading entries:', error);
+      console.error('[TimelineView] Error loading entries:', error);
+      setEntries([]);
     } finally {
       setLoading(false);
     }
@@ -48,31 +103,59 @@ export default function TimelineView({
 
   const getEntriesForDate = (date: Date): JournalEntry[] => {
     const dateStr = formatDate(date);
-    return entries.filter(entry => {
-      const entryDate = new Date(entry.date);
+    const checkYear = date.getFullYear();
+    const checkMonth = date.getMonth();
+    
+    const matchingEntries = entries.filter(entry => {
+      // Parse entry date as local date (YYYY-MM-DD format)
+      // Split the date string to avoid timezone issues
+      const [entryYearStr, entryMonthStr, entryDayStr] = entry.date.split('-');
+      const entryYear = parseInt(entryYearStr, 10);
+      const entryMonth = parseInt(entryMonthStr, 10) - 1; // Convert to 0-indexed month
+      const entryDay = parseInt(entryDayStr, 10);
+      
+      let matches = false;
+      
       // Match exact date or check if date falls within entry's time range
       if (entry.timeRange === 'day') {
-        return entry.date === dateStr;
+        // Day entries must match the exact date
+        matches = entry.date === dateStr;
       } else if (entry.timeRange === 'month') {
-        return entryDate.getFullYear() === date.getFullYear() && 
-               entryDate.getMonth() === date.getMonth();
+        // Month entries apply to all days in that month
+        matches = entryYear === checkYear && entryMonth === checkMonth;
       } else if (entry.timeRange === 'week') {
+        // Week entries apply to all days in that week (Monday-Sunday)
+        // Calculate the week start (Monday) for the entry's date
+        const entryDate = new Date(entryYear, entryMonth, entryDay);
         const weekStart = new Date(entryDate);
         const dayOfWeek = weekStart.getDay();
         const daysToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
         weekStart.setDate(weekStart.getDate() - daysToMonday);
+        weekStart.setHours(0, 0, 0, 0);
+        
+        // Calculate week end (Sunday)
         const weekEnd = new Date(weekStart);
         weekEnd.setDate(weekEnd.getDate() + 6);
-        return date >= weekStart && date <= weekEnd;
+        weekEnd.setHours(23, 59, 59, 999);
+        
+        // Check if the date falls within this week
+        const checkDate = new Date(date);
+        checkDate.setHours(12, 0, 0, 0);
+        matches = checkDate >= weekStart && checkDate <= weekEnd;
       } else if (entry.timeRange === 'year') {
-        return entryDate.getFullYear() === date.getFullYear();
+        // Year entries apply to all days in that year
+        matches = entryYear === checkYear;
       } else if (entry.timeRange === 'decade') {
-        const decadeStart = Math.floor(entryDate.getFullYear() / 10) * 10;
-        const dateDecade = Math.floor(date.getFullYear() / 10) * 10;
-        return decadeStart === dateDecade;
+        // Decade entries apply to all years in that decade
+        const entryDecade = Math.floor(entryYear / 10) * 10;
+        const dateDecade = Math.floor(checkYear / 10) * 10;
+        matches = entryDecade === dateDecade;
       }
-      return false;
+      
+      return matches;
     });
+    
+    return matchingEntries;
   };
 
   const renderMonthView = () => {
@@ -112,7 +195,7 @@ export default function TimelineView({
                       }}
                       title={entry.title}
                     >
-                      <span className="badge-title">{entry.title.substring(0, 8)}</span>
+                      <span className="badge-title">{entry.title}</span>
                       {entry.tags && entry.tags.length > 0 && (
                         <span className="badge-tag-count">{entry.tags.length}</span>
                       )}
@@ -256,7 +339,7 @@ export default function TimelineView({
                       }}
                       title={entry.title}
                     >
-                      <span className="badge-title">{entry.title.substring(0, 10)}</span>
+                      <span className="badge-title">{entry.title}</span>
                     </div>
                   ))}
                   {monthEntries.length > 2 && (
@@ -301,7 +384,7 @@ export default function TimelineView({
                       }}
                       title={entry.title}
                     >
-                      <span className="badge-title">{entry.title.substring(0, 12)}</span>
+                      <span className="badge-title">{entry.title}</span>
                     </div>
                   ))}
                   {yearEntries.length > 1 && (

@@ -11,6 +11,23 @@ export interface JournalEntry {
 
 export type TimeRange = 'decade' | 'year' | 'month' | 'week' | 'day';
 
+export interface Preferences {
+  defaultViewMode?: 'decade' | 'year' | 'month' | 'week' | 'day';
+  windowWidth?: number;
+  windowHeight?: number;
+  windowX?: number;
+  windowY?: number;
+  dateFormat?: string;
+  weekStartsOn?: 0 | 1 | 2 | 3 | 4 | 5 | 6;
+  autoSave?: boolean;
+  autoSaveInterval?: number;
+  theme?: 'light' | 'dark' | 'auto';
+  fontSize?: 'small' | 'medium' | 'large';
+  showMinimap?: boolean;
+  minimapPosition?: 'left' | 'right' | 'top' | 'bottom';
+  minimapSize?: 'small' | 'medium' | 'large';
+}
+
 declare global {
   interface Window {
     electronAPI: {
@@ -20,6 +37,11 @@ declare global {
       deleteEntry: (date: string, timeRange: TimeRange) => Promise<void>;
       searchEntries: (query: string) => Promise<JournalEntry[]>;
       getEntriesByRange: (range: TimeRange, value: number) => Promise<JournalEntry[]>;
+      getPreference: <K extends keyof Preferences>(key: K) => Promise<Preferences[K]>;
+      setPreference: <K extends keyof Preferences>(key: K, value: Preferences[K]) => Promise<{ success: boolean }>;
+      getAllPreferences: () => Promise<Preferences>;
+      resetPreferences: () => Promise<{ success: boolean }>;
+      openPreferences: () => Promise<void>;
     };
   }
 }

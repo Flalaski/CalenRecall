@@ -86,10 +86,62 @@ export function initDatabase() {
   const tableExists = checkTableExists(db, 'journal_entries');
   const hasTimeRange = tableExists ? checkColumnExists(db, 'journal_entries', 'time_range') : false;
   
-  // If table exists but doesn't have time_range, migrate it
-  if (tableExists && !hasTimeRange) {
+  // Check if there's an old unique constraint on just 'date' column
+  let hasOldUniqueConstraint = false;
+  if (tableExists) {
     try {
-      migrateDatabase(db);
+      const tableInfo = db.prepare(`PRAGMA table_info(journal_entries)`).all() as any[];
+      // Check if there's a unique constraint in the table definition
+      const createTableSql = db.prepare(`
+        SELECT sql FROM sqlite_master WHERE type='table' AND name='journal_entries'
+      `).get() as { sql: string } | undefined;
+      
+      if (createTableSql?.sql) {
+        // Check if there's UNIQUE(date) but not UNIQUE(date, time_range)
+        const sql = createTableSql.sql.toLowerCase();
+        if (sql.includes('unique(date)') && !sql.includes('unique(date, time_range)')) {
+          hasOldUniqueConstraint = true;
+          console.log('Detected old unique constraint on date column');
+        }
+      }
+    } catch (e) {
+      console.log('Could not check for old constraints:', e);
+    }
+  }
+  
+  // If table exists but doesn't have time_range, or has old constraint, migrate it
+  if (tableExists && (!hasTimeRange || hasOldUniqueConstraint)) {
+    try {
+      if (hasOldUniqueConstraint) {
+        console.log('Recreating table to fix unique constraint issue');
+        // Backup entries
+        const oldEntries = db.prepare('SELECT * FROM journal_entries').all() as any[];
+        // Drop and recreate
+        db.exec('DROP TABLE IF EXISTS journal_entries');
+        // Recreate with new schema
+        createTables(db);
+        // Restore entries
+        if (oldEntries.length > 0) {
+          const insertStmt = db.prepare(`
+            INSERT INTO journal_entries (date, time_range, title, content, tags, created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+          `);
+          for (const entry of oldEntries) {
+            insertStmt.run(
+              entry.date,
+              entry.time_range || 'day',
+              entry.title,
+              entry.content,
+              entry.tags || null,
+              entry.created_at,
+              entry.updated_at
+            );
+          }
+        }
+        console.log('Database recreated with correct schema');
+      } else {
+        migrateDatabase(db);
+      }
     } catch (error) {
       console.error('Migration failed, recreating database:', error);
       // Backup old data if possible, then recreate
@@ -109,7 +161,7 @@ export function initDatabase() {
           for (const entry of oldEntries) {
             insertStmt.run(
               entry.date,
-              'day', // Set all old entries to 'day' time range
+              entry.time_range || 'day',
               entry.title,
               entry.content,
               entry.tags || null,
@@ -150,7 +202,32 @@ function createTables(database: Database.Database) {
     CREATE INDEX IF NOT EXISTS idx_time_range ON journal_entries(time_range);
     CREATE INDEX IF NOT EXISTS idx_created_at ON journal_entries(created_at);
     CREATE UNIQUE INDEX IF NOT EXISTS idx_date_time_range ON journal_entries(date, time_range);
+    
+    CREATE TABLE IF NOT EXISTS preferences (
+      key TEXT PRIMARY KEY,
+      value TEXT NOT NULL
+    );
   `);
+  
+  // Remove any old unique constraint on just the date column
+  // SQLite doesn't support DROP CONSTRAINT directly, so we check indexes
+  try {
+    const indexes = database.prepare(`
+      SELECT name FROM sqlite_master 
+      WHERE type='index' AND tbl_name='journal_entries' AND sql LIKE '%UNIQUE%'
+    `).all() as Array<{ name: string }>;
+    
+    for (const idx of indexes) {
+      // If there's a unique index on just date (not date+time_range), drop it
+      const indexInfo = database.prepare(`SELECT sql FROM sqlite_master WHERE name = ?`).get(idx.name) as { sql: string } | undefined;
+      if (indexInfo?.sql && indexInfo.sql.includes('date') && !indexInfo.sql.includes('time_range')) {
+        console.log(`Dropping old unique index: ${idx.name}`);
+        database.exec(`DROP INDEX IF EXISTS ${idx.name}`);
+      }
+    }
+  } catch (e) {
+    console.log('Note: Could not check/remove old indexes:', e);
+  }
 }
 
 export function getDatabase(): Database.Database {
@@ -242,10 +319,91 @@ export function saveEntry(entry: JournalEntry): void {
       );
       console.log('Entry inserted successfully');
     }
-  } catch (error) {
+  } catch (error: any) {
+    // If we get a UNIQUE constraint error on just 'date', the database needs to be fixed
+    if (error?.message && error.message.includes('UNIQUE constraint failed: journal_entries.date') && 
+        !error.message.includes('journal_entries.date, journal_entries.time_range')) {
+      console.error('Database has old unique constraint on date column. Attempting to fix...');
+      try {
+        // Try to fix the database schema
+        fixDatabaseSchema(database);
+        // Retry the insert
+        const existing = getEntry(entry.date, entry.timeRange);
+        if (existing) {
+          const stmt = database.prepare(`
+            UPDATE journal_entries 
+            SET title = ?, content = ?, tags = ?, updated_at = ?
+            WHERE date = ? AND time_range = ?
+          `);
+          stmt.run(
+            entry.title,
+            entry.content,
+            JSON.stringify(entry.tags || []),
+            now,
+            entry.date,
+            entry.timeRange
+          );
+        } else {
+          const stmt = database.prepare(`
+            INSERT INTO journal_entries (date, time_range, title, content, tags, created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+          `);
+          stmt.run(
+            entry.date,
+            entry.timeRange,
+            entry.title,
+            entry.content,
+            JSON.stringify(entry.tags || []),
+            entry.createdAt || now,
+            now
+          );
+        }
+        console.log('Entry saved after fixing database schema');
+        return;
+      } catch (fixError) {
+        console.error('Failed to fix database schema:', fixError);
+        throw new Error('Database schema needs to be fixed. Please restart the application.');
+      }
+    }
     console.error('Error in saveEntry:', error);
     throw error;
   }
+}
+
+function fixDatabaseSchema(database: Database.Database): void {
+  console.log('Fixing database schema...');
+  
+  // Backup all entries
+  const oldEntries = database.prepare('SELECT * FROM journal_entries').all() as any[];
+  console.log(`Backing up ${oldEntries.length} entries`);
+  
+  // Drop the old table
+  database.exec('DROP TABLE IF EXISTS journal_entries');
+  
+  // Recreate with correct schema
+  createTables(database);
+  
+  // Restore entries
+  if (oldEntries.length > 0) {
+    const insertStmt = database.prepare(`
+      INSERT INTO journal_entries (date, time_range, title, content, tags, created_at, updated_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
+    `);
+    for (const entry of oldEntries) {
+      insertStmt.run(
+        entry.date,
+        entry.time_range || 'day',
+        entry.title,
+        entry.content,
+        entry.tags || null,
+        entry.created_at,
+        entry.updated_at
+      );
+    }
+    console.log(`Restored ${oldEntries.length} entries`);
+  }
+  
+  console.log('Database schema fixed successfully');
 }
 
 export function deleteEntry(date: string, timeRange: 'decade' | 'year' | 'month' | 'week' | 'day'): void {
@@ -405,5 +563,101 @@ export function getEntriesByRange(range: 'decade' | 'year' | 'month' | 'week' | 
     
     return false;
   });
+}
+
+// Preferences functions
+export interface Preferences {
+  defaultViewMode?: 'decade' | 'year' | 'month' | 'week' | 'day';
+  windowWidth?: number;
+  windowHeight?: number;
+  windowX?: number;
+  windowY?: number;
+  dateFormat?: string;
+  weekStartsOn?: 0 | 1 | 2 | 3 | 4 | 5 | 6; // 0 = Sunday, 1 = Monday, etc.
+  autoSave?: boolean;
+  autoSaveInterval?: number; // in seconds
+  theme?: 'light' | 'dark' | 'auto';
+  fontSize?: 'small' | 'medium' | 'large';
+  showMinimap?: boolean;
+  minimapPosition?: 'left' | 'right' | 'top' | 'bottom';
+  minimapSize?: 'small' | 'medium' | 'large';
+}
+
+const DEFAULT_PREFERENCES: Preferences = {
+  defaultViewMode: 'month',
+  windowWidth: 1200,
+  windowHeight: 800,
+  dateFormat: 'MMMM d, yyyy',
+  weekStartsOn: 1, // Monday
+  autoSave: true,
+  autoSaveInterval: 30,
+  theme: 'light',
+  fontSize: 'medium',
+  showMinimap: true,
+  minimapPosition: 'top',
+  minimapSize: 'medium',
+};
+
+export function getPreference<K extends keyof Preferences>(key: K): Preferences[K] {
+  const database = getDatabase();
+  const stmt = database.prepare('SELECT value FROM preferences WHERE key = ?');
+  const row = stmt.get(key) as { value: string } | undefined;
+  
+  if (!row) {
+    return DEFAULT_PREFERENCES[key];
+  }
+  
+  try {
+    return JSON.parse(row.value) as Preferences[K];
+  } catch {
+    return row.value as Preferences[K];
+  }
+}
+
+export function setPreference<K extends keyof Preferences>(key: K, value: Preferences[K]): void {
+  const database = getDatabase();
+  const stmt = database.prepare(`
+    INSERT OR REPLACE INTO preferences (key, value)
+    VALUES (?, ?)
+  `);
+  stmt.run(key, JSON.stringify(value));
+}
+
+export function getAllPreferences(): Preferences {
+  const database = getDatabase();
+  const stmt = database.prepare('SELECT key, value FROM preferences');
+  const rows = stmt.all() as Array<{ key: string; value: string }>;
+  
+  const prefs: Preferences = { ...DEFAULT_PREFERENCES };
+  
+  for (const row of rows) {
+    const key = row.key as keyof Preferences;
+    if (key in DEFAULT_PREFERENCES) {
+      try {
+        const parsedValue = JSON.parse(row.value);
+        (prefs as any)[key] = parsedValue;
+      } catch {
+        // If JSON parsing fails, try to use the raw value
+        // This handles cases where the value might be stored as a plain string
+        const rawValue = row.value;
+        // Try to infer the correct type based on the default value
+        const defaultValue = DEFAULT_PREFERENCES[key];
+        if (typeof defaultValue === 'number') {
+          (prefs as any)[key] = parseFloat(rawValue) || defaultValue;
+        } else if (typeof defaultValue === 'boolean') {
+          (prefs as any)[key] = rawValue === 'true';
+        } else {
+          (prefs as any)[key] = rawValue;
+        }
+      }
+    }
+  }
+  
+  return prefs;
+}
+
+export function resetPreferences(): void {
+  const database = getDatabase();
+  database.exec('DELETE FROM preferences');
 }
 

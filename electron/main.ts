@@ -1,16 +1,22 @@
-import { app, BrowserWindow } from 'electron';
+import { app, BrowserWindow, ipcMain } from 'electron';
 import * as path from 'path';
-import { initDatabase } from './database';
+import { initDatabase, getAllPreferences, setPreference } from './database';
 import { setupIpcHandlers } from './ipc-handlers';
 
 let mainWindow: BrowserWindow | null = null;
+let preferencesWindow: BrowserWindow | null = null;
 
 const isDev = process.env.NODE_ENV === 'development' || !app.isPackaged;
 
 function createWindow() {
+  // Load preferences for window size/position
+  const prefs = getAllPreferences();
+  
   mainWindow = new BrowserWindow({
-    width: 1200,
-    height: 800,
+    width: prefs.windowWidth || 1200,
+    height: prefs.windowHeight || 800,
+    x: prefs.windowX,
+    y: prefs.windowY,
     minWidth: 800,
     minHeight: 600,
     webPreferences: {
@@ -30,8 +36,59 @@ function createWindow() {
     mainWindow.loadFile(path.join(__dirname, '../dist/index.html'));
   }
 
+  // Save window position/size on move/resize
+  mainWindow.on('moved', () => {
+    if (mainWindow) {
+      const [x, y] = mainWindow.getPosition();
+      setPreference('windowX', x);
+      setPreference('windowY', y);
+    }
+  });
+
+  mainWindow.on('resized', () => {
+    if (mainWindow) {
+      const [width, height] = mainWindow.getSize();
+      setPreference('windowWidth', width);
+      setPreference('windowHeight', height);
+    }
+  });
+
   mainWindow.on('closed', () => {
     mainWindow = null;
+  });
+}
+
+function createPreferencesWindow() {
+  if (preferencesWindow) {
+    preferencesWindow.focus();
+    return;
+  }
+
+  preferencesWindow = new BrowserWindow({
+    width: 600,
+    height: 700,
+    minWidth: 500,
+    minHeight: 500,
+    parent: mainWindow || undefined,
+    modal: true,
+    webPreferences: {
+      preload: path.join(__dirname, 'preload.js'),
+      nodeIntegration: false,
+      contextIsolation: true,
+    },
+    ...(process.platform === 'win32' && {
+      icon: path.join(__dirname, '../assets/icon.png'),
+    }),
+  });
+
+  if (isDev) {
+    preferencesWindow.loadURL('http://localhost:5173/#/preferences');
+  } else {
+    preferencesWindow.loadFile(path.join(__dirname, '../dist/index.html'), { hash: 'preferences' });
+  }
+
+  preferencesWindow.on('closed', () => {
+    preferencesWindow = null;
   });
 }
 
@@ -41,6 +98,11 @@ app.whenReady().then(() => {
   
   // Setup IPC handlers
   setupIpcHandlers();
+  
+  // Handle opening preferences window
+  ipcMain.handle('open-preferences', () => {
+    createPreferencesWindow();
+  });
   
   createWindow();
 
