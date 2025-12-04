@@ -1,0 +1,38 @@
+.app {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+}
+
+.app-content {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+  gap: 1px;
+  background: #e0e0e0;
+}
+
+.calendar-section {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  background: white;
+}
+
+.journal-list-section {
+  width: 300px;
+  min-width: 250px;
+  overflow: hidden;
+  background: white;
+}
+
+.journal-section {
+  width: 400px;
+  min-width: 350px;
+  overflow-y: auto;
+  background: white;
+  border-left: 1px solid #e0e0e0;
+}
+

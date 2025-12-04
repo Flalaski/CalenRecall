@@ -1,0 +1,153 @@
+.journal-list {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: white;
+  border-right: 1px solid #e0e0e0;
+}
+
+.journal-list-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.journal-list-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid #e0e0e0;
+  background: #f9f9f9;
+}
+
+.journal-list-header h3 {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #333;
+}
+
+.new-entry-button {
+  padding: 0.5rem 1rem;
+  background: #4a90e2;
+  color: white;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  transition: background 0.2s;
+}
+
+.new-entry-button:hover {
+  background: #357abd;
+}
+
+.journal-list-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0.5rem;
+}
+
+.journal-list-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  text-align: center;
+  color: #666;
+  padding: 2rem;
+}
+
+.journal-list-empty .hint {
+  font-size: 0.85rem;
+  color: #999;
+  margin-top: 0.5rem;
+}
+
+.journal-entries {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.journal-entry-item {
+  padding: 1rem;
+  background: #f9f9f9;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.journal-entry-item:hover {
+  background: #f0f0f0;
+  border-color: #4a90e2;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.journal-entry-item.selected {
+  background: #e3f2fd;
+  border-color: #4a90e2;
+  box-shadow: 0 2px 8px rgba(74, 144, 226, 0.2);
+}
+
+.entry-item-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 0.5rem;
+}
+
+.entry-item-title {
+  font-weight: 600;
+  font-size: 1rem;
+  color: #333;
+  flex: 1;
+}
+
+.entry-item-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.25rem;
+  margin-left: 1rem;
+}
+
+.entry-time-range {
+  font-size: 0.75rem;
+  color: #666;
+  background: #e0e0e0;
+  padding: 0.15rem 0.5rem;
+  border-radius: 12px;
+}
+
+.entry-date {
+  font-size: 0.8rem;
+  color: #999;
+}
+
+.entry-item-preview {
+  font-size: 0.9rem;
+  color: #666;
+  line-height: 1.4;
+  margin-bottom: 0.5rem;
+}
+
+.entry-item-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  margin-top: 0.5rem;
+}
+
+.entry-tag {
+  font-size: 0.75rem;
+  padding: 0.15rem 0.5rem;
+  background: #e3f2fd;
+  color: #1976d2;
+  border-radius: 12px;
+}
+
