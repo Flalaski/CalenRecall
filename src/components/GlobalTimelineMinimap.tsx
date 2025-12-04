@@ -1,6 +1,6 @@
 import { useMemo, useState, useEffect, useRef } from 'react';
 import { TimeRange, JournalEntry } from '../types';
-import { formatDate, getWeekStart, getMonthStart, getZodiacColor, getZodiacColorForDecade, getCanonicalDate } from '../utils/dateUtils';
+import { formatDate, getWeekStart, getWeekEnd, getMonthStart, getMonthEnd, getYearEnd, getDecadeEnd, getZodiacColor, getZodiacColorForDecade, getCanonicalDate } from '../utils/dateUtils';
 import { addDays, addWeeks, addMonths, addYears, getYear, getMonth, getDate } from 'date-fns';
 import './GlobalTimelineMinimap.css';
 
@@ -414,10 +414,35 @@ export default function GlobalTimelineMinimap({
     return { startDate, endDate };
   };
   
-  // Update timeline range only when viewMode changes or on initial load
-  // selectedDate is only used for the initial calculation, not for updates
+  // Update timeline range when viewMode changes, on initial load, or when selectedDate moves outside the current range
   useEffect(() => {
-    if (isInitialLoadRef.current || timelineRangeRef.current?.viewMode !== viewMode) {
+    let shouldRecalculate = 
+      isInitialLoadRef.current || 
+      timelineRangeRef.current?.viewMode !== viewMode;
+    
+    // Check if selectedDate is outside the current timeline range (only if range exists)
+    if (!shouldRecalculate && timelineRangeRef.current) {
+      const canonicalSelectedDate = getCanonicalDate(selectedDate, viewMode);
+      const { startDate, endDate } = timelineRangeRef.current;
+      
+      // For decade view, compare decade boundaries
+      if (viewMode === 'decade') {
+        const selectedDecade = Math.floor(getYear(canonicalSelectedDate) / 10) * 10;
+        const rangeStartDecade = Math.floor(getYear(startDate) / 10) * 10;
+        const rangeEndDecade = Math.floor(getYear(endDate) / 10) * 10;
+        
+        if (selectedDecade < rangeStartDecade || selectedDecade > rangeEndDecade) {
+          shouldRecalculate = true;
+        }
+      } else {
+        // For other views, compare canonical dates directly
+        if (canonicalSelectedDate < startDate || canonicalSelectedDate > endDate) {
+          shouldRecalculate = true;
+        }
+      }
+    }
+    
+    if (shouldRecalculate) {
       const range = calculateTimelineRange(selectedDate, viewMode);
       timelineRangeRef.current = {
         ...range,
@@ -425,9 +450,7 @@ export default function GlobalTimelineMinimap({
       };
       isInitialLoadRef.current = false;
     }
-    // Only depend on viewMode - selectedDate changes should NOT trigger recalculation
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [viewMode]);
+  }, [viewMode, selectedDate]);
   
   const timelineData = useMemo(() => {
     // Use the fixed timeline range (doesn't change based on selectedDate)
@@ -552,21 +575,79 @@ export default function GlobalTimelineMinimap({
   //   return (timelineData.currentPosition / (timelineData.segments.length - 1)) * 100;
   // }, [timelineData]);
 
-  // Calculate current period indicator position (where the blue bar is)
-  // Use the start of the period that the calendar is actually showing, not the exact selectedDate
-  const currentIndicatorPosition = useMemo(() => {
-    if (!timelineData.startDate || !timelineData.endDate) return 50;
-    const totalTime = timelineData.endDate.getTime() - timelineData.startDate.getTime();
-    if (totalTime <= 0 || !isFinite(totalTime)) return 50; // Handle zero or invalid totalTime
+  // Calculate the start, end, center, and width of the current period indicator
+  // The indicator should cover the entire focused time segment (day, week, month, year, or decade)
+  const currentIndicatorMetrics = useMemo(() => {
+    if (!timelineData.startDate || !timelineData.endDate) {
+      return { position: 50, width: '6px' };
+    }
     
-    // Get the canonical/start date of the period that the calendar is showing
-    // This ensures the minimap indicator aligns with what the calendar view displays
+    const totalTime = timelineData.endDate.getTime() - timelineData.startDate.getTime();
+    if (totalTime <= 0 || !isFinite(totalTime)) {
+      return { position: 50, width: '6px' };
+    }
+    
+    // Get the start and end dates of the focused period
     const periodStartDate = getCanonicalDate(selectedDate, viewMode);
-    const selectedTime = periodStartDate.getTime() - timelineData.startDate.getTime();
-    const position = (selectedTime / totalTime) * 100;
-    // Ensure we return a valid number between 0 and 100
-    if (!isFinite(position) || isNaN(position)) return 50;
-    return Math.max(0, Math.min(100, position));
+    let periodEndDate: Date;
+    
+    switch (viewMode) {
+      case 'decade':
+        periodEndDate = getDecadeEnd(selectedDate);
+        break;
+      case 'year':
+        periodEndDate = getYearEnd(selectedDate);
+        break;
+      case 'month':
+        periodEndDate = getMonthEnd(selectedDate);
+        break;
+      case 'week':
+        periodEndDate = getWeekEnd(selectedDate);
+        break;
+      case 'day':
+        // For a day, the period is from start of day to end of day (23:59:59.999)
+        periodEndDate = new Date(periodStartDate);
+        periodEndDate.setHours(23, 59, 59, 999);
+        break;
+      default:
+        periodEndDate = new Date(periodStartDate);
+        periodEndDate.setHours(23, 59, 59, 999);
+    }
+    
+    // Calculate the duration of the focused period
+    const periodDuration = periodEndDate.getTime() - periodStartDate.getTime();
+    if (periodDuration <= 0 || !isFinite(periodDuration)) {
+      return { position: 50, width: '6px' };
+    }
+    
+    // Calculate the center of the period (for positioning the indicator)
+    const periodCenterDate = new Date(periodStartDate.getTime() + periodDuration / 2);
+    const centerTime = periodCenterDate.getTime() - timelineData.startDate.getTime();
+    const centerPosition = (centerTime / totalTime) * 100;
+    
+    // Calculate what percentage of the total timeline this period represents (for width)
+    const periodPercentage = (periodDuration / totalTime) * 100;
+    
+    // Ensure valid numbers
+    const position = isFinite(centerPosition) && !isNaN(centerPosition) 
+      ? Math.max(0, Math.min(100, centerPosition))
+      : 50;
+    
+    // Convert percentage to a width value
+    // Use a minimum width of 4px and ensure it doesn't exceed reasonable bounds
+    const minWidthPx = 4;
+    const maxWidthPercent = 50; // Don't let it exceed 50% of the container
+    
+    // Calculate width as percentage, clamped to reasonable bounds
+    const widthPercent = isFinite(periodPercentage) && !isNaN(periodPercentage)
+      ? Math.max(0.1, Math.min(maxWidthPercent, periodPercentage))
+      : 0.5;
+    
+    // Return as a percentage string for CSS, but ensure minimum pixel width
+    // We'll use calc() to ensure minimum width while allowing percentage scaling
+    const width = `max(${minWidthPx}px, ${widthPercent}%)`;
+    
+    return { position, width };
   }, [selectedDate, viewMode, timelineData]);
 
   // Localization range - only show scales within ±20% of the current indicator
@@ -574,8 +655,8 @@ export default function GlobalTimelineMinimap({
 
   // Center of the minimap in SVG coordinates (0–1000) for the "infinity tree" web
   const centerX = useMemo(() => {
-    return (currentIndicatorPosition / 100) * 1000;
-  }, [currentIndicatorPosition]);
+    return (currentIndicatorMetrics.position / 100) * 1000;
+  }, [currentIndicatorMetrics.position]);
 
   // Get color for current view mode
   const getViewModeColor = (mode: TimeRange): string => {
@@ -594,9 +675,9 @@ export default function GlobalTimelineMinimap({
   // Calculate gradient stop positions for separator lines
   // Return numeric values (0-1 range) for arithmetic operations
   const gradientStops = useMemo(() => {
-    // Ensure currentIndicatorPosition is valid
-    const center = isFinite(currentIndicatorPosition) && !isNaN(currentIndicatorPosition) 
-      ? currentIndicatorPosition / 100  // Convert percentage to 0-1 range
+    // Ensure currentIndicatorMetrics.position is valid
+    const center = isFinite(currentIndicatorMetrics.position) && !isNaN(currentIndicatorMetrics.position) 
+      ? currentIndicatorMetrics.position / 100  // Convert percentage to 0-1 range
       : 0.5; // Default to center if invalid
     
     const fadeStart = Math.max(0, Math.min(1, center - 0.15));
@@ -611,7 +692,7 @@ export default function GlobalTimelineMinimap({
       colorEnd,
       fadeEnd,
     };
-  }, [currentIndicatorPosition]);
+  }, [currentIndicatorMetrics.position]);
 
   // Ordered time scales for branch generation
   const timeScaleOrder: TimeRange[] = ['decade', 'year', 'month', 'week', 'day'];
@@ -2061,7 +2142,7 @@ export default function GlobalTimelineMinimap({
           {/* All time scale levels - displayed simultaneously, localized to current indicator */}
           {/* DECADE SCALE (topmost, largest scale) */}
           {allScaleMarkings.decade.major
-            .filter(mark => Math.abs(mark.position - currentIndicatorPosition) <= LOCALIZATION_RANGE)
+            .filter(mark => Math.abs(mark.position - currentIndicatorMetrics.position) <= LOCALIZATION_RANGE)
             .map((mark, idx) => {
             const x = Math.round((mark.position / 100) * 1000) + 0.5;
             const isCurrentScale = viewMode === 'decade';
@@ -2080,7 +2161,7 @@ export default function GlobalTimelineMinimap({
             );
           })}
           {allScaleMarkings.decade.minor
-            .filter(mark => Math.abs(mark.position - currentIndicatorPosition) <= LOCALIZATION_RANGE)
+            .filter(mark => Math.abs(mark.position - currentIndicatorMetrics.position) <= LOCALIZATION_RANGE)
             .map((mark, idx) => {
             const x = Math.round((mark.position / 100) * 1000) + 0.5;
             const isCurrentScale = viewMode === 'decade';
@@ -2101,7 +2182,7 @@ export default function GlobalTimelineMinimap({
           
           {/* YEAR SCALE */}
           {allScaleMarkings.year.major
-            .filter(mark => Math.abs(mark.position - currentIndicatorPosition) <= LOCALIZATION_RANGE)
+            .filter(mark => Math.abs(mark.position - currentIndicatorMetrics.position) <= LOCALIZATION_RANGE)
             .map((mark, idx) => {
             const x = Math.round((mark.position / 100) * 1000) + 0.5;
             const isCurrentScale = viewMode === 'year';
@@ -2120,7 +2201,7 @@ export default function GlobalTimelineMinimap({
             );
           })}
           {allScaleMarkings.year.minor
-            .filter(mark => Math.abs(mark.position - currentIndicatorPosition) <= LOCALIZATION_RANGE)
+            .filter(mark => Math.abs(mark.position - currentIndicatorMetrics.position) <= LOCALIZATION_RANGE)
             .map((mark, idx) => {
             const x = Math.round((mark.position / 100) * 1000) + 0.5;
             const isCurrentScale = viewMode === 'year';
@@ -2141,7 +2222,7 @@ export default function GlobalTimelineMinimap({
           
           {/* MONTH SCALE (center, current view highlighted) */}
           {allScaleMarkings.month.major
-            .filter(mark => Math.abs(mark.position - currentIndicatorPosition) <= LOCALIZATION_RANGE)
+            .filter(mark => Math.abs(mark.position - currentIndicatorMetrics.position) <= LOCALIZATION_RANGE)
             .map((mark, idx) => {
             const x = Math.round((mark.position / 100) * 1000) + 0.5;
             const isCurrentScale = viewMode === 'month';
@@ -2160,7 +2241,7 @@ export default function GlobalTimelineMinimap({
             );
           })}
           {allScaleMarkings.month.minor
-            .filter(mark => Math.abs(mark.position - currentIndicatorPosition) <= LOCALIZATION_RANGE)
+            .filter(mark => Math.abs(mark.position - currentIndicatorMetrics.position) <= LOCALIZATION_RANGE)
             .map((mark, idx) => {
             const x = Math.round((mark.position / 100) * 1000) + 0.5;
             const isCurrentScale = viewMode === 'month';
@@ -2181,7 +2262,7 @@ export default function GlobalTimelineMinimap({
           
           {/* WEEK SCALE */}
           {allScaleMarkings.week.major
-            .filter(mark => Math.abs(mark.position - currentIndicatorPosition) <= LOCALIZATION_RANGE)
+            .filter(mark => Math.abs(mark.position - currentIndicatorMetrics.position) <= LOCALIZATION_RANGE)
             .map((mark, idx) => {
             const x = Math.round((mark.position / 100) * 1000) + 0.5;
             const isCurrentScale = viewMode === 'week';
@@ -2200,7 +2281,7 @@ export default function GlobalTimelineMinimap({
             );
           })}
           {allScaleMarkings.week.minor
-            .filter(mark => Math.abs(mark.position - currentIndicatorPosition) <= LOCALIZATION_RANGE)
+            .filter(mark => Math.abs(mark.position - currentIndicatorMetrics.position) <= LOCALIZATION_RANGE)
             .map((mark, idx) => {
             const x = Math.round((mark.position / 100) * 1000) + 0.5;
             const isCurrentScale = viewMode === 'week';
@@ -2221,7 +2302,7 @@ export default function GlobalTimelineMinimap({
           
           {/* DAY SCALE (bottommost, finest scale) */}
           {allScaleMarkings.day.major
-            .filter(mark => Math.abs(mark.position - currentIndicatorPosition) <= LOCALIZATION_RANGE)
+            .filter(mark => Math.abs(mark.position - currentIndicatorMetrics.position) <= LOCALIZATION_RANGE)
             .map((mark, idx) => {
             const x = Math.round((mark.position / 100) * 1000) + 0.5;
             const isCurrentScale = viewMode === 'day';
@@ -2240,7 +2321,7 @@ export default function GlobalTimelineMinimap({
             );
           })}
           {allScaleMarkings.day.minor
-            .filter(mark => Math.abs(mark.position - currentIndicatorPosition) <= LOCALIZATION_RANGE)
+            .filter(mark => Math.abs(mark.position - currentIndicatorMetrics.position) <= LOCALIZATION_RANGE)
             .map((mark, idx) => {
             const x = Math.round((mark.position / 100) * 1000) + 0.5;
             return (
@@ -2263,7 +2344,7 @@ export default function GlobalTimelineMinimap({
         <div className="scale-labels">
           {/* Decade labels */}
           {allScaleMarkings.decade.major
-            .filter(mark => Math.abs(mark.position - currentIndicatorPosition) <= LOCALIZATION_RANGE)
+            .filter(mark => Math.abs(mark.position - currentIndicatorMetrics.position) <= LOCALIZATION_RANGE)
             .map((mark, idx) => {
               const decadeStart = mark.date ? Math.floor(mark.date.getFullYear() / 10) * 10 : 0;
               const zodiacColor = getZodiacColorForDecade(decadeStart);
@@ -2280,7 +2361,7 @@ export default function GlobalTimelineMinimap({
           
           {/* Year labels */}
           {allScaleMarkings.year.major
-            .filter(mark => Math.abs(mark.position - currentIndicatorPosition) <= LOCALIZATION_RANGE)
+            .filter(mark => Math.abs(mark.position - currentIndicatorMetrics.position) <= LOCALIZATION_RANGE)
             .map((mark, idx) => (
             mark.label && (
               <div
@@ -2293,7 +2374,7 @@ export default function GlobalTimelineMinimap({
             )
           ))}
           {allScaleMarkings.year.minor
-            .filter(mark => Math.abs(mark.position - currentIndicatorPosition) <= LOCALIZATION_RANGE)
+            .filter(mark => Math.abs(mark.position - currentIndicatorMetrics.position) <= LOCALIZATION_RANGE)
             .map((mark, idx) => (
             mark.label && (
               <div
@@ -2308,7 +2389,7 @@ export default function GlobalTimelineMinimap({
           
           {/* Month labels */}
           {allScaleMarkings.month.major
-            .filter(mark => Math.abs(mark.position - currentIndicatorPosition) <= LOCALIZATION_RANGE)
+            .filter(mark => Math.abs(mark.position - currentIndicatorMetrics.position) <= LOCALIZATION_RANGE)
             .map((mark, idx) => {
               const monthDate = mark.date ? new Date(mark.date.getFullYear(), mark.date.getMonth(), 15) : new Date();
               const zodiacColor = getZodiacColor(monthDate);
@@ -2323,7 +2404,7 @@ export default function GlobalTimelineMinimap({
               );
             })}
           {allScaleMarkings.month.minor
-            .filter(mark => Math.abs(mark.position - currentIndicatorPosition) <= LOCALIZATION_RANGE)
+            .filter(mark => Math.abs(mark.position - currentIndicatorMetrics.position) <= LOCALIZATION_RANGE)
             .map((mark, idx) => {
               const monthDate = mark.date ? new Date(mark.date.getFullYear(), mark.date.getMonth(), 15) : new Date();
               const zodiacColor = getZodiacColor(monthDate);
@@ -2340,7 +2421,7 @@ export default function GlobalTimelineMinimap({
           
           {/* Week labels */}
           {allScaleMarkings.week.major
-            .filter(mark => Math.abs(mark.position - currentIndicatorPosition) <= LOCALIZATION_RANGE)
+            .filter(mark => Math.abs(mark.position - currentIndicatorMetrics.position) <= LOCALIZATION_RANGE)
             .map((mark, idx) => (
             mark.label && (
               <div
@@ -2355,7 +2436,7 @@ export default function GlobalTimelineMinimap({
           
           {/* Day labels */}
           {allScaleMarkings.day.major
-            .filter(mark => Math.abs(mark.position - currentIndicatorPosition) <= LOCALIZATION_RANGE)
+            .filter(mark => Math.abs(mark.position - currentIndicatorMetrics.position) <= LOCALIZATION_RANGE)
             .map((mark, idx) => (
             mark.label && (
               <div
@@ -2467,22 +2548,16 @@ export default function GlobalTimelineMinimap({
         </div>
 
         {/* Current period highlight rectangle */}
-        {timelineData.segments.length > 0 && (() => {
-          const indicatorWidth = viewMode === 'decade' ? '12px' : 
-                                viewMode === 'year' ? '10px' : 
-                                viewMode === 'month' ? '8px' : 
-                                viewMode === 'week' ? '6px' : '4px';
-          return (
-            <div
-              key="current-indicator"
-              className="current-period-indicator"
-              style={{ 
-                left: `${currentIndicatorPosition}%`,
-                width: indicatorWidth
-              }}
-            />
-          );
-        })()}
+        {timelineData.segments.length > 0 && (
+          <div
+            key="current-indicator"
+            className="current-period-indicator"
+            style={{ 
+              left: `${currentIndicatorMetrics.position}%`,
+              width: currentIndicatorMetrics.width,
+            }}
+          />
+        )}
       </div>
     </div>
   );
