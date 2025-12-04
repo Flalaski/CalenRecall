@@ -9,6 +9,9 @@ import {
   isToday,
   getWeekStart,
   getWeekEnd,
+  getZodiacColor,
+  getZodiacGradientColor,
+  getZodiacGradientColorForYear,
 } from '../utils/dateUtils';
 import { isSameDay, isSameMonth, isSameYear } from 'date-fns';
 import { JournalEntry } from '../types';
@@ -208,18 +211,24 @@ export default function CalendarView({
     const years = getYearsInDecade(selectedDate);
     return (
       <div className="calendar-grid decade-view">
-        {years.map((year, idx) => (
-          <div
-            key={idx}
-            className={`calendar-cell year-cell ${isSelected(year) ? 'selected' : ''} ${hasEntry(year) ? 'has-entry' : ''}`}
-            onClick={() => onTimePeriodSelect(year, 'year')}
-          >
-            <div className="cell-content">
-              <div className="cell-label">{year.getFullYear()}</div>
-              {hasEntry(year) && <div className="entry-indicator"></div>}
+        {years.map((year, idx) => {
+          const yearGradientColor = getZodiacGradientColorForYear(year.getFullYear());
+          return (
+            <div
+              key={idx}
+              className={`calendar-cell year-cell ${isSelected(year) ? 'selected' : ''} ${hasEntry(year) ? 'has-entry' : ''}`}
+              onClick={() => onTimePeriodSelect(year, 'year')}
+              style={{ '--zodiac-gradient': yearGradientColor } as React.CSSProperties}
+            >
+              <div className="cell-content">
+                <div className="cell-label" style={{ color: yearGradientColor }}>
+                  {year.getFullYear()}
+                </div>
+                {hasEntry(year) && <div className="entry-indicator"></div>}
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     );
   };
@@ -232,18 +241,24 @@ export default function CalendarView({
     ];
     return (
       <div className="calendar-grid year-view">
-        {months.map((month, idx) => (
-          <div
-            key={idx}
-            className={`calendar-cell month-cell ${isSelected(month) ? 'selected' : ''} ${hasEntry(month) ? 'has-entry' : ''}`}
-            onClick={() => onTimePeriodSelect(month, 'month')}
-          >
-            <div className="cell-content">
-              <div className="cell-label">{monthNames[idx]}</div>
-              {hasEntry(month) && <div className="entry-indicator"></div>}
+        {months.map((month, idx) => {
+          // Use the 15th of each month as representative for the zodiac color
+          const monthMidpoint = new Date(month.getFullYear(), month.getMonth(), 15);
+          const zodiacColor = getZodiacColor(monthMidpoint);
+          return (
+            <div
+              key={idx}
+              className={`calendar-cell month-cell ${isSelected(month) ? 'selected' : ''} ${hasEntry(month) ? 'has-entry' : ''}`}
+              onClick={() => onTimePeriodSelect(month, 'month')}
+              style={{ '--zodiac-color': zodiacColor } as React.CSSProperties}
+            >
+              <div className="cell-content">
+                <div className="cell-label month-title">{monthNames[idx]}</div>
+                {hasEntry(month) && <div className="entry-indicator"></div>}
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     );
   };
@@ -267,18 +282,22 @@ export default function CalendarView({
           {Array(adjustedFirstDay).fill(null).map((_, idx) => (
             <div key={`empty-${idx}`} className="calendar-cell empty-cell"></div>
           ))}
-          {days.map((day, idx) => (
-            <div
-              key={idx}
-              className={`calendar-cell day-cell ${isToday(day) ? 'today' : ''} ${isSelected(day) ? 'selected' : ''} ${hasEntry(day) ? 'has-entry' : ''}`}
-              onClick={() => onTimePeriodSelect(day, 'day')}
-            >
-              <div className="cell-content">
-                <div className="cell-label">{day.getDate()}</div>
-                {hasEntry(day) && <div className="entry-indicator"></div>}
+          {days.map((day, idx) => {
+            const gradientColor = getZodiacGradientColor(day);
+            return (
+              <div
+                key={idx}
+                className={`calendar-cell day-cell ${isToday(day) ? 'today' : ''} ${isSelected(day) ? 'selected' : ''} ${hasEntry(day) ? 'has-entry' : ''}`}
+                onClick={() => onTimePeriodSelect(day, 'day')}
+                style={{ '--zodiac-gradient': gradientColor } as React.CSSProperties}
+              >
+                <div className="cell-content">
+                  <div className="cell-label">{day.getDate()}</div>
+                  {hasEntry(day) && <div className="entry-indicator"></div>}
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     );
@@ -299,17 +318,21 @@ export default function CalendarView({
           ))}
         </div>
         <div className="calendar-grid week-view">
-          {days.map((day, idx) => (
-            <div
-              key={idx}
-              className={`calendar-cell day-cell week-day-cell ${isToday(day) ? 'today' : ''} ${isSelected(day) ? 'selected' : ''} ${hasEntry(day) ? 'has-entry' : ''}`}
-              onClick={() => onTimePeriodSelect(day, 'day')}
-            >
-              <div className="cell-content">
-                {hasEntry(day) && <div className="entry-indicator"></div>}
+          {days.map((day, idx) => {
+            const gradientColor = getZodiacGradientColor(day);
+            return (
+              <div
+                key={idx}
+                className={`calendar-cell day-cell week-day-cell ${isToday(day) ? 'today' : ''} ${isSelected(day) ? 'selected' : ''} ${hasEntry(day) ? 'has-entry' : ''}`}
+                onClick={() => onTimePeriodSelect(day, 'day')}
+                style={{ '--zodiac-gradient': gradientColor } as React.CSSProperties}
+              >
+                <div className="cell-content">
+                  {hasEntry(day) && <div className="entry-indicator"></div>}
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     );

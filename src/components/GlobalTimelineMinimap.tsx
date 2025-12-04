@@ -1,6 +1,6 @@
 import { useMemo, useState, useEffect, useRef } from 'react';
 import { TimeRange, JournalEntry } from '../types';
-import { formatDate, getWeekStart, getMonthStart } from '../utils/dateUtils';
+import { formatDate, getWeekStart, getMonthStart, getZodiacColor, getZodiacColorForDecade } from '../utils/dateUtils';
 import { addDays, addWeeks, addMonths, getYear, getMonth, getDate } from 'date-fns';
 import './GlobalTimelineMinimap.css';
 
@@ -1444,17 +1444,19 @@ export default function GlobalTimelineMinimap({
           {/* Decade labels */}
           {allScaleMarkings.decade.major
             .filter(mark => Math.abs(mark.position - currentIndicatorPosition) <= LOCALIZATION_RANGE)
-            .map((mark, idx) => (
-            mark.label && (
-              <div
-                key={`decade-label-${idx}`}
-                className={`scale-label decade-label ${viewMode === 'decade' ? 'current-scale' : ''}`}
-                style={{ left: `${mark.position}%`, top: '5px' }}
-              >
-                {mark.label}
-              </div>
-            )
-          ))}
+            .map((mark, idx) => {
+              const decadeStart = mark.date ? Math.floor(mark.date.getFullYear() / 10) * 10 : 0;
+              const zodiacColor = getZodiacColorForDecade(decadeStart);
+              return mark.label && (
+                <div
+                  key={`decade-label-${idx}`}
+                  className={`scale-label decade-label ${viewMode === 'decade' ? 'current-scale' : ''}`}
+                  style={{ left: `${mark.position}%`, top: '5px', color: zodiacColor }}
+                >
+                  {mark.label}
+                </div>
+              );
+            })}
           
           {/* Year labels */}
           {allScaleMarkings.year.major
@@ -1487,30 +1489,34 @@ export default function GlobalTimelineMinimap({
           {/* Month labels */}
           {allScaleMarkings.month.major
             .filter(mark => Math.abs(mark.position - currentIndicatorPosition) <= LOCALIZATION_RANGE)
-            .map((mark, idx) => (
-            mark.label && (
-              <div
-                key={`month-label-${idx}`}
-                className={`scale-label month-label ${viewMode === 'month' ? 'current-scale' : ''}`}
-                style={{ left: `${mark.position}%`, top: '85px' }}
-              >
-                {mark.label}
-              </div>
-            )
-          ))}
+            .map((mark, idx) => {
+              const monthDate = mark.date ? new Date(mark.date.getFullYear(), mark.date.getMonth(), 15) : new Date();
+              const zodiacColor = getZodiacColor(monthDate);
+              return mark.label && (
+                <div
+                  key={`month-label-${idx}`}
+                  className={`scale-label month-label ${viewMode === 'month' ? 'current-scale' : ''}`}
+                  style={{ left: `${mark.position}%`, top: '85px', color: zodiacColor }}
+                >
+                  {mark.label}
+                </div>
+              );
+            })}
           {allScaleMarkings.month.minor
             .filter(mark => Math.abs(mark.position - currentIndicatorPosition) <= LOCALIZATION_RANGE)
-            .map((mark, idx) => (
-            mark.label && (
-              <div
-                key={`month-minor-label-${idx}`}
-                className="scale-label month-minor-label"
-                style={{ left: `${mark.position}%`, top: '88px' }}
-              >
-                {mark.label}
-              </div>
-            )
-          ))}
+            .map((mark, idx) => {
+              const monthDate = mark.date ? new Date(mark.date.getFullYear(), mark.date.getMonth(), 15) : new Date();
+              const zodiacColor = getZodiacColor(monthDate);
+              return mark.label && (
+                <div
+                  key={`month-minor-label-${idx}`}
+                  className="scale-label month-minor-label"
+                  style={{ left: `${mark.position}%`, top: '88px', color: zodiacColor }}
+                >
+                  {mark.label}
+                </div>
+              );
+            })}
           
           {/* Week labels */}
           {allScaleMarkings.week.major

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { JournalEntry, TimeRange } from '../types';
-import { formatDate, getDaysInMonth, getDaysInWeek, isToday, getWeekStart, getWeekEnd } from '../utils/dateUtils';
+import { formatDate, getDaysInMonth, getDaysInWeek, isToday, getWeekStart, getWeekEnd, getZodiacColor, getZodiacGradientColor, getZodiacGradientColorForYear, getZodiacColorForDecade } from '../utils/dateUtils';
 import { isSameDay, isSameMonth, isSameYear } from 'date-fns';
 import './TimelineView.css';
 
@@ -342,9 +342,20 @@ export default function TimelineView({
         <div className="month-view-content">
           <div className="month-calendar-section">
             <div className="weekday-header">
-              {weekDays.map(day => (
-                <div key={day} className="weekday-cell">{day}</div>
-              ))}
+              {weekDays.map((day, dayIdx) => {
+                // Get a representative date for this weekday in the current month
+                const weekDayDate = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), dayIdx + 1);
+                const gradientColor = getZodiacGradientColor(weekDayDate);
+                return (
+                  <div 
+                    key={day} 
+                    className="weekday-cell"
+                    style={{ '--zodiac-gradient': gradientColor } as React.CSSProperties}
+                  >
+                    {day}
+                  </div>
+                );
+              })}
             </div>
             <div className="timeline-grid month-grid">
               {Array(adjustedFirstDay).fill(null).map((_, idx) => (
@@ -352,11 +363,13 @@ export default function TimelineView({
               ))}
               {days.map((day, idx) => {
                 const dayEntries = getEntriesForDate(day);
+                const gradientColor = getZodiacGradientColor(day);
                 return (
                   <div
                     key={idx}
                     className={`timeline-cell day-cell ${isToday(day) ? 'today' : ''} ${isSelected(day) ? 'selected' : ''} ${dayEntries.length > 0 ? 'has-entries' : ''}`}
                     onClick={() => onTimePeriodSelect(day, 'day')}
+                    style={{ '--zodiac-gradient': gradientColor } as React.CSSProperties}
                   >
                     <div className="cell-date">{day.getDate()}</div>
                     <div className="cell-entries">
@@ -440,21 +453,31 @@ export default function TimelineView({
     return (
       <div className="timeline-week-view">
         <div className="weekday-header">
-          {weekDays.map((day, idx) => (
-            <div key={day} className="weekday-cell">
-              <div>{day}</div>
-              <div className="day-number">{days[idx].getDate()}</div>
-            </div>
-          ))}
+          {weekDays.map((day, idx) => {
+            const dayDate = days[idx];
+            const gradientColor = getZodiacGradientColor(dayDate);
+            return (
+              <div 
+                key={day} 
+                className="weekday-cell"
+                style={{ '--zodiac-gradient': gradientColor } as React.CSSProperties}
+              >
+                <div>{day}</div>
+                <div className="day-number">{dayDate.getDate()}</div>
+              </div>
+            );
+          })}
         </div>
         <div className="timeline-grid week-grid">
           {days.map((day, idx) => {
             const dayEntries = getEntriesForDate(day);
+            const gradientColor = getZodiacGradientColor(day);
             return (
               <div
                 key={idx}
                 className={`timeline-cell day-cell week-day-cell ${isToday(day) ? 'today' : ''} ${isSelected(day) ? 'selected' : ''} ${dayEntries.length > 0 ? 'has-entries' : ''}`}
                 onClick={() => onTimePeriodSelect(day, 'day')}
+                style={{ '--zodiac-gradient': gradientColor } as React.CSSProperties}
               >
                 <div className="cell-entries-vertical">
                   {dayEntries.map((entry, eIdx) => (
@@ -550,7 +573,12 @@ export default function TimelineView({
                 className={`timeline-cell month-cell ${isSelected(month) ? 'selected' : ''} ${monthEntries.length > 0 ? 'has-entries' : ''}`}
                 onClick={() => onTimePeriodSelect(month, 'month')}
               >
-                <div className="cell-month-label">{formatDate(month, 'MMM')}</div>
+                <div 
+                  className="cell-month-label"
+                  style={{ color: getZodiacColor(new Date(month.getFullYear(), month.getMonth(), 15)) }}
+                >
+                  {formatDate(month, 'MMM')}
+                </div>
                 {allMonthEntries.length > 0 && (
                   <div className="month-pixel-map">
                     {pixelMap.map((color, pixelIdx) => (
@@ -603,14 +631,21 @@ export default function TimelineView({
             const yearEntries = getEntriesForDate(year, 'decade');
             const allYearEntries = getAllEntriesForYear(year.getFullYear());
             const pixelMap = createYearPixelMap(allYearEntries);
+            const yearGradientColor = getZodiacGradientColorForYear(year.getFullYear());
             
             return (
               <div
                 key={idx}
                 className={`timeline-cell year-cell ${isSelected(year) ? 'selected' : ''} ${yearEntries.length > 0 ? 'has-entries' : ''}`}
                 onClick={() => onTimePeriodSelect(year, 'year')}
+                style={{ '--zodiac-gradient': yearGradientColor } as React.CSSProperties}
               >
-                <div className="cell-year-label">{year.getFullYear()}</div>
+                <div 
+                  className="cell-year-label"
+                  style={{ color: yearGradientColor }}
+                >
+                  {year.getFullYear()}
+                </div>
                 {allYearEntries.length > 0 && (
                   <div className="year-pixel-map">
                     {pixelMap.map((color, pixelIdx) => (

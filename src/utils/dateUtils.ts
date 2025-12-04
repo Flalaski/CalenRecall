@@ -111,3 +111,202 @@ export function getCanonicalDate(date: Date, timeRange: 'decade' | 'year' | 'mon
   }
 }
 
+// Tropical zodiac color scheme
+// Each sign has a primary color for month titles
+const zodiacColors: { [key: string]: string } = {
+  'aries': '#FF4444',      // Red (March 21 - April 19)
+  'taurus': '#4CAF50',     // Green (April 20 - May 20)
+  'gemini': '#FFD700',     // Gold/Yellow (May 21 - June 20)
+  'cancer': '#C0C0C0',     // Silver (June 21 - July 22)
+  'leo': '#FFA500',        // Orange/Gold (July 23 - August 22)
+  'virgo': '#8B4513',      // Brown (August 23 - September 22)
+  'libra': '#FF69B4',      // Pink (September 23 - October 22)
+  'scorpio': '#8B0000',    // Dark Red (October 23 - November 21)
+  'sagittarius': '#9370DB', // Purple (November 22 - December 21)
+  'capricorn': '#2F4F2F',   // Dark Green (December 22 - January 19)
+  'aquarius': '#4169E1',    // Blue (January 20 - February 18)
+  'pisces': '#20B2AA',      // Sea Green (February 19 - March 20)
+};
+
+// Get zodiac sign for a given date (tropical zodiac)
+function getZodiacSign(date: Date): string {
+  const month = date.getMonth() + 1; // 1-12
+  const day = date.getDate();
+  
+  if ((month === 3 && day >= 21) || (month === 4 && day <= 19)) return 'aries';
+  if ((month === 4 && day >= 20) || (month === 5 && day <= 20)) return 'taurus';
+  if ((month === 5 && day >= 21) || (month === 6 && day <= 20)) return 'gemini';
+  if ((month === 6 && day >= 21) || (month === 7 && day <= 22)) return 'cancer';
+  if ((month === 7 && day >= 23) || (month === 8 && day <= 22)) return 'leo';
+  if ((month === 8 && day >= 23) || (month === 9 && day <= 22)) return 'virgo';
+  if ((month === 9 && day >= 23) || (month === 10 && day <= 22)) return 'libra';
+  if ((month === 10 && day >= 23) || (month === 11 && day <= 21)) return 'scorpio';
+  if ((month === 11 && day >= 22) || (month === 12 && day <= 21)) return 'sagittarius';
+  if ((month === 12 && day >= 22) || (month === 1 && day <= 19)) return 'capricorn';
+  if ((month === 1 && day >= 20) || (month === 2 && day <= 18)) return 'aquarius';
+  return 'pisces'; // February 19 - March 20
+}
+
+// Get zodiac color for a date (for month titles)
+export function getZodiacColor(date: Date): string {
+  const sign = getZodiacSign(date);
+  return zodiacColors[sign];
+}
+
+// Get gradient color for a day, interpolating between zodiac signs
+// This creates a smooth rainbow gradient throughout the year
+export function getZodiacGradientColor(date: Date): string {
+  const year = date.getFullYear();
+  
+  // Calculate day of year (1-365/366)
+  const startOfYear = new Date(year, 0, 1);
+  const dayOfYear = Math.floor((date.getTime() - startOfYear.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+  
+  // Define zodiac periods by day of year (using March 21 as start of Aries = day 80)
+  // Adjust for leap years if needed
+  const isLeapYear = (year % 4 === 0 && year % 100 !== 0) || (year % 400 === 0);
+  const daysInYear = isLeapYear ? 366 : 365;
+  
+  const zodiacPeriods = [
+    { sign: 'aries', startDay: 80, endDay: 110 },      // March 21 - April 19
+    { sign: 'taurus', startDay: 110, endDay: 141 },     // April 20 - May 20
+    { sign: 'gemini', startDay: 141, endDay: 172 },     // May 21 - June 20
+    { sign: 'cancer', startDay: 172, endDay: 203 },     // June 21 - July 22
+    { sign: 'leo', startDay: 203, endDay: 235 },       // July 23 - August 22
+    { sign: 'virgo', startDay: 235, endDay: 266 },      // August 23 - September 22
+    { sign: 'libra', startDay: 266, endDay: 296 },      // September 23 - October 22
+    { sign: 'scorpio', startDay: 296, endDay: 326 },    // October 23 - November 21
+    { sign: 'sagittarius', startDay: 326, endDay: 356 }, // November 22 - December 21
+    { sign: 'capricorn', startDay: 356, endDay: 20 },   // December 22 - January 19 (wraps)
+    { sign: 'aquarius', startDay: 20, endDay: 51 },     // January 20 - February 18
+    { sign: 'pisces', startDay: 51, endDay: 80 },       // February 19 - March 20
+  ];
+  
+  // Find which period this day falls into
+  let currentPeriod = zodiacPeriods[0];
+  let nextPeriod = zodiacPeriods[1];
+  
+  for (let i = 0; i < zodiacPeriods.length; i++) {
+    const period = zodiacPeriods[i];
+    const nextIdx = (i + 1) % zodiacPeriods.length;
+    const next = zodiacPeriods[nextIdx];
+    
+    let inPeriod = false;
+    if (period.startDay > period.endDay) {
+      // Wraps around year (Capricorn: Dec 22 - Jan 19)
+      inPeriod = dayOfYear >= period.startDay || dayOfYear < period.endDay;
+    } else {
+      inPeriod = dayOfYear >= period.startDay && dayOfYear < period.endDay;
+    }
+    
+    if (inPeriod) {
+      currentPeriod = period;
+      nextPeriod = next;
+      break;
+    }
+  }
+  
+  // Calculate position within the period (0 to 1)
+  let position: number;
+  if (currentPeriod.startDay > currentPeriod.endDay) {
+    // Wraps around year
+    const periodLength = (daysInYear - currentPeriod.startDay) + currentPeriod.endDay;
+    if (dayOfYear >= currentPeriod.startDay) {
+      position = (dayOfYear - currentPeriod.startDay) / periodLength;
+    } else {
+      position = ((daysInYear - currentPeriod.startDay) + dayOfYear) / periodLength;
+    }
+  } else {
+    const periodLength = currentPeriod.endDay - currentPeriod.startDay;
+    position = (dayOfYear - currentPeriod.startDay) / periodLength;
+  }
+  
+  // Clamp position to 0-1
+  position = Math.max(0, Math.min(1, position));
+  
+  // Interpolate between current and next sign colors
+  const currentColor = zodiacColors[currentPeriod.sign];
+  const nextColor = zodiacColors[nextPeriod.sign];
+  
+  const currentRgb = hexToRgb(currentColor);
+  const nextRgb = hexToRgb(nextColor);
+  
+  if (!currentRgb || !nextRgb) return currentColor;
+  
+  const r = Math.round(currentRgb.r + (nextRgb.r - currentRgb.r) * position);
+  const g = Math.round(currentRgb.g + (nextRgb.g - currentRgb.g) * position);
+  const b = Math.round(currentRgb.b + (nextRgb.b - currentRgb.b) * position);
+  
+  return rgbToHex(r, g, b);
+}
+
+// Helper function to convert hex to RGB
+function hexToRgb(hex: string): { r: number; g: number; b: number } | null {
+  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  return result ? {
+    r: parseInt(result[1], 16),
+    g: parseInt(result[2], 16),
+    b: parseInt(result[3], 16)
+  } : null;
+}
+
+// Helper function to convert RGB to hex
+function rgbToHex(r: number, g: number, b: number): string {
+  return '#' + [r, g, b].map(x => {
+    const hex = x.toString(16);
+    return hex.length === 1 ? '0' + hex : hex;
+  }).join('');
+}
+
+// Get zodiac gradient color for a year within its decade
+// This cycles through all 12 zodiac signs over the 10-year decade period
+export function getZodiacGradientColorForYear(year: number): string {
+  // Get the decade start (e.g., 2020 for years 2020-2029)
+  const decadeStart = Math.floor(year / 10) * 10;
+  
+  // Calculate position within decade (0-9 for the 10 years)
+  const yearPosition = year - decadeStart;
+  
+  // Map the 10-year period to cycle through 12 zodiac signs
+  // Each year gets approximately 1.2 signs worth of the cycle
+  // We'll create a smooth gradient that cycles through all 12 signs
+  const zodiacSigns = [
+    'aries', 'taurus', 'gemini', 'cancer', 'leo', 'virgo',
+    'libra', 'scorpio', 'sagittarius', 'capricorn', 'aquarius', 'pisces'
+  ];
+  
+  // Calculate position in the zodiac cycle (0-1, cycling through all 12 signs)
+  // Year 0 of decade maps to start of Aries, Year 9 maps near end of cycle
+  const cyclePosition = (yearPosition / 10) * 12; // 0 to 10.8 (slightly more than one full cycle)
+  
+  // Find which zodiac period this falls into
+  const signIndex = Math.floor(cyclePosition) % 12;
+  const nextSignIndex = (signIndex + 1) % 12;
+  
+  // Position within the current sign period (0-1)
+  const positionInSign = cyclePosition - Math.floor(cyclePosition);
+  
+  // Get colors for current and next signs
+  const currentColor = zodiacColors[zodiacSigns[signIndex]];
+  const nextColor = zodiacColors[zodiacSigns[nextSignIndex]];
+  
+  // Interpolate between the two colors
+  const currentRgb = hexToRgb(currentColor);
+  const nextRgb = hexToRgb(nextColor);
+  
+  if (!currentRgb || !nextRgb) return currentColor;
+  
+  const r = Math.round(currentRgb.r + (nextRgb.r - currentRgb.r) * positionInSign);
+  const g = Math.round(currentRgb.g + (nextRgb.g - currentRgb.g) * positionInSign);
+  const b = Math.round(currentRgb.b + (nextRgb.b - currentRgb.b) * positionInSign);
+  
+  return rgbToHex(r, g, b);
+}
+
+// Get zodiac color for a decade (uses the middle year of the decade)
+export function getZodiacColorForDecade(decadeStart: number): string {
+  // Use year 5 (middle of the decade) as representative
+  const middleYear = decadeStart + 5;
+  return getZodiacGradientColorForYear(middleYear);
+}
+

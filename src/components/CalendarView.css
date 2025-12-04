@@ -48,6 +48,30 @@
   justify-content: center;
 }
 
+.calendar-cell.day-cell {
+  border-left: 4px solid var(--zodiac-gradient, #e0e0e0);
+  background: white;
+  position: relative;
+}
+
+.calendar-cell.day-cell::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  right: 0;
+  background: var(--zodiac-gradient, transparent);
+  opacity: 0.08;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.calendar-cell.day-cell .cell-content {
+  position: relative;
+  z-index: 1;
+}
+
 .calendar-cell:hover {
   background: #f0f0f0;
   transform: scale(1.02);
@@ -122,6 +146,11 @@
   font-size: 1.5rem;
 }
 
+.cell-label.month-title {
+  color: var(--zodiac-color, #333);
+  font-weight: 600;
+}
+
 .entry-indicator {
   position: absolute;
   bottom: 4px;
@@ -164,6 +193,29 @@
 .year-cell,
 .month-cell {
   min-height: 120px;
+}
+
+.calendar-cell.year-cell {
+  border-left: 5px solid var(--zodiac-gradient, #e0e0e0);
+  position: relative;
+}
+
+.calendar-cell.year-cell::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  right: 0;
+  background: var(--zodiac-gradient, transparent);
+  opacity: 0.06;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.calendar-cell.year-cell .cell-content {
+  position: relative;
+  z-index: 1;
 }
 
 .calendar-day-view {
