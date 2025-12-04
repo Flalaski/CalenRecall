@@ -2467,9 +2467,13 @@ export default function GlobalTimelineMinimap({
                 marginBottom: 0,
               };
               
+              // Use truly unique key based on date and position to prevent React element reuse
+              const decadeDateTimestamp = mark.date ? mark.date.getTime() : Date.now() + idx;
+              const decadeUniqueKey = `decade-label-${decadeDateTimestamp}-${labelPosition}`;
+              
               return (
                 <div
-                  key={`decade-label-${idx}`}
+                  key={decadeUniqueKey}
                   className={`scale-label decade-label ${viewMode === 'decade' ? 'current-scale' : ''}`}
                   style={decadeLabelStyle}
                   data-position={labelPosition}
@@ -2524,9 +2528,13 @@ export default function GlobalTimelineMinimap({
                 marginBottom: 0,
               };
               
+              // Use truly unique key based on date and position to prevent React element reuse
+              const yearDateTimestamp = mark.date ? mark.date.getTime() : Date.now() + idx;
+              const yearUniqueKey = `year-label-${yearDateTimestamp}-${labelPosition}`;
+              
               return (
                 <div
-                  key={`year-label-${idx}`}
+                  key={yearUniqueKey}
                   className={`scale-label year-label ${viewMode === 'year' ? 'current-scale' : ''}`}
                   style={yearLabelStyle}
                   data-position={labelPosition}
@@ -2580,17 +2588,22 @@ export default function GlobalTimelineMinimap({
               const calculatedOpacity = 1 - (distanceFromIndicator / maxDistanceForFade);
               const labelOpacity = Math.max(0.1, Math.min(1, calculatedOpacity));
               
-              // Use a unique key that includes the date to prevent React from reusing elements
-              const uniqueKey = `year-minor-label-${mark.date ? mark.date.getTime() : idx}-${idx}`;
+              // Use a truly unique key based on date timestamp to prevent React from reusing elements
+              // This ensures each label gets its own DOM element even if positions are similar
+              const dateTimestamp = mark.date ? mark.date.getTime() : Date.now() + idx;
+              const uniqueKey = `year-minor-label-${dateTimestamp}-${labelPosition}`;
               
               // Get zodiac color for the month
               const monthDate = mark.date ? new Date(mark.date.getFullYear(), mark.date.getMonth(), 15) : new Date();
               const zodiacColor = getZodiacColor(monthDate);
               
               // Build the style object explicitly to ensure all properties are set correctly
+              // CRITICAL: left must be set as a string with % to work correctly
+              const leftValue = `${labelPosition}%`;
+              
               const labelStyle: React.CSSProperties = {
                 position: 'absolute',
-                left: `${labelPosition}%`,
+                left: leftValue, // Explicitly set as percentage string
                 top: '48px',
                 color: zodiacColor,
                 opacity: labelOpacity,
@@ -2603,7 +2616,15 @@ export default function GlobalTimelineMinimap({
                 marginRight: 0,
                 marginTop: 0,
                 marginBottom: 0,
+                // Force override any CSS that might conflict
+                width: 'auto',
+                height: 'auto',
               };
+              
+              // Debug: Log if label position is very small (might be clustering)
+              if (labelPosition < 5 && idx < 10) {
+                console.log(`[DEBUG] Year minor label cluster check: "${mark.label}" at position ${labelPosition}%, date: ${mark.date ? formatDate(mark.date) : 'no date'}, style left: ${labelStyle.left}`);
+              }
               
               return (
                 <div
@@ -2612,6 +2633,7 @@ export default function GlobalTimelineMinimap({
                   style={labelStyle}
                   data-position={labelPosition}
                   data-label={mark.label}
+                  data-debug={`pos:${labelPosition},opacity:${labelOpacity.toFixed(2)}`}
                 >
                   {mark.label}
                 </div>
