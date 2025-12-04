@@ -16,9 +16,18 @@ function App() {
   const [isEditing, setIsEditing] = useState(false);
   const [preferences, setPreferences] = useState<Preferences>({});
   const [preferencesLoaded, setPreferencesLoaded] = useState(false);
+  
+  // Track if initial load has completed - after this, default view mode should NEVER be applied
+  const initialLoadCompleteRef = useRef(false);
+  const hasUserInteractedRef = useRef(false);
 
-  // Load preferences on startup
+  // Load preferences on startup - ONLY ONCE, on initial mount
   useEffect(() => {
+    // Only run on the very first mount
+    if (initialLoadCompleteRef.current) {
+      return;
+    }
+    
     const loadPreferences = async () => {
       try {
         if (window.electronAPI) {
@@ -26,6 +35,7 @@ function App() {
           setPreferences(prefs);
           
           // Restore last viewed position if enabled, otherwise use default view mode
+          // This ONLY happens on initial load - never after user interaction
           if (prefs.restoreLastView && prefs.lastViewedDate && prefs.lastViewedMode) {
             const lastDate = new Date(prefs.lastViewedDate);
             const validTimeRanges: TimeRange[] = ['decade', 'year', 'month', 'week', 'day'];
@@ -39,20 +49,20 @@ function App() {
                 setSelectedDate(lastDate);
                 setViewMode(prefs.lastViewedMode);
               } else {
-                // Date out of reasonable range, fall back to default
-                if (prefs.defaultViewMode) {
+                // Date out of reasonable range, fall back to default (ONLY on initial load)
+                if (prefs.defaultViewMode && !hasUserInteractedRef.current) {
                   setViewMode(prefs.defaultViewMode);
                 }
               }
             } else {
-              // Invalid date or mode, fall back to default
-              if (prefs.defaultViewMode) {
+              // Invalid date or mode, fall back to default (ONLY on initial load)
+              if (prefs.defaultViewMode && !hasUserInteractedRef.current) {
                 setViewMode(prefs.defaultViewMode);
               }
             }
           } else {
-            // Apply default view mode
-            if (prefs.defaultViewMode) {
+            // Apply default view mode (ONLY on initial load, before any user interaction)
+            if (prefs.defaultViewMode && !hasUserInteractedRef.current) {
               setViewMode(prefs.defaultViewMode);
             }
           }
@@ -81,15 +91,11 @@ function App() {
         console.error('Error loading preferences:', error);
       } finally {
         setPreferencesLoaded(true);
+        initialLoadCompleteRef.current = true; // Mark initial load as complete
       }
     };
     
     loadPreferences();
-    
-    // Listen for preference changes
-    const handlePreferenceChange = () => {
-      loadPreferences();
-    };
     
     // Check for preference updates periodically (when preferences window closes)
     // NOTE: Do NOT reset viewMode to default - default view mode only applies on initial load
@@ -97,10 +103,8 @@ function App() {
       if (window.electronAPI) {
         window.electronAPI.getAllPreferences().then(prefs => {
           setPreferences(prefs);
-          // Removed: Don't reset viewMode to default - user's current view should be preserved
-          // if (prefs.defaultViewMode && prefs.defaultViewMode !== viewMode) {
-          //   setViewMode(prefs.defaultViewMode);
-          // }
+          // NEVER reset viewMode - user's current view should always be preserved
+          // Default view mode is ONLY applied on the very first load, never after
           const theme = prefs.theme || 'light';
           document.documentElement.setAttribute('data-theme', theme);
           
@@ -117,6 +121,8 @@ function App() {
     }, 1000);
     
     return () => clearInterval(interval);
+    // Empty dependency array - this effect ONLY runs once on mount
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Save last viewed position when date or view mode changes (if restoreLastView is enabled)
@@ -168,6 +174,7 @@ function App() {
   };
 
   const handleTimePeriodSelect = (date: Date, newViewMode: TimeRange) => {
+    hasUserInteractedRef.current = true; // Mark that user has interacted
     setSelectedDate(date);
     setViewMode(newViewMode);
     setIsEditing(false);
@@ -175,12 +182,14 @@ function App() {
   };
 
   const handleViewModeChange = (mode: TimeRange) => {
+    hasUserInteractedRef.current = true; // Mark that user has interacted
     setViewMode(mode);
     setIsEditing(false);
     setIsNewEntry(false);
   };
 
   const handleEntrySelect = (entry: JournalEntry) => {
+    hasUserInteractedRef.current = true; // Mark that user has interacted
     // Navigate to the entry's date and time range, then select the entry
     const entryDate = new Date(entry.date);
     setSelectedDate(entryDate);
