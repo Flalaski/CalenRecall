@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { JournalEntry, TimeRange } from '../types';
 import { formatDate, getDaysInMonth, getDaysInWeek, isToday, getWeekStart, getWeekEnd } from '../utils/dateUtils';
+import { isSameDay, isSameMonth, isSameYear } from 'date-fns';
 import './TimelineView.css';
 
 interface TimelineViewProps {
@@ -98,6 +99,25 @@ export default function TimelineView({
       setEntries([]);
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Check if a date is the currently selected date (at appropriate granularity)
+  const isSelected = (date: Date): boolean => {
+    switch (viewMode) {
+      case 'day':
+      case 'week':
+      case 'month':
+        // For day/week/month views, compare at day level
+        return isSameDay(date, selectedDate);
+      case 'year':
+        // For year view, compare at month level
+        return isSameMonth(date, selectedDate) && isSameYear(date, selectedDate);
+      case 'decade':
+        // For decade view, compare at year level
+        return isSameYear(date, selectedDate);
+      default:
+        return false;
     }
   };
 
@@ -335,7 +355,7 @@ export default function TimelineView({
                 return (
                   <div
                     key={idx}
-                    className={`timeline-cell day-cell ${isToday(day) ? 'today' : ''} ${dayEntries.length > 0 ? 'has-entries' : ''}`}
+                    className={`timeline-cell day-cell ${isToday(day) ? 'today' : ''} ${isSelected(day) ? 'selected' : ''} ${dayEntries.length > 0 ? 'has-entries' : ''}`}
                     onClick={() => onTimePeriodSelect(day, 'day')}
                   >
                     <div className="cell-date">{day.getDate()}</div>
@@ -433,7 +453,7 @@ export default function TimelineView({
             return (
               <div
                 key={idx}
-                className={`timeline-cell day-cell week-day-cell ${isToday(day) ? 'today' : ''} ${dayEntries.length > 0 ? 'has-entries' : ''}`}
+                className={`timeline-cell day-cell week-day-cell ${isToday(day) ? 'today' : ''} ${isSelected(day) ? 'selected' : ''} ${dayEntries.length > 0 ? 'has-entries' : ''}`}
                 onClick={() => onTimePeriodSelect(day, 'day')}
               >
                 <div className="cell-entries-vertical">
@@ -527,7 +547,7 @@ export default function TimelineView({
             return (
               <div
                 key={idx}
-                className={`timeline-cell month-cell ${monthEntries.length > 0 ? 'has-entries' : ''}`}
+                className={`timeline-cell month-cell ${isSelected(month) ? 'selected' : ''} ${monthEntries.length > 0 ? 'has-entries' : ''}`}
                 onClick={() => onTimePeriodSelect(month, 'month')}
               >
                 <div className="cell-month-label">{formatDate(month, 'MMM')}</div>
@@ -587,7 +607,7 @@ export default function TimelineView({
             return (
               <div
                 key={idx}
-                className={`timeline-cell year-cell ${yearEntries.length > 0 ? 'has-entries' : ''}`}
+                className={`timeline-cell year-cell ${isSelected(year) ? 'selected' : ''} ${yearEntries.length > 0 ? 'has-entries' : ''}`}
                 onClick={() => onTimePeriodSelect(year, 'year')}
               >
                 <div className="cell-year-label">{year.getFullYear()}</div>

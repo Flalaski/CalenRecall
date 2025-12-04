@@ -168,6 +168,11 @@ export default function EntryViewer({
     }
   };
 
+  const getNewEntryButtonText = (): string => {
+    const timeRangeLabel = getTimeRangeLabel(viewMode);
+    return `+ New Entry for this ${timeRangeLabel}`;
+  };
+
   // If a specific entry is selected, show it
   if (entry) {
     return (
@@ -180,7 +185,7 @@ export default function EntryViewer({
                 Edit
               </button>
               <button className="new-entry-button-header" onClick={onNewEntry}>
-                + New Entry
+                {getNewEntryButtonText()}
               </button>
             </div>
           </div>
@@ -215,7 +220,7 @@ export default function EntryViewer({
         <div className="header-top">
           <h3>{getDateLabel()}</h3>
           <button className="new-entry-button-header" onClick={onNewEntry}>
-            + New Entry
+            {getNewEntryButtonText()}
           </button>
         </div>
       </div>

@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react';
-import { Preferences } from '../types';
+import { Preferences, ExportFormat } from '../types';
 import './Preferences.css';
 
 export default function PreferencesComponent() {
   const [preferences, setPreferences] = useState<Preferences>({});
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [saved, setSaved] = useState(false);
+  const [exportFormat, setExportFormat] = useState<ExportFormat>('markdown');
+  const [isExporting, setIsExporting] = useState(false);
 
   useEffect(() => {
     loadPreferences();
@@ -36,58 +36,12 @@ export default function PreferencesComponent() {
       }
       const prefs = await window.electronAPI.getAllPreferences();
       setPreferences(prefs);
+
+      // Initialize export format from any stored preference in future (for now default)
     } catch (error) {
       console.error('Error loading preferences:', error);
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleSave = async () => {
-    setSaving(true);
-    setSaved(false);
-    try {
-      if (!window.electronAPI) {
-        throw new Error('Electron API not available');
-      }
-      
-      // Save all preferences
-      for (const [key, value] of Object.entries(preferences)) {
-        await window.electronAPI.setPreference(key as keyof Preferences, value);
-      }
-      
-      // Apply theme and font size immediately
-      const theme = preferences.theme || 'light';
-      document.documentElement.setAttribute('data-theme', theme);
-      
-      // Handle auto theme
-      if (theme === 'auto') {
-        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-        document.documentElement.setAttribute('data-theme', prefersDark ? 'dark' : 'light');
-      }
-      
-      if (preferences.fontSize) {
-        document.documentElement.setAttribute('data-font-size', preferences.fontSize);
-      }
-      
-      setSaved(true);
-      setTimeout(() => {
-        setSaved(false);
-        // Close the preferences window after saving
-        if (window.electronAPI && window.electronAPI.closePreferencesWindow) {
-          window.electronAPI.closePreferencesWindow();
-        } else {
-          // Fallback: try to close via window.close() if in Electron
-          if (window.location.protocol === 'file:' || window.location.hostname === 'localhost') {
-            window.close();
-          }
-        }
-      }, 1000);
-    } catch (error) {
-      console.error('Error saving preferences:', error);
-      alert('Failed to save preferences. Please try again.');
-    } finally {
-      setSaving(false);
     }
   };
 
@@ -99,8 +53,6 @@ export default function PreferencesComponent() {
         }
         await window.electronAPI.resetPreferences();
         await loadPreferences();
-        setSaved(true);
-        setTimeout(() => setSaved(false), 2000);
       } catch (error) {
         console.error('Error resetting preferences:', error);
         alert('Failed to reset preferences. Please try again.');
@@ -129,6 +81,23 @@ export default function PreferencesComponent() {
       }).catch(error => {
         console.error('Error auto-saving preference:', error);
       });
+    }
+  };
+
+  const handleExport = async () => {
+    if (!window.electronAPI || isExporting) return;
+    try {
+      setIsExporting(true);
+      const result = await window.electronAPI.exportEntries(exportFormat);
+      if (!result.success && !result.canceled) {
+        console.error('Export failed:', result.error);
+        alert('Export failed. Please try again.');
+      }
+    } catch (error) {
+      console.error('Error during export:', error);
+      alert('Export failed. Please try again.');
+    } finally {
+      setIsExporting(false);
     }
   };
 
@@ -290,6 +259,38 @@ export default function PreferencesComponent() {
               <small>How often to auto-save (5-300 seconds)</small>
             </div>
           )}
+        </div>
+
+        <div className="preferences-section">
+          <h2>Export / Storybook</h2>
+          <div className="preference-item export-toolbar">
+            <label>Export all entries as</label>
+            <div className="export-controls">
+              <select
+                value={exportFormat}
+                onChange={(e) => setExportFormat(e.target.value as ExportFormat)}
+                disabled={isExporting}
+              >
+                <option value="markdown">Markdown (.md)</option>
+                <option value="text">Plain text (.txt)</option>
+                <option value="json">JSON (.json)</option>
+                <option value="rtf">Rich Text (.rtf)</option>
+                <option value="pdf">PDF (.pdf)</option>
+                <option value="dec">Decades summary (.dec)</option>
+              </select>
+              <button
+                className="preferences-button save-button"
+                onClick={handleExport}
+                disabled={isExporting}
+              >
+                {isExporting ? 'Exporting…' : 'Export Storybook'}
+              </button>
+            </div>
+            <small>
+              Exports all journal entries into a single document file. Choose the format you prefer,
+              then save it to your filesystem.
+            </small>
+          </div>
         </div>
 
         <div className="preferences-section">

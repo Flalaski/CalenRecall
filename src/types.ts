@@ -11,6 +11,8 @@ export interface JournalEntry {
 
 export type TimeRange = 'decade' | 'year' | 'month' | 'week' | 'day';
 
+export type ExportFormat = 'markdown' | 'text' | 'json' | 'rtf' | 'pdf' | 'dec';
+
 export interface Preferences {
   defaultViewMode?: 'decade' | 'year' | 'month' | 'week' | 'day';
   windowWidth?: number;
@@ -37,6 +39,9 @@ declare global {
       deleteEntry: (date: string, timeRange: TimeRange) => Promise<void>;
       searchEntries: (query: string) => Promise<JournalEntry[]>;
       getEntriesByRange: (range: TimeRange, value: number) => Promise<JournalEntry[]>;
+      exportEntries: (
+        format: ExportFormat
+      ) => Promise<{ success: boolean; canceled?: boolean; error?: string; path?: string }>;
       getPreference: <K extends keyof Preferences>(key: K) => Promise<Preferences[K]>;
       setPreference: <K extends keyof Preferences>(key: K, value: Preferences[K]) => Promise<{ success: boolean }>;
       getAllPreferences: () => Promise<Preferences>;

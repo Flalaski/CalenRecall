@@ -86,6 +86,11 @@ export default function JournalList({
     }
   };
 
+  const getNewEntryButtonText = (): string => {
+    const timeRangeLabel = getTimeRangeLabel(viewMode);
+    return `+ New Entry for this ${timeRangeLabel}`;
+  };
+
   if (loading) {
     return (
       <div className="journal-list">
@@ -99,7 +104,7 @@ export default function JournalList({
       <div className="journal-list-header">
         <h3>Journal Entries</h3>
         <button className="new-entry-button" onClick={onNewEntry}>
-          + New Entry
+          {getNewEntryButtonText()}
         </button>
       </div>
       <div className="journal-list-content">

@@ -10,6 +10,7 @@ const isDev = process.env.NODE_ENV === 'development' || !app.isPackaged;
 
 function createWindow() {
   // Load preferences for window size/position
+  // Note: Database must be initialized before calling getAllPreferences
   const prefs = getAllPreferences();
   
   mainWindow = new BrowserWindow({

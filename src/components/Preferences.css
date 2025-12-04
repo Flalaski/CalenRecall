@@ -152,6 +152,16 @@
   font-size: 12px;
 }
 
+.export-toolbar .export-controls {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.export-toolbar .export-controls select {
+  max-width: 220px;
+}
+
 .preference-note {
   display: block;
   margin-top: 15px;

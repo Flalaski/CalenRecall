@@ -7,11 +7,10 @@ import {
   getYearsInDecade,
   formatDate,
   isToday,
-  getCanonicalDate,
   getWeekStart,
   getWeekEnd,
 } from '../utils/dateUtils';
-import { getEntriesForRange } from '../services/journalService';
+import { isSameDay, isSameMonth, isSameYear } from 'date-fns';
 import { JournalEntry } from '../types';
 import './CalendarView.css';
 
@@ -116,6 +115,25 @@ export default function CalendarView({
     }
   };
 
+  // Check if a date is the currently selected date (at appropriate granularity)
+  const isSelected = (date: Date): boolean => {
+    switch (viewMode) {
+      case 'day':
+      case 'week':
+      case 'month':
+        // For day/week/month views, compare at day level
+        return isSameDay(date, selectedDate);
+      case 'year':
+        // For year view, compare at month level
+        return isSameMonth(date, selectedDate) && isSameYear(date, selectedDate);
+      case 'decade':
+        // For decade view, compare at year level
+        return isSameYear(date, selectedDate);
+      default:
+        return false;
+    }
+  };
+
   // Check if a date falls within any entry's time range
   // Similar to TimelineView's getEntriesForDate logic
   const hasEntry = (date: Date): boolean => {
@@ -193,7 +211,7 @@ export default function CalendarView({
         {years.map((year, idx) => (
           <div
             key={idx}
-            className={`calendar-cell year-cell ${hasEntry(year) ? 'has-entry' : ''}`}
+            className={`calendar-cell year-cell ${isSelected(year) ? 'selected' : ''} ${hasEntry(year) ? 'has-entry' : ''}`}
             onClick={() => onTimePeriodSelect(year, 'year')}
           >
             <div className="cell-content">
@@ -217,7 +235,7 @@ export default function CalendarView({
         {months.map((month, idx) => (
           <div
             key={idx}
-            className={`calendar-cell month-cell ${hasEntry(month) ? 'has-entry' : ''}`}
+            className={`calendar-cell month-cell ${isSelected(month) ? 'selected' : ''} ${hasEntry(month) ? 'has-entry' : ''}`}
             onClick={() => onTimePeriodSelect(month, 'month')}
           >
             <div className="cell-content">
@@ -252,7 +270,7 @@ export default function CalendarView({
           {days.map((day, idx) => (
             <div
               key={idx}
-              className={`calendar-cell day-cell ${isToday(day) ? 'today' : ''} ${hasEntry(day) ? 'has-entry' : ''}`}
+              className={`calendar-cell day-cell ${isToday(day) ? 'today' : ''} ${isSelected(day) ? 'selected' : ''} ${hasEntry(day) ? 'has-entry' : ''}`}
               onClick={() => onTimePeriodSelect(day, 'day')}
             >
               <div className="cell-content">
@@ -284,7 +302,7 @@ export default function CalendarView({
           {days.map((day, idx) => (
             <div
               key={idx}
-              className={`calendar-cell day-cell week-day-cell ${isToday(day) ? 'today' : ''} ${hasEntry(day) ? 'has-entry' : ''}`}
+              className={`calendar-cell day-cell week-day-cell ${isToday(day) ? 'today' : ''} ${isSelected(day) ? 'selected' : ''} ${hasEntry(day) ? 'has-entry' : ''}`}
               onClick={() => onTimePeriodSelect(day, 'day')}
             >
               <div className="cell-content">
@@ -301,7 +319,7 @@ export default function CalendarView({
     return (
       <div className="calendar-day-view">
         <div
-          className={`calendar-cell day-cell single-day ${isToday(selectedDate) ? 'today' : ''} ${hasEntry(selectedDate) ? 'has-entry' : ''}`}
+          className={`calendar-cell day-cell single-day ${isToday(selectedDate) ? 'today' : ''} ${isSelected(selectedDate) ? 'selected' : ''} ${hasEntry(selectedDate) ? 'has-entry' : ''}`}
         >
           <div className="cell-content">
             <div className="cell-label large">{formatDate(selectedDate, 'EEEE, MMMM d, yyyy')}</div>

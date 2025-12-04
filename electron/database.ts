@@ -237,6 +237,30 @@ export function getDatabase(): Database.Database {
   return db;
 }
 
+/**
+ * Get all journal entries in the database, ordered chronologically.
+ * This is used for full-archive exports (\"storybook\" export).
+ */
+export function getAllEntries(): JournalEntry[] {
+  const database = getDatabase();
+  const stmt = database.prepare(`
+    SELECT * FROM journal_entries
+    ORDER BY date ASC, time_range ASC, created_at ASC
+  `);
+
+  const rows = stmt.all() as any[];
+  return rows.map(row => ({
+    id: row.id,
+    date: row.date,
+    timeRange: row.time_range || 'day',
+    title: row.title,
+    content: row.content,
+    tags: row.tags ? JSON.parse(row.tags) : [],
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  }));
+}
+
 export function getEntries(startDate: string, endDate: string): JournalEntry[] {
   const database = getDatabase();
   const stmt = database.prepare(`

@@ -11,3 +11,6 @@ export interface JournalEntry {
 
 export type TimeRange = 'decade' | 'year' | 'month' | 'week' | 'day';
 
+// Supported export formats for storybook export
+export type ExportFormat = 'markdown' | 'text' | 'json' | 'rtf' | 'pdf' | 'dec';
+

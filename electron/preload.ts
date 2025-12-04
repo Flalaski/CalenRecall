@@ -1,5 +1,5 @@
 import { contextBridge, ipcRenderer } from 'electron';
-import { JournalEntry, TimeRange } from './types';
+import { JournalEntry, TimeRange, ExportFormat } from './types';
 
 export interface Preferences {
   defaultViewMode?: 'decade' | 'year' | 'month' | 'week' | 'day';
@@ -37,6 +37,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
   
   getEntriesByRange: (range: TimeRange, value: number): Promise<JournalEntry[]> =>
     ipcRenderer.invoke('get-entries-by-range', range, value),
+
+  // Export operations
+  exportEntries: (format: ExportFormat): Promise<{ success: boolean; canceled?: boolean; error?: string; path?: string }> =>
+    ipcRenderer.invoke('export-entries', format),
   
   // Preferences operations
   getPreference: <K extends keyof Preferences>(key: K): Promise<Preferences[K]> =>

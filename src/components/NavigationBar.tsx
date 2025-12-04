@@ -1,5 +1,5 @@
 import { TimeRange } from '../types';
-import { format, addMonths, subMonths, addYears, subYears, addWeeks, subWeeks, addDays, subDays } from 'date-fns';
+import { format, addMonths, addYears, addWeeks, addDays } from 'date-fns';
 import './NavigationBar.css';
 
 interface NavigationBarProps {

@@ -230,6 +230,7 @@
   margin-bottom: 0.75rem;
   display: -webkit-box;
   -webkit-line-clamp: 3;
+  line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
@@ -237,6 +238,7 @@
 .period-entry-item:hover .period-entry-content {
   display: block;
   -webkit-line-clamp: unset;
+  line-clamp: unset;
 }
 
 .period-entry-tags {

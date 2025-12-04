@@ -34,15 +34,7 @@ if not exist "node_modules" (
     echo.
 )
 
-REM Rebuild better-sqlite3 to ensure clean native module
-echo Rebuilding native dependencies...
-call npm rebuild better-sqlite3
-if errorlevel 1 (
-    echo WARNING: Failed to rebuild better-sqlite3, continuing anyway...
-)
-echo.
-
-echo Building application...
+echo Building application (includes rebuilding native dependencies for Electron)...
 call npm run build
 if errorlevel 1 (
     echo ERROR: Build failed

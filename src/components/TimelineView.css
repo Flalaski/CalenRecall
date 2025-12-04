@@ -206,12 +206,35 @@
   border: 2px solid #2196f3;
 }
 
+.timeline-cell.selected {
+  background: #bbdefb;
+  border: 2px solid #1976d2;
+  box-shadow: 0 0 8px rgba(25, 118, 210, 0.4);
+  z-index: 2;
+}
+
+.timeline-cell.selected.today {
+  background: #90caf9;
+  border: 2px solid #1565c0;
+  box-shadow: 0 0 10px rgba(21, 101, 192, 0.5);
+}
+
 .timeline-cell.has-entries {
   background: #fff9e6;
 }
 
 .timeline-cell.has-entries.today {
   background: #e1f5fe;
+}
+
+.timeline-cell.has-entries.selected {
+  background: #c5e1a5;
+  border: 2px solid #1976d2;
+}
+
+.timeline-cell.has-entries.selected.today {
+  background: #a5d6a7;
+  border: 2px solid #1565c0;
 }
 
 .cell-date {
