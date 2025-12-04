@@ -826,8 +826,29 @@ export default function GlobalTimelineMinimap({
     }
 
     const calculatePosition = (date: Date): number => {
-      const timeOffset = date.getTime() - startDate.getTime();
-      return Math.max(0, Math.min(100, (timeOffset / totalTime) * 100));
+      // Ensure we have valid dates and totalTime
+      if (!date || !startDate || !endDate || !isFinite(totalTime) || totalTime <= 0) {
+        return 0;
+      }
+      
+      const dateTime = date.getTime();
+      const startTime = startDate.getTime();
+      
+      // Calculate the time offset from the start
+      const timeOffset = dateTime - startTime;
+      
+      // Calculate position as a percentage (0-100)
+      const positionPercentage = (timeOffset / totalTime) * 100;
+      
+      // Clamp the position to valid range (0-100)
+      const clampedPosition = Math.max(0, Math.min(100, positionPercentage));
+      
+      // Ensure the result is a valid finite number
+      if (!isFinite(clampedPosition)) {
+        return 0;
+      }
+      
+      return clampedPosition;
     };
 
     const scales: {
@@ -886,20 +907,38 @@ export default function GlobalTimelineMinimap({
 
     const monthSet = new Set<number>();
     let current = new Date(startDate);
+    // Reset to the first day of the month for accurate month calculations
+    current = new Date(getYear(current), getMonth(current), 1);
     let monthCount = 0;
     const maxMonths = 120; // Limit to 10 years of months
     while (current <= endDate && monthCount < maxMonths) {
+      // Create month start date explicitly
       const monthStart = new Date(getYear(current), getMonth(current), 1);
       const monthKey = monthStart.getTime();
+      
+      // Only include months that fall within our date range
       if (monthStart >= startDate && monthStart <= endDate && !monthSet.has(monthKey)) {
         monthSet.add(monthKey);
-        scales.year.minor.push({
-          date: monthStart,
-          position: calculatePosition(monthStart),
-          label: getMonth(monthStart) % 3 === 0 ? formatDate(monthStart, 'MMM') : undefined,
-        });
+        
+        // Calculate position for this month
+        const monthPosition = calculatePosition(monthStart);
+        
+        // Only add labels for quarterly months (Jan=0, Apr=3, Jul=6, Oct=9)
+        const monthIndex = getMonth(monthStart);
+        const isQuarterlyMonth = monthIndex % 3 === 0;
+        
+        if (isQuarterlyMonth) {
+          // Ensure position is calculated correctly before storing
+          const finalPosition = isFinite(monthPosition) ? monthPosition : 0;
+          scales.year.minor.push({
+            date: new Date(monthStart.getTime()), // Ensure we store a fresh date object with correct timestamp
+            position: finalPosition,
+            label: formatDate(monthStart, 'MMM'),
+          });
+        }
         monthCount++;
       }
+      // Move to next month
       current = addMonths(current, 1);
     }
 
@@ -1048,7 +1087,16 @@ export default function GlobalTimelineMinimap({
     const clusterGroups = new Map<string, Array<{ entry: JournalEntry; position: number; color: string }>>();
     
     entries.forEach(entry => {
-      const entryDate = new Date(entry.date);
+      // Parse date string (YYYY-MM-DD) as local date to avoid timezone issues
+      // new Date("2025-12-04") interprets as UTC, but we need local time
+      const dateParts = entry.date.split('-');
+      const year = parseInt(dateParts[0], 10);
+      const month = parseInt(dateParts[1], 10) - 1; // Month is 0-indexed
+      const day = parseInt(dateParts[2], 10);
+      const rawEntryDate = new Date(year, month, day);
+      
+      // Use canonical date for the entry's timeRange to match how timeline segments are positioned
+      const entryDate = getCanonicalDate(rawEntryDate, entry.timeRange);
       const entryTime = entryDate.getTime() - timelineData.startDate!.getTime();
       const position = (entryTime / totalTime) * 100;
       const clampedPosition = Math.max(0, Math.min(100, position));
@@ -1201,13 +1249,15 @@ export default function GlobalTimelineMinimap({
 
 
   // Handle wheel scroll with reduced sensitivity
-  const handleWheel = (e: React.WheelEvent) => {
-    if (!containerRef.current || !timelineData.startDate || !timelineData.endDate) return;
+  // Note: This is called from a native event listener with { passive: false }
+  // to allow preventDefault() to work
+  const handleWheel = (e: WheelEvent) => {
+    if (!containerRef.current || !timelineDataRef.current.startDate || !timelineDataRef.current.endDate) return;
     
     e.preventDefault();
     
     // Calculate scroll increment based on visible range
-    const totalTime = timelineData.endDate.getTime() - timelineData.startDate.getTime();
+    const totalTime = timelineDataRef.current.endDate.getTime() - timelineDataRef.current.startDate.getTime();
     const visibleRangeDays = totalTime / (1000 * 60 * 60 * 24);
     
     // Scroll through a small portion of the visible range (about 5-10%)
@@ -1217,41 +1267,45 @@ export default function GlobalTimelineMinimap({
     let newDate: Date;
     
     // Use smaller increments that are proportional to the visible range
-    switch (viewMode) {
+    const currentViewMode = viewModeRef.current;
+    const currentSelectedDate = selectedDateRef.current;
+    const currentOnTimePeriodSelect = onTimePeriodSelectRef.current;
+    
+    switch (currentViewMode) {
       case 'decade': {
         // Scroll by about 1 year per scroll step
         const yearsToScroll = Math.max(1, Math.round(Math.abs(scrollDays) / 365));
-        newDate = addMonths(selectedDate, (scrollDays > 0 ? 1 : -1) * yearsToScroll * 12);
+        newDate = addMonths(currentSelectedDate, (scrollDays > 0 ? 1 : -1) * yearsToScroll * 12);
         break;
       }
       case 'year': {
         // Scroll by about 1 month per scroll step
         const monthsToScroll = Math.max(1, Math.round(Math.abs(scrollDays) / 30));
-        newDate = addMonths(selectedDate, (scrollDays > 0 ? 1 : -1) * monthsToScroll);
+        newDate = addMonths(currentSelectedDate, (scrollDays > 0 ? 1 : -1) * monthsToScroll);
         break;
       }
       case 'month': {
         // Scroll by about 1 week per scroll step
         const weeksToScroll = Math.max(1, Math.round(Math.abs(scrollDays) / 7));
-        newDate = addWeeks(selectedDate, (scrollDays > 0 ? 1 : -1) * weeksToScroll);
+        newDate = addWeeks(currentSelectedDate, (scrollDays > 0 ? 1 : -1) * weeksToScroll);
         break;
       }
       case 'week': {
         // Scroll by about 1 day per scroll step
         const daysToScroll = Math.max(1, Math.round(Math.abs(scrollDays)));
-        newDate = addDays(selectedDate, (scrollDays > 0 ? 1 : -1) * daysToScroll);
+        newDate = addDays(currentSelectedDate, (scrollDays > 0 ? 1 : -1) * daysToScroll);
         break;
       }
       case 'day': {
         // Scroll by 1 day per scroll step
-        newDate = addDays(selectedDate, scrollDays > 0 ? 1 : -1);
+        newDate = addDays(currentSelectedDate, scrollDays > 0 ? 1 : -1);
         break;
       }
       default:
         return;
     }
     
-    onTimePeriodSelect(newDate, viewMode);
+    currentOnTimePeriodSelect(newDate, currentViewMode);
   };
 
   // Store refs for drag handler to avoid recreating on every render
@@ -1355,6 +1409,17 @@ export default function GlobalTimelineMinimap({
     };
   }, []); // Empty deps - we use refs to access current values
 
+  // Handle wheel scroll with non-passive event listener to allow preventDefault()
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    container.addEventListener('wheel', handleWheel, { passive: false });
+    return () => {
+      container.removeEventListener('wheel', handleWheel);
+    };
+  }, []); // Empty deps - we use refs to access current values
+
   // Set up global mouse event listeners for dragging
   useEffect(() => {
     if (!isDragging || !dragStartPositionRef.current) {
@@ -1382,16 +1447,31 @@ export default function GlobalTimelineMinimap({
       if (initialMovementRef.current) {
         initialMovementRef.current.horizontal = totalHorizontalDelta;
         initialMovementRef.current.vertical = totalVerticalDelta;
-        
-        // If vertical movement is detected first (or is significant), lock horizontal
-        const verticalThreshold = 10; // pixels
-        if (Math.abs(totalVerticalDelta) > verticalThreshold && !horizontalLockedRef.current) {
-          // Check if vertical movement happened before significant horizontal movement
-          if (Math.abs(totalVerticalDelta) > Math.abs(totalHorizontalDelta) || Math.abs(totalHorizontalDelta) < 5) {
-            setHorizontalLocked(true);
-            horizontalLockedRef.current = true;
-          }
-        }
+      }
+      
+      // Horizontal dead zone: suppress horizontal movement when primarily moving vertically
+      // This makes it easier to zoom without accidentally moving the blips left/right
+      const horizontalDeadZone = 30; // pixels - ignore horizontal movement if within this
+      const verticalToHorizontalRatio = 2.0; // If vertical movement is X times horizontal, lock horizontal
+      
+      // Calculate if movement is primarily vertical
+      const absVertical = Math.abs(totalVerticalDelta);
+      const absHorizontal = Math.abs(totalHorizontalDelta);
+      
+      // Lock horizontal if:
+      // 1. Horizontal movement is within dead zone AND vertical movement is significant, OR
+      // 2. Vertical movement is significantly more than horizontal (ratio-based)
+      const shouldLockHorizontal = 
+        (absVertical > 10 && absHorizontal < horizontalDeadZone) || 
+        (absVertical > 15 && absVertical > absHorizontal * verticalToHorizontalRatio);
+      
+      if (shouldLockHorizontal && !horizontalLockedRef.current) {
+        setHorizontalLocked(true);
+        horizontalLockedRef.current = true;
+      } else if (!shouldLockHorizontal && horizontalLockedRef.current && absHorizontal > horizontalDeadZone) {
+        // Unlock if user explicitly moves horizontally beyond dead zone
+        setHorizontalLocked(false);
+        horizontalLockedRef.current = false;
       }
       
       // Calculate incremental vertical movement (scale change)
@@ -1875,7 +1955,6 @@ export default function GlobalTimelineMinimap({
         ref={containerRef}
         className={`minimap-container minimap-size-${minimapSize} ${isDragging ? 'dragging' : ''} ${mechanicalClick ? 'mechanical-click-active' : ''} ${horizontalLocked ? 'horizontal-locked' : ''}`}
         onMouseDown={handleMouseDown}
-        onWheel={handleWheel}
       >
         {/* Edge labels for time sections - positioned at center of each visual band */}
         <div className="edge-labels edge-labels-left">
@@ -2346,15 +2425,55 @@ export default function GlobalTimelineMinimap({
         <div className="scale-labels">
           {/* Decade labels */}
           {allScaleMarkings.decade.major
-            .filter(mark => Math.abs(mark.position - currentIndicatorMetrics.position) <= LOCALIZATION_RANGE)
+            .filter(mark => {
+              // Ensure we have a valid label and a valid numeric position
+              if (!mark.label) return false;
+              if (!isFinite(mark.position)) return false;
+              if (mark.position < 0 || mark.position > 100) return false;
+              return true;
+            })
             .map((mark, idx) => {
+              // Explicitly ensure position is a valid number between 0 and 100
+              const labelPosition = Math.max(0, Math.min(100, Number(mark.position)));
+              
+              // Get zodiac color for the decade
               const decadeStart = mark.date ? Math.floor(mark.date.getFullYear() / 10) * 10 : 0;
-              const zodiacColor = getZodiacColorForDecade(decadeStart);
-              return mark.label && (
+              const zodiacColor = getZodiacColorForDecade(decadeStart) || '#4a90e2';
+              
+              // Calculate opacity based on distance from indicator (fade with distance)
+              const indicatorPosition = isFinite(currentIndicatorMetrics.position) 
+                ? Number(currentIndicatorMetrics.position) 
+                : 50; // Default to center if invalid
+              const distanceFromIndicator = Math.abs(labelPosition - indicatorPosition);
+              const maxDistanceForFade = 50; // Maximum distance for full fade (50% of timeline)
+              const calculatedOpacity = 1 - (distanceFromIndicator / maxDistanceForFade);
+              const labelOpacity = Math.max(0.1, Math.min(1, calculatedOpacity));
+              
+              // Build the style object explicitly to ensure all properties are set correctly
+              const decadeLabelStyle: React.CSSProperties = {
+                position: 'absolute',
+                left: `${labelPosition}%`,
+                top: '5px',
+                color: zodiacColor,
+                opacity: labelOpacity,
+                transform: 'translateX(-50%)',
+                WebkitTransform: 'translateX(-50%)',
+                msTransform: 'translateX(-50%)',
+                zIndex: 2,
+                pointerEvents: 'none',
+                marginLeft: 0,
+                marginRight: 0,
+                marginTop: 0,
+                marginBottom: 0,
+              };
+              
+              return (
                 <div
                   key={`decade-label-${idx}`}
                   className={`scale-label decade-label ${viewMode === 'decade' ? 'current-scale' : ''}`}
-                  style={{ left: `${mark.position}%`, top: '5px', color: zodiacColor }}
+                  style={decadeLabelStyle}
+                  data-position={labelPosition}
+                  data-label={mark.label}
                 >
                   {mark.label}
                 </div>
@@ -2363,31 +2482,141 @@ export default function GlobalTimelineMinimap({
           
           {/* Year labels */}
           {allScaleMarkings.year.major
-            .filter(mark => Math.abs(mark.position - currentIndicatorMetrics.position) <= LOCALIZATION_RANGE)
-            .map((mark, idx) => (
-            mark.label && (
-              <div
-                key={`year-label-${idx}`}
-                className={`scale-label year-label ${viewMode === 'year' ? 'current-scale' : ''}`}
-                style={{ left: `${mark.position}%`, top: '45px' }}
-              >
-                {mark.label}
-              </div>
-            )
-          ))}
+            .filter(mark => {
+              // Ensure we have a valid label and a valid numeric position
+              if (!mark.label) return false;
+              if (!isFinite(mark.position)) return false;
+              if (mark.position < 0 || mark.position > 100) return false;
+              return true;
+            })
+            .map((mark, idx) => {
+              // Explicitly ensure position is a valid number between 0 and 100
+              const labelPosition = Math.max(0, Math.min(100, Number(mark.position)));
+              
+              // Get zodiac color for the year
+              const yearDate = mark.date ? new Date(mark.date.getFullYear(), 0, 1) : new Date();
+              const zodiacColor = getZodiacColor(yearDate);
+              
+              // Calculate opacity based on distance from indicator (fade with distance)
+              const indicatorPosition = isFinite(currentIndicatorMetrics.position) 
+                ? Number(currentIndicatorMetrics.position) 
+                : 50; // Default to center if invalid
+              const distanceFromIndicator = Math.abs(labelPosition - indicatorPosition);
+              const maxDistanceForFade = 50; // Maximum distance for full fade (50% of timeline)
+              const calculatedOpacity = 1 - (distanceFromIndicator / maxDistanceForFade);
+              const labelOpacity = Math.max(0.1, Math.min(1, calculatedOpacity));
+              
+              // Build the style object explicitly
+              const yearLabelStyle: React.CSSProperties = {
+                position: 'absolute',
+                left: `${labelPosition}%`,
+                top: '45px',
+                color: zodiacColor,
+                opacity: labelOpacity,
+                transform: 'translateX(-50%)',
+                WebkitTransform: 'translateX(-50%)',
+                msTransform: 'translateX(-50%)',
+                zIndex: 2,
+                pointerEvents: 'none',
+                marginLeft: 0,
+                marginRight: 0,
+                marginTop: 0,
+                marginBottom: 0,
+              };
+              
+              return (
+                <div
+                  key={`year-label-${idx}`}
+                  className={`scale-label year-label ${viewMode === 'year' ? 'current-scale' : ''}`}
+                  style={yearLabelStyle}
+                  data-position={labelPosition}
+                  data-label={mark.label}
+                >
+                  {mark.label}
+                </div>
+              );
+            })}
           {allScaleMarkings.year.minor
-            .filter(mark => Math.abs(mark.position - currentIndicatorMetrics.position) <= LOCALIZATION_RANGE)
-            .map((mark, idx) => (
-            mark.label && (
-              <div
-                key={`year-minor-label-${idx}`}
-                className="scale-label year-minor-label"
-                style={{ left: `${mark.position}%`, top: '48px' }}
-              >
-                {mark.label}
-              </div>
-            )
-          ))}
+            .filter(mark => {
+              // Ensure we have a valid label and a valid numeric position
+              if (!mark.label) return false;
+              if (!mark.date) return false;
+              if (!isFinite(mark.position)) return false;
+              if (mark.position < 0 || mark.position > 100) return false;
+              return true;
+            })
+            .map((mark, idx) => {
+              // Explicitly ensure position is a valid number between 0 and 100
+              // Position 0% is valid (start of timeline), only check if it's not finite
+              let labelPosition = Number(mark.position);
+              
+              // Safety check: only recalculate if position is not finite (NaN or Infinity)
+              // Position 0 is valid and should NOT trigger recalculation
+              if (!isFinite(labelPosition)) {
+                // Fallback: recalculate from date only if position is truly invalid
+                if (mark.date && timelineData.startDate && timelineData.endDate) {
+                  const timeOffset = mark.date.getTime() - timelineData.startDate.getTime();
+                  const totalTime = timelineData.endDate.getTime() - timelineData.startDate.getTime();
+                  if (totalTime > 0) {
+                    labelPosition = Math.max(0, Math.min(100, (timeOffset / totalTime) * 100));
+                  } else {
+                    labelPosition = 0;
+                  }
+                } else {
+                  labelPosition = 0;
+                }
+              }
+              
+              // Final validation and clamping - ensure we have a valid position (0-100 range)
+              // Position can be 0 (start of timeline) or 100 (end of timeline)
+              labelPosition = Math.max(0, Math.min(100, labelPosition));
+              
+              // Calculate opacity based on distance from indicator (fade with distance)
+              const indicatorPosition = isFinite(currentIndicatorMetrics.position) 
+                ? Number(currentIndicatorMetrics.position) 
+                : 50; // Default to center if invalid
+              const distanceFromIndicator = Math.abs(labelPosition - indicatorPosition);
+              const maxDistanceForFade = 50; // Maximum distance for full fade (50% of timeline)
+              const calculatedOpacity = 1 - (distanceFromIndicator / maxDistanceForFade);
+              const labelOpacity = Math.max(0.1, Math.min(1, calculatedOpacity));
+              
+              // Use a unique key that includes the date to prevent React from reusing elements
+              const uniqueKey = `year-minor-label-${mark.date ? mark.date.getTime() : idx}-${idx}`;
+              
+              // Get zodiac color for the month
+              const monthDate = mark.date ? new Date(mark.date.getFullYear(), mark.date.getMonth(), 15) : new Date();
+              const zodiacColor = getZodiacColor(monthDate);
+              
+              // Build the style object explicitly to ensure all properties are set correctly
+              const labelStyle: React.CSSProperties = {
+                position: 'absolute',
+                left: `${labelPosition}%`,
+                top: '48px',
+                color: zodiacColor,
+                opacity: labelOpacity,
+                transform: 'translateX(-50%)',
+                WebkitTransform: 'translateX(-50%)',
+                msTransform: 'translateX(-50%)',
+                zIndex: 2,
+                pointerEvents: 'none',
+                marginLeft: 0,
+                marginRight: 0,
+                marginTop: 0,
+                marginBottom: 0,
+              };
+              
+              return (
+                <div
+                  key={uniqueKey}
+                  className="scale-label year-minor-label"
+                  style={labelStyle}
+                  data-position={labelPosition}
+                  data-label={mark.label}
+                >
+                  {mark.label}
+                </div>
+              );
+            })}
           
           {/* Month labels */}
           {allScaleMarkings.month.major

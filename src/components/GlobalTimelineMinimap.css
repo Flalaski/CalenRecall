@@ -938,24 +938,26 @@
 .scale-label.decade-label {
   font-size: 0.8rem;
   font-weight: 700;
-  color: #222;
+  /* Color will be set via inline style (zodiac color) */
   top: 2px;
+  /* Allow left to be set via inline styles - no default left value */
 }
 
 .scale-label.decade-label.current-scale {
-  color: #4a90e2;
+  /* Keep current-scale styling but allow color override from inline style */
   font-size: 0.85rem;
 }
 
 .scale-label.year-label {
   font-size: 0.75rem;
   font-weight: 700;
-  color: #333;
+  /* Color will be set via inline style (zodiac color) */
   top: 45px;
+  /* Allow left to be set via inline styles - no default left value */
 }
 
 .scale-label.year-label.current-scale {
-  color: #4a90e2;
+  /* Keep current-scale styling but allow color override from inline style */
   font-size: 0.8rem;
 }
 
@@ -964,6 +966,7 @@
   font-weight: 500;
   color: #666;
   top: 48px;
+  /* Allow left to be set via inline styles - no default left value */
 }
 
 .scale-label.month-label {
@@ -1158,7 +1161,8 @@
   background: rgba(150, 150, 150, 0.5);
 }
 
-.scale-label {
+/* This .scale-label rule should only apply within .compact-scale-indicator */
+.compact-scale-indicator .scale-label {
   position: absolute;
   left: 85px;
   top: 50%;
