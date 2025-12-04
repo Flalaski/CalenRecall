@@ -147,50 +147,140 @@ export default function TimelineView({
     const firstDay = days[0].getDay();
     const adjustedFirstDay = firstDay === 0 ? 6 : firstDay - 1;
     
+    // Get week entries for the month and group them by week
+    const weekEntriesByWeek = new Map<string, JournalEntry[]>();
+    entries.forEach(entry => {
+      if (entry.timeRange === 'week') {
+        // Parse entry date to get the week start
+        const [entryYearStr, entryMonthStr, entryDayStr] = entry.date.split('-');
+        const entryDate = new Date(
+          parseInt(entryYearStr, 10),
+          parseInt(entryMonthStr, 10) - 1,
+          parseInt(entryDayStr, 10)
+        );
+        const weekStart = getWeekStart(entryDate);
+        const weekKey = formatDate(weekStart);
+        
+        // Check if this week is within the current month
+        const monthStart = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1);
+        const monthEnd = new Date(selectedDate.getFullYear(), selectedDate.getMonth() + 1, 0);
+        const weekEnd = new Date(weekStart);
+        weekEnd.setDate(weekEnd.getDate() + 6);
+        
+        // Only include weeks that overlap with the current month
+        if (weekStart <= monthEnd && weekEnd >= monthStart) {
+          if (!weekEntriesByWeek.has(weekKey)) {
+            weekEntriesByWeek.set(weekKey, []);
+          }
+          weekEntriesByWeek.get(weekKey)!.push(entry);
+        }
+      }
+    });
+    
+    // Get unique weeks in the month
+    const weeksInMonth: Date[] = [];
+    const seenWeeks = new Set<string>();
+    days.forEach(day => {
+      const weekStart = getWeekStart(day);
+      const weekKey = formatDate(weekStart);
+      if (!seenWeeks.has(weekKey)) {
+        seenWeeks.add(weekKey);
+        weeksInMonth.push(weekStart);
+      }
+    });
+    weeksInMonth.sort((a, b) => a.getTime() - b.getTime());
+    
     return (
       <div className="timeline-month-view">
-        <div className="weekday-header">
-          {weekDays.map(day => (
-            <div key={day} className="weekday-cell">{day}</div>
-          ))}
-        </div>
-        <div className="timeline-grid month-grid">
-          {Array(adjustedFirstDay).fill(null).map((_, idx) => (
-            <div key={`empty-${idx}`} className="timeline-cell empty-cell"></div>
-          ))}
-          {days.map((day, idx) => {
-            const dayEntries = getEntriesForDate(day);
-            return (
-              <div
-                key={idx}
-                className={`timeline-cell day-cell ${isToday(day) ? 'today' : ''} ${dayEntries.length > 0 ? 'has-entries' : ''}`}
-                onClick={() => onTimePeriodSelect(day, 'day')}
-              >
-                <div className="cell-date">{day.getDate()}</div>
-                <div className="cell-entries">
-                  {dayEntries.slice(0, 3).map((entry, eIdx) => (
-                    <div
-                      key={eIdx}
-                      className={`entry-badge entry-${entry.timeRange}`}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onEntrySelect(entry);
-                      }}
-                      title={entry.title}
-                    >
-                      <span className="badge-title">{entry.title}</span>
-                      {entry.tags && entry.tags.length > 0 && (
-                        <span className="badge-tag-count">{entry.tags.length}</span>
+        <div className="month-view-content">
+          <div className="month-calendar-section">
+            <div className="weekday-header">
+              {weekDays.map(day => (
+                <div key={day} className="weekday-cell">{day}</div>
+              ))}
+            </div>
+            <div className="timeline-grid month-grid">
+              {Array(adjustedFirstDay).fill(null).map((_, idx) => (
+                <div key={`empty-${idx}`} className="timeline-cell empty-cell"></div>
+              ))}
+              {days.map((day, idx) => {
+                const dayEntries = getEntriesForDate(day);
+                return (
+                  <div
+                    key={idx}
+                    className={`timeline-cell day-cell ${isToday(day) ? 'today' : ''} ${dayEntries.length > 0 ? 'has-entries' : ''}`}
+                    onClick={() => onTimePeriodSelect(day, 'day')}
+                  >
+                    <div className="cell-date">{day.getDate()}</div>
+                    <div className="cell-entries">
+                      {dayEntries.slice(0, 3).map((entry, eIdx) => (
+                        <div
+                          key={eIdx}
+                          className={`entry-badge entry-${entry.timeRange}`}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onEntrySelect(entry);
+                          }}
+                          title={entry.title}
+                        >
+                          <span className="badge-title">{entry.title}</span>
+                          {entry.tags && entry.tags.length > 0 && (
+                            <span className="badge-tag-count">{entry.tags.length}</span>
+                          )}
+                        </div>
+                      ))}
+                      {dayEntries.length > 3 && (
+                        <div className="entry-badge more-entries">+{dayEntries.length - 3}</div>
                       )}
                     </div>
-                  ))}
-                  {dayEntries.length > 3 && (
-                    <div className="entry-badge more-entries">+{dayEntries.length - 3}</div>
-                  )}
-                </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+          
+          {weeksInMonth.length > 0 && (
+            <div className="month-week-entries-section">
+              <div className="week-entries-header">Week Entries</div>
+              <div className="week-entries-list">
+                {weeksInMonth.map((weekStart, weekIdx) => {
+                  const weekKey = formatDate(weekStart);
+                  const weekEntries = weekEntriesByWeek.get(weekKey) || [];
+                  const weekEnd = new Date(weekStart);
+                  weekEnd.setDate(weekEnd.getDate() + 6);
+                  
+                  return (
+                    <div key={weekIdx} className="week-entry-group">
+                      <div className="week-entry-group-header">
+                        <span className="week-label">
+                          Week of {formatDate(weekStart, 'MMM d')}
+                        </span>
+                        {weekEntries.length > 0 && (
+                          <span className="week-entry-count">{weekEntries.length}</span>
+                        )}
+                      </div>
+                      {weekEntries.length > 0 ? (
+                        <div className="week-entry-items">
+                          {weekEntries.map((entry, eIdx) => (
+                            <div
+                              key={eIdx}
+                              className="week-entry-item"
+                              onClick={() => onEntrySelect(entry)}
+                              title={entry.title}
+                            >
+                              <span className="week-entry-title">{entry.title}</span>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="week-entry-empty">No week entries</div>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
-            );
-          })}
+            </div>
+          )}
         </div>
       </div>
     );
