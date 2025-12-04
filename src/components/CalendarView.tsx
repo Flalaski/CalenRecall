@@ -15,6 +15,7 @@ import {
 } from '../utils/dateUtils';
 import { isSameDay, isSameMonth, isSameYear } from 'date-fns';
 import { JournalEntry } from '../types';
+import { playCalendarSelectionSound } from '../utils/audioUtils';
 import './CalendarView.css';
 
 interface CalendarViewProps {
@@ -217,7 +218,10 @@ export default function CalendarView({
             <div
               key={idx}
               className={`calendar-cell year-cell ${isSelected(year) ? 'selected' : ''} ${hasEntry(year) ? 'has-entry' : ''}`}
-              onClick={() => onTimePeriodSelect(year, 'year')}
+              onClick={() => {
+                playCalendarSelectionSound();
+                onTimePeriodSelect(year, 'year');
+              }}
               style={{ '--zodiac-gradient': yearGradientColor } as React.CSSProperties}
             >
               <div className="cell-content">
@@ -249,7 +253,10 @@ export default function CalendarView({
             <div
               key={idx}
               className={`calendar-cell month-cell ${isSelected(month) ? 'selected' : ''} ${hasEntry(month) ? 'has-entry' : ''}`}
-              onClick={() => onTimePeriodSelect(month, 'month')}
+              onClick={() => {
+                playCalendarSelectionSound();
+                onTimePeriodSelect(month, 'month');
+              }}
               style={{ '--zodiac-color': zodiacColor } as React.CSSProperties}
             >
               <div className="cell-content">
@@ -288,7 +295,10 @@ export default function CalendarView({
               <div
                 key={idx}
                 className={`calendar-cell day-cell ${isToday(day) ? 'today' : ''} ${isSelected(day) ? 'selected' : ''} ${hasEntry(day) ? 'has-entry' : ''}`}
-                onClick={() => onTimePeriodSelect(day, 'day')}
+                onClick={() => {
+                  playCalendarSelectionSound();
+                  onTimePeriodSelect(day, 'day');
+                }}
                 style={{ '--zodiac-gradient': gradientColor } as React.CSSProperties}
               >
                 <div className="cell-content">
@@ -324,7 +334,10 @@ export default function CalendarView({
               <div
                 key={idx}
                 className={`calendar-cell day-cell week-day-cell ${isToday(day) ? 'today' : ''} ${isSelected(day) ? 'selected' : ''} ${hasEntry(day) ? 'has-entry' : ''}`}
-                onClick={() => onTimePeriodSelect(day, 'day')}
+                onClick={() => {
+                  playCalendarSelectionSound();
+                  onTimePeriodSelect(day, 'day');
+                }}
                 style={{ '--zodiac-gradient': gradientColor } as React.CSSProperties}
               >
                 <div className="cell-content">

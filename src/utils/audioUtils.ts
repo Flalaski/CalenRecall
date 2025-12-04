@@ -536,3 +536,68 @@ export function playExportSound(): void {
   }
 }
 
+// Calendar selection sound - for clicking calendar cells
+export function playCalendarSelectionSound(): void {
+  const audioContext = getAudioContext();
+  if (!audioContext) return;
+  
+  if (audioContext.state === 'closed') return;
+  
+  try {
+    const now = audioContext.currentTime;
+    const oscillator = audioContext.createOscillator();
+    const gainNode = audioContext.createGain();
+    
+    // Calendar selection sound - crisp, precise click for date selection
+    oscillator.type = 'sine';
+    oscillator.frequency.setValueAtTime(650, now);
+    oscillator.frequency.linearRampToValueAtTime(750, now + 0.04);
+    oscillator.frequency.linearRampToValueAtTime(600, now + 0.08);
+    
+    gainNode.gain.setValueAtTime(0, now);
+    gainNode.gain.linearRampToValueAtTime(0.28, now + 0.002);
+    gainNode.gain.exponentialRampToValueAtTime(0.06, now + 0.06);
+    gainNode.gain.linearRampToValueAtTime(0, now + 0.1);
+    
+    oscillator.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+    
+    oscillator.start(now);
+    oscillator.stop(now + 0.1);
+  } catch (error) {
+    console.debug('Calendar selection sound error:', error);
+  }
+}
+
+// Entry selection sound - for clicking on journal entries
+export function playEntrySelectionSound(): void {
+  const audioContext = getAudioContext();
+  if (!audioContext) return;
+  
+  if (audioContext.state === 'closed') return;
+  
+  try {
+    const now = audioContext.currentTime;
+    const oscillator = audioContext.createOscillator();
+    const gainNode = audioContext.createGain();
+    
+    // Entry selection sound - soft, gentle click for selecting entries
+    oscillator.type = 'sine';
+    oscillator.frequency.setValueAtTime(550, now);
+    oscillator.frequency.linearRampToValueAtTime(650, now + 0.05);
+    
+    gainNode.gain.setValueAtTime(0, now);
+    gainNode.gain.linearRampToValueAtTime(0.22, now + 0.002);
+    gainNode.gain.exponentialRampToValueAtTime(0.05, now + 0.04);
+    gainNode.gain.linearRampToValueAtTime(0, now + 0.08);
+    
+    oscillator.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+    
+    oscillator.start(now);
+    oscillator.stop(now + 0.08);
+  } catch (error) {
+    console.debug('Entry selection sound error:', error);
+  }
+}
+

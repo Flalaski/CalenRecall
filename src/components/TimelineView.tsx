@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { JournalEntry, TimeRange } from '../types';
 import { formatDate, getDaysInMonth, getDaysInWeek, isToday, getWeekStart, getWeekEnd, getZodiacColor, getZodiacGradientColor, getZodiacGradientColorForYear, getZodiacColorForDecade } from '../utils/dateUtils';
 import { isSameDay, isSameMonth, isSameYear } from 'date-fns';
+import { playCalendarSelectionSound, playEntrySelectionSound } from '../utils/audioUtils';
 import './TimelineView.css';
 
 interface TimelineViewProps {
@@ -368,7 +369,10 @@ export default function TimelineView({
                   <div
                     key={idx}
                     className={`timeline-cell day-cell ${isToday(day) ? 'today' : ''} ${isSelected(day) ? 'selected' : ''} ${dayEntries.length > 0 ? 'has-entries' : ''}`}
-                    onClick={() => onTimePeriodSelect(day, 'day')}
+                    onClick={() => {
+                      playCalendarSelectionSound();
+                      onTimePeriodSelect(day, 'day');
+                    }}
                     style={{ '--zodiac-gradient': gradientColor } as React.CSSProperties}
                   >
                     <div className="cell-date">{day.getDate()}</div>
@@ -379,6 +383,7 @@ export default function TimelineView({
                           className={`entry-badge entry-${entry.timeRange}`}
                           onClick={(e) => {
                             e.stopPropagation();
+                            playEntrySelectionSound();
                             onEntrySelect(entry);
                           }}
                           title={entry.title}
@@ -425,7 +430,10 @@ export default function TimelineView({
                             <div
                               key={eIdx}
                               className="week-entry-item"
-                              onClick={() => onEntrySelect(entry)}
+                              onClick={() => {
+                                playEntrySelectionSound();
+                                onEntrySelect(entry);
+                              }}
                               title={entry.title}
                             >
                               <span className="week-entry-title">{entry.title}</span>
@@ -476,7 +484,10 @@ export default function TimelineView({
               <div
                 key={idx}
                 className={`timeline-cell day-cell week-day-cell ${isToday(day) ? 'today' : ''} ${isSelected(day) ? 'selected' : ''} ${dayEntries.length > 0 ? 'has-entries' : ''}`}
-                onClick={() => onTimePeriodSelect(day, 'day')}
+                onClick={() => {
+                  playCalendarSelectionSound();
+                  onTimePeriodSelect(day, 'day');
+                }}
                 style={{ '--zodiac-gradient': gradientColor } as React.CSSProperties}
               >
                 <div className="cell-entries-vertical">
@@ -486,6 +497,7 @@ export default function TimelineView({
                       className={`entry-card entry-${entry.timeRange}`}
                       onClick={(e) => {
                         e.stopPropagation();
+                        playEntrySelectionSound();
                         onEntrySelect(entry);
                       }}
                     >
@@ -528,7 +540,10 @@ export default function TimelineView({
               <div
                 key={idx}
                 className={`entry-card-full entry-${entry.timeRange}`}
-                onClick={() => onEntrySelect(entry)}
+                onClick={() => {
+                  playEntrySelectionSound();
+                  onEntrySelect(entry);
+                }}
               >
                 <div className="card-header">
                   <div className="card-title-full">{entry.title}</div>
@@ -571,7 +586,10 @@ export default function TimelineView({
               <div
                 key={idx}
                 className={`timeline-cell month-cell ${isSelected(month) ? 'selected' : ''} ${monthEntries.length > 0 ? 'has-entries' : ''}`}
-                onClick={() => onTimePeriodSelect(month, 'month')}
+                onClick={() => {
+                  playCalendarSelectionSound();
+                  onTimePeriodSelect(month, 'month');
+                }}
               >
                 <div 
                   className="cell-month-label"
@@ -598,6 +616,7 @@ export default function TimelineView({
                       className={`entry-badge entry-${entry.timeRange}`}
                       onClick={(e) => {
                         e.stopPropagation();
+                        playEntrySelectionSound();
                         onEntrySelect(entry);
                       }}
                       title={entry.title}
@@ -637,7 +656,10 @@ export default function TimelineView({
               <div
                 key={idx}
                 className={`timeline-cell year-cell ${isSelected(year) ? 'selected' : ''} ${yearEntries.length > 0 ? 'has-entries' : ''}`}
-                onClick={() => onTimePeriodSelect(year, 'year')}
+                onClick={() => {
+                  playCalendarSelectionSound();
+                  onTimePeriodSelect(year, 'year');
+                }}
                 style={{ '--zodiac-gradient': yearGradientColor } as React.CSSProperties}
               >
                 <div 
@@ -665,6 +687,7 @@ export default function TimelineView({
                       className={`entry-badge entry-${entry.timeRange}`}
                       onClick={(e) => {
                         e.stopPropagation();
+                        playEntrySelectionSound();
                         onEntrySelect(entry);
                       }}
                       title={entry.title}
