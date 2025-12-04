@@ -87,6 +87,11 @@
   color: #999;
 }
 
+.entry-date-display {
+  font-weight: 600;
+  color: #4a90e2 !important;
+}
+
 .viewer-content {
   flex: 1;
   overflow-y: auto;

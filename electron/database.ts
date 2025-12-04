@@ -611,7 +611,7 @@ const DEFAULT_PREFERENCES: Preferences = {
   defaultViewMode: 'month',
   windowWidth: 1200,
   windowHeight: 800,
-  dateFormat: 'MMMM d, yyyy',
+  dateFormat: 'yyyy-MM-dd',
   weekStartsOn: 1, // Monday
   autoSave: true,
   autoSaveInterval: 30,

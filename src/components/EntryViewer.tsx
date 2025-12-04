@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { JournalEntry, TimeRange } from '../types';
-import { formatDate, getWeekStart, getMonthStart, getYearStart, getDecadeStart } from '../utils/dateUtils';
+import { formatDate, getWeekStart, getWeekEnd, getMonthStart, getYearStart, getDecadeStart } from '../utils/dateUtils';
 import './EntryViewer.css';
 
 interface EntryViewerProps {
@@ -168,6 +168,31 @@ export default function EntryViewer({
     }
   };
 
+  const formatEntryDate = (entry: JournalEntry): string => {
+    const entryDate = new Date(entry.date);
+    switch (entry.timeRange) {
+      case 'decade':
+        const decadeStart = Math.floor(entryDate.getFullYear() / 10) * 10;
+        return `${decadeStart}s`;
+      case 'year':
+        return formatDate(entryDate, 'yyyy');
+      case 'month':
+        return formatDate(entryDate, 'MMMM yyyy');
+      case 'week':
+        const weekStart = getWeekStart(entryDate);
+        const weekEnd = getWeekEnd(entryDate);
+        if (weekStart.getMonth() === weekEnd.getMonth()) {
+          return `Week of ${formatDate(weekStart, 'MMM d')} - ${formatDate(weekEnd, 'd, yyyy')}`;
+        } else {
+          return `Week of ${formatDate(weekStart, 'MMM d')} - ${formatDate(weekEnd, 'MMM d, yyyy')}`;
+        }
+      case 'day':
+        return formatDate(entryDate, 'MMM d, yyyy');
+      default:
+        return formatDate(entryDate, 'MMM d, yyyy');
+    }
+  };
+
   const getNewEntryButtonText = (): string => {
     const timeRangeLabel = getTimeRangeLabel(viewMode);
     return `+ New Entry for this ${timeRangeLabel}`;
@@ -191,6 +216,7 @@ export default function EntryViewer({
           </div>
           <div className="entry-meta">
             <span className="time-range-badge-viewer">{getTimeRangeLabel(entry.timeRange)}</span>
+            <small className="entry-date-display">Date: {formatEntryDate(entry)}</small>
             <small>Created: {formatDate(new Date(entry.createdAt), 'MMM d, yyyy')}</small>
             {entry.updatedAt !== entry.createdAt && (
               <small>Updated: {formatDate(new Date(entry.updatedAt), 'MMM d, yyyy')}</small>
@@ -252,6 +278,9 @@ export default function EntryViewer({
                     </span>
                   </div>
                   <div className="period-entry-meta">
+                    <span className="period-entry-date">
+                      Date: {formatEntryDate(periodEntry)}
+                    </span>
                     <span className="period-entry-date">
                       Created: {formatDate(new Date(periodEntry.createdAt), 'MMM d, yyyy')}
                     </span>

@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain } from 'electron';
+import { app, BrowserWindow, ipcMain, Menu } from 'electron';
 import * as path from 'path';
 import { initDatabase, getAllPreferences, setPreference } from './database';
 import { setupIpcHandlers } from './ipc-handlers';
@@ -59,6 +59,80 @@ function createWindow() {
   });
 }
 
+function createMenu() {
+  const template: Electron.MenuItemConstructorOptions[] = [
+    {
+      label: 'File',
+      submenu: [
+        {
+          label: 'Exit',
+          accelerator: process.platform === 'darwin' ? 'Cmd+Q' : 'Ctrl+Q',
+          click: () => {
+            app.quit();
+          },
+        },
+      ],
+    },
+    {
+      label: 'Edit',
+      submenu: [
+        { role: 'undo', label: 'Undo' },
+        { role: 'redo', label: 'Redo' },
+        { type: 'separator' },
+        { role: 'cut', label: 'Cut' },
+        { role: 'copy', label: 'Copy' },
+        { role: 'paste', label: 'Paste' },
+        { role: 'delete', label: 'Delete' },
+        { type: 'separator' },
+        { role: 'selectAll', label: 'Select All' },
+        { type: 'separator' },
+        {
+          label: 'Preferences',
+          accelerator: process.platform === 'darwin' ? 'Cmd+,' : 'Ctrl+,',
+          click: () => {
+            createPreferencesWindow();
+          },
+        },
+      ],
+    },
+    {
+      label: 'View',
+      submenu: [
+        { role: 'reload', label: 'Reload' },
+        { role: 'forceReload', label: 'Force Reload' },
+        { role: 'toggleDevTools', label: 'Toggle Developer Tools' },
+        { type: 'separator' },
+        { role: 'resetZoom', label: 'Actual Size' },
+        { role: 'zoomIn', label: 'Zoom In' },
+        { role: 'zoomOut', label: 'Zoom Out' },
+        { type: 'separator' },
+        { role: 'togglefullscreen', label: 'Toggle Full Screen' },
+      ],
+    },
+    {
+      label: 'Window',
+      submenu: [
+        { role: 'minimize', label: 'Minimize' },
+        { role: 'close', label: 'Close' },
+      ],
+    },
+    {
+      label: 'Help',
+      submenu: [
+        {
+          label: 'About CalenRecall',
+          click: () => {
+            // You can add an about dialog here if needed
+          },
+        },
+      ],
+    },
+  ];
+
+  const menu = Menu.buildFromTemplate(template);
+  Menu.setApplicationMenu(menu);
+}
+
 function createPreferencesWindow() {
   if (preferencesWindow) {
     preferencesWindow.focus();
@@ -101,6 +175,9 @@ app.whenReady().then(() => {
   
   // Setup IPC handlers
   setupIpcHandlers();
+  
+  // Create application menu
+  createMenu();
   
   // Handle opening preferences window
   ipcMain.handle('open-preferences', () => {

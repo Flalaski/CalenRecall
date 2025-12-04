@@ -147,11 +147,11 @@ export default function PreferencesComponent() {
             <input
               id="dateFormat"
               type="text"
-              value={preferences.dateFormat || 'MMMM d, yyyy'}
+              value={preferences.dateFormat || 'yyyy-MM-dd'}
               onChange={(e) => updatePreference('dateFormat', e.target.value)}
               placeholder="MMMM d, yyyy"
             />
-            <small>Examples: MMMM d, yyyy (January 1, 2024), MM/dd/yyyy (01/01/2024)</small>
+            <small>Examples: yyyy-MM-dd (2024-01-01), MMMM d, yyyy (January 1, 2024), MM/dd/yyyy (01/01/2024)</small>
           </div>
 
           <div className="preference-item">
