@@ -136,6 +136,7 @@ function App() {
               viewMode={viewMode}
               onEdit={handleEdit}
               onNewEntry={handleNewEntry}
+              onEntrySelect={handleEntrySelect}
             />
           )}
         </div>

@@ -101,61 +101,44 @@ export default function TimelineView({
     }
   };
 
-  const getEntriesForDate = (date: Date): JournalEntry[] => {
+  const getEntriesForDate = (date: Date, forViewMode?: TimeRange): JournalEntry[] => {
     const dateStr = formatDate(date);
     const checkYear = date.getFullYear();
     const checkMonth = date.getMonth();
     
-    const matchingEntries = entries.filter(entry => {
+    // Determine which entries to return based on the view mode
+    return entries.filter(entry => {
       // Parse entry date as local date (YYYY-MM-DD format)
-      // Split the date string to avoid timezone issues
-      const [entryYearStr, entryMonthStr, entryDayStr] = entry.date.split('-');
+      const [entryYearStr, entryMonthStr] = entry.date.split('-');
       const entryYear = parseInt(entryYearStr, 10);
       const entryMonth = parseInt(entryMonthStr, 10) - 1; // Convert to 0-indexed month
-      const entryDay = parseInt(entryDayStr, 10);
       
-      let matches = false;
-      
-      // Match exact date or check if date falls within entry's time range
-      if (entry.timeRange === 'day') {
-        // Day entries must match the exact date
-        matches = entry.date === dateStr;
-      } else if (entry.timeRange === 'month') {
-        // Month entries apply to all days in that month
-        matches = entryYear === checkYear && entryMonth === checkMonth;
-      } else if (entry.timeRange === 'week') {
-        // Week entries apply to all days in that week (Monday-Sunday)
-        // Calculate the week start (Monday) for the entry's date
-        const entryDate = new Date(entryYear, entryMonth, entryDay);
-        const weekStart = new Date(entryDate);
-        const dayOfWeek = weekStart.getDay();
-        const daysToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
-        weekStart.setDate(weekStart.getDate() - daysToMonday);
-        weekStart.setHours(0, 0, 0, 0);
-        
-        // Calculate week end (Sunday)
-        const weekEnd = new Date(weekStart);
-        weekEnd.setDate(weekEnd.getDate() + 6);
-        weekEnd.setHours(23, 59, 59, 999);
-        
-        // Check if the date falls within this week
-        const checkDate = new Date(date);
-        checkDate.setHours(12, 0, 0, 0);
-        matches = checkDate >= weekStart && checkDate <= weekEnd;
-      } else if (entry.timeRange === 'year') {
-        // Year entries apply to all days in that year
-        matches = entryYear === checkYear;
-      } else if (entry.timeRange === 'decade') {
-        // Decade entries apply to all years in that decade
-        const entryDecade = Math.floor(entryYear / 10) * 10;
-        const dateDecade = Math.floor(checkYear / 10) * 10;
-        matches = entryDecade === dateDecade;
+      // For decade view, show year entries in their year cells
+      if (forViewMode === 'decade' || viewMode === 'decade') {
+        if (entry.timeRange === 'year') {
+          return entryYear === checkYear;
+        }
+        // Don't show other entry types in decade view cells
+        return false;
       }
       
-      return matches;
+      // For year view, show month entries in their month cells
+      if (forViewMode === 'year' || viewMode === 'year') {
+        if (entry.timeRange === 'month') {
+          return entryYear === checkYear && entryMonth === checkMonth;
+        }
+        // Don't show other entry types in year view cells
+        return false;
+      }
+      
+      // For month/week/day views, only show day entries in calendar cells
+      // Week/month/year/decade entries are shown in the right panel
+      if (entry.timeRange === 'day') {
+        return entry.date === dateStr;
+      }
+      
+      return false;
     });
-    
-    return matchingEntries;
   };
 
   const renderMonthView = () => {
@@ -320,7 +303,7 @@ export default function TimelineView({
       <div className="timeline-year-view">
         <div className="year-grid">
           {months.map((month, idx) => {
-            const monthEntries = getEntriesForDate(month);
+            const monthEntries = getEntriesForDate(month, 'year');
             return (
               <div
                 key={idx}
@@ -365,7 +348,7 @@ export default function TimelineView({
       <div className="timeline-decade-view">
         <div className="decade-grid">
           {years.map((year, idx) => {
-            const yearEntries = getEntriesForDate(year);
+            const yearEntries = getEntriesForDate(year, 'decade');
             return (
               <div
                 key={idx}
@@ -374,7 +357,7 @@ export default function TimelineView({
               >
                 <div className="cell-year-label">{year.getFullYear()}</div>
                 <div className="cell-entries">
-                  {yearEntries.slice(0, 1).map((entry, eIdx) => (
+                  {yearEntries.slice(0, 2).map((entry, eIdx) => (
                     <div
                       key={eIdx}
                       className={`entry-badge entry-${entry.timeRange}`}
@@ -387,8 +370,8 @@ export default function TimelineView({
                       <span className="badge-title">{entry.title}</span>
                     </div>
                   ))}
-                  {yearEntries.length > 1 && (
-                    <div className="entry-badge more-entries">+{yearEntries.length - 1}</div>
+                  {yearEntries.length > 2 && (
+                    <div className="entry-badge more-entries">+{yearEntries.length - 2}</div>
                   )}
                 </div>
               </div>
