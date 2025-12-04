@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { JournalEntry, TimeRange } from '../types';
 import { formatDate, getWeekStart, getWeekEnd, getMonthStart, getYearStart, getDecadeStart } from '../utils/dateUtils';
+import { playEditSound, playNewEntrySound } from '../utils/audioUtils';
 import './EntryViewer.css';
 
 interface EntryViewerProps {
@@ -206,10 +207,16 @@ export default function EntryViewer({
           <div className="header-top">
             <h3>{getDateLabel()}</h3>
             <div className="header-actions">
-              <button className="edit-button" onClick={onEdit}>
+              <button className="edit-button" onClick={() => {
+                playEditSound();
+                onEdit();
+              }}>
                 Edit
               </button>
-              <button className="new-entry-button-header" onClick={onNewEntry}>
+              <button className="new-entry-button-header" onClick={() => {
+                playNewEntrySound();
+                onNewEntry();
+              }}>
                 {getNewEntryButtonText()}
               </button>
             </div>
@@ -245,7 +252,10 @@ export default function EntryViewer({
       <div className="viewer-header">
         <div className="header-top">
           <h3>{getDateLabel()}</h3>
-          <button className="new-entry-button-header" onClick={onNewEntry}>
+          <button className="new-entry-button-header" onClick={() => {
+            playNewEntrySound();
+            onNewEntry();
+          }}>
             {getNewEntryButtonText()}
           </button>
         </div>

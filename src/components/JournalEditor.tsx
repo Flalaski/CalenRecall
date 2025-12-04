@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { JournalEntry, TimeRange } from '../types';
 import { formatDate, getCanonicalDate } from '../utils/dateUtils';
 import { getEntryForDate, saveJournalEntry, deleteJournalEntry } from '../services/journalService';
+import { playSaveSound, playCancelSound, playDeleteSound, playAddSound, playRemoveSound } from '../utils/audioUtils';
 import './JournalEditor.css';
 
 interface JournalEditorProps {
@@ -79,6 +80,8 @@ export default function JournalEditor({
       alert('Please enter a title or content before saving.');
       return;
     }
+    
+    playSaveSound();
 
     setSaving(true);
     try {
@@ -153,6 +156,7 @@ export default function JournalEditor({
       return;
     }
 
+    playDeleteSound();
     if (!confirm('Are you sure you want to delete this entry?')) {
       return;
     }
@@ -178,12 +182,14 @@ export default function JournalEditor({
   const handleAddTag = () => {
     const tag = tagInput.trim();
     if (tag && !tags.includes(tag)) {
+      playAddSound();
       setTags([...tags, tag]);
       setTagInput('');
     }
   };
 
   const handleRemoveTag = (tagToRemove: string) => {
+    playRemoveSound();
     setTags(tags.filter(tag => tag !== tagToRemove));
   };
 
@@ -288,7 +294,10 @@ export default function JournalEditor({
         )}
         <div className="footer-actions">
           {onCancel && (
-            <button className="cancel-button" onClick={onCancel}>
+            <button className="cancel-button" onClick={() => {
+              playCancelSound();
+              onCancel();
+            }}>
               Cancel
             </button>
           )}

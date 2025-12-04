@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { JournalEntry, TimeRange } from '../types';
 import { getEntriesForRange } from '../services/journalService';
 import { formatDate } from '../utils/dateUtils';
+import { playNewEntrySound } from '../utils/audioUtils';
 import './JournalList.css';
 
 interface JournalListProps {
@@ -103,7 +104,10 @@ export default function JournalList({
     <div className="journal-list">
       <div className="journal-list-header">
         <h3>Journal Entries</h3>
-        <button className="new-entry-button" onClick={onNewEntry}>
+        <button className="new-entry-button" onClick={() => {
+          playNewEntrySound();
+          onNewEntry();
+        }}>
           {getNewEntryButtonText()}
         </button>
       </div>

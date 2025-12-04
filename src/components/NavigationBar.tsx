@@ -1,5 +1,6 @@
 import { TimeRange } from '../types';
 import { format, addMonths, addYears, addWeeks, addDays } from 'date-fns';
+import { playNavigationSound, playModeSelectionSound, playSettingsSound } from '../utils/audioUtils';
 import './NavigationBar.css';
 
 interface NavigationBarProps {
@@ -18,6 +19,7 @@ export default function NavigationBar({
   onOpenPreferences,
 }: NavigationBarProps) {
   const navigate = (direction: 'prev' | 'next') => {
+    playNavigationSound();
     let newDate: Date;
     const multiplier = direction === 'next' ? 1 : -1;
 
@@ -62,6 +64,7 @@ export default function NavigationBar({
   };
 
   const goToToday = () => {
+    playNavigationSound();
     onDateChange(new Date());
   };
 
@@ -82,38 +85,56 @@ export default function NavigationBar({
       <div className="view-mode-selector">
         <button
           className={`view-mode-button ${viewMode === 'decade' ? 'active' : ''}`}
-          onClick={() => onViewModeChange('decade')}
+          onClick={() => {
+            playModeSelectionSound();
+            onViewModeChange('decade');
+          }}
         >
           Decade
         </button>
         <button
           className={`view-mode-button ${viewMode === 'year' ? 'active' : ''}`}
-          onClick={() => onViewModeChange('year')}
+          onClick={() => {
+            playModeSelectionSound();
+            onViewModeChange('year');
+          }}
         >
           Year
         </button>
         <button
           className={`view-mode-button ${viewMode === 'month' ? 'active' : ''}`}
-          onClick={() => onViewModeChange('month')}
+          onClick={() => {
+            playModeSelectionSound();
+            onViewModeChange('month');
+          }}
         >
           Month
         </button>
         <button
           className={`view-mode-button ${viewMode === 'week' ? 'active' : ''}`}
-          onClick={() => onViewModeChange('week')}
+          onClick={() => {
+            playModeSelectionSound();
+            onViewModeChange('week');
+          }}
         >
           Week
         </button>
         <button
           className={`view-mode-button ${viewMode === 'day' ? 'active' : ''}`}
-          onClick={() => onViewModeChange('day')}
+          onClick={() => {
+            playModeSelectionSound();
+            onViewModeChange('day');
+          }}
         >
           Day
         </button>
         {onOpenPreferences && (
           <button
             className="view-mode-button preferences-button"
-            onClick={onOpenPreferences}
+            onClick={() => {
+              playSettingsSound();
+              onOpenPreferences();
+            }}
             title="Preferences"
           >
             ⚙️

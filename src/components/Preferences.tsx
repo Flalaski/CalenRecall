@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Preferences, ExportFormat } from '../types';
+import { playResetSound, playExportSound } from '../utils/audioUtils';
 import './Preferences.css';
 
 export default function PreferencesComponent() {
@@ -46,6 +47,7 @@ export default function PreferencesComponent() {
   };
 
   const handleReset = async () => {
+    playResetSound();
     if (confirm('Are you sure you want to reset all preferences to default values?')) {
       try {
         if (!window.electronAPI) {
@@ -86,6 +88,7 @@ export default function PreferencesComponent() {
 
   const handleExport = async () => {
     if (!window.electronAPI || isExporting) return;
+    playExportSound();
     try {
       setIsExporting(true);
       const result = await window.electronAPI.exportEntries(exportFormat);

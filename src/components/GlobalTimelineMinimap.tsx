@@ -2,6 +2,7 @@ import { useMemo, useState, useEffect, useRef } from 'react';
 import { TimeRange, JournalEntry } from '../types';
 import { formatDate, getWeekStart, getWeekEnd, getMonthStart, getMonthEnd, getYearEnd, getDecadeEnd, getZodiacColor, getZodiacColorForDecade, getCanonicalDate } from '../utils/dateUtils';
 import { addDays, addWeeks, addMonths, addYears, getYear, getMonth, getDate } from 'date-fns';
+import { playMechanicalClick, playMicroBlip, getAudioContext } from '../utils/audioUtils';
 import './GlobalTimelineMinimap.css';
 
 interface GlobalTimelineMinimapProps {
@@ -10,149 +11,6 @@ interface GlobalTimelineMinimapProps {
   onTimePeriodSelect: (date: Date, viewMode: TimeRange) => void;
   onEntrySelect?: (entry: JournalEntry) => void;
   minimapSize?: 'small' | 'medium' | 'large';
-}
-
-// Generate mechanical click sound using Web Audio API
-function playMechanicalClick(direction: 'up' | 'down'): void {
-  const audioContext = getAudioContext();
-  if (!audioContext) return;
-  
-  // Check if context is in a valid state
-  if (audioContext.state === 'closed') {
-    return;
-  }
-  
-  try {
-    const now = audioContext.currentTime;
-    const oscillator = audioContext.createOscillator();
-    const gainNode = audioContext.createGain();
-    
-    // Create a mechanical click sound - sharp transient with resonance
-    oscillator.type = 'sine';
-    oscillator.frequency.setValueAtTime(direction === 'up' ? 800 : 600, now);
-    oscillator.frequency.exponentialRampToValueAtTime(direction === 'up' ? 400 : 300, now + 0.05);
-    
-    // Envelope for click sound
-    gainNode.gain.setValueAtTime(0, now);
-    gainNode.gain.linearRampToValueAtTime(0.3, now + 0.001);
-    gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.05);
-    gainNode.gain.linearRampToValueAtTime(0, now + 0.1);
-    
-    oscillator.connect(gainNode);
-    gainNode.connect(audioContext.destination);
-    
-    oscillator.start(now);
-    oscillator.stop(now + 0.1);
-    
-    // Add a second click for mechanical feel
-    setTimeout(() => {
-      // Re-check context state in case it changed
-      if (!audioContext || audioContext.state === 'closed') {
-        return;
-      }
-      
-      try {
-        const now2 = audioContext.currentTime;
-        const oscillator2 = audioContext.createOscillator();
-        const gainNode2 = audioContext.createGain();
-        
-        oscillator2.type = 'sine';
-        oscillator2.frequency.setValueAtTime(direction === 'up' ? 1200 : 900, now2);
-        oscillator2.frequency.exponentialRampToValueAtTime(direction === 'up' ? 500 : 400, now2 + 0.03);
-        
-        gainNode2.gain.setValueAtTime(0, now2);
-        gainNode2.gain.linearRampToValueAtTime(0.2, now2 + 0.001);
-        gainNode2.gain.exponentialRampToValueAtTime(0.01, now2 + 0.03);
-        gainNode2.gain.linearRampToValueAtTime(0, now2 + 0.08);
-        
-        oscillator2.connect(gainNode2);
-        gainNode2.connect(audioContext.destination);
-        
-        oscillator2.start(now2);
-        oscillator2.stop(now2 + 0.08);
-      } catch (error) {
-        // Silently fail if second click cannot be created
-        console.debug('Second click audio error:', error);
-      }
-    }, 20);
-  } catch (error) {
-    // Silently fail if audio context is not available
-    console.debug('Mechanical click audio error:', error);
-  }
-}
-
-// Shared audio context for micro blips - reuse to avoid creation overhead
-let sharedAudioContext: AudioContext | null = null;
-
-// Initialize audio context on first use
-function getAudioContext(): AudioContext | null {
-  if (!sharedAudioContext) {
-    try {
-      sharedAudioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-    } catch (error) {
-      console.debug('Audio context not available:', error);
-      return null;
-    }
-  }
-  
-  // Check if context was closed (shouldn't happen, but handle gracefully)
-  if (sharedAudioContext.state === 'closed') {
-    // Reset and try to create a new one
-    sharedAudioContext = null;
-    try {
-      sharedAudioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-    } catch (error) {
-      console.debug('Audio context recreation failed:', error);
-      return null;
-    }
-  }
-  
-  // Resume audio context if suspended (browsers require user interaction)
-  if (sharedAudioContext.state === 'suspended') {
-    sharedAudioContext.resume().catch((error) => {
-      // Silently fail if resume is not possible
-      console.debug('Audio context resume failed:', error);
-    });
-  }
-  
-  return sharedAudioContext;
-}
-
-// Generate micro mechanical blip sound for date changes during dragging
-function playMicroBlip(): void {
-  const audioContext = getAudioContext();
-  if (!audioContext) return;
-  
-  // Check if context is in a valid state
-  if (audioContext.state === 'closed') {
-    return;
-  }
-  
-  try {
-    const oscillator = audioContext.createOscillator();
-    const gainNode = audioContext.createGain();
-    
-    // Create a very short, quiet mechanical blip - subtle tick sound
-    oscillator.type = 'sine';
-    const now = audioContext.currentTime;
-    oscillator.frequency.setValueAtTime(1000, now);
-    oscillator.frequency.exponentialRampToValueAtTime(600, now + 0.02);
-    
-    // Very short envelope for micro blip - quieter and shorter than main click
-    gainNode.gain.setValueAtTime(0, now);
-    gainNode.gain.linearRampToValueAtTime(0.08, now + 0.0005);
-    gainNode.gain.exponentialRampToValueAtTime(0.005, now + 0.02);
-    gainNode.gain.linearRampToValueAtTime(0, now + 0.04);
-    
-    oscillator.connect(gainNode);
-    gainNode.connect(audioContext.destination);
-    
-    oscillator.start(now);
-    oscillator.stop(now + 0.04);
-  } catch (error) {
-    // Silently fail if audio creation fails
-    console.debug('Micro blip audio error:', error);
-  }
 }
 
 // Generate a polygon clip-path based on number of sides
@@ -662,6 +520,24 @@ export default function GlobalTimelineMinimap({
       case 'day': return '#4a90e2';
       default: return '#4a90e2';
     }
+  };
+
+  // Calculate magnification scale based on distance from indicator
+  // Uses an ease-out curve for smooth magnification effect
+  const calculateMagnificationScale = (distanceFromIndicator: number, maxDistance: number = 50): number => {
+    // Normalize distance to 0-1 range
+    const normalizedDistance = Math.min(1, Math.abs(distanceFromIndicator) / maxDistance);
+    
+    // Use ease-out cubic curve: 1 - (1 - t)^3
+    // This creates a smooth curve where labels near the indicator are much larger
+    const easedDistance = 1 - Math.pow(1 - normalizedDistance, 3);
+    
+    // Magnification scale: 1.0 (at distance 0) to 0.5 (at max distance)
+    // This means labels at the indicator are 2x size, fading to 1x at distance
+    const minScale = 0.5; // Minimum scale at max distance
+    const maxScale = 2.0; // Maximum scale at indicator (distance 0)
+    
+    return maxScale - (easedDistance * (maxScale - minScale));
   };
 
   // Calculate micro indicators for finer time scales within the main period
@@ -2608,14 +2484,20 @@ export default function GlobalTimelineMinimap({
               const decadeStart = mark.date ? Math.floor(mark.date.getFullYear() / 10) * 10 : 0;
               const zodiacColor = getZodiacColorForDecade(decadeStart) || '#4a90e2';
               
-              // Calculate opacity based on distance from indicator (fade with distance)
+              // Calculate opacity and magnification based on distance from indicator
               const indicatorPosition = isFinite(currentIndicatorMetrics.position) 
                 ? Number(currentIndicatorMetrics.position) 
                 : 50; // Default to center if invalid
-              const distanceFromIndicator = Math.abs(labelPosition - indicatorPosition);
+              const distanceFromIndicator = labelPosition - indicatorPosition;
+              const absDistance = Math.abs(distanceFromIndicator);
               const maxDistanceForFade = 50; // Maximum distance for full fade (50% of timeline)
-              const calculatedOpacity = 1 - (distanceFromIndicator / maxDistanceForFade);
+              const calculatedOpacity = 1 - (absDistance / maxDistanceForFade);
               const labelOpacity = Math.max(0.1, Math.min(1, calculatedOpacity));
+              
+              // Calculate magnification scale using curve
+              const magnificationScale = calculateMagnificationScale(distanceFromIndicator, maxDistanceForFade);
+              const baseFontSize = 0.9; // Increased base font size for better legibility
+              const fontSize = `${baseFontSize * magnificationScale}rem`;
               
               // Build the style object explicitly to ensure all properties are set correctly
               const decadeLabelStyle: React.CSSProperties = {
@@ -2624,6 +2506,7 @@ export default function GlobalTimelineMinimap({
                 top: '5px',
                 color: zodiacColor,
                 opacity: labelOpacity,
+                fontSize: fontSize,
                 transform: 'translateX(-50%)',
                 WebkitTransform: 'translateX(-50%)',
                 msTransform: 'translateX(-50%)',
@@ -2669,14 +2552,20 @@ export default function GlobalTimelineMinimap({
               const yearDate = mark.date ? new Date(mark.date.getFullYear(), 0, 1) : new Date();
               const zodiacColor = getZodiacColor(yearDate);
               
-              // Calculate opacity based on distance from indicator (fade with distance)
+              // Calculate opacity and magnification based on distance from indicator
               const indicatorPosition = isFinite(currentIndicatorMetrics.position) 
                 ? Number(currentIndicatorMetrics.position) 
                 : 50; // Default to center if invalid
-              const distanceFromIndicator = Math.abs(labelPosition - indicatorPosition);
+              const distanceFromIndicator = labelPosition - indicatorPosition;
+              const absDistance = Math.abs(distanceFromIndicator);
               const maxDistanceForFade = 50; // Maximum distance for full fade (50% of timeline)
-              const calculatedOpacity = 1 - (distanceFromIndicator / maxDistanceForFade);
+              const calculatedOpacity = 1 - (absDistance / maxDistanceForFade);
               const labelOpacity = Math.max(0.1, Math.min(1, calculatedOpacity));
+              
+              // Calculate magnification scale using curve
+              const magnificationScale = calculateMagnificationScale(distanceFromIndicator, maxDistanceForFade);
+              const baseFontSize = 0.85; // Increased base font size for better legibility
+              const fontSize = `${baseFontSize * magnificationScale}rem`;
               
               // Build the style object explicitly
               const yearLabelStyle: React.CSSProperties = {
@@ -2685,6 +2574,7 @@ export default function GlobalTimelineMinimap({
                 top: '45px',
                 color: zodiacColor,
                 opacity: labelOpacity,
+                fontSize: fontSize,
                 transform: 'translateX(-50%)',
                 WebkitTransform: 'translateX(-50%)',
                 msTransform: 'translateX(-50%)',
@@ -2747,14 +2637,20 @@ export default function GlobalTimelineMinimap({
               // Position can be 0 (start of timeline) or 100 (end of timeline)
               labelPosition = Math.max(0, Math.min(100, labelPosition));
               
-              // Calculate opacity based on distance from indicator (fade with distance)
+              // Calculate opacity and magnification based on distance from indicator
               const indicatorPosition = isFinite(currentIndicatorMetrics.position) 
                 ? Number(currentIndicatorMetrics.position) 
                 : 50; // Default to center if invalid
-              const distanceFromIndicator = Math.abs(labelPosition - indicatorPosition);
+              const distanceFromIndicator = labelPosition - indicatorPosition;
+              const absDistance = Math.abs(distanceFromIndicator);
               const maxDistanceForFade = 50; // Maximum distance for full fade (50% of timeline)
-              const calculatedOpacity = 1 - (distanceFromIndicator / maxDistanceForFade);
+              const calculatedOpacity = 1 - (absDistance / maxDistanceForFade);
               const labelOpacity = Math.max(0.1, Math.min(1, calculatedOpacity));
+              
+              // Calculate magnification scale using curve
+              const magnificationScale = calculateMagnificationScale(distanceFromIndicator, maxDistanceForFade);
+              const baseFontSize = 0.7; // Increased base font size for better legibility
+              const fontSize = `${baseFontSize * magnificationScale}rem`;
               
               // Use a truly unique key based on date timestamp to prevent React from reusing elements
               // This ensures each label gets its own DOM element even if positions are similar
@@ -2775,6 +2671,7 @@ export default function GlobalTimelineMinimap({
                 top: '48px',
                 color: zodiacColor,
                 opacity: labelOpacity,
+                fontSize: fontSize,
                 transform: 'translateX(-50%)',
                 WebkitTransform: 'translateX(-50%)',
                 msTransform: 'translateX(-50%)',
@@ -2814,11 +2711,28 @@ export default function GlobalTimelineMinimap({
             .map((mark, idx) => {
               const monthDate = mark.date ? new Date(mark.date.getFullYear(), mark.date.getMonth(), 15) : new Date();
               const zodiacColor = getZodiacColor(monthDate);
+              const indicatorPosition = isFinite(currentIndicatorMetrics.position) 
+                ? Number(currentIndicatorMetrics.position) 
+                : 50;
+              const distanceFromIndicator = mark.position - indicatorPosition;
+              const magnificationScale = calculateMagnificationScale(distanceFromIndicator, LOCALIZATION_RANGE);
+              const baseFontSize = 0.8;
+              const fontSize = `${baseFontSize * magnificationScale}rem`;
+              const absDistance = Math.abs(distanceFromIndicator);
+              const calculatedOpacity = 1 - (absDistance / LOCALIZATION_RANGE);
+              const labelOpacity = Math.max(0.2, Math.min(1, calculatedOpacity));
+              
               return mark.label && (
                 <div
                   key={`month-label-${idx}`}
                   className={`scale-label month-label ${viewMode === 'month' ? 'current-scale' : ''}`}
-                  style={{ left: `${mark.position}%`, top: '85px', color: zodiacColor }}
+                  style={{ 
+                    left: `${mark.position}%`, 
+                    top: '85px', 
+                    color: zodiacColor,
+                    fontSize: fontSize,
+                    opacity: labelOpacity,
+                  }}
                 >
                   {mark.label}
                 </div>
@@ -2829,11 +2743,28 @@ export default function GlobalTimelineMinimap({
             .map((mark, idx) => {
               const monthDate = mark.date ? new Date(mark.date.getFullYear(), mark.date.getMonth(), 15) : new Date();
               const zodiacColor = getZodiacColor(monthDate);
+              const indicatorPosition = isFinite(currentIndicatorMetrics.position) 
+                ? Number(currentIndicatorMetrics.position) 
+                : 50;
+              const distanceFromIndicator = mark.position - indicatorPosition;
+              const magnificationScale = calculateMagnificationScale(distanceFromIndicator, LOCALIZATION_RANGE);
+              const baseFontSize = 0.65;
+              const fontSize = `${baseFontSize * magnificationScale}rem`;
+              const absDistance = Math.abs(distanceFromIndicator);
+              const calculatedOpacity = 1 - (absDistance / LOCALIZATION_RANGE);
+              const labelOpacity = Math.max(0.2, Math.min(1, calculatedOpacity));
+              
               return mark.label && (
                 <div
                   key={`month-minor-label-${idx}`}
                   className="scale-label month-minor-label"
-                  style={{ left: `${mark.position}%`, top: '88px', color: zodiacColor }}
+                  style={{ 
+                    left: `${mark.position}%`, 
+                    top: '88px', 
+                    color: zodiacColor,
+                    fontSize: fontSize,
+                    opacity: labelOpacity,
+                  }}
                 >
                   {mark.label}
                 </div>
@@ -2843,32 +2774,64 @@ export default function GlobalTimelineMinimap({
           {/* Week labels */}
           {allScaleMarkings.week.major
             .filter(mark => Math.abs(mark.position - currentIndicatorMetrics.position) <= LOCALIZATION_RANGE)
-            .map((mark, idx) => (
-            mark.label && (
-              <div
-                key={`week-label-${idx}`}
-                className={`scale-label week-label ${viewMode === 'week' ? 'current-scale' : ''}`}
-                style={{ left: `${mark.position}%`, top: '125px' }}
-              >
-                {mark.label}
-              </div>
-            )
-          ))}
+            .map((mark, idx) => {
+              const indicatorPosition = isFinite(currentIndicatorMetrics.position) 
+                ? Number(currentIndicatorMetrics.position) 
+                : 50;
+              const distanceFromIndicator = mark.position - indicatorPosition;
+              const magnificationScale = calculateMagnificationScale(distanceFromIndicator, LOCALIZATION_RANGE);
+              const baseFontSize = 0.75;
+              const fontSize = `${baseFontSize * magnificationScale}rem`;
+              const absDistance = Math.abs(distanceFromIndicator);
+              const calculatedOpacity = 1 - (absDistance / LOCALIZATION_RANGE);
+              const labelOpacity = Math.max(0.2, Math.min(1, calculatedOpacity));
+              
+              return mark.label && (
+                <div
+                  key={`week-label-${idx}`}
+                  className={`scale-label week-label ${viewMode === 'week' ? 'current-scale' : ''}`}
+                  style={{ 
+                    left: `${mark.position}%`, 
+                    top: '125px',
+                    fontSize: fontSize,
+                    opacity: labelOpacity,
+                  }}
+                >
+                  {mark.label}
+                </div>
+              );
+            })}
           
           {/* Day labels */}
           {allScaleMarkings.day.major
             .filter(mark => Math.abs(mark.position - currentIndicatorMetrics.position) <= LOCALIZATION_RANGE)
-            .map((mark, idx) => (
-            mark.label && (
-              <div
-                key={`day-label-${idx}`}
-                className={`scale-label day-label ${viewMode === 'day' ? 'current-scale' : ''}`}
-                style={{ left: `${mark.position}%`, top: '165px' }}
-              >
-                {mark.label}
-              </div>
-            )
-          ))}
+            .map((mark, idx) => {
+              const indicatorPosition = isFinite(currentIndicatorMetrics.position) 
+                ? Number(currentIndicatorMetrics.position) 
+                : 50;
+              const distanceFromIndicator = mark.position - indicatorPosition;
+              const magnificationScale = calculateMagnificationScale(distanceFromIndicator, LOCALIZATION_RANGE);
+              const baseFontSize = 0.7;
+              const fontSize = `${baseFontSize * magnificationScale}rem`;
+              const absDistance = Math.abs(distanceFromIndicator);
+              const calculatedOpacity = 1 - (absDistance / LOCALIZATION_RANGE);
+              const labelOpacity = Math.max(0.2, Math.min(1, calculatedOpacity));
+              
+              return mark.label && (
+                <div
+                  key={`day-label-${idx}`}
+                  className={`scale-label day-label ${viewMode === 'day' ? 'current-scale' : ''}`}
+                  style={{ 
+                    left: `${mark.position}%`, 
+                    top: '165px',
+                    fontSize: fontSize,
+                    opacity: labelOpacity,
+                  }}
+                >
+                  {mark.label}
+                </div>
+              );
+            })}
         </div>
 
         {/* Timeline segments */}
