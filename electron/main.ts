@@ -71,6 +71,8 @@ function createPreferencesWindow() {
     minHeight: 500,
     parent: mainWindow || undefined,
     modal: true,
+    resizable: true,
+    title: 'Preferences - CalenRecall',
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       nodeIntegration: false,
@@ -82,9 +84,9 @@ function createPreferencesWindow() {
   });
 
   if (isDev) {
-    preferencesWindow.loadURL('http://localhost:5173/#/preferences');
+    preferencesWindow.loadURL('http://localhost:5173/preferences.html');
   } else {
-    preferencesWindow.loadFile(path.join(__dirname, '../dist/index.html'), { hash: 'preferences' });
+    preferencesWindow.loadFile(path.join(__dirname, '../dist/preferences.html'));
   }
 
   preferencesWindow.on('closed', () => {
@@ -102,6 +104,13 @@ app.whenReady().then(() => {
   // Handle opening preferences window
   ipcMain.handle('open-preferences', () => {
     createPreferencesWindow();
+  });
+  
+  // Handle closing preferences window
+  ipcMain.handle('close-preferences-window', () => {
+    if (preferencesWindow) {
+      preferencesWindow.close();
+    }
   });
   
   createWindow();

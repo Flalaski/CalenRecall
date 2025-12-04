@@ -54,5 +54,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // Window operations
   openPreferences: (): Promise<void> =>
     ipcRenderer.invoke('open-preferences'),
+  
+  closePreferencesWindow: (): Promise<void> =>
+    ipcRenderer.invoke('close-preferences-window'),
 });
 

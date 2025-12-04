@@ -42,6 +42,7 @@ declare global {
       getAllPreferences: () => Promise<Preferences>;
       resetPreferences: () => Promise<{ success: boolean }>;
       openPreferences: () => Promise<void>;
+      closePreferencesWindow: () => Promise<void>;
     };
   }
 }

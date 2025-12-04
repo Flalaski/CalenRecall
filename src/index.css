@@ -15,6 +15,362 @@ body {
   overflow: hidden;
 }
 
+/* Theme support */
+[data-theme="dark"] {
+  background: #1e1e1e;
+  color: #e0e0e0;
+}
+
+[data-theme="dark"] body {
+  background: #1e1e1e;
+  color: #e0e0e0;
+}
+
+[data-theme="dark"] .app {
+  background: #1e1e1e;
+  color: #e0e0e0;
+}
+
+[data-theme="dark"] .app-content {
+  background: #2d2d2d;
+}
+
+[data-theme="dark"] .timeline-section {
+  background: #252525;
+}
+
+[data-theme="dark"] .editor-section {
+  background: #2d2d2d;
+  border-left-color: #4a90e2;
+}
+
+/* Navigation Bar Dark Theme */
+[data-theme="dark"] .navigation-bar {
+  background: #2d2d2d;
+  border-bottom-color: #404040;
+}
+
+[data-theme="dark"] .nav-button,
+[data-theme="dark"] .view-mode-button {
+  background: #3d3d3d;
+  border-color: #555;
+  color: #e0e0e0;
+}
+
+[data-theme="dark"] .nav-button:hover,
+[data-theme="dark"] .view-mode-button:hover {
+  background: #4d4d4d;
+  border-color: #666;
+}
+
+[data-theme="dark"] .date-label {
+  color: #e0e0e0;
+}
+
+/* Timeline View Dark Theme */
+[data-theme="dark"] .timeline-loading {
+  color: #b0b0b0;
+}
+
+[data-theme="dark"] .weekday-header {
+  background: #2d2d2d;
+  border-bottom-color: #404040;
+  color: #b0b0b0;
+}
+
+[data-theme="dark"] .timeline-grid {
+  background: #2d2d2d;
+}
+
+[data-theme="dark"] .timeline-cell {
+  background: #2d2d2d;
+  border-color: #404040;
+  color: #e0e0e0;
+}
+
+[data-theme="dark"] .timeline-cell:hover {
+  background: #353535;
+  border-color: #4a90e2;
+}
+
+[data-theme="dark"] .timeline-cell.empty-cell {
+  background: #252525;
+}
+
+[data-theme="dark"] .timeline-cell.today {
+  background: #1e3a5f;
+  border-color: #4a90e2;
+}
+
+[data-theme="dark"] .timeline-cell.has-entries {
+  background: #3d3520;
+}
+
+[data-theme="dark"] .cell-date {
+  color: #e0e0e0;
+  border-bottom-color: #404040;
+}
+
+[data-theme="dark"] .entry-badge {
+  background: #3d3d3d;
+  color: #e0e0e0;
+  border-color: #555;
+}
+
+[data-theme="dark"] .month-week-entries-section {
+  background: #252525;
+  border-left-color: #404040;
+}
+
+[data-theme="dark"] .week-entries-header {
+  background: #2d2d2d;
+  border-bottom-color: #404040;
+  color: #e0e0e0;
+}
+
+[data-theme="dark"] .week-entry-group {
+  background: #2d2d2d;
+  border-color: #404040;
+}
+
+[data-theme="dark"] .week-entry-group-header {
+  border-bottom-color: #404040;
+}
+
+[data-theme="dark"] .week-label {
+  color: #b0b0b0;
+}
+
+[data-theme="dark"] .week-entry-title {
+  color: #ffffff;
+  font-weight: 600;
+}
+
+[data-theme="dark"] .badge-title {
+  color: #ffffff;
+  font-weight: 500;
+}
+
+[data-theme="dark"] .card-title {
+  color: #ffffff;
+  font-weight: 600;
+}
+
+[data-theme="dark"] .card-title-full {
+  color: #ffffff;
+  font-weight: 600;
+}
+
+[data-theme="dark"] .day-header h2 {
+  color: #ffffff;
+}
+
+[data-theme="dark"] .cell-month-label,
+[data-theme="dark"] .cell-year-label {
+  color: #ffffff;
+  font-weight: 700;
+}
+
+[data-theme="dark"] .year-pixel-map {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+[data-theme="dark"] .month-pixel-map {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+[data-theme="dark"] .week-entry-item {
+  background: #353535;
+  border-left-color: #4caf50;
+}
+
+[data-theme="dark"] .week-entry-item:hover {
+  background: #3d3d3d;
+}
+
+[data-theme="dark"] .week-entry-title {
+  color: #ffffff;
+  font-weight: 600;
+}
+
+[data-theme="dark"] .week-entry-empty {
+  color: #888;
+}
+
+/* Entry Viewer Dark Theme */
+[data-theme="dark"] .entry-viewer {
+  background: #2d2d2d;
+}
+
+[data-theme="dark"] .viewer-header {
+  background: linear-gradient(to bottom, #2d2d2d, #252525);
+  border-bottom-color: #404040;
+}
+
+[data-theme="dark"] .edit-button {
+  background: #3d3d3d;
+  color: #e0e0e0;
+  border-color: #555;
+}
+
+[data-theme="dark"] .edit-button:hover {
+  background: #4d4d4d;
+  border-color: #666;
+}
+
+[data-theme="dark"] .entry-meta small {
+  color: #b0b0b0;
+}
+
+[data-theme="dark"] .viewer-content {
+  background: #2d2d2d;
+}
+
+[data-theme="dark"] .viewer-title {
+  color: #ffffff;
+  font-weight: 700;
+  border-bottom-color: #404040;
+}
+
+[data-theme="dark"] .viewer-text {
+  color: #d0d0d0;
+}
+
+[data-theme="dark"] .viewer-empty {
+  color: #b0b0b0;
+}
+
+[data-theme="dark"] .period-entry-item {
+  background: #2d2d2d;
+  border-color: #404040;
+}
+
+[data-theme="dark"] .period-entry-item:hover {
+  border-color: #4a90e2;
+}
+
+[data-theme="dark"] .period-entry-title {
+  color: #ffffff;
+  font-weight: 600;
+}
+
+[data-theme="dark"] .period-entry-date {
+  color: #b0b0b0;
+}
+
+[data-theme="dark"] .period-entry-content {
+  color: #d0d0d0;
+}
+
+[data-theme="dark"] .period-entry-tags {
+  border-top-color: #404040;
+}
+
+/* Journal Editor Dark Theme */
+[data-theme="dark"] .journal-editor {
+  background: #2d2d2d;
+}
+
+[data-theme="dark"] .editor-header {
+  background: linear-gradient(to bottom, #2d2d2d, #252525);
+  border-bottom-color: #404040;
+}
+
+[data-theme="dark"] .editor-header h3 {
+  color: #ffffff;
+  font-weight: 600;
+}
+
+[data-theme="dark"] .viewer-header h3 {
+  color: #ffffff;
+  font-weight: 600;
+}
+
+[data-theme="dark"] .badge-title {
+  color: #ffffff;
+  font-weight: 500;
+}
+
+[data-theme="dark"] .card-title {
+  color: #ffffff;
+  font-weight: 600;
+}
+
+[data-theme="dark"] .card-title-full {
+  color: #ffffff;
+  font-weight: 600;
+}
+
+[data-theme="dark"] .day-header h2 {
+  color: #ffffff;
+  font-weight: 600;
+}
+
+[data-theme="dark"] .cell-month-label,
+[data-theme="dark"] .cell-year-label {
+  color: #ffffff;
+  font-weight: 700;
+}
+
+[data-theme="dark"] .date-label {
+  color: #ffffff;
+  font-weight: 600;
+}
+
+[data-theme="dark"] .editor-form input,
+[data-theme="dark"] .editor-form textarea {
+  background: #353535;
+  border-color: #555;
+  color: #e0e0e0;
+}
+
+[data-theme="dark"] .editor-form input:focus,
+[data-theme="dark"] .editor-form textarea:focus {
+  border-color: #4a90e2;
+  background: #3d3d3d;
+}
+
+[data-theme="dark"] .tag-input-container {
+  background: #353535;
+  border-color: #555;
+}
+
+[data-theme="dark"] .tag {
+  background: #1e3a5f;
+  color: #90caf9;
+}
+
+[data-theme="dark"] .tag:hover {
+  background: #2563eb;
+}
+
+/* Global Timeline Minimap Dark Theme */
+[data-theme="dark"] .global-timeline-minimap {
+  background: linear-gradient(to bottom, #252525, #1e1e1e);
+  border-bottom-color: #404040;
+}
+
+[data-theme="auto"] {
+  /* System theme - handled by OS */
+  @media (prefers-color-scheme: dark) {
+    background: #1e1e1e;
+    color: #e0e0e0;
+  }
+}
+
+/* Font size support */
+[data-font-size="small"] {
+  font-size: 0.875rem;
+}
+
+[data-font-size="medium"] {
+  font-size: 1rem;
+}
+
+[data-font-size="large"] {
+  font-size: 1.125rem;
+}
+
 #root {
   width: 100vw;
   height: 100vh;

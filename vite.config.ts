@@ -10,7 +10,13 @@ export default defineConfig({
   },
   build: {
     outDir: 'dist',
-    emptyOutDir: true
+    emptyOutDir: true,
+    rollupOptions: {
+      input: {
+        main: path.resolve(__dirname, 'index.html'),
+        preferences: path.resolve(__dirname, 'preferences.html'),
+      },
+    },
   },
   resolve: {
     alias: {

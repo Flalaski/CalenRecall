@@ -141,6 +141,133 @@ export default function TimelineView({
     });
   };
 
+  // Get all entries for a specific year (for pixel map)
+  const getAllEntriesForYear = (year: number): JournalEntry[] => {
+    return entries.filter(entry => {
+      const [entryYearStr] = entry.date.split('-');
+      const entryYear = parseInt(entryYearStr, 10);
+      
+      // Check if entry falls within this year
+      if (entry.timeRange === 'day' || entry.timeRange === 'week' || entry.timeRange === 'month') {
+        return entryYear === year;
+      } else if (entry.timeRange === 'year') {
+        return entryYear === year;
+      } else if (entry.timeRange === 'decade') {
+        const entryDecade = Math.floor(entryYear / 10) * 10;
+        const yearDecade = Math.floor(year / 10) * 10;
+        return entryDecade === yearDecade;
+      }
+      return false;
+    });
+  };
+
+  // Get all entries for a specific month (for pixel map)
+  const getAllEntriesForMonth = (year: number, month: number): JournalEntry[] => {
+    return entries.filter(entry => {
+      const [entryYearStr, entryMonthStr, entryDayStr] = entry.date.split('-');
+      const entryYear = parseInt(entryYearStr, 10);
+      const entryMonth = parseInt(entryMonthStr, 10) - 1; // Convert to 0-indexed month
+      const entryDay = parseInt(entryDayStr, 10);
+      
+      // Check if entry falls within this month
+      if (entry.timeRange === 'day') {
+        return entryYear === year && entryMonth === month;
+      } else if (entry.timeRange === 'week') {
+        // Check if week overlaps with this month
+        const entryDate = new Date(entryYear, entryMonth, entryDay);
+        const weekStart = getWeekStart(entryDate);
+        const weekEnd = new Date(weekStart);
+        weekEnd.setDate(weekEnd.getDate() + 6);
+        const monthStart = new Date(year, month, 1);
+        const monthEnd = new Date(year, month + 1, 0);
+        return weekStart <= monthEnd && weekEnd >= monthStart;
+      } else if (entry.timeRange === 'month') {
+        return entryYear === year && entryMonth === month;
+      } else if (entry.timeRange === 'year') {
+        return entryYear === year;
+      } else if (entry.timeRange === 'decade') {
+        const entryDecade = Math.floor(entryYear / 10) * 10;
+        const yearDecade = Math.floor(year / 10) * 10;
+        return entryDecade === yearDecade;
+      }
+      return false;
+    });
+  };
+
+  // Create pixel map for a year (12 months x ~30 days = 360 pixels, but we'll use 12x30 grid)
+  const createYearPixelMap = (yearEntries: JournalEntry[]): string[] => {
+    // Create a 12x30 grid (12 months, 30 days each)
+    // Each pixel represents one entry, colored by time range
+    const pixels: string[] = [];
+    const totalPixels = 12 * 30; // 360 pixels
+    
+    // Sort entries by date
+    const sortedEntries = [...yearEntries].sort((a, b) => {
+      const dateA = new Date(a.date);
+      const dateB = new Date(b.date);
+      return dateA.getTime() - dateB.getTime();
+    });
+    
+    // Map each entry to a pixel color based on time range
+    const timeRangeColors: Record<TimeRange, string> = {
+      'decade': '#9c27b0', // Purple
+      'year': '#2196f3',   // Blue
+      'month': '#ff9800',   // Orange
+      'week': '#4caf50',    // Green
+      'day': '#f44336',     // Red
+    };
+    
+    // Create pixel array - one entry per pixel
+    for (let i = 0; i < Math.min(sortedEntries.length, totalPixels); i++) {
+      const entry = sortedEntries[i];
+      pixels.push(timeRangeColors[entry.timeRange] || '#999999');
+    }
+    
+    // Fill remaining pixels with transparent/empty
+    while (pixels.length < totalPixels) {
+      pixels.push('transparent');
+    }
+    
+    return pixels;
+  };
+
+  // Create pixel map for a month (7 days x 5 weeks = 35 pixels)
+  const createMonthPixelMap = (monthEntries: JournalEntry[]): string[] => {
+    // Create a 7x5 grid (7 days per week, 5 weeks max)
+    // Each pixel represents one entry, colored by time range
+    const pixels: string[] = [];
+    const totalPixels = 7 * 5; // 35 pixels
+    
+    // Sort entries by date
+    const sortedEntries = [...monthEntries].sort((a, b) => {
+      const dateA = new Date(a.date);
+      const dateB = new Date(b.date);
+      return dateA.getTime() - dateB.getTime();
+    });
+    
+    // Map each entry to a pixel color based on time range
+    const timeRangeColors: Record<TimeRange, string> = {
+      'decade': '#9c27b0', // Purple
+      'year': '#2196f3',   // Blue
+      'month': '#ff9800',   // Orange
+      'week': '#4caf50',    // Green
+      'day': '#f44336',     // Red
+    };
+    
+    // Create pixel array - one entry per pixel
+    for (let i = 0; i < Math.min(sortedEntries.length, totalPixels); i++) {
+      const entry = sortedEntries[i];
+      pixels.push(timeRangeColors[entry.timeRange] || '#999999');
+    }
+    
+    // Fill remaining pixels with transparent/empty
+    while (pixels.length < totalPixels) {
+      pixels.push('transparent');
+    }
+    
+    return pixels;
+  };
+
   const renderMonthView = () => {
     const days = getDaysInMonth(selectedDate);
     const weekDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
@@ -394,6 +521,9 @@ export default function TimelineView({
         <div className="year-grid">
           {months.map((month, idx) => {
             const monthEntries = getEntriesForDate(month, 'year');
+            const allMonthEntries = getAllEntriesForMonth(month.getFullYear(), month.getMonth());
+            const pixelMap = createMonthPixelMap(allMonthEntries);
+            
             return (
               <div
                 key={idx}
@@ -401,6 +531,18 @@ export default function TimelineView({
                 onClick={() => onTimePeriodSelect(month, 'month')}
               >
                 <div className="cell-month-label">{formatDate(month, 'MMM')}</div>
+                {allMonthEntries.length > 0 && (
+                  <div className="month-pixel-map">
+                    {pixelMap.map((color, pixelIdx) => (
+                      <div
+                        key={pixelIdx}
+                        className="pixel"
+                        style={{ backgroundColor: color }}
+                        title={pixelIdx < allMonthEntries.length ? allMonthEntries[pixelIdx].title : ''}
+                      />
+                    ))}
+                  </div>
+                )}
                 <div className="cell-entries">
                   {monthEntries.slice(0, 2).map((entry, eIdx) => (
                     <div
@@ -439,6 +581,9 @@ export default function TimelineView({
         <div className="decade-grid">
           {years.map((year, idx) => {
             const yearEntries = getEntriesForDate(year, 'decade');
+            const allYearEntries = getAllEntriesForYear(year.getFullYear());
+            const pixelMap = createYearPixelMap(allYearEntries);
+            
             return (
               <div
                 key={idx}
@@ -446,6 +591,18 @@ export default function TimelineView({
                 onClick={() => onTimePeriodSelect(year, 'year')}
               >
                 <div className="cell-year-label">{year.getFullYear()}</div>
+                {allYearEntries.length > 0 && (
+                  <div className="year-pixel-map">
+                    {pixelMap.map((color, pixelIdx) => (
+                      <div
+                        key={pixelIdx}
+                        className="pixel"
+                        style={{ backgroundColor: color }}
+                        title={pixelIdx < allYearEntries.length ? allYearEntries[pixelIdx].title : ''}
+                      />
+                    ))}
+                  </div>
+                )}
                 <div className="cell-entries">
                   {yearEntries.slice(0, 2).map((entry, eIdx) => (
                     <div

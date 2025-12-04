@@ -163,3 +163,92 @@
   border-radius: 4px;
 }
 
+.auto-save-indicator {
+  display: flex;
+  align-items: center;
+  padding: 8px 16px;
+  font-size: 14px;
+  color: #4CAF50;
+  font-weight: 500;
+}
+
+.auto-save-indicator::before {
+  content: '✓';
+  margin-right: 6px;
+  font-weight: bold;
+}
+
+/* Dark Theme for Preferences */
+[data-theme="dark"] .preferences-container {
+  background: #1e1e1e;
+  color: #e0e0e0;
+}
+
+[data-theme="dark"] .preferences-loading {
+  color: #b0b0b0;
+}
+
+[data-theme="dark"] .preferences-header {
+  background: #2d2d2d;
+  border-bottom-color: #404040;
+}
+
+[data-theme="dark"] .preferences-header h1 {
+  color: #ffffff;
+}
+
+[data-theme="dark"] .auto-save-indicator {
+  color: #4caf50;
+}
+
+[data-theme="dark"] .preferences-content {
+  background: #1e1e1e;
+}
+
+[data-theme="dark"] .preferences-section {
+  background: #2d2d2d;
+  border-color: #404040;
+}
+
+[data-theme="dark"] .preferences-section h2 {
+  color: #ffffff;
+  border-bottom-color: #404040;
+}
+
+[data-theme="dark"] .preference-item label {
+  color: #e0e0e0;
+}
+
+[data-theme="dark"] .preference-item input[type="text"],
+[data-theme="dark"] .preference-item input[type="number"],
+[data-theme="dark"] .preference-item select {
+  background: #353535;
+  border-color: #555;
+  color: #e0e0e0;
+}
+
+[data-theme="dark"] .preference-item input[type="text"]:focus,
+[data-theme="dark"] .preference-item input[type="number"]:focus,
+[data-theme="dark"] .preference-item select:focus {
+  border-color: #4CAF50;
+  background: #3d3d3d;
+}
+
+[data-theme="dark"] .preference-item small {
+  color: #b0b0b0;
+}
+
+[data-theme="dark"] .preference-note {
+  background: #3d3520;
+  border-left-color: #ffc107;
+  color: #ffd54f;
+}
+
+[data-theme="dark"] .reset-button {
+  background: #d32f2f;
+}
+
+[data-theme="dark"] .reset-button:hover {
+  background: #c62828;
+}
+

@@ -4,8 +4,7 @@ import JournalEditor from './components/JournalEditor';
 import EntryViewer from './components/EntryViewer';
 import NavigationBar from './components/NavigationBar';
 import GlobalTimelineMinimap from './components/GlobalTimelineMinimap';
-import PreferencesComponent from './components/Preferences';
-import { TimeRange, JournalEntry } from './types';
+import { TimeRange, JournalEntry, Preferences } from './types';
 import { getEntryForDate } from './services/journalService';
 import './App.css';
 
@@ -15,14 +14,80 @@ function App() {
   const [selectedEntry, setSelectedEntry] = useState<JournalEntry | null>(null);
   const [isNewEntry, setIsNewEntry] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
-  const [showPreferences, setShowPreferences] = useState(false);
+  const [preferences, setPreferences] = useState<Preferences>({});
+  const [preferencesLoaded, setPreferencesLoaded] = useState(false);
 
-  // Check if we're in preferences mode (for preferences window)
+  // Load preferences on startup
   useEffect(() => {
-    const hash = window.location.hash;
-    if (hash === '#/preferences') {
-      setShowPreferences(true);
-    }
+    const loadPreferences = async () => {
+      try {
+        if (window.electronAPI) {
+          const prefs = await window.electronAPI.getAllPreferences();
+          setPreferences(prefs);
+          
+          // Apply default view mode
+          if (prefs.defaultViewMode) {
+            setViewMode(prefs.defaultViewMode);
+          }
+          
+          // Apply theme
+          const theme = prefs.theme || 'light';
+          document.documentElement.setAttribute('data-theme', theme);
+          
+          // Handle auto theme
+          if (theme === 'auto') {
+            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            document.documentElement.setAttribute('data-theme', prefersDark ? 'dark' : 'light');
+            
+            // Listen for system theme changes
+            window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+              document.documentElement.setAttribute('data-theme', e.matches ? 'dark' : 'light');
+            });
+          }
+          
+          // Apply font size
+          if (prefs.fontSize) {
+            document.documentElement.setAttribute('data-font-size', prefs.fontSize);
+          }
+        }
+      } catch (error) {
+        console.error('Error loading preferences:', error);
+      } finally {
+        setPreferencesLoaded(true);
+      }
+    };
+    
+    loadPreferences();
+    
+    // Listen for preference changes
+    const handlePreferenceChange = () => {
+      loadPreferences();
+    };
+    
+    // Check for preference updates periodically (when preferences window closes)
+    const interval = setInterval(() => {
+      if (window.electronAPI) {
+        window.electronAPI.getAllPreferences().then(prefs => {
+          setPreferences(prefs);
+          if (prefs.defaultViewMode && prefs.defaultViewMode !== viewMode) {
+            setViewMode(prefs.defaultViewMode);
+          }
+          const theme = prefs.theme || 'light';
+          document.documentElement.setAttribute('data-theme', theme);
+          
+          // Handle auto theme
+          if (theme === 'auto') {
+            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            document.documentElement.setAttribute('data-theme', prefersDark ? 'dark' : 'light');
+          }
+          if (prefs.fontSize) {
+            document.documentElement.setAttribute('data-font-size', prefs.fontSize);
+          }
+        }).catch(console.error);
+      }
+    }, 1000);
+    
+    return () => clearInterval(interval);
   }, []);
 
   // Load entry for current date/viewMode when they change
@@ -82,19 +147,20 @@ function App() {
     loadCurrentEntry();
   };
 
-  // If showing preferences, render only preferences component
-  if (showPreferences) {
-    return <PreferencesComponent />;
+  if (!preferencesLoaded) {
+    return <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>Loading...</div>;
   }
 
   return (
     <div className="app">
-      <GlobalTimelineMinimap
-        selectedDate={selectedDate}
-        viewMode={viewMode}
-        onTimePeriodSelect={handleTimePeriodSelect}
-        onEntrySelect={handleEntrySelect}
-      />
+      {preferences.showMinimap !== false && (
+        <GlobalTimelineMinimap
+          selectedDate={selectedDate}
+          viewMode={viewMode}
+          onTimePeriodSelect={handleTimePeriodSelect}
+          onEntrySelect={handleEntrySelect}
+        />
+      )}
       <NavigationBar
         viewMode={viewMode}
         onViewModeChange={handleViewModeChange}

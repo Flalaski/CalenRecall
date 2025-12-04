@@ -10,6 +10,23 @@ export default function PreferencesComponent() {
 
   useEffect(() => {
     loadPreferences();
+    
+    // Apply theme on load
+    const applyTheme = async () => {
+      if (window.electronAPI) {
+        const prefs = await window.electronAPI.getAllPreferences();
+        const theme = prefs.theme || 'light';
+        document.documentElement.setAttribute('data-theme', theme);
+        if (theme === 'auto') {
+          const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+          document.documentElement.setAttribute('data-theme', prefersDark ? 'dark' : 'light');
+        }
+        if (prefs.fontSize) {
+          document.documentElement.setAttribute('data-font-size', prefs.fontSize);
+        }
+      }
+    };
+    applyTheme();
   }, []);
 
   const loadPreferences = async () => {
@@ -39,8 +56,33 @@ export default function PreferencesComponent() {
         await window.electronAPI.setPreference(key as keyof Preferences, value);
       }
       
+      // Apply theme and font size immediately
+      const theme = preferences.theme || 'light';
+      document.documentElement.setAttribute('data-theme', theme);
+      
+      // Handle auto theme
+      if (theme === 'auto') {
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        document.documentElement.setAttribute('data-theme', prefersDark ? 'dark' : 'light');
+      }
+      
+      if (preferences.fontSize) {
+        document.documentElement.setAttribute('data-font-size', preferences.fontSize);
+      }
+      
       setSaved(true);
-      setTimeout(() => setSaved(false), 2000);
+      setTimeout(() => {
+        setSaved(false);
+        // Close the preferences window after saving
+        if (window.electronAPI && window.electronAPI.closePreferencesWindow) {
+          window.electronAPI.closePreferencesWindow();
+        } else {
+          // Fallback: try to close via window.close() if in Electron
+          if (window.location.protocol === 'file:' || window.location.hostname === 'localhost') {
+            window.close();
+          }
+        }
+      }, 1000);
     } catch (error) {
       console.error('Error saving preferences:', error);
       alert('Failed to save preferences. Please try again.');
@@ -68,6 +110,26 @@ export default function PreferencesComponent() {
 
   const updatePreference = <K extends keyof Preferences>(key: K, value: Preferences[K]) => {
     setPreferences(prev => ({ ...prev, [key]: value }));
+    
+    // Auto-save immediately
+    if (window.electronAPI) {
+      window.electronAPI.setPreference(key, value).then(() => {
+        // Apply theme and font size immediately if changed
+        if (key === 'theme') {
+          const theme = value as string || 'light';
+          document.documentElement.setAttribute('data-theme', theme);
+          if (theme === 'auto') {
+            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            document.documentElement.setAttribute('data-theme', prefersDark ? 'dark' : 'light');
+          }
+        }
+        if (key === 'fontSize') {
+          document.documentElement.setAttribute('data-font-size', value as string);
+        }
+      }).catch(error => {
+        console.error('Error auto-saving preference:', error);
+      });
+    }
   };
 
   if (loading) {
@@ -83,13 +145,7 @@ export default function PreferencesComponent() {
       <div className="preferences-header">
         <h1>Preferences</h1>
         <div className="preferences-actions">
-          <button
-            className="preferences-button save-button"
-            onClick={handleSave}
-            disabled={saving}
-          >
-            {saving ? 'Saving...' : saved ? '✓ Saved' : 'Save'}
-          </button>
+          <span className="auto-save-indicator">Auto-saved</span>
           <button
             className="preferences-button reset-button"
             onClick={handleReset}
