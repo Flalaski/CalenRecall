@@ -7,10 +7,302 @@
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
+.radial-dial {
+  position: fixed;
+  transform: translate(-50%, -50%);
+  width: 200px;
+  height: 200px;
+  pointer-events: none;
+  z-index: 1000;
+  animation: radialDialAppear 0.2s ease-out;
+}
+
+@keyframes radialDialAppear {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.5);
+  }
+  100% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+.radial-dial-center {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 20px;
+  height: 20px;
+  background: #4a90e2;
+  border: 3px solid #fff;
+  border-radius: 50%;
+  box-shadow: 0 0 15px rgba(74, 144, 226, 0.8), inset 0 0 10px rgba(255, 255, 255, 0.3);
+  z-index: 2;
+}
+
+.radial-dial-direction {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  opacity: 0.7;
+  transition: opacity 0.2s ease;
+}
+
+.radial-dial-direction:hover {
+  opacity: 1;
+}
+
+.radial-dial-left {
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.radial-dial-right {
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.radial-dial-up {
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.radial-dial-down {
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.radial-arrow {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #4a90e2;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  filter: drop-shadow(0 0 8px rgba(74, 144, 226, 0.6));
+}
+
+.radial-label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #333;
+  background: rgba(255, 255, 255, 0.95);
+  padding: 4px 8px;
+  border-radius: 4px;
+  white-space: nowrap;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(74, 144, 226, 0.3);
+  text-align: center;
+  max-width: 120px;
+}
+
+.mechanical-click-feedback {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 100;
+  pointer-events: none;
+  animation: mechanicalClick 0.3s ease-out;
+}
+
+.mechanical-click-feedback.up {
+  animation: mechanicalClickUp 0.3s ease-out;
+}
+
+.mechanical-click-feedback.down {
+  animation: mechanicalClickDown 0.3s ease-out;
+}
+
+.mechanical-gear {
+  width: 60px;
+  height: 60px;
+  position: relative;
+  margin: 0 auto 10px;
+  animation: gearRotate 0.3s ease-out;
+}
+
+.gear-tooth {
+  position: absolute;
+  width: 8px;
+  height: 20px;
+  background: #4a90e2;
+  border: 2px solid #2e5c8a;
+  border-radius: 2px;
+  top: 50%;
+  left: 50%;
+  transform-origin: center;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.gear-tooth:nth-child(1) {
+  transform: translate(-50%, -50%) translateY(-30px) rotate(0deg);
+}
+
+.gear-tooth:nth-child(2) {
+  transform: translate(-50%, -50%) translateY(-30px) rotate(60deg);
+}
+
+.gear-tooth:nth-child(3) {
+  transform: translate(-50%, -50%) translateY(-30px) rotate(120deg);
+}
+
+.gear-tooth:nth-child(4) {
+  transform: translate(-50%, -50%) translateY(-30px) rotate(180deg);
+}
+
+.gear-tooth:nth-child(5) {
+  transform: translate(-50%, -50%) translateY(-30px) rotate(240deg);
+}
+
+.gear-tooth:nth-child(6) {
+  transform: translate(-50%, -50%) translateY(-30px) rotate(300deg);
+}
+
+.mechanical-scale-label {
+  text-align: center;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #4a90e2;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  background: rgba(255, 255, 255, 0.9);
+  padding: 4px 12px;
+  border-radius: 4px;
+  border: 2px solid #4a90e2;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+@keyframes mechanicalClick {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.5);
+  }
+  50% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+@keyframes mechanicalClickUp {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.5) translateY(20px);
+  }
+  50% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.1) translateY(-5px);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(1) translateY(-10px);
+  }
+}
+
+@keyframes mechanicalClickDown {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.5) translateY(-20px);
+  }
+  50% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.1) translateY(5px);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(1) translateY(10px);
+  }
+}
+
+@keyframes gearRotate {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(180deg);
+  }
+}
+
+.minimap-container.mechanical-click-active {
+  animation: containerShake 0.2s ease-out;
+}
+
+@keyframes containerShake {
+  0%, 100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-2px);
+  }
+  75% {
+    transform: translateX(2px);
+  }
+}
+
 .minimap-container {
   position: relative;
-  height: 80px;
+  height: 200px;
   overflow: hidden;
+  cursor: grab;
+  user-select: none;
+}
+
+.minimap-container.dragging {
+  cursor: grabbing;
+}
+
+.minimap-container.dragging * {
+  pointer-events: none;
+}
+
+.minimap-container.dragging .entry-indicator,
+.minimap-container.dragging .timeline-segment {
+  pointer-events: none;
+}
+
+.minimap-container.horizontal-locked {
+  cursor: ns-resize;
+}
+
+.minimap-container.horizontal-locked::after {
+  content: '↕';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 2rem;
+  color: #4a90e2;
+  opacity: 0.3;
+  pointer-events: none;
+  z-index: 50;
+  animation: lockIndicator 0.3s ease-out;
+}
+
+@keyframes lockIndicator {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.5);
+  }
+  50% {
+    opacity: 0.5;
+    transform: translate(-50%, -50%) scale(1.2);
+  }
+  100% {
+    opacity: 0.3;
+    transform: translate(-50%, -50%) scale(1);
+  }
 }
 
 .fractal-web {
@@ -137,7 +429,7 @@
   top: 50%;
   transform: translate(-50%, -50%);
   width: 6px;
-  height: 70px;
+  height: 180px;
   background: linear-gradient(to bottom, 
     rgba(74, 144, 226, 0.3), 
     #4a90e2, 
@@ -200,10 +492,108 @@
   box-shadow: 0 0 10px currentColor, 0 0 20px currentColor !important;
 }
 
+.scale-labels {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.scale-label {
+  position: absolute;
+  transform: translateX(-50%);
+  font-size: 0.65rem;
+  color: #555;
+  font-weight: 600;
+  white-space: nowrap;
+  pointer-events: none;
+  text-shadow: 0 1px 2px rgba(255, 255, 255, 0.8);
+}
+
+.scale-label.decade-label {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #222;
+  top: 2px;
+}
+
+.scale-label.decade-label.current-scale {
+  color: #4a90e2;
+  font-size: 0.85rem;
+}
+
+.scale-label.year-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #333;
+  top: 45px;
+}
+
+.scale-label.year-label.current-scale {
+  color: #4a90e2;
+  font-size: 0.8rem;
+}
+
+.scale-label.year-minor-label {
+  font-size: 0.6rem;
+  font-weight: 500;
+  color: #666;
+  top: 48px;
+}
+
+.scale-label.month-label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #444;
+  top: 85px;
+}
+
+.scale-label.month-label.current-scale {
+  color: #4a90e2;
+  font-weight: 700;
+  font-size: 0.75rem;
+}
+
+.scale-label.month-minor-label {
+  font-size: 0.55rem;
+  font-weight: 500;
+  color: #777;
+  top: 88px;
+}
+
+.scale-label.week-label {
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: #555;
+  top: 125px;
+}
+
+.scale-label.week-label.current-scale {
+  color: #4a90e2;
+  font-weight: 700;
+  font-size: 0.7rem;
+}
+
+.scale-label.day-label {
+  font-size: 0.6rem;
+  font-weight: 600;
+  color: #666;
+  top: 165px;
+}
+
+.scale-label.day-label.current-scale {
+  color: #4a90e2;
+  font-weight: 700;
+  font-size: 0.65rem;
+}
+
 /* Responsive adjustments */
 @media (max-width: 1200px) {
   .minimap-container {
-    height: 60px;
+    height: 150px;
   }
   
   .segment-label {
@@ -215,6 +605,18 @@
     width: 6px;
     height: 6px;
     border-width: 1.5px;
+  }
+  
+  .scale-label {
+    font-size: 0.55rem;
+  }
+  
+  .scale-label.major-label {
+    font-size: 0.65rem;
+  }
+  
+  .scale-label.minor-label {
+    font-size: 0.5rem;
   }
 }
 
