@@ -4,10 +4,23 @@ A self-contained calendar journal application for Windows that helps you recall 
 
 ## Features
 
-- **Multiple Time Views**: Navigate through decades, years, months, weeks, or days
+- **Multiple Time Views**: Navigate through decades, years, months, weeks, or days with intuitive calendar grids
+- **Hierarchical Entry System**: 
+  - Day entries appear in calendar day cells
+  - Week entries shown in month view's side panel, grouped by week
+  - Month entries displayed in year view's month cells
+  - Year entries displayed in decade view's year cells
+  - All period entries (week/month/year/decade) listed in the right panel for easy access
+- **Global Timeline Minimap**: Visual overview of your entire timeline at the top of the window
+- **Preferences System**: Comprehensive settings including:
+  - Default view mode, date format, week start day
+  - Theme (light/dark/auto) and font size
+  - Timeline minimap visibility and size
+  - Auto-save settings
+  - Window size and position (automatically saved)
 - **Local Storage**: All data is stored locally using SQLite - your privacy is protected
-- **Rich Journal Entries**: Create entries with titles, content, and tags
-- **Visual Indicators**: See which dates have entries at a glance
+- **Rich Journal Entries**: Create entries with titles, content, and tags at any time scale
+- **Visual Indicators**: See which dates have entries at a glance with color-coded badges
 - **Search & Recall**: Find past entries easily
 - **Self-Contained**: Distribute as a single Windows installer
 
@@ -87,14 +100,21 @@ All builds are created in the `release` directory, and the folder will automatic
 ```
 CalenRecall/
 ├── electron/          # Electron main process
-│   ├── main.ts        # Main entry point
+│   ├── main.ts        # Main entry point and window management
 │   ├── preload.ts     # Preload script (IPC bridge)
-│   ├── database.ts    # SQLite database operations
-│   └── ipc-handlers.ts # IPC message handlers
+│   ├── database.ts    # SQLite database operations and preferences
+│   ├── ipc-handlers.ts # IPC message handlers
+│   └── types.ts       # Shared TypeScript types
 ├── src/               # React frontend
 │   ├── components/    # React components
+│   │   ├── TimelineView.tsx      # Calendar grid views
+│   │   ├── EntryViewer.tsx       # Right panel entry display
+│   │   ├── JournalEditor.tsx     # Entry editing interface
+│   │   ├── GlobalTimelineMinimap.tsx # Top timeline overview
+│   │   ├── NavigationBar.tsx     # Date navigation and view controls
+│   │   └── Preferences.tsx       # Preferences window
 │   ├── services/      # API service layer
-│   └── utils/         # Utility functions
+│   └── utils/         # Utility functions (date formatting, etc.)
 └── assets/            # Application assets (icons, etc.)
 ```
 
@@ -109,10 +129,42 @@ CalenRecall/
 
 ## Data Storage
 
-All journal entries are stored in a SQLite database located in the application's user data directory:
+All journal entries and preferences are stored in a SQLite database located in the application's user data directory:
 - Windows: `%APPDATA%\calenrecall\calenrecall.db`
 
+The database includes:
+- **journal_entries**: All your journal entries with support for multiple time scales (decade, year, month, week, day)
+- **preferences**: Application settings and user preferences
+
 Your data never leaves your device.
+
+## Usage
+
+### Creating Entries
+
+You can create journal entries at different time scales:
+- **Day entries**: Specific to a single day
+- **Week entries**: Apply to an entire week (Monday-Sunday)
+- **Month entries**: Apply to all days in a month
+- **Year entries**: Apply to all days in a year
+- **Decade entries**: Apply to all years in a decade
+
+### Viewing Entries
+
+- **Day entries** appear directly in calendar day cells
+- **Week entries** are shown in the side panel when viewing month view, grouped by week
+- **Month entries** appear in year view's month cells
+- **Year entries** appear in decade view's year cells
+- All period entries are also listed in the right panel for easy browsing and access
+
+### Preferences
+
+Access preferences by clicking the gear icon (⚙️) in the navigation bar. You can configure:
+- Default view mode and date format
+- Theme and appearance settings
+- Timeline minimap visibility and size
+- Auto-save behavior
+- Window preferences (size and position are saved automatically)
 
 ## License
 
