@@ -325,6 +325,77 @@
   opacity: 0.5;
 }
 
+/* Infinity tree web centered on the current indicator */
+.infinity-tree-trunk {
+  filter: drop-shadow(0 0 6px rgba(74, 144, 226, 0.7));
+}
+
+.infinity-tree-branch {
+  stroke-linecap: round;
+  stroke-linejoin: bevel;
+  stroke-dasharray: 6 5;
+  filter: drop-shadow(0 0 5px rgba(74, 144, 226, 0.7));
+  animation: infinityBranchIdle 4s ease-in-out infinite;
+}
+
+.infinity-tree-branch.secondary {
+  stroke-dasharray: 3 7;
+  filter: drop-shadow(0 0 4px rgba(144, 202, 249, 0.7));
+}
+
+.infinity-tree-branch.active {
+  animation: infinityBranchActive 1.2s ease-in-out infinite;
+}
+
+.minimap-container.dragging .infinity-tree-branch {
+  animation: infinityBranchLightning 0.35s ease-in-out infinite;
+}
+
+.infinity-tree-filament {
+  stroke-dasharray: 2 6;
+  opacity: 0.25;
+}
+
+@keyframes infinityBranchIdle {
+  0%, 100% {
+    stroke-dashoffset: 0;
+    opacity: 0.6;
+  }
+  50% {
+    stroke-dashoffset: -10;
+    opacity: 0.9;
+  }
+}
+
+@keyframes infinityBranchActive {
+  0%, 100% {
+    stroke-dashoffset: 0;
+    opacity: 0.8;
+  }
+  50% {
+    stroke-dashoffset: -18;
+    opacity: 1;
+  }
+}
+
+@keyframes infinityBranchLightning {
+  0% {
+    stroke-dashoffset: 0;
+    opacity: 0.9;
+    filter: drop-shadow(0 0 10px rgba(144, 202, 249, 1));
+  }
+  50% {
+    stroke-dashoffset: -26;
+    opacity: 1;
+    filter: drop-shadow(0 0 22px rgba(144, 202, 249, 1));
+  }
+  100% {
+    stroke-dashoffset: -8;
+    opacity: 0.85;
+    filter: drop-shadow(0 0 12px rgba(74, 144, 226, 0.9));
+  }
+}
+
 @keyframes pathGlow {
   0%, 100% {
     opacity: 0.7;

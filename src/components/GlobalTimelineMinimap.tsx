@@ -364,11 +364,12 @@ export default function GlobalTimelineMinimap({
     return { segments, currentPosition, startDate, endDate };
   }, [selectedDate, viewMode]);
 
-  // Calculate position percentage for the illuminated line
-  const linePosition = useMemo(() => {
-    if (timelineData.segments.length === 0) return 50;
-    return (timelineData.currentPosition / (timelineData.segments.length - 1)) * 100;
-  }, [timelineData]);
+  // Calculate position percentage for the illuminated line (kept for potential future use)
+  // Currently unused by the infinity tree, but preserved for design iterations.
+  // const linePosition = useMemo(() => {
+  //   if (timelineData.segments.length === 0) return 50;
+  //   return (timelineData.currentPosition / (timelineData.segments.length - 1)) * 100;
+  // }, [timelineData]);
 
   // Calculate current period indicator position (where the blue bar is)
   const currentIndicatorPosition = useMemo(() => {
@@ -380,6 +381,47 @@ export default function GlobalTimelineMinimap({
 
   // Localization range - only show scales within ±20% of the current indicator
   const LOCALIZATION_RANGE = 20; // percentage of timeline width
+
+  // Center of the minimap in SVG coordinates (0–1000) for the "infinity tree" web
+  const centerX = useMemo(() => {
+    return (currentIndicatorPosition / 100) * 1000;
+  }, [currentIndicatorPosition]);
+
+  // Ordered time scales for branch generation
+  const timeScaleOrder: TimeRange[] = ['decade', 'year', 'month', 'week', 'day'];
+
+  // Vertical anchoring for each scale level in SVG coordinates
+  const scaleYPositions: Record<TimeRange, number> = {
+    decade: 20,
+    year: 60,
+    month: 100,
+    week: 140,
+    day: 180,
+  };
+
+  // Build a crystalline, lightning-like branch path for a given scale and side
+  const buildInfinityBranchPath = (scale: TimeRange, direction: 'left' | 'right'): string => {
+    const levelIndex = timeScaleOrder.indexOf(scale);
+    const yTarget = scaleYPositions[scale];
+
+    // Horizontal reach grows with finer scales (more detailed = wider spread)
+    const baseSpread = 80 + levelIndex * 25;
+    const spread = baseSpread * (direction === 'left' ? -1 : 1);
+
+    // Deterministic jitter based on current date and scale, so the web shifts with movement
+    const jitterSeed = `${scale}-${selectedDate.toISOString()}`;
+    const jitter = hashToVerticalOffset(jitterSeed, 40); // -40..40
+
+    // Intermediate "lightning" joints between center and target band
+    const midY1 = 100 + (yTarget - 100) * 0.33;
+    const midY2 = 100 + (yTarget - 100) * 0.66;
+
+    const midX1 = centerX + spread * 0.4 + jitter * 0.2;
+    const midX2 = centerX + spread * 0.8 - jitter * 0.2;
+    const endX = centerX + spread + jitter * 0.1;
+
+    return `M ${centerX},100 L ${midX1},${midY1} L ${midX2},${midY2} L ${endX},${yTarget}`;
+  };
 
   // Calculate detailed scale markings for ALL time scale levels simultaneously
   const allScaleMarkings = useMemo(() => {
@@ -1149,39 +1191,62 @@ export default function GlobalTimelineMinimap({
           <rect width="100%" height="100%" fill="url(#fractalGrid)" />
           <rect width="100%" height="100%" fill="url(#fractalWeb)" />
           <rect width="100%" height="100%" fill="url(#fractalStrands)" />
-          
-          {/* Illuminated timeline path - curves through the fractal web */}
-          <path
-            d={`M 0,100 Q ${linePosition * 5},50 ${linePosition * 10},100 T 1000,100`}
+
+          {/* Infinity tree trunk centered on the current indicator */}
+          <line
+            x1={centerX}
+            y1="0"
+            x2={centerX}
+            y2="200"
             stroke="#4a90e2"
-            strokeWidth="3"
-            fill="none"
-            opacity="0.8"
-            className="timeline-path"
+            strokeWidth="1.5"
+            opacity="0.55"
+            className="infinity-tree-trunk"
           />
-          <path
-            d={`M 0,100 Q ${linePosition * 5},50 ${linePosition * 10},100 T 1000,100`}
-            stroke="#2196f3"
-            strokeWidth="2"
-            fill="none"
-            opacity="0.6"
-            className="timeline-path-glow"
-          />
-          {/* Additional subtle paths suggesting other timeline possibilities */}
-          <path
-            d={`M 0,90 Q ${linePosition * 4},40 ${linePosition * 8},90 T 1000,90`}
-            stroke="#90caf9"
-            strokeWidth="1"
-            fill="none"
-            opacity="0.2"
-          />
-          <path
-            d={`M 0,110 Q ${linePosition * 6},60 ${linePosition * 12},110 T 1000,110`}
-            stroke="#90caf9"
-            strokeWidth="1"
-            fill="none"
-            opacity="0.2"
-          />
+
+          {/* Fractaline crystalline web "infinity tree" branches for each time scale */}
+          <g className="infinity-tree">
+            {timeScaleOrder.map((scale) => {
+              const isActiveScale = scale === viewMode;
+              const levelIndex = timeScaleOrder.indexOf(scale);
+              const baseOpacity = isActiveScale ? 0.9 : 0.35;
+              const thickness = isActiveScale ? 2.6 : 1.6;
+              const glowColorPrimary = '#4a90e2';
+              const glowColorSecondary = '#90caf9';
+
+              return (
+                <g key={scale}>
+                  {/* Primary crystalline branch */}
+                  <path
+                    d={buildInfinityBranchPath(scale, 'left')}
+                    stroke={glowColorPrimary}
+                    strokeWidth={thickness}
+                    fill="none"
+                    opacity={baseOpacity}
+                    className={`infinity-tree-branch ${isActiveScale ? 'active' : ''}`}
+                  />
+                  <path
+                    d={buildInfinityBranchPath(scale, 'right')}
+                    stroke={glowColorSecondary}
+                    strokeWidth={thickness - 0.4}
+                    fill="none"
+                    opacity={baseOpacity * 0.8}
+                    className={`infinity-tree-branch secondary ${isActiveScale ? 'active' : ''}`}
+                  />
+
+                  {/* Subtle crystalline filaments hugging the scale band */}
+                  <path
+                    d={`M ${centerX - 12 * (levelIndex + 1)},${scaleYPositions[scale]} 
+                        L ${centerX + 12 * (levelIndex + 1)},${scaleYPositions[scale]}`}
+                    stroke={glowColorSecondary}
+                    strokeWidth="0.8"
+                    opacity={baseOpacity * 0.4}
+                    className="infinity-tree-filament"
+                  />
+                </g>
+              );
+            })}
+          </g>
           
           {/* All time scale levels - displayed simultaneously, localized to current indicator */}
           {/* DECADE SCALE (topmost, largest scale) */}
