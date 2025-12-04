@@ -78,6 +78,7 @@ function App() {
         selectedDate={selectedDate}
         viewMode={viewMode}
         onTimePeriodSelect={handleTimePeriodSelect}
+        onEntrySelect={handleEntrySelect}
       />
       <NavigationBar
         viewMode={viewMode}

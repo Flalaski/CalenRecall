@@ -1,5 +1,5 @@
-import { useMemo } from 'react';
-import { TimeRange } from '../types';
+import { useMemo, useState, useEffect } from 'react';
+import { TimeRange, JournalEntry } from '../types';
 import { formatDate, getWeekStart, getMonthStart } from '../utils/dateUtils';
 import { addDays, addWeeks, addMonths, getYear } from 'date-fns';
 import './GlobalTimelineMinimap.css';
@@ -8,13 +8,123 @@ interface GlobalTimelineMinimapProps {
   selectedDate: Date;
   viewMode: TimeRange;
   onTimePeriodSelect: (date: Date, viewMode: TimeRange) => void;
+  onEntrySelect?: (entry: JournalEntry) => void;
+}
+
+// Calculate color based on numerological patterns of content and time
+function calculateEntryColor(entry: JournalEntry): string {
+  // Combine title and content for numerological calculation
+  const text = (entry.title || '') + (entry.content || '');
+  
+  // Calculate numerological value from text (sum of character codes with weighting)
+  let textValue = 0;
+  for (let i = 0; i < text.length; i++) {
+    const charCode = text.charCodeAt(i);
+    // Weight characters differently to create more variation
+    textValue += charCode * (i % 3 + 1);
+  }
+  
+  // Calculate time-based numerological value
+  const entryDate = new Date(entry.date);
+  const timeValue = entryDate.getFullYear() * 10000 + 
+                    (entryDate.getMonth() + 1) * 100 + 
+                    entryDate.getDate();
+  
+  // Add timeRange to the calculation for additional variation
+  const timeRangeValue = entry.timeRange === 'decade' ? 1000 :
+                        entry.timeRange === 'year' ? 2000 :
+                        entry.timeRange === 'month' ? 3000 :
+                        entry.timeRange === 'week' ? 4000 : 5000;
+  
+  // Combine all values for numerological calculation
+  const combinedValue = (textValue + timeValue + timeRangeValue) % 360; // Use modulo 360 for hue
+  
+  // Calculate hue, saturation, and lightness with more variation
+  const hue = combinedValue; // 0-360 degrees
+  const saturation = 55 + (textValue % 25); // 55-80% saturation (more vibrant)
+  const lightness = 45 + (timeValue % 15); // 45-60% lightness (more visible)
+  
+  return `hsl(${hue}, ${saturation}%, ${lightness}%)`;
 }
 
 export default function GlobalTimelineMinimap({
   selectedDate,
   viewMode,
   onTimePeriodSelect,
+  onEntrySelect,
 }: GlobalTimelineMinimapProps) {
+  const [entries, setEntries] = useState<JournalEntry[]>([]);
+  const [loading, setLoading] = useState(false);
+  // Load entries for the timeline range
+  useEffect(() => {
+    const loadEntries = async () => {
+      setLoading(true);
+      try {
+        // Calculate the visible date range based on view mode
+        let rangeStart: Date;
+        let rangeEnd: Date;
+        
+        switch (viewMode) {
+          case 'decade': {
+            const currentDecade = Math.floor(getYear(selectedDate) / 10) * 10;
+            rangeStart = new Date(currentDecade - 50, 0, 1);
+            rangeEnd = new Date(currentDecade + 60, 11, 31);
+            break;
+          }
+          case 'year': {
+            const currentYear = getYear(selectedDate);
+            rangeStart = new Date(currentYear - 5, 0, 1);
+            rangeEnd = new Date(currentYear + 6, 11, 31);
+            break;
+          }
+          case 'month': {
+            const monthStart = getMonthStart(selectedDate);
+            rangeStart = addMonths(monthStart, -6);
+            rangeEnd = addMonths(monthStart, 7);
+            break;
+          }
+          case 'week': {
+            const weekStart = getWeekStart(selectedDate);
+            rangeStart = addWeeks(weekStart, -8);
+            rangeEnd = addWeeks(weekStart, 9);
+            break;
+          }
+          case 'day': {
+            const dayStart = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate());
+            rangeStart = addDays(dayStart, -14);
+            rangeEnd = addDays(dayStart, 15);
+            break;
+          }
+        }
+        
+        // Use the electron API to get entries for the date range
+        if (window.electronAPI) {
+          const startDateStr = formatDate(rangeStart);
+          const endDateStr = formatDate(rangeEnd);
+          const loadedEntries = await window.electronAPI.getEntries(startDateStr, endDateStr);
+          setEntries(loadedEntries);
+        }
+      } catch (error) {
+        console.error('Error loading entries:', error);
+        setEntries([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    loadEntries();
+    
+    // Reload when entries are saved
+    const handleEntrySaved = () => {
+      loadEntries();
+    };
+    window.addEventListener('journalEntrySaved', handleEntrySaved);
+    
+    return () => {
+      window.removeEventListener('journalEntrySaved', handleEntrySaved);
+    };
+  }, [selectedDate, viewMode]);
+
   // Calculate the time range to display based on view mode
   const timelineData = useMemo(() => {
     const now = new Date();
@@ -145,6 +255,30 @@ export default function GlobalTimelineMinimap({
     return (timelineData.currentPosition / (timelineData.segments.length - 1)) * 100;
   }, [timelineData]);
 
+  // Calculate entry positions on the timeline
+  const entryPositions = useMemo(() => {
+    if (!timelineData.startDate || !timelineData.endDate || entries.length === 0) {
+      return [];
+    }
+
+    const totalTime = timelineData.endDate.getTime() - timelineData.startDate.getTime();
+    
+    return entries.map(entry => {
+      const entryDate = new Date(entry.date);
+      const entryTime = entryDate.getTime() - timelineData.startDate!.getTime();
+      const position = (entryTime / totalTime) * 100;
+      
+      // Clamp position to 0-100%
+      const clampedPosition = Math.max(0, Math.min(100, position));
+      
+      return {
+        entry,
+        position: clampedPosition,
+        color: calculateEntryColor(entry),
+      };
+    });
+  }, [entries, timelineData]);
+
   return (
     <div className="global-timeline-minimap">
       <div className="minimap-container">
@@ -238,6 +372,35 @@ export default function GlobalTimelineMinimap({
                   <div className="segment-label">{segment.label}</div>
                 )}
               </div>
+            );
+          })}
+        </div>
+
+        {/* Entry indicators */}
+        <div className="entry-indicators">
+          {entryPositions.map(({ entry, position, color }, idx) => {
+            const handleClick = (e: React.MouseEvent) => {
+              e.stopPropagation();
+              const entryDate = new Date(entry.date);
+              if (onEntrySelect) {
+                onEntrySelect(entry);
+              } else {
+                onTimePeriodSelect(entryDate, entry.timeRange);
+              }
+            };
+            
+            return (
+              <div
+                key={entry.id || idx}
+                className="entry-indicator"
+                style={{
+                  left: `${position}%`,
+                  backgroundColor: color,
+                  boxShadow: `0 0 6px ${color}40, 0 0 12px ${color}20`,
+                }}
+                onClick={handleClick}
+                title={entry.title}
+              />
             );
           })}
         </div>
