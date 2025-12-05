@@ -855,6 +855,11 @@ export default function GlobalTimelineMinimap({
     allowSplits: boolean = true,
     isEntryEnd: boolean = true // Track if endX/endY is the entry crystal
   ): string => {
+    // Validate inputs
+    if (!isFinite(startX) || !isFinite(startY) || !isFinite(endX) || !isFinite(endY)) {
+      return `L ${endX.toFixed(2)},${endY.toFixed(2)}`;
+    }
+    
     // Early termination for performance
     // Always end exactly at the target coordinates (entry crystal center)
     if (depth >= maxDepth) {
@@ -868,6 +873,11 @@ export default function GlobalTimelineMinimap({
     const distanceSq = dx * dx + dy * dy;
     const distance = Math.sqrt(distanceSq);
     
+    // Check for invalid distance
+    if (!isFinite(distance) || distance <= 0) {
+      return `L ${endX.toFixed(2)},${endY.toFixed(2)}`;
+    }
+    
     // Skip recursion for very short distances (performance optimization)
     // Always end exactly at the target coordinates (entry crystal center)
     if (distance < 10 && depth > 0) {
@@ -878,9 +888,19 @@ export default function GlobalTimelineMinimap({
     const midX = (startX + endX) * 0.5;
     const midY = (startY + endY) * 0.5;
     
+    // Validate midpoints
+    if (!isFinite(midX) || !isFinite(midY)) {
+      return `L ${endX.toFixed(2)},${endY.toFixed(2)}`;
+    }
+    
     // Optimize: only calculate perpendicular if we need it
     const perpX = -dy / distance;
     const perpY = dx / distance;
+    
+    // Validate perpendicular vectors
+    if (!isFinite(perpX) || !isFinite(perpY)) {
+      return `L ${endX.toFixed(2)},${endY.toFixed(2)}`;
+    }
     
     // Optimized jitter calculation - cache seed
     const jitterSeed = `${branchSeed}-${depth}`;
@@ -891,6 +911,11 @@ export default function GlobalTimelineMinimap({
     // Create branching point
     const branchX = midX + perpX * jitterX + (jitterX * 0.3);
     const branchY = midY + perpY * jitterY + (jitterY * 0.3);
+    
+    // Validate branch point
+    if (!isFinite(branchX) || !isFinite(branchY)) {
+      return `L ${endX.toFixed(2)},${endY.toFixed(2)}`;
+    }
     
     // Optimized split decision - only allow splits at shallow depths and for certain entries
     const shouldSplit = allowSplits && 
@@ -938,9 +963,19 @@ export default function GlobalTimelineMinimap({
     levelIndex: number,
     simplified: boolean = false
   ): string => {
+    // Validate inputs
+    if (!isFinite(webNodeX) || !isFinite(webNodeY) || !isFinite(entryX) || !isFinite(entryY)) {
+      return `M ${webNodeX},${webNodeY} L ${entryX},${entryY}`;
+    }
+    
     const dx = entryX - webNodeX;
     const dy = entryY - webNodeY;
     const distance = Math.sqrt(dx * dx + dy * dy);
+    
+    // Check for invalid distance
+    if (!isFinite(distance) || distance <= 0) {
+      return `M ${webNodeX},${webNodeY} L ${entryX},${entryY}`;
+    }
     
     // Reduce steps for performance
     const flowSteps = simplified ? 4 : Math.min(6 + levelIndex, 10); // Cap at 10 steps
@@ -965,13 +1000,24 @@ export default function GlobalTimelineMinimap({
       const flowX = baseX + sinPhase * cosmicAmplitude;
       const flowY = baseY + cosPhase * cosmicAmplitude * 0.7;
       
+      // Validate flow coordinates
+      if (!isFinite(flowX) || !isFinite(flowY)) {
+        continue; // Skip invalid points
+      }
+      
       // Reduced ripple frequency for performance (only every 4th step)
       if (!simplified && i % 4 === 0 && i > 0 && i < flowSteps) {
         const rippleAngle = timePhase * 2;
         const rippleRadius = distance * 0.02; // Reduced from 0.03
         const rippleX = flowX + Math.cos(rippleAngle) * rippleRadius;
         const rippleY = flowY + Math.sin(rippleAngle) * rippleRadius;
-        timeFlow.push(`L ${rippleX},${rippleY} L ${flowX},${flowY}`);
+        
+        // Validate ripple coordinates
+        if (isFinite(rippleX) && isFinite(rippleY)) {
+          timeFlow.push(`L ${rippleX},${rippleY} L ${flowX},${flowY}`);
+        } else {
+          timeFlow.push(`L ${flowX},${flowY}`);
+        }
       } else {
         timeFlow.push(`L ${flowX},${flowY}`);
       }
@@ -994,6 +1040,11 @@ export default function GlobalTimelineMinimap({
     levelIndex: number,
     simplified: boolean = false
   ): string => {
+    // Validate inputs
+    if (!isFinite(webNodeX) || !isFinite(webNodeY) || !isFinite(entryX) || !isFinite(entryY)) {
+      return `M ${webNodeX},${webNodeY} L ${entryX},${entryY}`;
+    }
+    
     // Cap segments for performance
     const segments = simplified ? 3 : Math.min(4 + levelIndex, 6); // Cap at 6 segments
     const lightning: string[] = [`M ${webNodeX},${webNodeY}`];
@@ -1017,6 +1068,11 @@ export default function GlobalTimelineMinimap({
       const lightningX = baseX + jitterX;
       const lightningY = baseY + jitterY;
       
+      // Validate lightning coordinates
+      if (!isFinite(lightningX) || !isFinite(lightningY)) {
+        continue; // Skip invalid points
+      }
+      
       lightning.push(`L ${lightningX},${lightningY}`);
       
       // Reduced side branch frequency for performance (only every 3rd segment)
@@ -1025,7 +1081,11 @@ export default function GlobalTimelineMinimap({
         const branchAngle = (entryId % 360) * Math.PI / 180;
         const branchX = lightningX + Math.cos(branchAngle) * branchLength;
         const branchY = lightningY + Math.sin(branchAngle) * branchLength;
-        lightning.push(`L ${branchX},${branchY} M ${lightningX},${lightningY}`);
+        
+        // Validate branch coordinates
+        if (isFinite(branchX) && isFinite(branchY)) {
+          lightning.push(`L ${branchX},${branchY} M ${lightningX},${lightningY}`);
+        }
       }
     }
     
@@ -1048,7 +1108,17 @@ export default function GlobalTimelineMinimap({
     viewportBounds?: { minX: number; maxX: number; minY: number; maxY: number },
     lodLevel?: 'high' | 'medium' | 'low' | 'minimal' | 'ultraMinimal'
   ): ConnectionPath | null => {
+    // Validate inputs - check for NaN or invalid values
+    if (!isFinite(webNodeX) || !isFinite(webNodeY) || !isFinite(entryX) || !isFinite(entryY)) {
+      return null;
+    }
+    
     const distance = Math.sqrt(Math.pow(entryX - webNodeX, 2) + Math.pow(entryY - webNodeY, 2));
+    
+    // Check for invalid distance
+    if (!isFinite(distance) || distance <= 0) {
+      return null;
+    }
     
     // Localization: Limit connection distance to keep them near entry crystals
     const maxLocalizedDistance = 300; // Maximum distance from entry crystal
@@ -1127,6 +1197,13 @@ export default function GlobalTimelineMinimap({
         // Optimized spiral with fewer branches, always ends at entry crystal
         const centerX = (webNodeX + entryX) * 0.5;
         const centerY = (webNodeY + entryY) * 0.5;
+        
+        // Validate center coordinates
+        if (!isFinite(centerX) || !isFinite(centerY)) {
+          path = `M ${webNodeX},${webNodeY} L ${entryX},${entryY}`;
+          break;
+        }
+        
         const radius = distance * 0.5;
         const spiralTurns = 0.5 + levelIndex * 0.2;
         const spiralPath: string[] = [`M ${webNodeX},${webNodeY}`];
@@ -1137,15 +1214,23 @@ export default function GlobalTimelineMinimap({
           const r = radius * t;
           const x = centerX + r * Math.cos(angle);
           const y = centerY + r * Math.sin(angle);
-          spiralPath.push(`${i === 0 ? 'M' : 'L'} ${x},${y}`);
           
-          // Reduced branch frequency (every 7th step instead of 5th)
-          if (!useSimplified && i % 7 === 0 && i > 0 && i < spiralSteps) {
-            const branchAngle = angle + Math.PI / 4;
-            const branchLength = radius * 0.12; // Reduced from 0.15
-            const branchX = x + Math.cos(branchAngle) * branchLength;
-            const branchY = y + Math.sin(branchAngle) * branchLength;
-            spiralPath.push(`L ${branchX},${branchY} M ${x},${y}`);
+          // Validate coordinates before adding to path
+          if (isFinite(x) && isFinite(y)) {
+            spiralPath.push(`${i === 0 ? 'M' : 'L'} ${x},${y}`);
+            
+            // Reduced branch frequency (every 7th step instead of 5th)
+            if (!useSimplified && i % 7 === 0 && i > 0 && i < spiralSteps) {
+              const branchAngle = angle + Math.PI / 4;
+              const branchLength = radius * 0.12; // Reduced from 0.15
+              const branchX = x + Math.cos(branchAngle) * branchLength;
+              const branchY = y + Math.sin(branchAngle) * branchLength;
+              
+              // Validate branch coordinates
+              if (isFinite(branchX) && isFinite(branchY)) {
+                spiralPath.push(`L ${branchX},${branchY} M ${x},${y}`);
+              }
+            }
           }
         }
         // Always end exactly at entry crystal center - use precise coordinates
@@ -1214,20 +1299,28 @@ export default function GlobalTimelineMinimap({
       if (levelIndex > 0) {
         const secondaryLeftX = centerX - (40 + levelIndex * 15);
         const secondaryRightX = centerX + (40 + levelIndex * 15);
-        nodes.push(
-          { x: secondaryLeftX, y: yPos, scale, level: levelIndex },
-          { x: secondaryRightX, y: yPos, scale, level: levelIndex }
-        );
+        
+        // Validate secondary node coordinates
+        if (isFinite(secondaryLeftX) && isFinite(secondaryRightX)) {
+          nodes.push(
+            { x: secondaryLeftX, y: yPos, scale, level: levelIndex },
+            { x: secondaryRightX, y: yPos, scale, level: levelIndex }
+          );
+        }
       }
       
       // Tertiary nodes for fine-grained connections
       if (levelIndex > 1) {
         const tertiaryLeftX = centerX - (20 + levelIndex * 8);
         const tertiaryRightX = centerX + (20 + levelIndex * 8);
-        nodes.push(
-          { x: tertiaryLeftX, y: yPos, scale, level: levelIndex },
-          { x: tertiaryRightX, y: yPos, scale, level: levelIndex }
-        );
+        
+        // Validate tertiary node coordinates
+        if (isFinite(tertiaryLeftX) && isFinite(tertiaryRightX)) {
+          nodes.push(
+            { x: tertiaryLeftX, y: yPos, scale, level: levelIndex },
+            { x: tertiaryRightX, y: yPos, scale, level: levelIndex }
+          );
+        }
       }
     });
     
@@ -1235,7 +1328,11 @@ export default function GlobalTimelineMinimap({
     const trunkNodes = 5;
     for (let i = 0; i < trunkNodes; i++) {
       const yPos = (minimapDimensions.height / trunkNodes) * (i + 0.5);
-      nodes.push({ x: centerX, y: yPos, scale: viewMode, level: 0 });
+      
+      // Validate trunk node coordinates
+      if (isFinite(yPos) && isFinite(centerX)) {
+        nodes.push({ x: centerX, y: yPos, scale: viewMode, level: 0 });
+      }
     }
     
     return nodes;
@@ -1776,6 +1873,11 @@ export default function GlobalTimelineMinimap({
       const baseYPosition = scaleYPositions[entry.timeRange];
       const entryY = baseYPosition + verticalOffset;
       
+      // Validate coordinates before checking viewport
+      if (!isFinite(entryX) || !isFinite(entryY) || !isFinite(baseYPosition) || !isFinite(verticalOffset)) {
+        return false; // Exclude entries with invalid coordinates
+      }
+      
       // Only include entries that are actually in the viewport
       return isPointInViewport(entryX, entryY, viewportBounds, 150);
     });
@@ -1814,6 +1916,11 @@ export default function GlobalTimelineMinimap({
       // So the center is at baseYPosition pixels from top in SVG coordinates
       // The SVG height matches minimapDimensions.height, so this aligns perfectly
       const entryY = baseYPosition + verticalOffset;
+      
+      // Validate entry coordinates - skip if invalid
+      if (!isFinite(entryX) || !isFinite(entryY) || !isFinite(baseYPosition) || !isFinite(verticalOffset)) {
+        return; // Skip this entry if coordinates are invalid
+      }
 
       // Find nearest web nodes with distance calculation
       // Optimize for decades view: only consider nodes within reasonable distance
@@ -1838,6 +1945,12 @@ export default function GlobalTimelineMinimap({
       // Primary connection to nearest same-scale node (always shown)
       if (sameScaleNodes.length > 0) {
         const nearestNode = sameScaleNodes[0].node;
+        
+        // Validate web node coordinates
+        if (!isFinite(nearestNode.x) || !isFinite(nearestNode.y)) {
+          return; // Skip if web node has invalid coordinates
+        }
+        
         const levelIndex = timeScaleOrder.indexOf(entry.timeRange);
         
         // Entry position is already validated in visibleEntries filter, but double-check
@@ -1887,6 +2000,12 @@ export default function GlobalTimelineMinimap({
       
       if (shouldShowSecondary && otherScaleNodes.length > 0 && connections.length < maxConnectionsPerFrame) {
         const nearestOtherNode = otherScaleNodes[0].node;
+        
+        // Validate web node coordinates
+        if (!isFinite(nearestOtherNode.x) || !isFinite(nearestOtherNode.y)) {
+          return; // Skip if web node has invalid coordinates
+        }
+        
         const levelIndex = timeScaleOrder.indexOf(entry.timeRange);
         const secondaryStrategy = strategies[(strategyHash + 1) % strategies.length];
         
@@ -1929,6 +2048,12 @@ export default function GlobalTimelineMinimap({
       // Only show in high LOD
       if (lodLevel === 'high' && nodeDistances.length > 1 && connections.length < maxConnectionsPerFrame) {
         const tertiaryNode = nodeDistances[1].node;
+        
+        // Validate web node coordinates
+        if (!isFinite(tertiaryNode.x) || !isFinite(tertiaryNode.y)) {
+          return; // Skip if web node has invalid coordinates
+        }
+        
         const levelIndex = timeScaleOrder.indexOf(entry.timeRange);
         const tertiaryStrategy = strategies[(strategyHash + 2) % strategies.length];
         
@@ -1962,6 +2087,11 @@ export default function GlobalTimelineMinimap({
       // Connection to main focus web (present focus) - always connect to center
       // Entry position is already validated, but ensure we're using current positions
       if (connections.length < maxConnectionsPerFrame && isPointInViewport(entryX, entryY, viewportBounds, 150)) {
+        // Validate focus web node coordinates
+        if (!isFinite(focusWebNode.x) || !isFinite(focusWebNode.y)) {
+          return; // Skip if focus web node has invalid coordinates
+        }
+        
         const levelIndex = timeScaleOrder.indexOf(entry.timeRange);
         const focusStrategy = strategies[(strategyHash + 3) % strategies.length];
         const connection = buildConnectionPath(
@@ -2003,7 +2133,13 @@ export default function GlobalTimelineMinimap({
       for (let i = 0; i < visibleEntries.length && entryConnectionCount < maxEntryConnections && connections.length < maxConnectionsPerFrame; i++) {
         const sourceEntry = visibleEntries[i];
         const sourceX = (sourceEntry.position / 100) * 1000;
-        const sourceY = scaleYPositions[sourceEntry.entry.timeRange] + sourceEntry.verticalOffset;
+        const sourceBaseY = scaleYPositions[sourceEntry.entry.timeRange];
+        const sourceY = sourceBaseY + sourceEntry.verticalOffset;
+        
+        // Validate source coordinates
+        if (!isFinite(sourceX) || !isFinite(sourceY) || !isFinite(sourceBaseY) || !isFinite(sourceEntry.verticalOffset)) {
+          continue; // Skip invalid source entries
+        }
         
         // Skip if source entry is not in viewport
         if (!isPointInViewport(sourceX, sourceY, viewportBounds, 150)) {
@@ -2016,7 +2152,13 @@ export default function GlobalTimelineMinimap({
         for (let j = i + 1; j < visibleEntries.length; j++) {
           const targetEntry = visibleEntries[j];
           const targetX = (targetEntry.position / 100) * 1000;
-          const targetY = scaleYPositions[targetEntry.entry.timeRange] + targetEntry.verticalOffset;
+          const targetBaseY = scaleYPositions[targetEntry.entry.timeRange];
+          const targetY = targetBaseY + targetEntry.verticalOffset;
+          
+          // Validate target coordinates
+          if (!isFinite(targetX) || !isFinite(targetY) || !isFinite(targetBaseY) || !isFinite(targetEntry.verticalOffset)) {
+            continue; // Skip invalid target entries
+          }
           
           const distance = Math.sqrt(Math.pow(targetX - sourceX, 2) + Math.pow(targetY - sourceY, 2));
           

@@ -128,7 +128,7 @@ export default function NavigationBar({
         <button className="nav-button" onClick={() => navigate('next')}>
           →
         </button>
-        <h2 className="date-label">{getDateLabel()}</h2>
+        <h2 className={`date-label date-label-${viewMode}`}>{getDateLabel()}</h2>
       </div>
       <div className="view-mode-selector">
         <button

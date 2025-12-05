@@ -63,9 +63,6 @@ body {
   border-color: #666;
 }
 
-[data-theme="dark"] .date-label {
-  color: #e0e0e0;
-}
 
 /* Timeline View Dark Theme */
 [data-theme="dark"] .timeline-loading {
@@ -312,9 +309,24 @@ body {
   font-weight: 700;
 }
 
-[data-theme="dark"] .date-label {
-  color: #ffffff;
-  font-weight: 600;
+[data-theme="dark"] .date-label-decade {
+  color: #9c27b0;
+}
+
+[data-theme="dark"] .date-label-year {
+  color: #0277bd;
+}
+
+[data-theme="dark"] .date-label-month {
+  color: #ef6c00;
+}
+
+[data-theme="dark"] .date-label-week {
+  color: #2e7d32;
+}
+
+[data-theme="dark"] .date-label-day {
+  color: #c2185b;
 }
 
 [data-theme="dark"] .editor-form input,
