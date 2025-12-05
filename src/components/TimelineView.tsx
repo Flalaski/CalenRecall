@@ -1,9 +1,12 @@
 import { useState, useEffect } from 'react';
 import { JournalEntry, TimeRange } from '../types';
-import { formatDate, getDaysInMonth, getDaysInWeek, isToday, getWeekStart, getWeekEnd, getZodiacColor, getZodiacGradientColor, getZodiacGradientColorForYear, getZodiacColorForDecade } from '../utils/dateUtils';
+import { formatDate, getDaysInMonth, getDaysInWeek, isToday, getWeekStart, getWeekEnd, getZodiacColor, getZodiacGradientColor, getZodiacGradientColorForYear, getZodiacColorForDecade, parseISODate } from '../utils/dateUtils';
 import { isSameDay, isSameMonth, isSameYear } from 'date-fns';
 import { playCalendarSelectionSound, playEntrySelectionSound, playEditSound } from '../utils/audioUtils';
 import { calculateEntryColor } from '../utils/entryColorUtils';
+import { useCalendar } from '../contexts/CalendarContext';
+import { dateToCalendarDate } from '../utils/calendars/calendarConverter';
+import { formatCalendarDate } from '../utils/calendars/calendarConverter';
 import './TimelineView.css';
 
 interface TimelineViewProps {
@@ -21,6 +24,7 @@ export default function TimelineView({
   onEntrySelect,
   onEditEntry,
 }: TimelineViewProps) {
+  const { calendar } = useCalendar();
   const [entries, setEntries] = useState<JournalEntry[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -132,10 +136,10 @@ export default function TimelineView({
     
     // Determine which entries to return based on the view mode
     return entries.filter(entry => {
-      // Parse entry date as local date (YYYY-MM-DD format)
-      const [entryYearStr, entryMonthStr] = entry.date.split('-');
-      const entryYear = parseInt(entryYearStr, 10);
-      const entryMonth = parseInt(entryMonthStr, 10) - 1; // Convert to 0-indexed month
+      // Parse entry date as local date (YYYY-MM-DD or -YYYY-MM-DD format)
+      const entryDate = parseISODate(entry.date);
+      const entryYear = entryDate.getFullYear();
+      const entryMonth = entryDate.getMonth();
       
       // For decade view, show year entries in their year cells
       if (forViewMode === 'decade' || viewMode === 'decade') {
@@ -168,8 +172,8 @@ export default function TimelineView({
   // Get all entries for a specific year (for pixel map)
   const getAllEntriesForYear = (year: number): JournalEntry[] => {
     return entries.filter(entry => {
-      const [entryYearStr] = entry.date.split('-');
-      const entryYear = parseInt(entryYearStr, 10);
+      const entryDate = parseISODate(entry.date);
+      const entryYear = entryDate.getFullYear();
       
       // Check if entry falls within this year
       if (entry.timeRange === 'day' || entry.timeRange === 'week' || entry.timeRange === 'month') {
@@ -188,17 +192,16 @@ export default function TimelineView({
   // Get all entries for a specific month (for pixel map)
   const getAllEntriesForMonth = (year: number, month: number): JournalEntry[] => {
     return entries.filter(entry => {
-      const [entryYearStr, entryMonthStr, entryDayStr] = entry.date.split('-');
-      const entryYear = parseInt(entryYearStr, 10);
-      const entryMonth = parseInt(entryMonthStr, 10) - 1; // Convert to 0-indexed month
-      const entryDay = parseInt(entryDayStr, 10);
+      const entryDate = parseISODate(entry.date);
+      const entryYear = entryDate.getFullYear();
+      const entryMonth = entryDate.getMonth();
+      const entryDay = entryDate.getDate();
       
       // Check if entry falls within this month
       if (entry.timeRange === 'day') {
         return entryYear === year && entryMonth === month;
       } else if (entry.timeRange === 'week') {
         // Check if week overlaps with this month
-        const entryDate = new Date(entryYear, entryMonth, entryDay);
         const weekStart = getWeekStart(entryDate);
         const weekEnd = new Date(weekStart);
         weekEnd.setDate(weekEnd.getDate() + 6);
@@ -227,8 +230,8 @@ export default function TimelineView({
     
     // Sort entries by date
     const sortedEntries = [...yearEntries].sort((a, b) => {
-      const dateA = new Date(a.date);
-      const dateB = new Date(b.date);
+      const dateA = parseISODate(a.date);
+      const dateB = parseISODate(b.date);
       return dateA.getTime() - dateB.getTime();
     });
     
@@ -255,8 +258,8 @@ export default function TimelineView({
     
     // Sort entries by date
     const sortedEntries = [...monthEntries].sort((a, b) => {
-      const dateA = new Date(a.date);
-      const dateB = new Date(b.date);
+      const dateA = parseISODate(a.date);
+      const dateB = parseISODate(b.date);
       return dateA.getTime() - dateB.getTime();
     });
     
@@ -285,12 +288,7 @@ export default function TimelineView({
     entries.forEach(entry => {
       if (entry.timeRange === 'week') {
         // Parse entry date to get the week start
-        const [entryYearStr, entryMonthStr, entryDayStr] = entry.date.split('-');
-        const entryDate = new Date(
-          parseInt(entryYearStr, 10),
-          parseInt(entryMonthStr, 10) - 1,
-          parseInt(entryDayStr, 10)
-        );
+        const entryDate = parseISODate(entry.date);
         const weekStart = getWeekStart(entryDate);
         const weekKey = formatDate(weekStart);
         
@@ -539,7 +537,15 @@ export default function TimelineView({
     return (
       <div className="timeline-day-view">
         <div className="day-header">
-          <h2>{formatDate(selectedDate, 'EEEE, MMMM d, yyyy')}</h2>
+          <h2>
+            {(() => {
+              try {
+                return formatCalendarDate(dateToCalendarDate(selectedDate, calendar), 'EEEE, MMMM D, YYYY');
+              } catch (e) {
+                return formatDate(selectedDate, 'EEEE, MMMM d, yyyy');
+              }
+            })()}
+          </h2>
         </div>
         <div className="day-entries-list">
           {dayEntries.length === 0 ? (
@@ -577,7 +583,7 @@ export default function TimelineView({
                       </button>
                     )}
                     <span className="time-range-badge">{entry.timeRange}</span>
-                    <span className="card-date">{formatDate(new Date(entry.date), 'MMM d')}</span>
+                    <span className="card-date">{formatDate(parseISODate(entry.date), 'MMM d')}</span>
                   </div>
                 </div>
                 <div className="card-content-full">{entry.content}</div>

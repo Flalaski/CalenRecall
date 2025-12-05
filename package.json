@@ -29,7 +29,8 @@
     "open:release": "node scripts/open-release.js",
     "preview": "vite preview",
     "version:show": "node -p \"require('./package.json').version\"",
-    "generate:icon": "node scripts/generate-icon.js"
+    "generate:icon": "node scripts/generate-icon.js",
+    "test:calendars": "tsc -p scripts/tsconfig.json && node scripts/test-calendar-accuracy.js"
   },
   "dependencies": {
     "better-sqlite3": "^12.5.0",

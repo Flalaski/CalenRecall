@@ -1,0 +1,90 @@
+{
+    "name": "calenrecall",
+    "version": "2025.12.04.1",
+    "description": "A calendar journal for recalling memories across decades, years, months, weeks, and days",
+    "main": "dist-electron/main.js",
+    "author": "",
+    "license": "MIT",
+    "scripts": {
+        "postinstall": "electron-rebuild -f -w better-sqlite3",
+        "dev": "npm run rebuild && npm run build:electron && concurrently \"npm run dev:react\" \"npm run watch:electron\" \"npm run dev:electron\"",
+        "dev:react": "vite",
+        "dev:electron": "wait-on http://localhost:5173 && electron .",
+        "watch:electron": "tsc -p electron --watch",
+        "rebuild": "electron-rebuild -f -w better-sqlite3",
+        "build": "npm run rebuild && npm run build:react && npm run build:electron",
+        "build:react": "vite build",
+        "build:electron": "tsc -p electron",
+        "version:auto": "node scripts/auto-version.js",
+        "clean:release": "node scripts/clean-release.js",
+        "dist": "npm run version:auto && npm run build && npm run clean:release && electron-builder",
+        "dist:win": "npm run version:auto && npm run build && npm run clean:release && electron-builder --win --x64 && npm run open:release",
+        "dist:win:pack": "npm run version:auto && npm run clean:release && npm run dist:win:pack:prebuild && npm run dist:win:pack:nsis && npm run dist:win:pack:cleanup && npm run dist:win:pack:portable",
+        "dist:win:pack:prebuild": "node scripts/pre-build-cleanup.js",
+        "dist:win:pack:nsis": "electron-builder --win nsis --x64",
+        "dist:win:pack:portable": "electron-builder --win portable --x64",
+        "dist:win:pack:cleanup": "node scripts/clean-release-partial.js",
+        "dist:win:installer": "npm run version:auto && npm run build && npm run clean:release && electron-builder --win nsis --x64 && npm run open:release",
+        "dist:win:portable": "npm run version:auto && npm run build && npm run clean:release && electron-builder --win portable --x64 && npm run open:release",
+        "open:release": "node scripts/open-release.js",
+        "preview": "vite preview",
+        "version:show": "node -p \"require('./package.json').version\"",
+        "generate:icon": "node scripts/generate-icon.js",
+        "test:calendars": "tsc -p scripts/tsconfig.json && node scripts/test-calendar-accuracy.js"
+    },
+    "dependencies": {
+        "better-sqlite3": "^12.5.0",
+        "date-fns": "^3.0.0",
+        "pdfkit": "^0.14.0",
+        "react": "^18.2.0",
+        "react-dom": "^18.2.0"
+    },
+    "devDependencies": {
+        "@electron/rebuild": "^3.7.2",
+        "@types/better-sqlite3": "^7.6.13",
+        "@types/node": "^20.10.6",
+        "@types/react": "^18.2.45",
+        "@types/react-dom": "^18.2.18",
+        "@vitejs/plugin-react": "^4.2.1",
+        "concurrently": "^8.2.2",
+        "electron": "^39.2.5",
+        "electron-builder": "^24.9.1",
+        "sharp": "^0.34.5",
+        "typescript": "^5.3.3",
+        "vite": "^7.2.6",
+        "wait-on": "^7.2.0"
+    },
+    "build": {
+        "appId": "com.calenrecall.app",
+        "productName": "CalenRecall",
+        "directories": {
+            "output": "release"
+        },
+        "icon": "assets/icon.png",
+        "files": [
+            "dist/**/*",
+            "dist-electron/**/*",
+            "node_modules/**/*"
+        ],
+        "win": {
+            "target": [
+                {
+                    "target": "nsis",
+                    "arch": [
+                        "x64"
+                    ]
+                },
+                {
+                    "target": "portable",
+                    "arch": [
+                        "x64"
+                    ]
+                }
+            ]
+        },
+        "nsis": {
+            "oneClick": false,
+            "allowToChangeInstallationDirectory": true
+        }
+    }
+}

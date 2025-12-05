@@ -17,6 +17,7 @@ import {
   getAllPreferences,
   resetPreferences,
   Preferences,
+  parseISODate,
 } from './database';
 import { JournalEntry, TimeRange, ExportFormat } from './types';
 
@@ -266,7 +267,7 @@ function formatAsDecades(entries: JournalEntry[]): string {
   const byDecade: Map<string, Map<string, JournalEntry[]>> = new Map();
 
   for (const entry of entries) {
-    const year = new Date(entry.date).getFullYear();
+    const year = parseISODate(entry.date).getFullYear();
     const decadeStart = Math.floor(year / 10) * 10;
     const decadeKey = `${decadeStart}s`;
     const yearKey = `${year}`;

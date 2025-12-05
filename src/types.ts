@@ -31,6 +31,8 @@ export interface Preferences {
   restoreLastView?: boolean;
   lastViewedDate?: string;
   lastViewedMode?: 'decade' | 'year' | 'month' | 'week' | 'day';
+  defaultCalendar?: string; // Calendar system (e.g., 'gregorian', 'islamic', 'hebrew')
+  showMultipleCalendars?: boolean; // Show date in multiple calendars simultaneously
 }
 
 declare global {

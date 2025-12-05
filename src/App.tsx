@@ -8,6 +8,7 @@ import EntryEditModal from './components/EntryEditModal';
 import { TimeRange, JournalEntry, Preferences } from './types';
 import { getEntryForDate } from './services/journalService';
 import { playNewEntrySound } from './utils/audioUtils';
+import { formatDateToISO, parseISODate } from './utils/dateUtils';
 import './App.css';
 
 function App() {
@@ -147,9 +148,10 @@ function App() {
     // Only save if preferences are loaded, restore is enabled, and we're not in the restoration phase
     if (preferencesLoaded && !isRestoringRef.current && preferences.restoreLastView && window.electronAPI) {
       try {
-        const dateString = selectedDate.toISOString().split('T')[0];
-        // Validate date string format (YYYY-MM-DD)
-        if (/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
+        // Use formatDateToISO to handle negative years correctly
+        const dateString = formatDateToISO(selectedDate);
+        // Validate date string format (YYYY-MM-DD or -YYYY-MM-DD for negative years)
+        if (/^-?\d{4}-\d{2}-\d{2}$/.test(dateString)) {
           window.electronAPI.setPreference('lastViewedDate', dateString).catch(console.error);
           window.electronAPI.setPreference('lastViewedMode', viewMode).catch(console.error);
         }
@@ -194,13 +196,8 @@ function App() {
   const handleEntrySelect = (entry: JournalEntry) => {
     hasUserInteractedRef.current = true; // Mark that user has interacted
     // Navigate to the entry's date and time range, then select the entry
-    // Parse date string to avoid timezone issues (YYYY-MM-DD format)
-    const [entryYearStr, entryMonthStr, entryDayStr] = entry.date.split('-');
-    const entryDate = new Date(
-      parseInt(entryYearStr, 10),
-      parseInt(entryMonthStr, 10) - 1,
-      parseInt(entryDayStr, 10)
-    );
+    // Parse date string to avoid timezone issues (YYYY-MM-DD or -YYYY-MM-DD format)
+    const entryDate = parseISODate(entry.date);
     setSelectedDate(entryDate);
     setViewMode(entry.timeRange);
     setSelectedEntry(entry);

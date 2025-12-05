@@ -1,7 +1,11 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { TimeRange } from '../types';
 import { format, addMonths, addYears, addWeeks, addDays } from 'date-fns';
 import { playNavigationSound, playModeSelectionSound, playSettingsSound } from '../utils/audioUtils';
+import { useCalendar } from '../contexts/CalendarContext';
+import { CalendarSystem, CALENDAR_INFO } from '../utils/calendars/types';
+import { getTimeRangeLabelInCalendar } from '../utils/calendars/timeRangeConverter';
+import { CALENDAR_DESCRIPTIONS } from '../utils/calendars/calendarDescriptions';
 import './NavigationBar.css';
 
 interface NavigationBarProps {
@@ -19,6 +23,9 @@ export default function NavigationBar({
   onDateChange,
   onOpenPreferences,
 }: NavigationBarProps) {
+  const { calendar, setCalendar } = useCalendar();
+  const [isDefinitionExpanded, setIsDefinitionExpanded] = useState(false);
+  
   // Use ref to access current onDateChange in keyboard handler
   const onDateChangeRef = useRef(onDateChange);
   
@@ -55,20 +62,27 @@ export default function NavigationBar({
   };
 
   const getDateLabel = () => {
-    switch (viewMode) {
-      case 'decade':
-        const decadeStart = Math.floor(selectedDate.getFullYear() / 10) * 10;
-        return `${decadeStart}s`;
-      case 'year':
-        return format(selectedDate, 'yyyy');
-      case 'month':
-        return format(selectedDate, 'MMMM yyyy');
-      case 'week':
-        return `Week of ${format(selectedDate, 'MMM d, yyyy')}`;
-      case 'day':
-        return format(selectedDate, 'EEEE, MMMM d, yyyy');
-      default:
-        return format(selectedDate, 'MMMM yyyy');
+    // Use calendar-aware formatting
+    try {
+      return getTimeRangeLabelInCalendar(selectedDate, viewMode, calendar);
+    } catch (e) {
+      console.error('Error formatting date in calendar:', e);
+      // Fallback to Gregorian formatting if calendar conversion fails
+      switch (viewMode) {
+        case 'decade':
+          const decadeStart = Math.floor(selectedDate.getFullYear() / 10) * 10;
+          return `${decadeStart}s`;
+        case 'year':
+          return format(selectedDate, 'yyyy');
+        case 'month':
+          return format(selectedDate, 'MMMM yyyy');
+        case 'week':
+          return `Week of ${format(selectedDate, 'MMM d, yyyy')}`;
+        case 'day':
+          return format(selectedDate, 'EEEE, MMMM d, yyyy');
+        default:
+          return format(selectedDate, 'MMMM yyyy');
+      }
     }
   };
 
@@ -112,25 +126,45 @@ export default function NavigationBar({
 
   return (
     <div className="navigation-bar">
-      <div className="nav-controls">
-        <img 
-          src="/icon.png" 
-          alt="CalenRecall" 
-          className="app-icon"
-          style={{ width: '32px', height: '32px', marginRight: '0.5rem' }}
-        />
-        <button className="nav-button" onClick={() => navigate('prev')}>
-          ←
-        </button>
-        <button className="nav-button today-button" onClick={goToToday}>
-          Today
-        </button>
-        <button className="nav-button" onClick={() => navigate('next')}>
-          →
-        </button>
-        <h2 className={`date-label date-label-${viewMode}`}>{getDateLabel()}</h2>
-      </div>
-      <div className="view-mode-selector">
+      <div className="navigation-bar-top-row">
+        <div className="nav-controls">
+          <img 
+            src="/icon.png" 
+            alt="CalenRecall" 
+            className="app-icon"
+            style={{ width: '32px', height: '32px', marginRight: '0.5rem' }}
+          />
+          <button className="nav-button" onClick={() => navigate('prev')}>
+            ←
+          </button>
+          <button className="nav-button today-button" onClick={goToToday}>
+            Today
+          </button>
+          <button className="nav-button" onClick={() => navigate('next')}>
+            →
+          </button>
+          <h2 className={`date-label date-label-${viewMode}`}>{getDateLabel()}</h2>
+          <div className="calendar-selector">
+            <select
+              value={calendar}
+              onChange={(e) => {
+                playModeSelectionSound();
+                setCalendar(e.target.value as CalendarSystem);
+              }}
+              className="calendar-select"
+              title="Select calendar system"
+            >
+              {Object.entries(CALENDAR_INFO)
+                .filter(([key]) => ['gregorian', 'julian', 'islamic', 'hebrew', 'persian', 'ethiopian', 'coptic', 'indian-saka', 'cherokee', 'iroquois', 'thai-buddhist', 'bahai', 'mayan-tzolkin', 'mayan-haab', 'mayan-longcount', 'aztec-xiuhpohualli', 'chinese'].includes(key))
+                .map(([key, info]) => (
+                  <option key={key} value={key}>
+                    {info.name}
+                  </option>
+                ))}
+            </select>
+          </div>
+        </div>
+        <div className="view-mode-selector">
         <button
           className={`view-mode-button ${viewMode === 'decade' ? 'active' : ''}`}
           onClick={() => {
@@ -188,6 +222,53 @@ export default function NavigationBar({
             ⚙️
           </button>
         )}
+        </div>
+      </div>
+      <div className="calendar-info-panel">
+        {(() => {
+          const calendarInfo = CALENDAR_INFO[calendar];
+          const description = CALENDAR_DESCRIPTIONS[calendar];
+          const daysInYear = typeof calendarInfo.daysInYear === 'number' 
+            ? calendarInfo.daysInYear 
+            : `${calendarInfo.daysInYear.min}-${calendarInfo.daysInYear.max}`;
+          
+          return (
+            <div className="calendar-info-content">
+              <button 
+                className="calendar-definition-toggle"
+                onClick={() => setIsDefinitionExpanded(!isDefinitionExpanded)}
+                aria-expanded={isDefinitionExpanded}
+              >
+                <span className="toggle-icon">{isDefinitionExpanded ? '▼' : '▶'}</span>
+                <span>Calendar Information</span>
+              </button>
+              <div className={`calendar-definition-drawer ${isDefinitionExpanded ? 'expanded' : ''}`}>
+                <div className="calendar-info-section">
+                  <strong>Definition:</strong> {description.definition}
+                </div>
+                <div className="calendar-info-section">
+                  <strong>History:</strong> {description.history}
+                </div>
+                {description.notes && (
+                  <div className="calendar-info-section">
+                    <strong>Notes:</strong> {description.notes}
+                  </div>
+                )}
+              </div>
+              <div className="calendar-info-details">
+                <span>Type: {calendarInfo.type}</span>
+                <span>Months: {calendarInfo.months}</span>
+                <span>Days per year: {daysInYear}</span>
+                {calendarInfo.eraName && (
+                  <span>Era: {calendarInfo.eraName} (begins {calendarInfo.eraStart > 0 ? calendarInfo.eraStart + ' CE' : Math.abs(calendarInfo.eraStart) + ' BCE'})</span>
+                )}
+                {calendarInfo.leapYearRule && (
+                  <span>Leap year: {calendarInfo.leapYearRule}</span>
+                )}
+              </div>
+            </div>
+          );
+        })()}
       </div>
     </div>
   );

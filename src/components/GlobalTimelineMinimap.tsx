@@ -1,6 +1,6 @@
 import { useMemo, useState, useEffect, useRef } from 'react';
 import { TimeRange, JournalEntry } from '../types';
-import { formatDate, getWeekStart, getWeekEnd, getMonthStart, getMonthEnd, getYearEnd, getDecadeEnd, getZodiacColor, getZodiacColorForDecade, getCanonicalDate } from '../utils/dateUtils';
+import { formatDate, getWeekStart, getWeekEnd, getMonthStart, getMonthEnd, getYearEnd, getDecadeEnd, getZodiacColor, getZodiacColorForDecade, getCanonicalDate, parseISODate } from '../utils/dateUtils';
 import { addDays, addWeeks, addMonths, addYears, getYear, getMonth, getDate } from 'date-fns';
 import { playMechanicalClick, playMicroBlip, getAudioContext } from '../utils/audioUtils';
 import { calculateEntryColor } from '../utils/entryColorUtils';
@@ -3666,9 +3666,9 @@ export default function GlobalTimelineMinimap({
                 marginBottom: 0,
               };
               
-              // Use truly unique key based on date and position to prevent React element reuse
+              // Use truly unique key based on date, position, and index to prevent React element reuse
               const decadeDateTimestamp = mark.date ? mark.date.getTime() : Date.now() + idx;
-              const decadeUniqueKey = `decade-label-${decadeDateTimestamp}-${labelPosition}`;
+              const decadeUniqueKey = `decade-label-${decadeDateTimestamp}-${labelPosition}-${idx}`;
               
               return (
                 <div
@@ -3734,9 +3734,9 @@ export default function GlobalTimelineMinimap({
                 marginBottom: 0,
               };
               
-              // Use truly unique key based on date and position to prevent React element reuse
+              // Use truly unique key based on date, position, and index to prevent React element reuse
               const yearDateTimestamp = mark.date ? mark.date.getTime() : Date.now() + idx;
-              const yearUniqueKey = `year-label-${yearDateTimestamp}-${labelPosition}`;
+              const yearUniqueKey = `year-label-${yearDateTimestamp}-${labelPosition}-${idx}`;
               
               return (
                 <div
@@ -4020,7 +4020,7 @@ export default function GlobalTimelineMinimap({
           {entryPositions.map(({ entry, position, color, clusterIndex, clusterSize, clusterAngle, polygonClipPath, sides }, idx) => {
             const handleClick = (e: React.MouseEvent) => {
               e.stopPropagation();
-              const entryDate = new Date(entry.date);
+              const entryDate = parseISODate(entry.date);
               if (onEntrySelect) {
                 onEntrySelect(entry);
               } else {

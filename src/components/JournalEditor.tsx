@@ -3,6 +3,8 @@ import { JournalEntry, TimeRange } from '../types';
 import { formatDate, getCanonicalDate } from '../utils/dateUtils';
 import { getEntryForDate, saveJournalEntry, deleteJournalEntry } from '../services/journalService';
 import { playSaveSound, playCancelSound, playDeleteSound, playAddSound, playRemoveSound } from '../utils/audioUtils';
+import { useCalendar } from '../contexts/CalendarContext';
+import { getTimeRangeLabelInCalendar } from '../utils/calendars/timeRangeConverter';
 import './JournalEditor.css';
 
 interface JournalEditorProps {
@@ -22,6 +24,7 @@ export default function JournalEditor({
   onEntrySaved,
   onCancel,
 }: JournalEditorProps) {
+  const { calendar } = useCalendar();
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [tags, setTags] = useState<string[]>([]);
@@ -164,20 +167,27 @@ export default function JournalEditor({
   };
 
   const getDefaultTitle = (): string => {
-    switch (viewMode) {
-      case 'decade':
-        const decadeStart = Math.floor(date.getFullYear() / 10) * 10;
-        return `${decadeStart}s`;
-      case 'year':
-        return formatDate(date, 'yyyy');
-      case 'month':
-        return formatDate(date, 'MMMM yyyy');
-      case 'week':
-        return `Week of ${formatDate(date, 'MMM d, yyyy')}`;
-      case 'day':
-        return formatDate(date, 'MMMM d, yyyy');
-      default:
-        return formatDate(date, 'MMMM d, yyyy');
+    // Use calendar-aware formatting
+    try {
+      return getTimeRangeLabelInCalendar(date, viewMode, calendar);
+    } catch (e) {
+      console.error('Error formatting date in calendar:', e);
+      // Fallback to Gregorian formatting
+      switch (viewMode) {
+        case 'decade':
+          const decadeStart = Math.floor(date.getFullYear() / 10) * 10;
+          return `${decadeStart}s`;
+        case 'year':
+          return formatDate(date, 'yyyy');
+        case 'month':
+          return formatDate(date, 'MMMM yyyy');
+        case 'week':
+          return `Week of ${formatDate(date, 'MMM d, yyyy')}`;
+        case 'day':
+          return formatDate(date, 'MMMM d, yyyy');
+        default:
+          return formatDate(date, 'MMMM d, yyyy');
+      }
     }
   };
 
@@ -314,20 +324,27 @@ export default function JournalEditor({
   }, [showConfirmDialog, handleConfirmDiscard, handleCancelDiscard]);
 
   const getDateLabel = () => {
-    switch (viewMode) {
-      case 'decade':
-        const decadeStart = Math.floor(date.getFullYear() / 10) * 10;
-        return `${decadeStart}s`;
-      case 'year':
-        return formatDate(date, 'yyyy');
-      case 'month':
-        return formatDate(date, 'MMMM yyyy');
-      case 'week':
-        return `Week of ${formatDate(date, 'MMM d, yyyy')}`;
-      case 'day':
-        return formatDate(date, 'EEEE, MMMM d, yyyy');
-      default:
-        return formatDate(date, 'MMMM d, yyyy');
+    // Use calendar-aware formatting
+    try {
+      return getTimeRangeLabelInCalendar(date, viewMode, calendar);
+    } catch (e) {
+      console.error('Error formatting date in calendar:', e);
+      // Fallback to Gregorian formatting
+      switch (viewMode) {
+        case 'decade':
+          const decadeStart = Math.floor(date.getFullYear() / 10) * 10;
+          return `${decadeStart}s`;
+        case 'year':
+          return formatDate(date, 'yyyy');
+        case 'month':
+          return formatDate(date, 'MMMM yyyy');
+        case 'week':
+          return `Week of ${formatDate(date, 'MMM d, yyyy')}`;
+        case 'day':
+          return formatDate(date, 'EEEE, MMMM d, yyyy');
+        default:
+          return formatDate(date, 'MMMM d, yyyy');
+      }
     }
   };
 

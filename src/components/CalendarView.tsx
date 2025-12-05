@@ -12,11 +12,15 @@ import {
   getZodiacColor,
   getZodiacGradientColor,
   getZodiacGradientColorForYear,
+  parseISODate,
 } from '../utils/dateUtils';
 import { isSameDay, isSameMonth, isSameYear } from 'date-fns';
 import { JournalEntry } from '../types';
 import { playCalendarSelectionSound } from '../utils/audioUtils';
 import { getEntryColorForDate } from '../utils/entryColorUtils';
+import { useCalendar } from '../contexts/CalendarContext';
+import { dateToCalendarDate } from '../utils/calendars/calendarConverter';
+import { formatCalendarDate } from '../utils/calendars/calendarConverter';
 import './CalendarView.css';
 
 interface CalendarViewProps {
@@ -30,6 +34,7 @@ export default function CalendarView({
   viewMode,
   onTimePeriodSelect,
 }: CalendarViewProps) {
+  const { calendar } = useCalendar();
   const [entries, setEntries] = useState<JournalEntry[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -148,7 +153,7 @@ export default function CalendarView({
     
     const dateStr = formatDate(date);
     const result = entries.some(entry => {
-      const entryDate = new Date(entry.date);
+      const entryDate = parseISODate(entry.date);
       
       // Check if date falls within entry's time range
       if (entry.timeRange === 'day') {
@@ -228,7 +233,14 @@ export default function CalendarView({
             >
               <div className="cell-content">
                 <div className="cell-label" style={{ color: yearGradientColor }}>
-                  {year.getFullYear()}
+                  {(() => {
+                    try {
+                      const calDate = dateToCalendarDate(year, calendar);
+                      return `${calDate.year}${calDate.era ? ' ' + calDate.era : ''}`;
+                    } catch (e) {
+                      return year.getFullYear();
+                    }
+                  })()}
                 </div>
                 {hasEntry(year) && entryColor && (
                   <div 
@@ -383,7 +395,15 @@ export default function CalendarView({
           className={`calendar-cell day-cell single-day ${isToday(selectedDate) ? 'today' : ''} ${isSelected(selectedDate) ? 'selected' : ''} ${hasEntry(selectedDate) ? 'has-entry' : ''}`}
         >
           <div className="cell-content">
-            <div className="cell-label large">{formatDate(selectedDate, 'EEEE, MMMM d, yyyy')}</div>
+            <div className="cell-label large">
+              {(() => {
+                try {
+                  return formatCalendarDate(dateToCalendarDate(selectedDate, calendar), 'EEEE, MMMM D, YYYY');
+                } catch (e) {
+                  return formatDate(selectedDate, 'EEEE, MMMM d, yyyy');
+                }
+              })()}
+            </div>
             {hasEntry(selectedDate) && <div className="entry-indicator"></div>}
           </div>
         </div>

@@ -3,8 +3,74 @@ import * as path from 'path';
 import { app } from 'electron';
 import { JournalEntry } from './types';
 
+/**
+ * Safely formats a date to ISO date string (YYYY-MM-DD) that works with negative years.
+ * This replaces toISOString() which doesn't work for dates before year 0.
+ * Supports proleptic Gregorian calendar dates from -9999 to 9999.
+ */
 function formatDate(date: Date): string {
-  return date.toISOString().split('T')[0];
+  const year = date.getFullYear();
+  const month = date.getMonth() + 1; // getMonth() returns 0-11
+  const day = date.getDate();
+  
+  // Format year with sign for negative years (ISO 8601 format: -YYYY-MM-DD)
+  const yearStr = year < 0 
+    ? `-${String(Math.abs(year)).padStart(4, '0')}` 
+    : String(year).padStart(4, '0');
+  
+  const monthStr = String(month).padStart(2, '0');
+  const dayStr = String(day).padStart(2, '0');
+  
+  return `${yearStr}-${monthStr}-${dayStr}`;
+}
+
+/**
+ * Parses an ISO date string (YYYY-MM-DD or -YYYY-MM-DD) to a Date object.
+ * Handles negative years correctly by parsing as local date.
+ */
+export function parseISODate(dateStr: string): Date {
+  // Handle negative years: -YYYY-MM-DD format
+  const isNegative = dateStr.startsWith('-');
+  const cleanDateStr = isNegative ? dateStr.substring(1) : dateStr;
+  const [yearStr, monthStr, dayStr] = cleanDateStr.split('-');
+  
+  const year = isNegative ? -parseInt(yearStr, 10) : parseInt(yearStr, 10);
+  const month = parseInt(monthStr, 10) - 1; // Convert to 0-indexed month
+  const day = parseInt(dayStr, 10);
+  
+  return new Date(year, month, day);
+}
+
+/**
+ * Convert a Gregorian date to Julian Day Number
+ * Simple implementation for database use
+ */
+function gregorianToJDN(year: number, month: number, day: number): number {
+  // Handle negative years (BC dates)
+  if (year < 0) {
+    year = year + 1;
+  }
+  
+  const a = Math.floor((14 - month) / 12);
+  const y = year + 4800 - a;
+  const m = month + 12 * a - 3;
+  
+  // Gregorian calendar formula
+  return day + Math.floor((153 * m + 2) / 5) + 365 * y + 
+         Math.floor(y / 4) - Math.floor(y / 100) + Math.floor(y / 400) - 32045;
+}
+
+/**
+ * Calculate JDN from an ISO date string
+ */
+function calculateJDNFromDateString(dateStr: string): number | null {
+  try {
+    const date = parseISODate(dateStr);
+    return gregorianToJDN(date.getFullYear(), date.getMonth() + 1, date.getDate());
+  } catch (e) {
+    console.error('Error calculating JDN from date string:', e);
+    return null;
+  }
 }
 
 let db: Database.Database | null = null;
@@ -73,6 +139,31 @@ function migrateDatabase(database: Database.Database) {
     } catch (error) {
       console.error('Migration error:', error);
       throw error; // Re-throw to prevent using broken database
+    }
+  }
+  
+  // Check if JDN column exists and add it if missing
+  const hasJDN = checkColumnExists(database, 'journal_entries', 'jdn');
+  if (!hasJDN) {
+    try {
+      // Add JDN column (nullable, will be computed from date)
+      database.exec(`
+        ALTER TABLE journal_entries ADD COLUMN jdn INTEGER;
+      `);
+      
+      // Compute JDN for existing entries from their date strings
+      // This will be done lazily when entries are accessed, or can be done here
+      // For now, we'll leave it null and compute on-the-fly when needed
+      
+      // Create index on JDN for faster lookups
+      database.exec(`
+        CREATE INDEX IF NOT EXISTS idx_jdn ON journal_entries(jdn);
+      `);
+      
+      console.log('Database migrated successfully: Added JDN column');
+    } catch (error) {
+      console.error('JDN migration error:', error);
+      // Don't throw - JDN is optional, system can work without it
     }
   }
 }
@@ -274,6 +365,7 @@ function createTables(database: Database.Database) {
     CREATE TABLE IF NOT EXISTS journal_entries (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       date TEXT NOT NULL,
+      jdn INTEGER,
       time_range TEXT NOT NULL DEFAULT 'day',
       title TEXT NOT NULL,
       content TEXT NOT NULL,
@@ -283,6 +375,7 @@ function createTables(database: Database.Database) {
     );
     
     CREATE INDEX IF NOT EXISTS idx_date ON journal_entries(date);
+    CREATE INDEX IF NOT EXISTS idx_jdn ON journal_entries(jdn);
     CREATE INDEX IF NOT EXISTS idx_time_range ON journal_entries(time_range);
     CREATE INDEX IF NOT EXISTS idx_created_at ON journal_entries(created_at);
     CREATE INDEX IF NOT EXISTS idx_date_time_range ON journal_entries(date, time_range);
@@ -388,17 +481,22 @@ export function getEntriesByDateAndRange(date: string, timeRange: 'decade' | 'ye
 
 export function saveEntry(entry: JournalEntry): void {
   const database = getDatabase();
+  // Use formatDate for created_at/updated_at to ensure consistency
+  // For current timestamp, we can use ISO string since it's always "now" (positive year)
   const now = new Date().toISOString();
   
   try {
     console.log('saveEntry called with:', { id: entry.id, date: entry.date, timeRange: entry.timeRange, title: entry.title });
+    
+    // Calculate JDN from date string
+    const jdn = calculateJDNFromDateString(entry.date);
     
     // If entry has an ID, update that specific entry
     if (entry.id) {
       console.log('Updating existing entry by ID');
       const stmt = database.prepare(`
         UPDATE journal_entries 
-        SET title = ?, content = ?, tags = ?, updated_at = ?
+        SET title = ?, content = ?, tags = ?, updated_at = ?, jdn = ?
         WHERE id = ?
       `);
       stmt.run(
@@ -406,6 +504,7 @@ export function saveEntry(entry: JournalEntry): void {
         entry.content,
         JSON.stringify(entry.tags || []),
         now,
+        jdn,
         entry.id
       );
       console.log('Entry updated successfully');
@@ -413,11 +512,12 @@ export function saveEntry(entry: JournalEntry): void {
       // If no ID, always insert a new entry (allows multiple entries per date/timeRange)
       console.log('Inserting new entry');
       const stmt = database.prepare(`
-        INSERT INTO journal_entries (date, time_range, title, content, tags, created_at, updated_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO journal_entries (date, jdn, time_range, title, content, tags, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
       `);
       stmt.run(
         entry.date,
+        jdn,
         entry.timeRange,
         entry.title,
         entry.content,
@@ -530,11 +630,11 @@ export function getEntriesByRange(range: 'decade' | 'year' | 'month' | 'week' | 
       canonicalDate = startDate;
       break;
     case 'week':
-      // For week, value is week number since epoch (Monday-based weeks)
-      const epoch = new Date(1970, 0, 1);
-      // Get to the first Monday (Jan 5, 1970 was a Monday)
-      const firstMonday = new Date(1970, 0, 5);
-      const weekStart = new Date(firstMonday);
+      // For week, value is week number since a reference Monday (Monday-based weeks)
+      // Use a reference Monday that works for all dates: January 1, 0001 was a Monday
+      // (in proleptic Gregorian calendar)
+      const referenceMonday = new Date(1, 0, 1); // January 1, 0001 (Monday)
+      const weekStart = new Date(referenceMonday);
       weekStart.setDate(weekStart.getDate() + (value * 7));
       startDate = new Date(weekStart);
       endDate = new Date(weekStart);
@@ -542,7 +642,10 @@ export function getEntriesByRange(range: 'decade' | 'year' | 'month' | 'week' | 
       canonicalDate = startDate;
       break;
     case 'day':
-      const dayDate = new Date(1970, 0, 1);
+      // For day, value is day number since a reference date
+      // Use January 1, 0001 as reference (works for all dates in proleptic Gregorian calendar)
+      const referenceDay = new Date(1, 0, 1);
+      const dayDate = new Date(referenceDay);
       dayDate.setDate(dayDate.getDate() + value);
       startDate = dayDate;
       endDate = new Date(dayDate);
@@ -556,14 +659,14 @@ export function getEntriesByRange(range: 'decade' | 'year' | 'month' | 'week' | 
   
   // Get all entries in the date range
   const allEntries = getEntries(
-    startDate.toISOString().split('T')[0],
-    endDate.toISOString().split('T')[0]
+    formatDate(startDate),
+    formatDate(endDate)
   );
   
   // Filter entries to show all relevant entries for this time range
   // Show entries at the current level AND entries at more specific levels within this range
   return allEntries.filter(entry => {
-    const entryDate = new Date(entry.date);
+    const entryDate = parseISODate(entry.date);
     
     // Always show entries at the current time range level
     if (entry.timeRange === range) {

@@ -63,17 +63,20 @@ export async function getEntriesForRange(
       break;
     case 'week':
       // Calculate week number based on Monday-based weeks
+      // Use a reference Monday that works for all dates: January 1, 0001 was a Monday
+      // (in proleptic Gregorian calendar)
       const weekStart = new Date(date);
       const dayOfWeek = weekStart.getDay();
       const daysToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // Convert Sunday (0) to 6
       weekStart.setDate(weekStart.getDate() - daysToMonday);
-      // First Monday after epoch (Jan 5, 1970 was a Monday)
-      const firstMonday = new Date(1970, 0, 5);
-      value = Math.floor((weekStart.getTime() - firstMonday.getTime()) / (1000 * 60 * 60 * 24 * 7));
+      // Reference Monday: January 1, 0001 (works for all dates including negative years)
+      const referenceMonday = new Date(1, 0, 1);
+      value = Math.floor((weekStart.getTime() - referenceMonday.getTime()) / (1000 * 60 * 60 * 24 * 7));
       break;
     case 'day':
-      const epochDay = new Date(1970, 0, 1);
-      value = Math.floor((date.getTime() - epochDay.getTime()) / (1000 * 60 * 60 * 24));
+      // Use January 1, 0001 as reference (works for all dates in proleptic Gregorian calendar)
+      const referenceDay = new Date(1, 0, 1);
+      value = Math.floor((date.getTime() - referenceDay.getTime()) / (1000 * 60 * 60 * 24));
       break;
   }
   

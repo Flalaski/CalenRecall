@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
 import { JournalEntry, TimeRange } from '../types';
-import { formatDate, getWeekStart, getWeekEnd, getMonthStart, getYearStart, getDecadeStart } from '../utils/dateUtils';
+import { formatDate, getWeekStart, getWeekEnd, getMonthStart, getYearStart, getDecadeStart, parseISODate } from '../utils/dateUtils';
 import { playEditSound, playNewEntrySound } from '../utils/audioUtils';
+import { useCalendar } from '../contexts/CalendarContext';
+import { getTimeRangeLabelInCalendar } from '../utils/calendars/timeRangeConverter';
 import './EntryViewer.css';
 
 interface EntryViewerProps {
@@ -23,6 +25,7 @@ export default function EntryViewer({
   onEntrySelect,
   onEditEntry,
 }: EntryViewerProps) {
+  const { calendar } = useCalendar();
   const [periodEntries, setPeriodEntries] = useState<JournalEntry[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -132,20 +135,27 @@ export default function EntryViewer({
   };
 
   const getDateLabel = () => {
-    switch (viewMode) {
-      case 'decade':
-        const decadeStart = Math.floor(date.getFullYear() / 10) * 10;
-        return `${decadeStart}s`;
-      case 'year':
-        return formatDate(date, 'yyyy');
-      case 'month':
-        return formatDate(date, 'MMMM yyyy');
-      case 'week':
-        return `Week of ${formatDate(date, 'MMM d, yyyy')}`;
-      case 'day':
-        return formatDate(date, 'EEEE, MMMM d, yyyy');
-      default:
-        return formatDate(date, 'MMMM d, yyyy');
+    // Use calendar-aware formatting
+    try {
+      return getTimeRangeLabelInCalendar(date, viewMode, calendar);
+    } catch (e) {
+      console.error('Error formatting date in calendar:', e);
+      // Fallback to Gregorian formatting
+      switch (viewMode) {
+        case 'decade':
+          const decadeStart = Math.floor(date.getFullYear() / 10) * 10;
+          return `${decadeStart}s`;
+        case 'year':
+          return formatDate(date, 'yyyy');
+        case 'month':
+          return formatDate(date, 'MMMM yyyy');
+        case 'week':
+          return `Week of ${formatDate(date, 'MMM d, yyyy')}`;
+        case 'day':
+          return formatDate(date, 'EEEE, MMMM d, yyyy');
+        default:
+          return formatDate(date, 'MMMM d, yyyy');
+      }
     }
   };
 
@@ -172,27 +182,34 @@ export default function EntryViewer({
   };
 
   const formatEntryDate = (entry: JournalEntry): string => {
-    const entryDate = new Date(entry.date);
-    switch (entry.timeRange) {
-      case 'decade':
-        const decadeStart = Math.floor(entryDate.getFullYear() / 10) * 10;
-        return `${decadeStart}s`;
-      case 'year':
-        return formatDate(entryDate, 'yyyy');
-      case 'month':
-        return formatDate(entryDate, 'MMMM yyyy');
-      case 'week':
-        const weekStart = getWeekStart(entryDate);
-        const weekEnd = getWeekEnd(entryDate);
-        if (weekStart.getMonth() === weekEnd.getMonth()) {
-          return `Week of ${formatDate(weekStart, 'MMM d')} - ${formatDate(weekEnd, 'd, yyyy')}`;
-        } else {
-          return `Week of ${formatDate(weekStart, 'MMM d')} - ${formatDate(weekEnd, 'MMM d, yyyy')}`;
-        }
-      case 'day':
-        return formatDate(entryDate, 'MMM d, yyyy');
-      default:
-        return formatDate(entryDate, 'MMM d, yyyy');
+    const entryDate = parseISODate(entry.date);
+    // Use calendar-aware formatting
+    try {
+      return getTimeRangeLabelInCalendar(entryDate, entry.timeRange, calendar);
+    } catch (e) {
+      console.error('Error formatting entry date in calendar:', e);
+      // Fallback to Gregorian formatting
+      switch (entry.timeRange) {
+        case 'decade':
+          const decadeStart = Math.floor(entryDate.getFullYear() / 10) * 10;
+          return `${decadeStart}s`;
+        case 'year':
+          return formatDate(entryDate, 'yyyy');
+        case 'month':
+          return formatDate(entryDate, 'MMMM yyyy');
+        case 'week':
+          const weekStart = getWeekStart(entryDate);
+          const weekEnd = getWeekEnd(entryDate);
+          if (weekStart.getMonth() === weekEnd.getMonth()) {
+            return `Week of ${formatDate(weekStart, 'MMM d')} - ${formatDate(weekEnd, 'd, yyyy')}`;
+          } else {
+            return `Week of ${formatDate(weekStart, 'MMM d')} - ${formatDate(weekEnd, 'MMM d, yyyy')}`;
+          }
+        case 'day':
+          return formatDate(entryDate, 'MMM d, yyyy');
+        default:
+          return formatDate(entryDate, 'MMM d, yyyy');
+      }
     }
   };
 

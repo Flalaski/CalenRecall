@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Preferences, ExportFormat } from '../types';
 import { playResetSound, playExportSound } from '../utils/audioUtils';
+import { CALENDAR_INFO } from '../utils/calendars/types';
 import HotkeyDiagram from './HotkeyDiagram';
 import packageJson from '../../package.json';
 import './Preferences.css';
@@ -170,6 +171,24 @@ export default function PreferencesComponent() {
             {preferences.restoreLastView === true && (
               <small>Disabled when "Restore last viewed position" is enabled.</small>
             )}
+          </div>
+
+          <div className="preference-item">
+            <label htmlFor="defaultCalendar">Default Calendar</label>
+            <select
+              id="defaultCalendar"
+              value={preferences.defaultCalendar || 'gregorian'}
+              onChange={(e) => updatePreference('defaultCalendar', e.target.value)}
+            >
+              {Object.entries(CALENDAR_INFO)
+                .filter(([key]) => ['gregorian', 'julian', 'islamic', 'hebrew', 'persian', 'ethiopian', 'coptic', 'indian-saka', 'cherokee', 'iroquois', 'thai-buddhist', 'bahai', 'mayan-tzolkin', 'mayan-haab', 'mayan-longcount', 'aztec-xiuhpohualli', 'chinese'].includes(key))
+                .map(([key, info]) => (
+                  <option key={key} value={key}>
+                    {info.name} {info.eraName ? `(${info.eraName})` : ''}
+                  </option>
+                ))}
+            </select>
+            <small>Select the default calendar system for displaying dates. You can also change this from the navigation bar.</small>
           </div>
 
           <div className="preference-item">

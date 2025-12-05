@@ -1,4 +1,5 @@
 import { JournalEntry } from '../types';
+import { parseISODate } from './dateUtils';
 
 /**
  * Calculate entry color based on numerological calculation
@@ -17,7 +18,7 @@ export function calculateEntryColor(entry: JournalEntry): string {
   }
   
   // Calculate time-based numerological value
-  const entryDate = new Date(entry.date);
+  const entryDate = parseISODate(entry.date);
   const timeValue = entryDate.getFullYear() * 10000 + 
                     (entryDate.getMonth() + 1) * 100 + 
                     entryDate.getDate();
@@ -53,7 +54,7 @@ export function getEntryColorForDate(
   const matchingEntries = entries.filter(entry => {
     if (entry.timeRange !== timeRange) return false;
     
-    const entryDate = new Date(entry.date);
+    const entryDate = parseISODate(entry.date);
     
     switch (timeRange) {
       case 'day':

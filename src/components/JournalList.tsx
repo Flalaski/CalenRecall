@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { JournalEntry, TimeRange } from '../types';
 import { getEntriesForRange } from '../services/journalService';
-import { formatDate } from '../utils/dateUtils';
+import { formatDate, parseISODate } from '../utils/dateUtils';
 import { playNewEntrySound } from '../utils/audioUtils';
 import './JournalList.css';
 
@@ -18,6 +18,7 @@ export default function JournalList({
   onEntrySelect,
   onNewEntry,
 }: JournalListProps) {
+  const { calendar } = useCalendar();
   const [entries, setEntries] = useState<JournalEntry[]>([]);
   const [loading, setLoading] = useState(false);
   const [selectedEntryId, setSelectedEntryId] = useState<number | undefined>();
@@ -69,21 +70,28 @@ export default function JournalList({
   };
 
   const formatEntryDate = (entry: JournalEntry): string => {
-    const entryDate = new Date(entry.date);
-    switch (entry.timeRange) {
-      case 'decade':
-        const decadeStart = Math.floor(entryDate.getFullYear() / 10) * 10;
-        return `${decadeStart}s`;
-      case 'year':
-        return formatDate(entryDate, 'yyyy');
-      case 'month':
-        return formatDate(entryDate, 'MMMM yyyy');
-      case 'week':
-        return `Week of ${formatDate(entryDate, 'MMM d, yyyy')}`;
-      case 'day':
-        return formatDate(entryDate, 'MMM d, yyyy');
-      default:
-        return formatDate(entryDate, 'MMM d, yyyy');
+    const entryDate = parseISODate(entry.date);
+    // Use calendar-aware formatting
+    try {
+      return getTimeRangeLabelInCalendar(entryDate, entry.timeRange, calendar);
+    } catch (e) {
+      console.error('Error formatting entry date in calendar:', e);
+      // Fallback to Gregorian formatting
+      switch (entry.timeRange) {
+        case 'decade':
+          const decadeStart = Math.floor(entryDate.getFullYear() / 10) * 10;
+          return `${decadeStart}s`;
+        case 'year':
+          return formatDate(entryDate, 'yyyy');
+        case 'month':
+          return formatDate(entryDate, 'MMMM yyyy');
+        case 'week':
+          return `Week of ${formatDate(entryDate, 'MMM d, yyyy')}`;
+        case 'day':
+          return formatDate(entryDate, 'MMM d, yyyy');
+        default:
+          return formatDate(entryDate, 'MMM d, yyyy');
+      }
     }
   };
 

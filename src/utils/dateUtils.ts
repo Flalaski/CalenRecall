@@ -2,6 +2,44 @@ import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth,
   startOfYear, endOfYear, addDays, addWeeks, addMonths, addYears,
   getWeek, getYear, getMonth, differenceInDays, isSameDay } from 'date-fns';
 
+/**
+ * Safely formats a date to ISO date string (YYYY-MM-DD) that works with negative years.
+ * This replaces toISOString() which doesn't work for dates before year 0.
+ * Supports proleptic Gregorian calendar dates from -9999 to 9999.
+ */
+export function formatDateToISO(date: Date): string {
+  const year = date.getFullYear();
+  const month = date.getMonth() + 1; // getMonth() returns 0-11
+  const day = date.getDate();
+  
+  // Format year with sign for negative years (ISO 8601 format: -YYYY-MM-DD)
+  const yearStr = year < 0 
+    ? `-${String(Math.abs(year)).padStart(4, '0')}` 
+    : String(year).padStart(4, '0');
+  
+  const monthStr = String(month).padStart(2, '0');
+  const dayStr = String(day).padStart(2, '0');
+  
+  return `${yearStr}-${monthStr}-${dayStr}`;
+}
+
+/**
+ * Parses an ISO date string (YYYY-MM-DD or -YYYY-MM-DD) to a Date object.
+ * Handles negative years correctly by parsing as local date.
+ */
+export function parseISODate(dateStr: string): Date {
+  // Handle negative years: -YYYY-MM-DD format
+  const isNegative = dateStr.startsWith('-');
+  const cleanDateStr = isNegative ? dateStr.substring(1) : dateStr;
+  const [yearStr, monthStr, dayStr] = cleanDateStr.split('-');
+  
+  const year = isNegative ? -parseInt(yearStr, 10) : parseInt(yearStr, 10);
+  const month = parseInt(monthStr, 10) - 1; // Convert to 0-indexed month
+  const day = parseInt(dayStr, 10);
+  
+  return new Date(year, month, day);
+}
+
 export function formatDate(date: Date, formatStr: string = 'yyyy-MM-dd'): string {
   return format(date, formatStr);
 }
