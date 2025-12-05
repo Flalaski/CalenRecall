@@ -373,9 +373,41 @@ export default function PreferencesComponent() {
               <p style={{ margin: '0 0 8px 0', fontSize: '14px', color: '#666' }}>
                 <strong>Version:</strong> {packageJson.version || 'Unknown'}
               </p>
-              <p style={{ margin: '0', fontSize: '12px', color: '#999' }}>
+              <p style={{ margin: '0 0 16px 0', fontSize: '12px', color: '#999' }}>
                 All your journaling history is stored locally on your device.
               </p>
+              <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: '1px solid #e0e0e0' }}>
+                <p style={{ margin: '0 0 8px 0', fontSize: '14px', color: '#666', fontWeight: '600' }}>
+                  Credits
+                </p>
+                <p style={{ margin: '0 0 4px 0', fontSize: '13px', color: '#666' }}>
+                  Created by <strong>Cory F. Mahler</strong>
+                </p>
+                <p style={{ margin: '0 0 4px 0', fontSize: '13px', color: '#666' }}>
+                  <a 
+                    href="https://flalaski.com" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    style={{ color: '#4a90e2', textDecoration: 'none' }}
+                    onMouseEnter={(e) => e.currentTarget.style.textDecoration = 'underline'}
+                    onMouseLeave={(e) => e.currentTarget.style.textDecoration = 'none'}
+                  >
+                    Flalaski.com
+                  </a>
+                </p>
+                <p style={{ margin: '0', fontSize: '13px', color: '#666' }}>
+                  <a 
+                    href="https://github.com/flalaski/CalenRecall" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    style={{ color: '#4a90e2', textDecoration: 'none' }}
+                    onMouseEnter={(e) => e.currentTarget.style.textDecoration = 'underline'}
+                    onMouseLeave={(e) => e.currentTarget.style.textDecoration = 'none'}
+                  >
+                    GitHub Repository
+                  </a>
+                </p>
+              </div>
             </div>
           </div>
         </div>

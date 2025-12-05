@@ -269,8 +269,22 @@
   border: 1px solid #e0e0e0;
 }
 
+.about-section a {
+  color: #4a90e2;
+  text-decoration: none;
+  transition: text-decoration 0.2s;
+}
+
+.about-section a:hover {
+  text-decoration: underline;
+}
+
 [data-theme="dark"] .about-section {
   background: #2a2a2a;
   border-color: #444;
+}
+
+[data-theme="dark"] .about-section a {
+  color: #6BB3F0;
 }
 
