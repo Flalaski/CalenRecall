@@ -1,4 +1,4 @@
-import { ipcMain, dialog } from 'electron';
+import { ipcMain, dialog, app } from 'electron';
 import * as fs from 'fs';
 import * as path from 'path';
 import PDFDocument from 'pdfkit';
@@ -18,8 +18,18 @@ import {
   resetPreferences,
   Preferences,
   parseISODate,
+  getDatabasePath,
+  getEntryVersions,
+  archiveEntry,
+  unarchiveEntry,
+  getArchivedEntries,
+  pinEntry,
+  unpinEntry,
+  getPinnedEntries,
 } from './database';
-import { JournalEntry, TimeRange, ExportFormat } from './types';
+import { EntryVersion } from './types';
+import { JournalEntry, TimeRange, ExportFormat, EntryAttachment } from './types';
+import { EntryTemplate, getAllTemplates, getTemplate, saveTemplate, deleteTemplate } from './database';
 
 export function setupIpcHandlers() {
   ipcMain.handle('get-entries', async (_event, startDate: string, endDate: string) => {
@@ -28,6 +38,195 @@ export function setupIpcHandlers() {
 
   ipcMain.handle('get-entry', async (_event, date: string, timeRange: TimeRange) => {
     return getEntry(date, timeRange);
+  });
+
+  ipcMain.handle('get-entry-by-id', async (_event, id: number) => {
+    const { getEntryById } = require('./database');
+    return getEntryById(id);
+  });
+
+  ipcMain.handle('get-entry-versions', async (_event, entryId: number) => {
+    return getEntryVersions(entryId);
+  });
+
+  ipcMain.handle('archive-entry', async (_event, id: number) => {
+    archiveEntry(id);
+    return { success: true };
+  });
+
+  ipcMain.handle('unarchive-entry', async (_event, id: number) => {
+    unarchiveEntry(id);
+    return { success: true };
+  });
+
+  ipcMain.handle('get-archived-entries', async () => {
+    return getArchivedEntries();
+  });
+
+  ipcMain.handle('pin-entry', async (_event, id: number) => {
+    pinEntry(id);
+    return { success: true };
+  });
+
+  ipcMain.handle('unpin-entry', async (_event, id: number) => {
+    unpinEntry(id);
+    return { success: true };
+  });
+
+  ipcMain.handle('get-pinned-entries', async () => {
+    return getPinnedEntries();
+  });
+
+  ipcMain.handle('get-all-templates', async () => {
+    return getAllTemplates();
+  });
+
+  ipcMain.handle('get-template', async (_event, id: number) => {
+    return getTemplate(id);
+  });
+
+  ipcMain.handle('save-template', async (_event, template: EntryTemplate) => {
+    saveTemplate(template);
+    return { success: true };
+  });
+
+  ipcMain.handle('delete-template', async (_event, id: number) => {
+    deleteTemplate(id);
+    return { success: true };
+  });
+
+  /**
+   * Add an attachment to an entry.
+   * Copies the file to the attachments directory and updates the entry.
+   */
+  ipcMain.handle('add-entry-attachment', async (_event, entryId: number) => {
+    const { canceled, filePaths } = await dialog.showOpenDialog({
+      title: 'Select File to Attach',
+      properties: ['openFile'],
+      filters: [
+        { name: 'All Files', extensions: ['*'] },
+        { name: 'Images', extensions: ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'] },
+        { name: 'Documents', extensions: ['pdf', 'doc', 'docx', 'txt', 'md'] },
+      ],
+    });
+
+    if (canceled || !filePaths || filePaths.length === 0) {
+      return { success: false, canceled: true };
+    }
+
+    const sourcePath = filePaths[0];
+    const { getEntryById, saveEntry } = require('./database');
+    const entry = getEntryById(entryId);
+
+    if (!entry) {
+      return { success: false, error: 'entry_not_found', message: 'Entry not found' };
+    }
+
+    try {
+      // Create attachments directory in user data
+      const userDataPath = app.getPath('userData');
+      const attachmentsDir = path.join(userDataPath, 'attachments');
+      if (!fs.existsSync(attachmentsDir)) {
+        fs.mkdirSync(attachmentsDir, { recursive: true });
+      }
+
+      // Generate unique filename
+      const fileExt = path.extname(sourcePath);
+      const fileName = path.basename(sourcePath);
+      const uniqueId = `${Date.now()}-${Math.random().toString(36).substring(7)}`;
+      const destFileName = `${entryId}-${uniqueId}${fileExt}`;
+      const destPath = path.join(attachmentsDir, destFileName);
+
+      // Copy file
+      fs.copyFileSync(sourcePath, destPath);
+      const stats = fs.statSync(destPath);
+
+      // Get MIME type
+      const mimeType = getMimeType(fileExt);
+
+      // Create attachment metadata
+      const attachment: EntryAttachment = {
+        id: uniqueId,
+        fileName: fileName,
+        filePath: destPath,
+        fileSize: stats.size,
+        mimeType: mimeType,
+        createdAt: new Date().toISOString(),
+      };
+
+      // Add to entry
+      const attachments = entry.attachments || [];
+      attachments.push(attachment);
+      entry.attachments = attachments;
+      saveEntry(entry);
+
+      return { success: true, attachment };
+    } catch (error: any) {
+      console.error('Error adding attachment:', error);
+      return {
+        success: false,
+        error: 'add_failed',
+        message: error.message || 'Failed to add attachment',
+      };
+    }
+  });
+
+  /**
+   * Remove an attachment from an entry.
+   */
+  ipcMain.handle('remove-entry-attachment', async (_event, entryId: number, attachmentId: string) => {
+    const { getEntryById, saveEntry } = require('./database');
+    const entry = getEntryById(entryId);
+
+    if (!entry) {
+      return { success: false, error: 'entry_not_found', message: 'Entry not found' };
+    }
+
+    try {
+      const attachments = entry.attachments || [];
+      const attachment = attachments.find((a: EntryAttachment) => a.id === attachmentId);
+
+      if (!attachment) {
+        return { success: false, error: 'attachment_not_found', message: 'Attachment not found' };
+      }
+
+      // Delete file
+      if (fs.existsSync(attachment.filePath)) {
+        fs.unlinkSync(attachment.filePath);
+      }
+
+      // Remove from entry
+      entry.attachments = attachments.filter((a: EntryAttachment) => a.id !== attachmentId);
+      saveEntry(entry);
+
+      return { success: true };
+    } catch (error: any) {
+      console.error('Error removing attachment:', error);
+      return {
+        success: false,
+        error: 'remove_failed',
+        message: error.message || 'Failed to remove attachment',
+      };
+    }
+  });
+
+  /**
+   * Get attachment file path for opening.
+   */
+  ipcMain.handle('get-attachment-path', async (_event, entryId: number, attachmentId: string) => {
+    const { getEntryById } = require('./database');
+    const entry = getEntryById(entryId);
+
+    if (!entry || !entry.attachments) {
+      return { success: false, error: 'not_found' };
+    }
+
+    const attachment = entry.attachments.find((a: EntryAttachment) => a.id === attachmentId);
+    if (!attachment || !fs.existsSync(attachment.filePath)) {
+      return { success: false, error: 'not_found' };
+    }
+
+    return { success: true, path: attachment.filePath };
   });
 
   ipcMain.handle('get-entries-by-date-range', async (_event, date: string, timeRange: TimeRange) => {
@@ -140,6 +339,340 @@ export function setupIpcHandlers() {
     resetPreferences();
     return { success: true };
   });
+
+  /**
+   * Import journal entries from a file.
+   * Supports JSON and Markdown formats.
+   */
+  ipcMain.handle('import-entries', async (_event, format: 'json' | 'markdown') => {
+    const { canceled, filePaths } = await dialog.showOpenDialog({
+      title: 'Import Entries',
+      filters:
+        format === 'json'
+          ? [{ name: 'JSON', extensions: ['json'] }]
+          : [{ name: 'Markdown', extensions: ['md', 'markdown'] }],
+      properties: ['openFile'],
+    });
+
+    if (canceled || !filePaths || filePaths.length === 0) {
+      return { success: false, canceled: true };
+    }
+
+    const filePath = filePaths[0];
+
+    try {
+      const content = fs.readFileSync(filePath, { encoding: 'utf-8' });
+      const entries = parseImportContent(content, format);
+
+      if (entries.length === 0) {
+        return { success: false, canceled: false, error: 'no_entries', message: 'No entries found in file' };
+      }
+
+      // Save all entries
+      let imported = 0;
+      let skipped = 0;
+      for (const entry of entries) {
+        try {
+          // Don't import entries with IDs (they're duplicates)
+          if (!entry.id) {
+            saveEntry(entry);
+            imported++;
+          } else {
+            skipped++;
+          }
+        } catch (error) {
+          console.error('Error importing entry:', error);
+          skipped++;
+        }
+      }
+
+      return {
+        success: true,
+        canceled: false,
+        imported,
+        skipped,
+        total: entries.length,
+      };
+    } catch (error: any) {
+      console.error('Error importing entries:', error);
+      return {
+        success: false,
+        canceled: false,
+        error: 'read_failed',
+        message: error.message || 'Failed to read file',
+      };
+    }
+  });
+
+  /**
+   * Backup the database to a user-selected location.
+   */
+  ipcMain.handle('backup-database', async () => {
+    const dbPath = getDatabasePath();
+    
+    if (!fs.existsSync(dbPath)) {
+      return { success: false, error: 'database_not_found', message: 'Database file not found' };
+    }
+
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+    const defaultFileName = `calenrecall-backup-${timestamp}.db`;
+
+    const { canceled, filePath } = await dialog.showSaveDialog({
+      title: 'Backup Database',
+      defaultPath: defaultFileName,
+      filters: [{ name: 'SQLite Database', extensions: ['db'] }],
+    });
+
+    if (canceled || !filePath) {
+      return { success: false, canceled: true };
+    }
+
+    try {
+      fs.copyFileSync(dbPath, filePath);
+      return { success: true, canceled: false, path: filePath };
+    } catch (error: any) {
+      console.error('Error backing up database:', error);
+      return {
+        success: false,
+        canceled: false,
+        error: 'backup_failed',
+        message: error.message || 'Failed to backup database',
+      };
+    }
+  });
+
+  /**
+   * Restore the database from a backup file.
+   */
+  ipcMain.handle('restore-database', async () => {
+    const { canceled, filePaths } = await dialog.showOpenDialog({
+      title: 'Restore Database from Backup',
+      filters: [{ name: 'SQLite Database', extensions: ['db'] }],
+      properties: ['openFile'],
+    });
+
+    if (canceled || !filePaths || filePaths.length === 0) {
+      return { success: false, canceled: true };
+    }
+
+    const backupPath = filePaths[0];
+    const dbPath = getDatabasePath();
+
+    // Confirm restore
+    const response = await dialog.showMessageBox({
+      type: 'warning',
+      title: 'Confirm Restore',
+      message: 'Restoring will replace your current database with the backup.',
+      detail: 'This action cannot be undone. Make sure you have a current backup before proceeding.',
+      buttons: ['Cancel', 'Restore'],
+      defaultId: 0,
+      cancelId: 0,
+    });
+
+    if (response.response === 0) {
+      return { success: false, canceled: true };
+    }
+
+    try {
+      // Close current database connection
+      const { closeDatabase } = require('./database');
+      closeDatabase();
+
+      // Copy backup to database location
+      fs.copyFileSync(backupPath, dbPath);
+
+      // Reinitialize database
+      const { initDatabase } = require('./database');
+      initDatabase();
+
+      return { success: true, canceled: false };
+    } catch (error: any) {
+      console.error('Error restoring database:', error);
+      
+      // Try to reinitialize database even if restore failed
+      try {
+        const { initDatabase } = require('./database');
+        initDatabase();
+      } catch (initError) {
+        console.error('Error reinitializing database after restore failure:', initError);
+      }
+
+      return {
+        success: false,
+        canceled: false,
+        error: 'restore_failed',
+        message: error.message || 'Failed to restore database',
+      };
+    }
+  });
+}
+
+/**
+ * Get MIME type from file extension.
+ */
+function getMimeType(ext: string): string {
+  const mimeTypes: Record<string, string> = {
+    '.jpg': 'image/jpeg',
+    '.jpeg': 'image/jpeg',
+    '.png': 'image/png',
+    '.gif': 'image/gif',
+    '.webp': 'image/webp',
+    '.svg': 'image/svg+xml',
+    '.pdf': 'application/pdf',
+    '.txt': 'text/plain',
+    '.md': 'text/markdown',
+    '.doc': 'application/msword',
+    '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  };
+  return mimeTypes[ext.toLowerCase()] || 'application/octet-stream';
+}
+
+/**
+ * Parse imported content based on format.
+ */
+function parseImportContent(content: string, format: 'json' | 'markdown'): JournalEntry[] {
+  switch (format) {
+    case 'json':
+      return parseJsonImport(content);
+    case 'markdown':
+      return parseMarkdownImport(content);
+    default:
+      return [];
+  }
+}
+
+/**
+ * Parse JSON import format.
+ * Expects an array of JournalEntry objects.
+ */
+function parseJsonImport(content: string): JournalEntry[] {
+  try {
+    const data = JSON.parse(content);
+    
+    // Handle array of entries
+    if (Array.isArray(data)) {
+      return data.map(entry => ({
+        date: entry.date,
+        timeRange: entry.timeRange || 'day',
+        title: entry.title || '',
+        content: entry.content || '',
+        tags: entry.tags || [],
+        createdAt: entry.createdAt || new Date().toISOString(),
+        updatedAt: entry.updatedAt || new Date().toISOString(),
+      }));
+    }
+    
+    return [];
+  } catch (error) {
+    console.error('Error parsing JSON import:', error);
+    return [];
+  }
+}
+
+/**
+ * Parse Markdown import format.
+ * Expects entries in the format:
+ * ## YYYY-MM-DD (timeRange) — Title
+ * **Tags:** tag1, tag2
+ * 
+ * Content here
+ * 
+ * ---
+ */
+function parseMarkdownImport(content: string): JournalEntry[] {
+  const entries: JournalEntry[] = [];
+  const lines = content.split('\n');
+  
+  let currentEntry: Partial<JournalEntry> | null = null;
+  let inContent = false;
+  let contentLines: string[] = [];
+  
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    
+    // Check for entry header: ## YYYY-MM-DD (timeRange) — Title
+    const headerMatch = line.match(/^##\s+(-?\d{4}-\d{2}-\d{2})\s+\((\w+)\)\s+—\s+(.+)$/);
+    if (headerMatch) {
+      // Save previous entry if exists
+      if (currentEntry && contentLines.length > 0) {
+        entries.push({
+          date: currentEntry.date!,
+          timeRange: currentEntry.timeRange!,
+          title: currentEntry.title || '',
+          content: contentLines.join('\n').trim(),
+          tags: currentEntry.tags || [],
+          createdAt: currentEntry.createdAt || new Date().toISOString(),
+          updatedAt: currentEntry.updatedAt || new Date().toISOString(),
+        });
+      }
+      
+      // Start new entry
+      currentEntry = {
+        date: headerMatch[1],
+        timeRange: headerMatch[2] as TimeRange,
+        title: headerMatch[3],
+        tags: [],
+      };
+      contentLines = [];
+      inContent = false;
+      continue;
+    }
+    
+    // Check for tags line: **Tags:** tag1, tag2
+    if (currentEntry && line.match(/^\*\*Tags:\*\*/)) {
+      const tagsText = line.replace(/^\*\*Tags:\*\*\s*/, '');
+      currentEntry.tags = tagsText.split(',').map(t => t.trim()).filter(t => t.length > 0);
+      continue;
+    }
+    
+    // Check for separator (end of entry)
+    if (line.trim() === '---') {
+      if (currentEntry && contentLines.length > 0) {
+        entries.push({
+          date: currentEntry.date!,
+          timeRange: currentEntry.timeRange!,
+          title: currentEntry.title || '',
+          content: contentLines.join('\n').trim(),
+          tags: currentEntry.tags || [],
+          createdAt: currentEntry.createdAt || new Date().toISOString(),
+          updatedAt: currentEntry.updatedAt || new Date().toISOString(),
+        });
+      }
+      currentEntry = null;
+      contentLines = [];
+      inContent = false;
+      continue;
+    }
+    
+    // Skip header lines and empty lines at start
+    if (!currentEntry) {
+      continue;
+    }
+    
+    // Skip empty lines before content starts
+    if (!inContent && line.trim() === '') {
+      continue;
+    }
+    
+    // Collect content
+    inContent = true;
+    contentLines.push(line);
+  }
+  
+  // Save last entry if exists
+  if (currentEntry && contentLines.length > 0) {
+    entries.push({
+      date: currentEntry.date!,
+      timeRange: currentEntry.timeRange!,
+      title: currentEntry.title || '',
+      content: contentLines.join('\n').trim(),
+      tags: currentEntry.tags || [],
+      createdAt: currentEntry.createdAt || new Date().toISOString(),
+      updatedAt: currentEntry.updatedAt || new Date().toISOString(),
+    });
+  }
+  
+  return entries;
 }
 
 /**

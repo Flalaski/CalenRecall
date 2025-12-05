@@ -3,6 +3,8 @@ import { JournalEntry, TimeRange } from '../types';
 import { getEntriesForRange } from '../services/journalService';
 import { formatDate, parseISODate } from '../utils/dateUtils';
 import { playNewEntrySound } from '../utils/audioUtils';
+import { useCalendar } from '../contexts/CalendarContext';
+import { getTimeRangeLabelInCalendar } from '../utils/calendars/timeRangeConverter';
 import './JournalList.css';
 
 interface JournalListProps {
@@ -20,8 +22,12 @@ export default function JournalList({
 }: JournalListProps) {
   const { calendar } = useCalendar();
   const [entries, setEntries] = useState<JournalEntry[]>([]);
+  const [filteredEntries, setFilteredEntries] = useState<JournalEntry[]>([]);
   const [loading, setLoading] = useState(false);
   const [selectedEntryId, setSelectedEntryId] = useState<number | undefined>();
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [sortBy, setSortBy] = useState<'date' | 'title' | 'timeRange'>('date');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
 
   useEffect(() => {
     loadEntries();
@@ -52,6 +58,46 @@ export default function JournalList({
       setLoading(false);
     }
   };
+
+  // Apply filters and sorting when entries or filter settings change
+  useEffect(() => {
+    let filtered = [...entries];
+
+    // Filter by tags
+    if (selectedTags.length > 0) {
+      filtered = filtered.filter(entry => 
+        entry.tags && entry.tags.some(tag => selectedTags.includes(tag))
+      );
+    }
+
+    // Sort entries
+    filtered.sort((a, b) => {
+      let comparison = 0;
+      
+      switch (sortBy) {
+        case 'date':
+          comparison = a.date.localeCompare(b.date);
+          break;
+        case 'title':
+          comparison = a.title.localeCompare(b.title);
+          break;
+        case 'timeRange':
+          const timeRangeOrder: Record<TimeRange, number> = {
+            decade: 0,
+            year: 1,
+            month: 2,
+            week: 3,
+            day: 4,
+          };
+          comparison = timeRangeOrder[a.timeRange] - timeRangeOrder[b.timeRange];
+          break;
+      }
+
+      return sortOrder === 'asc' ? comparison : -comparison;
+    });
+
+    setFilteredEntries(filtered);
+  }, [entries, selectedTags, sortBy, sortOrder]);
 
   const handleEntryClick = (entry: JournalEntry) => {
     setSelectedEntryId(entry.id);
@@ -100,6 +146,21 @@ export default function JournalList({
     return `+ New Entry for this ${timeRangeLabel}`;
   };
 
+  // Get all unique tags from entries
+  const allTags = Array.from(new Set(entries.flatMap(entry => entry.tags || [])));
+
+  const handleTagToggle = (tag: string) => {
+    setSelectedTags(prev => 
+      prev.includes(tag) 
+        ? prev.filter(t => t !== tag)
+        : [...prev, tag]
+    );
+  };
+
+  const clearFilters = () => {
+    setSelectedTags([]);
+  };
+
   if (loading) {
     return (
       <div className="journal-list">
@@ -126,8 +187,56 @@ export default function JournalList({
             <p className="hint">Click "New Entry" to create one.</p>
           </div>
         ) : (
-          <div className="journal-entries">
-            {entries.map((entry) => (
+          <>
+            {(allTags.length > 0 || entries.length > 1) && (
+              <div className="journal-list-controls">
+                {allTags.length > 0 && (
+                  <div className="journal-list-filter">
+                    <label>Filter by tags:</label>
+                    <div className="journal-list-tags">
+                      {allTags.map(tag => (
+                        <button
+                          key={tag}
+                          className={`journal-entry-filter-tag ${selectedTags.includes(tag) ? 'active' : ''}`}
+                          onClick={() => handleTagToggle(tag)}
+                        >
+                          {tag}
+                        </button>
+                      ))}
+                      {selectedTags.length > 0 && (
+                        <button className="journal-entry-clear-filters" onClick={clearFilters}>
+                          Clear
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                )}
+                {entries.length > 1 && (
+                  <div className="journal-list-sort">
+                    <label>Sort by:</label>
+                    <select value={sortBy} onChange={(e) => setSortBy(e.target.value as 'date' | 'title' | 'timeRange')}>
+                      <option value="date">Date</option>
+                      <option value="title">Title</option>
+                      <option value="timeRange">Time Range</option>
+                    </select>
+                    <select value={sortOrder} onChange={(e) => setSortOrder(e.target.value as 'asc' | 'desc')}>
+                      <option value="asc">Ascending</option>
+                      <option value="desc">Descending</option>
+                    </select>
+                  </div>
+                )}
+              </div>
+            )}
+            {filteredEntries.length === 0 && entries.length > 0 ? (
+              <div className="journal-list-empty">
+                <p>No entries match the selected filters.</p>
+                <button className="clear-filters-button" onClick={clearFilters}>
+                  Clear Filters
+                </button>
+              </div>
+            ) : (
+              <div className="journal-entries">
+                {filteredEntries.map((entry) => (
               <div
                 key={entry.id}
                 className={`journal-entry-item ${selectedEntryId === entry.id ? 'selected' : ''}`}

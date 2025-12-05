@@ -11,6 +11,10 @@ export default function PreferencesComponent() {
   const [loading, setLoading] = useState(true);
   const [exportFormat, setExportFormat] = useState<ExportFormat>('markdown');
   const [isExporting, setIsExporting] = useState(false);
+  const [importFormat, setImportFormat] = useState<'json' | 'markdown'>('json');
+  const [isImporting, setIsImporting] = useState(false);
+  const [isBackingUp, setIsBackingUp] = useState(false);
+  const [isRestoring, setIsRestoring] = useState(false);
 
   useEffect(() => {
     loadPreferences();
@@ -104,6 +108,70 @@ export default function PreferencesComponent() {
       alert('Export failed. Please try again.');
     } finally {
       setIsExporting(false);
+    }
+  };
+
+  const handleImport = async () => {
+    if (!window.electronAPI || isImporting) return;
+    playExportSound();
+    try {
+      setIsImporting(true);
+      const result = await window.electronAPI.importEntries(importFormat);
+      if (result.success) {
+        alert(`Import successful! Imported ${result.imported} entries${result.skipped ? `, skipped ${result.skipped} duplicates` : ''}.`);
+        // Refresh the main window
+        window.location.reload();
+      } else if (!result.canceled) {
+        console.error('Import failed:', result.error, result.message);
+        alert(`Import failed: ${result.message || result.error || 'Unknown error'}`);
+      }
+    } catch (error) {
+      console.error('Error during import:', error);
+      alert('Import failed. Please try again.');
+    } finally {
+      setIsImporting(false);
+    }
+  };
+
+  const handleBackup = async () => {
+    if (!window.electronAPI || isBackingUp) return;
+    playExportSound();
+    try {
+      setIsBackingUp(true);
+      const result = await window.electronAPI.backupDatabase();
+      if (result.success) {
+        alert(`Backup successful! Saved to: ${result.path}`);
+      } else if (!result.canceled) {
+        console.error('Backup failed:', result.error, result.message);
+        alert(`Backup failed: ${result.message || result.error || 'Unknown error'}`);
+      }
+    } catch (error) {
+      console.error('Error during backup:', error);
+      alert('Backup failed. Please try again.');
+    } finally {
+      setIsBackingUp(false);
+    }
+  };
+
+  const handleRestore = async () => {
+    if (!window.electronAPI || isRestoring) return;
+    playExportSound();
+    try {
+      setIsRestoring(true);
+      const result = await window.electronAPI.restoreDatabase();
+      if (result.success) {
+        alert('Database restored successfully! The application will now reload.');
+        // Refresh the main window
+        window.location.reload();
+      } else if (!result.canceled) {
+        console.error('Restore failed:', result.error, result.message);
+        alert(`Restore failed: ${result.message || result.error || 'Unknown error'}`);
+      }
+    } catch (error) {
+      console.error('Error during restore:', error);
+      alert('Restore failed. Please try again.');
+    } finally {
+      setIsRestoring(false);
     }
   };
 
@@ -338,6 +406,69 @@ export default function PreferencesComponent() {
             <small>
               Exports all journal entries into a single document file. Choose the format you prefer,
               then save it to your filesystem.
+            </small>
+          </div>
+        </div>
+
+        <div className="preferences-section">
+          <h2>Import Entries</h2>
+          <div className="preference-item export-toolbar">
+            <label>Import entries from</label>
+            <div className="export-controls">
+              <select
+                value={importFormat}
+                onChange={(e) => setImportFormat(e.target.value as 'json' | 'markdown')}
+                disabled={isImporting}
+              >
+                <option value="json">JSON (.json)</option>
+                <option value="markdown">Markdown (.md)</option>
+              </select>
+              <button
+                className="preferences-button save-button"
+                onClick={handleImport}
+                disabled={isImporting}
+              >
+                {isImporting ? 'Importing…' : 'Import Entries'}
+              </button>
+            </div>
+            <small>
+              Import journal entries from a JSON or Markdown file. Entries with IDs will be skipped to avoid duplicates.
+              The main window will refresh after a successful import.
+            </small>
+          </div>
+        </div>
+
+        <div className="preferences-section">
+          <h2>Backup & Restore</h2>
+          <div className="preference-item export-toolbar">
+            <label>Database Backup</label>
+            <div className="export-controls">
+              <button
+                className="preferences-button save-button"
+                onClick={handleBackup}
+                disabled={isBackingUp}
+              >
+                {isBackingUp ? 'Backing up…' : 'Backup Database'}
+              </button>
+            </div>
+            <small>
+              Create a backup of your entire database. This saves all your journal entries and preferences to a file.
+            </small>
+          </div>
+          <div className="preference-item export-toolbar">
+            <label>Database Restore</label>
+            <div className="export-controls">
+              <button
+                className="preferences-button save-button"
+                onClick={handleRestore}
+                disabled={isRestoring}
+              >
+                {isRestoring ? 'Restoring…' : 'Restore Database'}
+              </button>
+            </div>
+            <small>
+              Restore your database from a backup file. This will replace your current database with the backup.
+              Make sure you have a current backup before restoring.
             </small>
           </div>
         </div>

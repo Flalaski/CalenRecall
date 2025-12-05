@@ -1,5 +1,6 @@
 import { contextBridge, ipcRenderer } from 'electron';
-import { JournalEntry, TimeRange, ExportFormat } from './types';
+import { JournalEntry, TimeRange, ExportFormat, EntryVersion, EntryAttachment } from './types';
+import { EntryTemplate } from './database';
 
 export interface Preferences {
   defaultViewMode?: 'decade' | 'year' | 'month' | 'week' | 'day';
@@ -29,6 +30,53 @@ contextBridge.exposeInMainWorld('electronAPI', {
   getEntry: (date: string, timeRange: TimeRange): Promise<JournalEntry | null> =>
     ipcRenderer.invoke('get-entry', date, timeRange),
   
+  getEntryById: (id: number): Promise<JournalEntry | null> =>
+    ipcRenderer.invoke('get-entry-by-id', id),
+  
+  getEntryVersions: (entryId: number): Promise<EntryVersion[]> =>
+    ipcRenderer.invoke('get-entry-versions', entryId),
+  
+  archiveEntry: (id: number): Promise<{ success: boolean }> =>
+    ipcRenderer.invoke('archive-entry', id),
+  
+  unarchiveEntry: (id: number): Promise<{ success: boolean }> =>
+    ipcRenderer.invoke('unarchive-entry', id),
+  
+  getArchivedEntries: (): Promise<JournalEntry[]> =>
+    ipcRenderer.invoke('get-archived-entries'),
+  
+  pinEntry: (id: number): Promise<{ success: boolean }> =>
+    ipcRenderer.invoke('pin-entry', id),
+  
+  unpinEntry: (id: number): Promise<{ success: boolean }> =>
+    ipcRenderer.invoke('unpin-entry', id),
+  
+  getPinnedEntries: (): Promise<JournalEntry[]> =>
+    ipcRenderer.invoke('get-pinned-entries'),
+  
+  // Template operations
+  getAllTemplates: (): Promise<EntryTemplate[]> =>
+    ipcRenderer.invoke('get-all-templates'),
+  
+  getTemplate: (id: number): Promise<EntryTemplate | null> =>
+    ipcRenderer.invoke('get-template', id),
+  
+  saveTemplate: (template: EntryTemplate): Promise<{ success: boolean }> =>
+    ipcRenderer.invoke('save-template', template),
+  
+  deleteTemplate: (id: number): Promise<{ success: boolean }> =>
+    ipcRenderer.invoke('delete-template', id),
+  
+  // Attachment operations
+  addEntryAttachment: (entryId: number): Promise<{ success: boolean; canceled?: boolean; error?: string; message?: string; attachment?: EntryAttachment }> =>
+    ipcRenderer.invoke('add-entry-attachment', entryId),
+  
+  removeEntryAttachment: (entryId: number, attachmentId: string): Promise<{ success: boolean; error?: string; message?: string }> =>
+    ipcRenderer.invoke('remove-entry-attachment', entryId, attachmentId),
+  
+  getAttachmentPath: (entryId: number, attachmentId: string): Promise<{ success: boolean; error?: string; path?: string }> =>
+    ipcRenderer.invoke('get-attachment-path', entryId, attachmentId),
+  
   saveEntry: (entry: JournalEntry): Promise<void> =>
     ipcRenderer.invoke('save-entry', entry),
   
@@ -50,6 +98,17 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // Export operations
   exportEntries: (format: ExportFormat): Promise<{ success: boolean; canceled?: boolean; error?: string; path?: string }> =>
     ipcRenderer.invoke('export-entries', format),
+  
+  // Import operations
+  importEntries: (format: 'json' | 'markdown'): Promise<{ success: boolean; canceled?: boolean; error?: string; message?: string; imported?: number; skipped?: number; total?: number }> =>
+    ipcRenderer.invoke('import-entries', format),
+  
+  // Backup/Restore operations
+  backupDatabase: (): Promise<{ success: boolean; canceled?: boolean; error?: string; message?: string; path?: string }> =>
+    ipcRenderer.invoke('backup-database'),
+  
+  restoreDatabase: (): Promise<{ success: boolean; canceled?: boolean; error?: string; message?: string }> =>
+    ipcRenderer.invoke('restore-database'),
   
   // Preferences operations
   getPreference: <K extends keyof Preferences>(key: K): Promise<Preferences[K]> =>

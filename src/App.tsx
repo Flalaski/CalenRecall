@@ -5,6 +5,7 @@ import EntryViewer from './components/EntryViewer';
 import NavigationBar from './components/NavigationBar';
 import GlobalTimelineMinimap from './components/GlobalTimelineMinimap';
 import EntryEditModal from './components/EntryEditModal';
+import SearchView from './components/SearchView';
 import { TimeRange, JournalEntry, Preferences } from './types';
 import { getEntryForDate } from './services/journalService';
 import { playNewEntrySound } from './utils/audioUtils';
@@ -20,6 +21,7 @@ function App() {
   const [preferences, setPreferences] = useState<Preferences>({});
   const [preferencesLoaded, setPreferencesLoaded] = useState(false);
   const [editingEntry, setEditingEntry] = useState<JournalEntry | null>(null);
+  const [showSearch, setShowSearch] = useState(false);
   
   // Track if initial load has completed - after this, default view mode should NEVER be applied
   const initialLoadCompleteRef = useRef(false);
@@ -219,7 +221,7 @@ function App() {
     handleNewEntryRef.current = handleNewEntry;
   }, [handleNewEntry]);
 
-  // Handle keyboard shortcut for New Entry button (Shift+Spacebar)
+  // Handle keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       // Don't handle keys if user is typing in an input, textarea, or contenteditable element
@@ -233,24 +235,32 @@ function App() {
         return;
       }
 
-      // Only handle Shift+Spacebar
-      if (e.key !== ' ' || !e.shiftKey) {
+      // Handle Ctrl+F or Cmd+F for search
+      if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
+        e.preventDefault();
+        setShowSearch(true);
         return;
       }
 
-      // Prevent default behavior
-      e.preventDefault();
+      // Handle Escape to close search
+      if (e.key === 'Escape' && showSearch) {
+        setShowSearch(false);
+        return;
+      }
 
-      // Trigger New Entry button - use ref to get current handleNewEntry
-      playNewEntrySound();
-      handleNewEntryRef.current();
+      // Only handle Shift+Spacebar for new entry (when search is not open)
+      if (e.key === ' ' && e.shiftKey && !showSearch) {
+        e.preventDefault();
+        playNewEntrySound();
+        handleNewEntryRef.current();
+      }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, []); // Empty deps - we use ref to access current values
+  }, [showSearch]); // Include showSearch in deps
 
   const handleEdit = () => {
     setIsEditing(true);
@@ -294,6 +304,7 @@ function App() {
             window.electronAPI.openPreferences();
           }
         }}
+        onOpenSearch={() => setShowSearch(true)}
       />
       {preferences.showMinimap !== false && (
         <GlobalTimelineMinimap
@@ -337,6 +348,7 @@ function App() {
               onNewEntry={handleNewEntry}
               onEntrySelect={handleEntrySelect}
               onEditEntry={handleEditEntry}
+              onEntryDuplicated={loadCurrentEntry}
             />
           )}
         </div>
@@ -347,7 +359,16 @@ function App() {
           isOpen={true}
           onClose={handleModalClose}
           onEntrySaved={handleModalEntrySaved}
+          onEntryDuplicated={loadCurrentEntry}
         />
+      )}
+      {showSearch && (
+        <div className="search-overlay">
+          <SearchView
+            onEntrySelect={handleEntrySelect}
+            onClose={() => setShowSearch(false)}
+          />
+        </div>
       )}
     </div>
   );

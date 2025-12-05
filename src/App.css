@@ -43,6 +43,30 @@
   cursor: default;
 }
 
+.search-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+}
+
+.search-overlay .search-view {
+  width: 100%;
+  max-width: 800px;
+  max-height: 90vh;
+  background: var(--bg-color, #ffffff);
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  overflow: hidden;
+}
+
 .app-content {
   display: flex;
   flex: 1;

@@ -1,9 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, Fragment } from 'react';
 import { JournalEntry, TimeRange } from '../types';
 import { formatDate, getWeekStart, getWeekEnd, getMonthStart, getYearStart, getDecadeStart, parseISODate } from '../utils/dateUtils';
-import { playEditSound, playNewEntrySound } from '../utils/audioUtils';
+import { playEditSound, playNewEntrySound, playAddSound } from '../utils/audioUtils';
 import { useCalendar } from '../contexts/CalendarContext';
 import { getTimeRangeLabelInCalendar } from '../utils/calendars/timeRangeConverter';
+import { saveJournalEntry } from '../services/journalService';
 import './EntryViewer.css';
 
 interface EntryViewerProps {
@@ -14,6 +15,7 @@ interface EntryViewerProps {
   onNewEntry: () => void;
   onEntrySelect: (entry: JournalEntry) => void;
   onEditEntry?: (entry: JournalEntry) => void;
+  onEntryDuplicated?: () => void;
 }
 
 export default function EntryViewer({
@@ -24,24 +26,69 @@ export default function EntryViewer({
   onNewEntry,
   onEntrySelect,
   onEditEntry,
+  onEntryDuplicated,
 }: EntryViewerProps) {
   const { calendar } = useCalendar();
   const [periodEntries, setPeriodEntries] = useState<JournalEntry[]>([]);
+  const [filteredEntries, setFilteredEntries] = useState<JournalEntry[]>([]);
   const [loading, setLoading] = useState(false);
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [sortBy, setSortBy] = useState<'date' | 'title' | 'timeRange'>('date');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+  const [linkedEntries, setLinkedEntries] = useState<JournalEntry[]>([]);
+  const [loadingLinked, setLoadingLinked] = useState(false);
 
   useEffect(() => {
     loadPeriodEntries();
   }, [date, viewMode]);
 
+  const loadLinkedEntries = useCallback(async () => {
+    if (!entry?.linkedEntries || entry.linkedEntries.length === 0) {
+      setLinkedEntries([]);
+      return;
+    }
+
+    setLoadingLinked(true);
+    try {
+      const loaded: JournalEntry[] = [];
+      for (const linkedId of entry.linkedEntries) {
+        if (window.electronAPI) {
+          const linkedEntry = await window.electronAPI.getEntryById(linkedId);
+          if (linkedEntry) {
+            loaded.push(linkedEntry);
+          }
+        }
+      }
+      setLinkedEntries(loaded);
+    } catch (error) {
+      console.error('Error loading linked entries:', error);
+      setLinkedEntries([]);
+    } finally {
+      setLoadingLinked(false);
+    }
+  }, [entry?.linkedEntries]);
+
   useEffect(() => {
     const handleEntrySaved = () => {
       loadPeriodEntries();
+      if (entry?.id) {
+        loadLinkedEntries();
+      }
     };
     window.addEventListener('journalEntrySaved', handleEntrySaved);
     return () => {
       window.removeEventListener('journalEntrySaved', handleEntrySaved);
     };
-  }, [date, viewMode]);
+  }, [date, viewMode, entry?.id, loadLinkedEntries]);
+
+  // Load linked entries when entry changes
+  useEffect(() => {
+    if (entry?.id && entry.linkedEntries && entry.linkedEntries.length > 0) {
+      loadLinkedEntries();
+    } else {
+      setLinkedEntries([]);
+    }
+  }, [entry?.id, entry?.linkedEntries, loadLinkedEntries]);
 
   const loadPeriodEntries = async () => {
     if (!window.electronAPI) return;
@@ -134,6 +181,46 @@ export default function EntryViewer({
     }
   };
 
+  // Apply filters and sorting when entries or filter settings change
+  useEffect(() => {
+    let filtered = [...periodEntries];
+
+    // Filter by tags
+    if (selectedTags.length > 0) {
+      filtered = filtered.filter(entry => 
+        entry.tags && entry.tags.some(tag => selectedTags.includes(tag))
+      );
+    }
+
+    // Sort entries
+    filtered.sort((a, b) => {
+      let comparison = 0;
+      
+      switch (sortBy) {
+        case 'date':
+          comparison = a.date.localeCompare(b.date);
+          break;
+        case 'title':
+          comparison = a.title.localeCompare(b.title);
+          break;
+        case 'timeRange':
+          const timeRangeOrder: Record<TimeRange, number> = {
+            decade: 0,
+            year: 1,
+            month: 2,
+            week: 3,
+            day: 4,
+          };
+          comparison = timeRangeOrder[a.timeRange] - timeRangeOrder[b.timeRange];
+          break;
+      }
+
+      return sortOrder === 'asc' ? comparison : -comparison;
+    });
+
+    setFilteredEntries(filtered);
+  }, [periodEntries, selectedTags, sortBy, sortOrder]);
+
   const getDateLabel = () => {
     // Use calendar-aware formatting
     try {
@@ -218,6 +305,52 @@ export default function EntryViewer({
     return `+ New Entry for this ${timeRangeLabel}`;
   };
 
+  // Get all unique tags from period entries
+  const allTags = Array.from(new Set(periodEntries.flatMap(entry => entry.tags || [])));
+
+  const handleTagToggle = (tag: string) => {
+    setSelectedTags(prev => 
+      prev.includes(tag) 
+        ? prev.filter(t => t !== tag)
+        : [...prev, tag]
+    );
+  };
+
+  const clearFilters = () => {
+    setSelectedTags([]);
+  };
+
+  const handleDuplicate = async () => {
+    if (!entry) return;
+
+    playAddSound();
+    
+    try {
+      // Create a new entry with the same content but without ID
+      const duplicatedEntry: JournalEntry = {
+        date: entry.date,
+        timeRange: entry.timeRange,
+        title: `${entry.title} (Copy)`,
+        content: entry.content,
+        tags: entry.tags ? [...entry.tags] : [],
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+
+      await saveJournalEntry(duplicatedEntry);
+      
+      // Trigger refresh
+      window.dispatchEvent(new CustomEvent('journalEntrySaved'));
+      
+      if (onEntryDuplicated) {
+        onEntryDuplicated();
+      }
+    } catch (error) {
+      console.error('Error duplicating entry:', error);
+      alert('Failed to duplicate entry. Please try again.');
+    }
+  };
+
   // If a specific entry is selected, show it
   if (entry) {
     return (
@@ -231,6 +364,9 @@ export default function EntryViewer({
                 onEdit();
               }}>
                 Edit
+              </button>
+              <button className="duplicate-button" onClick={handleDuplicate} title="Duplicate this entry">
+                Duplicate
               </button>
               <button className="new-entry-button-header" onClick={() => {
                 playNewEntrySound();
@@ -258,6 +394,26 @@ export default function EntryViewer({
               {entry.tags.map((tag, idx) => (
                 <span key={idx} className="viewer-tag">{tag}</span>
               ))}
+            </div>
+          )}
+          {linkedEntries.length > 0 && (
+            <div className="viewer-linked-entries">
+              <h4>Linked Entries</h4>
+              <div className="linked-entries-list">
+                {linkedEntries.map((linkedEntry) => (
+                  <div
+                    key={linkedEntry.id}
+                    className="linked-entry-item"
+                    onClick={() => onEntrySelect(linkedEntry)}
+                  >
+                    <div className="linked-entry-title">{linkedEntry.title}</div>
+                    <div className="linked-entry-meta">
+                      <span className="linked-entry-date">{formatEntryDate(linkedEntry)}</span>
+                      <span className="linked-entry-time-range">{getTimeRangeLabel(linkedEntry.timeRange)}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
         </div>
@@ -289,8 +445,56 @@ export default function EntryViewer({
             <p className="hint">Click "+ New Entry" to create one.</p>
           </div>
         ) : (
-          <div className="period-entries-list">
-            {periodEntries.map((periodEntry) => (
+          <Fragment>
+            {(allTags.length > 0 || periodEntries.length > 1) && (
+              <div className="period-entries-controls">
+                {allTags.length > 0 && (
+                  <div className="period-entries-filter">
+                    <label>Filter by tags:</label>
+                    <div className="period-entries-tags">
+                      {allTags.map(tag => (
+                        <button
+                          key={tag}
+                          className={`period-entry-filter-tag ${selectedTags.includes(tag) ? 'active' : ''}`}
+                          onClick={() => handleTagToggle(tag)}
+                        >
+                          {tag}
+                        </button>
+                      ))}
+                      {selectedTags.length > 0 && (
+                        <button className="period-entry-clear-filters" onClick={clearFilters}>
+                          Clear
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                )}
+                {periodEntries.length > 1 && (
+                  <div className="period-entries-sort">
+                    <label>Sort by:</label>
+                    <select value={sortBy} onChange={(e) => setSortBy(e.target.value as 'date' | 'title' | 'timeRange')}>
+                      <option value="date">Date</option>
+                      <option value="title">Title</option>
+                      <option value="timeRange">Time Range</option>
+                    </select>
+                    <select value={sortOrder} onChange={(e) => setSortOrder(e.target.value as 'asc' | 'desc')}>
+                      <option value="asc">Ascending</option>
+                      <option value="desc">Descending</option>
+                    </select>
+                  </div>
+                )}
+              </div>
+            )}
+            {filteredEntries.length === 0 && periodEntries.length > 0 ? (
+              <div className="viewer-empty">
+                <p>No entries match the selected filters.</p>
+                <button className="clear-filters-button" onClick={clearFilters}>
+                  Clear Filters
+                </button>
+              </div>
+            ) : (
+              <div className="period-entries-list">
+                {filteredEntries.map((periodEntry) => (
               <div
                 key={periodEntry.id || `${periodEntry.date}-${periodEntry.timeRange}-${periodEntry.createdAt}`}
                 className="period-entry-item"
@@ -346,6 +550,8 @@ export default function EntryViewer({
               </div>
             ))}
           </div>
+            )}
+          </Fragment>
         )}
       </div>
     </div>

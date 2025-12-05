@@ -10,6 +10,7 @@ interface EntryEditModalProps {
   isOpen: boolean;
   onClose: () => void;
   onEntrySaved?: () => void;
+  onEntryDuplicated?: () => void;
 }
 
 export default function EntryEditModal({
@@ -17,6 +18,7 @@ export default function EntryEditModal({
   isOpen,
   onClose,
   onEntrySaved,
+  onEntryDuplicated,
 }: EntryEditModalProps) {
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
@@ -124,6 +126,37 @@ export default function EntryEditModal({
     setTags(tags.filter(tag => tag !== tagToRemove));
   };
 
+  const handleDuplicate = async () => {
+    playAddSound();
+    
+    try {
+      // Create a new entry with the same content but without ID
+      const duplicatedEntry: JournalEntry = {
+        date: entry.date,
+        timeRange: entry.timeRange,
+        title: `${entry.title} (Copy)`,
+        content: entry.content,
+        tags: entry.tags ? [...entry.tags] : [],
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+
+      await saveJournalEntry(duplicatedEntry);
+      
+      // Trigger refresh
+      window.dispatchEvent(new CustomEvent('journalEntrySaved'));
+      
+      if (onEntryDuplicated) {
+        onEntryDuplicated();
+      }
+      
+      onClose();
+    } catch (error) {
+      console.error('Error duplicating entry:', error);
+      alert('Failed to duplicate entry. Please try again.');
+    }
+  };
+
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && e.ctrlKey) {
       handleSave();
@@ -224,9 +257,14 @@ export default function EntryEditModal({
         </div>
 
         <div className="modal-footer">
-          <button className="modal-delete-button" onClick={handleDelete}>
-            Delete Entry
-          </button>
+          <div className="modal-footer-left">
+            <button className="modal-duplicate-button" onClick={handleDuplicate} title="Duplicate this entry">
+              Duplicate
+            </button>
+            <button className="modal-delete-button" onClick={handleDelete}>
+              Delete Entry
+            </button>
+          </div>
           <div className="modal-footer-actions">
             <button
               className="modal-cancel-button"

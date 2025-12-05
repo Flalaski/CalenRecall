@@ -1,7 +1,7 @@
 import Database from 'better-sqlite3';
 import * as path from 'path';
 import { app } from 'electron';
-import { JournalEntry } from './types';
+import { JournalEntry, TimeRange } from './types';
 
 /**
  * Safely formats a date to ISO date string (YYYY-MM-DD) that works with negative years.
@@ -164,6 +164,70 @@ function migrateDatabase(database: Database.Database) {
     } catch (error) {
       console.error('JDN migration error:', error);
       // Don't throw - JDN is optional, system can work without it
+    }
+  }
+
+  // Check if linked_entries column exists and add it if missing
+  const hasLinkedEntries = checkColumnExists(database, 'journal_entries', 'linked_entries');
+  if (!hasLinkedEntries) {
+    try {
+      // Add linked_entries column (nullable, stores JSON array of entry IDs)
+      database.exec(`
+        ALTER TABLE journal_entries ADD COLUMN linked_entries TEXT;
+      `);
+      
+      console.log('Database migrated successfully: Added linked_entries column');
+    } catch (error) {
+      console.error('Linked entries migration error:', error);
+      // Don't throw - linked entries is optional
+    }
+  }
+
+  // Check if archived column exists and add it if missing
+  const hasArchived = checkColumnExists(database, 'journal_entries', 'archived');
+  if (!hasArchived) {
+    try {
+      // Add archived column (defaults to 0/false)
+      database.exec(`
+        ALTER TABLE journal_entries ADD COLUMN archived INTEGER DEFAULT 0;
+      `);
+      
+      console.log('Database migrated successfully: Added archived column');
+    } catch (error) {
+      console.error('Archived migration error:', error);
+      // Don't throw - archived is optional
+    }
+  }
+
+  // Check if pinned column exists and add it if missing
+  const hasPinned = checkColumnExists(database, 'journal_entries', 'pinned');
+  if (!hasPinned) {
+    try {
+      // Add pinned column (defaults to 0/false)
+      database.exec(`
+        ALTER TABLE journal_entries ADD COLUMN pinned INTEGER DEFAULT 0;
+      `);
+      
+      console.log('Database migrated successfully: Added pinned column');
+    } catch (error) {
+      console.error('Pinned migration error:', error);
+      // Don't throw - pinned is optional
+    }
+  }
+
+  // Check if attachments column exists and add it if missing
+  const hasAttachments = checkColumnExists(database, 'journal_entries', 'attachments');
+  if (!hasAttachments) {
+    try {
+      // Add attachments column (stores JSON array of attachment metadata)
+      database.exec(`
+        ALTER TABLE journal_entries ADD COLUMN attachments TEXT;
+      `);
+      
+      console.log('Database migrated successfully: Added attachments column');
+    } catch (error) {
+      console.error('Attachments migration error:', error);
+      // Don't throw - attachments is optional
     }
   }
 }
@@ -370,6 +434,10 @@ function createTables(database: Database.Database) {
       title TEXT NOT NULL,
       content TEXT NOT NULL,
       tags TEXT,
+      linked_entries TEXT,
+      archived INTEGER DEFAULT 0,
+      pinned INTEGER DEFAULT 0,
+      attachments TEXT,
       created_at TEXT NOT NULL,
       updated_at TEXT NOT NULL
     );
@@ -384,6 +452,34 @@ function createTables(database: Database.Database) {
       key TEXT PRIMARY KEY,
       value TEXT NOT NULL
     );
+    
+    CREATE TABLE IF NOT EXISTS entry_templates (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name TEXT NOT NULL,
+      title TEXT,
+      content TEXT NOT NULL,
+      tags TEXT,
+      time_range TEXT,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    );
+    
+    CREATE TABLE IF NOT EXISTS entry_versions (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      entry_id INTEGER NOT NULL,
+      date TEXT NOT NULL,
+      time_range TEXT NOT NULL,
+      title TEXT NOT NULL,
+      content TEXT NOT NULL,
+      tags TEXT,
+      linked_entries TEXT,
+      created_at TEXT NOT NULL,
+      version_created_at TEXT NOT NULL,
+      FOREIGN KEY (entry_id) REFERENCES journal_entries(id) ON DELETE CASCADE
+    );
+    
+    CREATE INDEX IF NOT EXISTS idx_entry_versions_entry_id ON entry_versions(entry_id);
+    CREATE INDEX IF NOT EXISTS idx_entry_versions_created_at ON entry_versions(version_created_at);
   `);
   
   // Remove any old unique constraints/indexes
@@ -412,13 +508,23 @@ export function getDatabase(): Database.Database {
 }
 
 /**
+ * Get the path to the database file.
+ */
+export function getDatabasePath(): string {
+  const userDataPath = app.getPath('userData');
+  return path.join(userDataPath, 'calenrecall.db');
+}
+
+/**
  * Get all journal entries in the database, ordered chronologically.
  * This is used for full-archive exports (\"storybook\" export).
  */
-export function getAllEntries(): JournalEntry[] {
+export function getAllEntries(includeArchived: boolean = false): JournalEntry[] {
   const database = getDatabase();
+  const whereClause = includeArchived ? '' : 'WHERE archived = 0';
   const stmt = database.prepare(`
     SELECT * FROM journal_entries
+    ${whereClause}
     ORDER BY date ASC, time_range ASC, created_at ASC
   `);
 
@@ -430,16 +536,21 @@ export function getAllEntries(): JournalEntry[] {
     title: row.title,
     content: row.content,
     tags: row.tags ? JSON.parse(row.tags) : [],
+    linkedEntries: row.linked_entries ? JSON.parse(row.linked_entries) : [],
+    archived: row.archived === 1,
+    pinned: row.pinned === 1,
+    attachments: row.attachments ? JSON.parse(row.attachments) : [],
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   }));
 }
 
-export function getEntries(startDate: string, endDate: string): JournalEntry[] {
+export function getEntries(startDate: string, endDate: string, includeArchived: boolean = false): JournalEntry[] {
   const database = getDatabase();
+  const archivedClause = includeArchived ? '' : 'AND archived = 0';
   const stmt = database.prepare(`
     SELECT * FROM journal_entries 
-    WHERE date >= ? AND date <= ?
+    WHERE date >= ? AND date <= ? ${archivedClause}
     ORDER BY date DESC
   `);
   
@@ -462,9 +573,71 @@ export function getEntry(date: string, timeRange: 'decade' | 'year' | 'month' | 
   return entries.length > 0 ? entries[0] : null;
 }
 
-export function getEntriesByDateAndRange(date: string, timeRange: 'decade' | 'year' | 'month' | 'week' | 'day'): JournalEntry[] {
+export function getEntryById(id: number): JournalEntry | null {
   const database = getDatabase();
-  const stmt = database.prepare('SELECT * FROM journal_entries WHERE date = ? AND time_range = ? ORDER BY created_at DESC');
+  const stmt = database.prepare('SELECT * FROM journal_entries WHERE id = ?');
+  const row = stmt.get(id) as any;
+  
+  if (!row) {
+    return null;
+  }
+  
+  return {
+    id: row.id,
+    date: row.date,
+    timeRange: row.time_range || 'day',
+    title: row.title,
+    content: row.content,
+    tags: row.tags ? JSON.parse(row.tags) : [],
+    linkedEntries: row.linked_entries ? JSON.parse(row.linked_entries) : [],
+    archived: row.archived === 1,
+    pinned: row.pinned === 1,
+    attachments: row.attachments ? JSON.parse(row.attachments) : [],
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
+
+export interface EntryVersion {
+  id: number;
+  entryId: number;
+  date: string;
+  timeRange: TimeRange;
+  title: string;
+  content: string;
+  tags: string[];
+  linkedEntries: number[];
+  createdAt: string;
+  versionCreatedAt: string;
+}
+
+export function getEntryVersions(entryId: number): EntryVersion[] {
+  const database = getDatabase();
+  const stmt = database.prepare(`
+    SELECT * FROM entry_versions 
+    WHERE entry_id = ? 
+    ORDER BY version_created_at DESC
+  `);
+  const rows = stmt.all(entryId) as any[];
+  
+  return rows.map(row => ({
+    id: row.id,
+    entryId: row.entry_id,
+    date: row.date,
+    timeRange: row.time_range || 'day',
+    title: row.title,
+    content: row.content,
+    tags: row.tags ? JSON.parse(row.tags) : [],
+    linkedEntries: row.linked_entries ? JSON.parse(row.linked_entries) : [],
+    createdAt: row.created_at,
+    versionCreatedAt: row.version_created_at,
+  }));
+}
+
+export function getEntriesByDateAndRange(date: string, timeRange: 'decade' | 'year' | 'month' | 'week' | 'day', includeArchived: boolean = false): JournalEntry[] {
+  const database = getDatabase();
+  const archivedClause = includeArchived ? '' : 'AND archived = 0';
+  const stmt = database.prepare(`SELECT * FROM journal_entries WHERE date = ? AND time_range = ? ${archivedClause} ORDER BY created_at DESC`);
   const rows = stmt.all(date, timeRange) as any[];
   
   return rows.map(row => ({
@@ -474,6 +647,10 @@ export function getEntriesByDateAndRange(date: string, timeRange: 'decade' | 'ye
     title: row.title,
     content: row.content,
     tags: row.tags ? JSON.parse(row.tags) : [],
+    linkedEntries: row.linked_entries ? JSON.parse(row.linked_entries) : [],
+    archived: row.archived === 1,
+    pinned: row.pinned === 1,
+    attachments: row.attachments ? JSON.parse(row.attachments) : [],
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   }));
@@ -494,15 +671,40 @@ export function saveEntry(entry: JournalEntry): void {
     // If entry has an ID, update that specific entry
     if (entry.id) {
       console.log('Updating existing entry by ID');
+      
+      // Save current version before updating
+      const currentEntry = getEntryById(entry.id);
+      if (currentEntry) {
+        const versionStmt = database.prepare(`
+          INSERT INTO entry_versions (entry_id, date, time_range, title, content, tags, linked_entries, created_at, version_created_at)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `);
+        versionStmt.run(
+          currentEntry.id,
+          currentEntry.date,
+          currentEntry.timeRange,
+          currentEntry.title,
+          currentEntry.content,
+          JSON.stringify(currentEntry.tags || []),
+          JSON.stringify(currentEntry.linkedEntries || []),
+          currentEntry.createdAt,
+          now
+        );
+      }
+      
       const stmt = database.prepare(`
         UPDATE journal_entries 
-        SET title = ?, content = ?, tags = ?, updated_at = ?, jdn = ?
+        SET title = ?, content = ?, tags = ?, linked_entries = ?, archived = ?, pinned = ?, attachments = ?, updated_at = ?, jdn = ?
         WHERE id = ?
       `);
       stmt.run(
         entry.title,
         entry.content,
         JSON.stringify(entry.tags || []),
+        JSON.stringify(entry.linkedEntries || []),
+        entry.archived ? 1 : 0,
+        entry.pinned ? 1 : 0,
+        JSON.stringify(entry.attachments || []),
         now,
         jdn,
         entry.id
@@ -512,8 +714,8 @@ export function saveEntry(entry: JournalEntry): void {
       // If no ID, always insert a new entry (allows multiple entries per date/timeRange)
       console.log('Inserting new entry');
       const stmt = database.prepare(`
-        INSERT INTO journal_entries (date, jdn, time_range, title, content, tags, created_at, updated_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO journal_entries (date, jdn, time_range, title, content, tags, linked_entries, archived, pinned, attachments, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `);
       stmt.run(
         entry.date,
@@ -522,6 +724,10 @@ export function saveEntry(entry: JournalEntry): void {
         entry.title,
         entry.content,
         JSON.stringify(entry.tags || []),
+        JSON.stringify(entry.linkedEntries || []),
+        entry.archived ? 1 : 0,
+        entry.pinned ? 1 : 0,
+        JSON.stringify(entry.attachments || []),
         entry.createdAt || now,
         now
       );
@@ -575,18 +781,185 @@ export function deleteEntry(id: number): void {
   stmt.run(id);
 }
 
+export function archiveEntry(id: number): void {
+  const database = getDatabase();
+  const stmt = database.prepare('UPDATE journal_entries SET archived = 1, updated_at = ? WHERE id = ?');
+  stmt.run(new Date().toISOString(), id);
+}
+
+export function unarchiveEntry(id: number): void {
+  const database = getDatabase();
+  const stmt = database.prepare('UPDATE journal_entries SET archived = 0, updated_at = ? WHERE id = ?');
+  stmt.run(new Date().toISOString(), id);
+}
+
+export function getArchivedEntries(): JournalEntry[] {
+  const database = getDatabase();
+  const stmt = database.prepare(`
+    SELECT * FROM journal_entries 
+    WHERE archived = 1
+    ORDER BY date DESC, created_at DESC
+  `);
+  
+  const rows = stmt.all() as any[];
+  return rows.map(row => ({
+    id: row.id,
+    date: row.date,
+    timeRange: row.time_range || 'day',
+    title: row.title,
+    content: row.content,
+    tags: row.tags ? JSON.parse(row.tags) : [],
+    linkedEntries: row.linked_entries ? JSON.parse(row.linked_entries) : [],
+    archived: true,
+    pinned: row.pinned === 1,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  }));
+}
+
+export function pinEntry(id: number): void {
+  const database = getDatabase();
+  const stmt = database.prepare('UPDATE journal_entries SET pinned = 1, updated_at = ? WHERE id = ?');
+  stmt.run(new Date().toISOString(), id);
+}
+
+export function unpinEntry(id: number): void {
+  const database = getDatabase();
+  const stmt = database.prepare('UPDATE journal_entries SET pinned = 0, updated_at = ? WHERE id = ?');
+  stmt.run(new Date().toISOString(), id);
+}
+
+export function getPinnedEntries(): JournalEntry[] {
+  const database = getDatabase();
+  const stmt = database.prepare(`
+    SELECT * FROM journal_entries 
+    WHERE pinned = 1 AND archived = 0
+    ORDER BY date DESC, created_at DESC
+  `);
+  
+  const rows = stmt.all() as any[];
+  return rows.map(row => ({
+    id: row.id,
+    date: row.date,
+    timeRange: row.time_range || 'day',
+    title: row.title,
+    content: row.content,
+    tags: row.tags ? JSON.parse(row.tags) : [],
+    linkedEntries: row.linked_entries ? JSON.parse(row.linked_entries) : [],
+    archived: row.archived === 1,
+    pinned: true,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  }));
+}
+
+export interface EntryTemplate {
+  id?: number;
+  name: string;
+  title?: string;
+  content: string;
+  tags?: string[];
+  timeRange?: TimeRange;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export function getAllTemplates(): EntryTemplate[] {
+  const database = getDatabase();
+  const stmt = database.prepare(`
+    SELECT * FROM entry_templates
+    ORDER BY name ASC
+  `);
+  
+  const rows = stmt.all() as any[];
+  return rows.map(row => ({
+    id: row.id,
+    name: row.name,
+    title: row.title || '',
+    content: row.content,
+    tags: row.tags ? JSON.parse(row.tags) : [],
+    timeRange: row.time_range as TimeRange | undefined,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  }));
+}
+
+export function getTemplate(id: number): EntryTemplate | null {
+  const database = getDatabase();
+  const stmt = database.prepare('SELECT * FROM entry_templates WHERE id = ?');
+  const row = stmt.get(id) as any;
+  
+  if (!row) {
+    return null;
+  }
+  
+  return {
+    id: row.id,
+    name: row.name,
+    title: row.title || '',
+    content: row.content,
+    tags: row.tags ? JSON.parse(row.tags) : [],
+    timeRange: row.time_range as TimeRange | undefined,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
+
+export function saveTemplate(template: EntryTemplate): void {
+  const database = getDatabase();
+  const now = new Date().toISOString();
+  
+  if (template.id) {
+    const stmt = database.prepare(`
+      UPDATE entry_templates 
+      SET name = ?, title = ?, content = ?, tags = ?, time_range = ?, updated_at = ?
+      WHERE id = ?
+    `);
+    stmt.run(
+      template.name,
+      template.title || null,
+      template.content,
+      JSON.stringify(template.tags || []),
+      template.timeRange || null,
+      now,
+      template.id
+    );
+  } else {
+    const stmt = database.prepare(`
+      INSERT INTO entry_templates (name, title, content, tags, time_range, created_at, updated_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
+    `);
+    stmt.run(
+      template.name,
+      template.title || null,
+      template.content,
+      JSON.stringify(template.tags || []),
+      template.timeRange || null,
+      template.createdAt || now,
+      now
+    );
+  }
+}
+
+export function deleteTemplate(id: number): void {
+  const database = getDatabase();
+  const stmt = database.prepare('DELETE FROM entry_templates WHERE id = ?');
+  stmt.run(id);
+}
+
 export function deleteEntryByDateAndRange(date: string, timeRange: 'decade' | 'year' | 'month' | 'week' | 'day'): void {
   const database = getDatabase();
   const stmt = database.prepare('DELETE FROM journal_entries WHERE date = ? AND time_range = ?');
   stmt.run(date, timeRange);
 }
 
-export function searchEntries(query: string): JournalEntry[] {
+export function searchEntries(query: string, includeArchived: boolean = false): JournalEntry[] {
   const database = getDatabase();
   const searchTerm = `%${query}%`;
+  const archivedClause = includeArchived ? '' : 'AND archived = 0';
   const stmt = database.prepare(`
     SELECT * FROM journal_entries 
-    WHERE title LIKE ? OR content LIKE ?
+    WHERE (title LIKE ? OR content LIKE ?) ${archivedClause}
     ORDER BY date DESC
   `);
   
@@ -598,6 +971,10 @@ export function searchEntries(query: string): JournalEntry[] {
     title: row.title,
     content: row.content,
     tags: row.tags ? JSON.parse(row.tags) : [],
+    linkedEntries: row.linked_entries ? JSON.parse(row.linked_entries) : [],
+    archived: row.archived === 1,
+    pinned: row.pinned === 1,
+    attachments: row.attachments ? JSON.parse(row.attachments) : [],
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   }));

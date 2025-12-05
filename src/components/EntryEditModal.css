@@ -265,6 +265,31 @@
   border-top-color: var(--border-color, #333);
 }
 
+.modal-duplicate-button {
+  padding: 10px 20px;
+  background: var(--secondary-bg-color, #f5f5f5);
+  color: var(--text-color, #000000);
+  border: 1px solid var(--border-color, #ddd);
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: background-color 0.2s;
+}
+
+.modal-duplicate-button:hover {
+  background: var(--hover-bg-color, #e8e8e8);
+}
+
+[data-theme="dark"] .modal-duplicate-button {
+  background: var(--secondary-bg-color, #2a2a2a);
+  color: var(--text-color, #ffffff);
+  border-color: var(--border-color, #444);
+}
+
+[data-theme="dark"] .modal-duplicate-button:hover {
+  background: var(--hover-bg-color, #3a3a3a);
+}
+
 .modal-delete-button {
   padding: 10px 20px;
   background: var(--danger-color, #f44336);

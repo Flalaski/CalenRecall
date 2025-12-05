@@ -14,6 +14,7 @@ interface NavigationBarProps {
   selectedDate: Date;
   onDateChange: (date: Date) => void;
   onOpenPreferences?: () => void;
+  onOpenSearch?: () => void;
 }
 
 export default function NavigationBar({
@@ -22,6 +23,7 @@ export default function NavigationBar({
   selectedDate,
   onDateChange,
   onOpenPreferences,
+  onOpenSearch,
 }: NavigationBarProps) {
   const { calendar, setCalendar } = useCalendar();
   const [isDefinitionExpanded, setIsDefinitionExpanded] = useState(false);
@@ -192,6 +194,18 @@ export default function NavigationBar({
             >
               Day
             </button>
+            {onOpenSearch && (
+              <button
+                className="view-mode-button search-button"
+                onClick={() => {
+                  playModeSelectionSound();
+                  onOpenSearch();
+                }}
+                title="Search (Ctrl+F)"
+              >
+                🔍
+              </button>
+            )}
             {onOpenPreferences && (
               <button
                 className="view-mode-button preferences-button"
