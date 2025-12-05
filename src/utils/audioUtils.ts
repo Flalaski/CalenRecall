@@ -623,14 +623,49 @@ export function createSliderNoise(): SliderNoise | null {
   try {
     const now = audioContext.currentTime;
     
-    // Create a buffer source with white noise
-    const bufferSize = audioContext.sampleRate * 0.1; // 100ms buffer
+    // Create a much longer buffer for seamless looping (3 seconds)
+    // Longer buffer = less audible looping artifacts
+    const bufferSize = audioContext.sampleRate * 3; // 3 second buffer
     const buffer = audioContext.createBuffer(1, bufferSize, audioContext.sampleRate);
     const data = buffer.getChannelData(0);
     
-    // Generate white noise
+    // Generate smoother, more granular noise using pink noise approximation
+    // Pink noise has more low-frequency content, sounds softer and more natural
+    let b0 = 0, b1 = 0, b2 = 0, b3 = 0, b4 = 0, b5 = 0, b6 = 0;
+    
     for (let i = 0; i < bufferSize; i++) {
-      data[i] = Math.random() * 2 - 1; // Random values between -1 and 1
+      // Generate white noise
+      const white = Math.random() * 2 - 1;
+      
+      // Apply pink noise filter (Paul Kellet's method)
+      // This creates smoother, more natural-sounding noise
+      b0 = 0.99886 * b0 + white * 0.0555179;
+      b1 = 0.99332 * b1 + white * 0.0750759;
+      b2 = 0.96900 * b2 + white * 0.1538520;
+      b3 = 0.86650 * b3 + white * 0.3104856;
+      b4 = 0.55000 * b4 + white * 0.5329522;
+      b5 = -0.7616 * b5 - white * 0.0168980;
+      
+      const pink = b0 + b1 + b2 + b3 + b4 + b5 + b6 + white * 0.5362;
+      b6 = white * 0.115926;
+      
+      // Normalize and apply gentle smoothing
+      data[i] = pink * 0.11; // Normalize pink noise (quieter than white)
+    }
+    
+    // Crossfade the end with the beginning for seamless loop
+    // Fade out last 100ms and fade in first 100ms
+    const fadeLength = Math.floor(audioContext.sampleRate * 0.1); // 100ms fade
+    for (let i = 0; i < fadeLength; i++) {
+      const fadeOut = i / fadeLength; // 0 to 1
+      const fadeIn = 1 - fadeOut;
+      const endIndex = bufferSize - fadeLength + i;
+      const startIndex = i;
+      
+      // Blend end with beginning
+      const blended = data[endIndex] * fadeOut + data[startIndex] * fadeIn;
+      data[endIndex] = blended;
+      data[startIndex] = blended;
     }
     
     // Create buffer source (looping)
@@ -643,10 +678,11 @@ export function createSliderNoise(): SliderNoise | null {
     gainNode.gain.setValueAtTime(0, now);
     
     // Create low-pass filter to soften the noise (mixing board slider sound)
+    // Lower Q value creates smoother, more blended sound without resonance peaks
     const filter = audioContext.createBiquadFilter();
     filter.type = 'lowpass';
     filter.frequency.setValueAtTime(2000, now); // Start with moderate filtering
-    filter.Q.setValueAtTime(1, now);
+    filter.Q.setValueAtTime(0.7, now); // Lower Q for smoother, more blended sound (less resonance)
     
     // Connect: bufferSource -> filter -> gain -> destination
     bufferSource.connect(filter);

@@ -2306,8 +2306,8 @@ export default function GlobalTimelineMinimap({
     setDragLimits({
       deadZoneTop: 0,
       deadZoneBottom: 0,
-      thresholdTop: -800,
-      thresholdBottom: 800,
+      thresholdTop: -88,
+      thresholdBottom: 88,
       currentMovement: 0,
     });
     
