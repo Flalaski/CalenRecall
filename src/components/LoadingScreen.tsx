@@ -22,7 +22,7 @@ const LOADING_SCREEN_CONSTANTS = {
   NEBULA_DIMENSIONS: { width: 800, height: 600 },
   PROGRESS_THRESHOLDS: { slow: 20, fast: 80 },
   PROGRESS_PERCENTAGES: { slow: 0.05, fast: 0.80, finish: 0.15 },
-  ORNAMENT_SIZE: 8,
+  ORNAMENT_SIZE: 2,
   MAX_ANIMATION_DELAY: 2,
   OPACITY_DIVISORS: { infinity: 100, branch: 150 },
   ANIMATION_INTERVAL_MS: 16, // ~60fps
@@ -792,59 +792,6 @@ export default function LoadingScreen({ progress, message = 'Loading your journa
               );
             })}
             
-            {/* Unified singularity point - pixelated star blast at center representing present moment */}
-            <div className="singularity-unified">
-              <div className="singularity-core">
-                {/* Generate pixelated star blast - radiating points from center */}
-                {Array.from({ length: 16 }, (_, i) => {
-                  const angle = (i / 16) * Math.PI * 2;
-                  const distance = 8 + (i % 3) * 3; // Vary distance for layered effect
-                  const x = Math.cos(angle) * distance;
-                  const y = Math.sin(angle) * distance;
-                  const delay = (i % 4) * 0.2;
-                  
-                  return (
-                    <div
-                      key={`star-point-${i}`}
-                      className="singularity-star-point"
-                      style={{
-                        left: `${x}px`,
-                        top: `${y}px`,
-                        transform: `translate(-50%, -50%)`,
-                        animationDelay: `${delay}s`,
-                      }}
-                    />
-                  );
-                })}
-                {/* Additional inner layer for more density */}
-                {Array.from({ length: 8 }, (_, i) => {
-                  const angle = (i / 8) * Math.PI * 2 + Math.PI / 8; // Offset angle
-                  const distance = 4;
-                  const x = Math.cos(angle) * distance;
-                  const y = Math.sin(angle) * distance;
-                  
-                  return (
-                    <div
-                      key={`star-point-inner-${i}`}
-                      className="singularity-star-point"
-                      style={{
-                        left: `${x}px`,
-                        top: `${y}px`,
-                        transform: `translate(-50%, -50%)`,
-                        width: '1px',
-                        height: '1px',
-                        animationDelay: `${(i % 2) * 0.5}s`,
-                      }}
-                    />
-                  );
-                })}
-              </div>
-              <div className="singularity-rings">
-                <div className="singularity-ring ring-1"></div>
-                <div className="singularity-ring ring-2"></div>
-                <div className="singularity-ring ring-3"></div>
-              </div>
-            </div>
           </div>
           </div>
         </div>

@@ -473,13 +473,13 @@
   pointer-events: none;
 }
 
-/* Star blast pixel points - radiating outward from center */
+/* Star blast pixel points - radiating outward from center as small circular points */
 .singularity-star-point {
   position: absolute;
-  width: 2px;
-  height: 2px;
+  width: 1px;
+  height: 1px;
   background: #ffffff;
-  border-radius: 0;
+  border-radius: 50%;
   image-rendering: pixelated;
   image-rendering: crisp-edges;
   image-rendering: -moz-crisp-edges;
@@ -489,6 +489,8 @@
   backface-visibility: visible;
   -webkit-backface-visibility: visible;
   animation: starBlastPulse 2s ease-in-out infinite;
+  opacity: 0.6;
+  box-shadow: 0 0 1px rgba(255, 255, 255, 0.8);
 }
 
 .singularity-star-point:nth-child(odd) {
@@ -501,12 +503,12 @@
 
 @keyframes starBlastPulse {
   0%, 100% {
-    opacity: 1;
+    opacity: 0.4;
     transform: scale(1);
   }
   50% {
-    opacity: 0.6;
-    transform: scale(1.5);
+    opacity: 0.8;
+    transform: scale(2);
   }
 }
 
