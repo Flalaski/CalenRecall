@@ -41,23 +41,46 @@ function App() {
     const preloadAllEntries = async () => {
       try {
         setLoadingMessage('Loading all journal entries...');
-        setLoadingProgress(10);
+        setLoadingProgress(5);
         
         if (window.electronAPI) {
           // Load all entries at once
           const allEntries = await window.electronAPI.getAllEntries();
-          setLoadingProgress(80);
+          
+          // Progressive loading simulation - show entries appearing on tree
+          const totalEntries = allEntries.length;
+          const batchSize = Math.max(1, Math.floor(totalEntries / 50)); // 50 batches
+          
+          for (let i = 0; i < totalEntries; i += batchSize) {
+            const batch = allEntries.slice(0, i + batchSize);
+            setEntries(batch);
+            
+            const progress = 10 + (i / totalEntries) * 70; // 10% to 80%
+            setLoadingProgress(progress);
+            
+            // Small delay between batches to see progression
+            await new Promise(resolve => setTimeout(resolve, 50));
+          }
+          
+          // Set all entries
+          setEntries(allEntries);
+          setLoadingProgress(85);
           setLoadingMessage('Indexing entries...');
           
-          // Small delay to show progress
-          await new Promise(resolve => setTimeout(resolve, 100));
+          // Delay to show indexing
+          await new Promise(resolve => setTimeout(resolve, 500));
           
-          setEntries(allEntries);
+          setLoadingProgress(95);
+          setLoadingMessage('Finalizing timeline...');
+          
+          // Delay to show finalizing
+          await new Promise(resolve => setTimeout(resolve, 500));
+          
           setLoadingProgress(100);
           setLoadingMessage('Ready!');
           
-          // Small delay before hiding loading screen
-          await new Promise(resolve => setTimeout(resolve, 300));
+          // Extended delay to admire the decorated infinity tree
+          await new Promise(resolve => setTimeout(resolve, 2000));
           setIsLoading(false);
         }
       } catch (error) {
