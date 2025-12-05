@@ -17,6 +17,34 @@
   image-rendering: -webkit-crisp-edges;
 }
 
+/* Film Grain Overlay - Optimized Static Noise Pattern */
+.loading-screen::before {
+  content: '';
+  position: fixed;
+  /* Oversized to prevent edge gaps during animation */
+  top: -20px;
+  left: -20px;
+  width: calc(100vw + 40px);
+  height: calc(100vh + 40px);
+  pointer-events: none;
+  z-index: 999999;
+  opacity: 0.639;
+  /* Optimized: Static SVG without animations - parsed once, cached by browser */
+  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200"><filter id="noise"><feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="3" stitchTiles="stitch"/><feColorMatrix type="saturate" values="0"/></filter><rect width="200" height="200" filter="url(%23noise)" opacity="0.8"/></svg>');
+  background-repeat: repeat;
+  background-size: 200px 200px;
+  mix-blend-mode: overlay;
+  animation: filmGrainShift 8s steps(4) infinite;
+  will-change: transform;
+  /* Use pixelated rendering for better performance */
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: crisp-edges;
+  /* Ensure parent clips any overflow */
+  overflow: hidden;
+}
+
 .space-background {
   position: absolute;
   top: 0;
@@ -30,6 +58,33 @@
   image-rendering: crisp-edges;
   image-rendering: -moz-crisp-edges;
   image-rendering: -webkit-crisp-edges;
+}
+
+/* Velvet Noise Overlay - Optimized for outer space areas */
+.space-background::after {
+  content: '';
+  position: absolute;
+  /* Oversized to prevent edge gaps during animation */
+  top: -20px;
+  left: -20px;
+  width: calc(100% + 40px);
+  height: calc(100% + 40px);
+  pointer-events: none;
+  z-index: 1;
+  opacity: 0.396;
+  /* Optimized: Static SVG without animations - parsed once, cached by browser */
+  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300"><filter id="velvetNoise"><feTurbulence type="fractalNoise" baseFrequency="0.25" numOctaves="2" stitchTiles="stitch"/><feColorMatrix type="saturate" values="0"/></filter><rect width="300" height="300" filter="url(%23velvetNoise)" opacity="0.4"/></svg>');
+  background-repeat: repeat;
+  background-size: 300px 300px;
+  /* Alternative: Use 'color-dodge' for a more intense luminous overlay */
+  mix-blend-mode: color-dodge;
+  animation: velvetShift 12s steps(3) infinite;
+  will-change: transform;
+  /* Use pixelated rendering for better performance */
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: crisp-edges;
 }
 
 .nebula-layer {
@@ -702,6 +757,40 @@
 @keyframes spin {
   to {
     transform: rotate(360deg);
+  }
+}
+
+/* Optimized: Use transform instead of filter changes for better performance */
+@keyframes filmGrainShift {
+  0% { 
+    transform: translate(0, 0);
+  }
+  25% { 
+    transform: translate(-5px, -10px);
+  }
+  50% { 
+    transform: translate(10px, 5px);
+  }
+  75% { 
+    transform: translate(-8px, 8px);
+  }
+  100% { 
+    transform: translate(0, 0);
+  }
+}
+
+@keyframes velvetShift {
+  0% { 
+    transform: translate(0, 0) scale(1.0);
+  }
+  33% { 
+    transform: translate(-8px, 6px) scale(1.02);
+  }
+  66% { 
+    transform: translate(6px, -8px) scale(0.98);
+  }
+  100% { 
+    transform: translate(0, 0) scale(1.0);
   }
 }
 
