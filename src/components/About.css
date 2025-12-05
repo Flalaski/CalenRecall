@@ -19,6 +19,10 @@
   padding: 40px;
   padding-bottom: 50px; /* Extra bottom padding to ensure content isn't cut off */
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  /* Enable hardware acceleration for smooth scrolling */
+  transform: translateZ(0);
+  /* Optimize rendering - isolate paint operations */
+  isolation: isolate;
 }
 
 .about-header {
@@ -247,13 +251,17 @@
   color: #808080;
 }
 
-/* Enable scrolling for About page */
+/* Enable scrolling for About page with hardware acceleration */
 body.about-page,
 html.about-page {
   overflow-y: auto !important;
   overflow-x: hidden !important;
   height: auto !important;
   min-height: 100% !important;
+  /* Enable smooth scrolling */
+  -webkit-overflow-scrolling: touch;
+  /* Promote to own layer for better scrolling performance */
+  transform: translateZ(0);
 }
 
 body.about-page #root,

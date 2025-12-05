@@ -4,13 +4,19 @@ import './About.css';
 
 export default function AboutComponent() {
   useEffect(() => {
-    // Enable scrolling for about page
+    // Enable scrolling for about page with performance optimizations
     document.body.classList.add('about-page');
     document.documentElement.classList.add('about-page');
+    
+    // Set overflow for scrolling
     document.body.style.overflowY = 'auto';
     document.body.style.height = 'auto';
     document.documentElement.style.overflowY = 'auto';
     document.documentElement.style.height = 'auto';
+    
+    // Enable hardware acceleration for smooth scrolling
+    document.body.style.transform = 'translateZ(0)';
+    document.body.style.webkitOverflowScrolling = 'touch';
     
     // Apply theme on load
     const applyTheme = async () => {
