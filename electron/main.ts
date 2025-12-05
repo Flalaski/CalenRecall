@@ -30,6 +30,36 @@ function createWindow() {
     }),
   });
 
+  // Handle external links - open in custom browser window
+  mainWindow.webContents.setWindowOpenHandler(({ url }) => {
+    // Only handle http/https URLs (external links)
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+      // Create browser window with custom dimensions
+      // 33% wider and twice as tall (assuming default ~800x600)
+      const browserWidth = Math.floor(800 * 1.33); // ~1064px
+      const browserHeight = 600 * 2; // 1200px
+      
+      const browserWindow = new BrowserWindow({
+        width: browserWidth,
+        height: browserHeight,
+        minWidth: 400,
+        minHeight: 300,
+        webPreferences: {
+          nodeIntegration: false,
+          contextIsolation: true,
+        },
+        ...(process.platform === 'win32' && {
+          icon: path.join(__dirname, '../assets/icon.png'),
+        }),
+      });
+      
+      browserWindow.loadURL(url);
+      
+      return { action: 'deny' }; // Prevent default handling
+    }
+    return { action: 'allow' }; // Allow other URLs
+  });
+
   if (isDev) {
     mainWindow.loadURL('http://localhost:5173');
     mainWindow.webContents.openDevTools();
@@ -150,7 +180,7 @@ function createPreferencesWindow() {
 
   preferencesWindow = new BrowserWindow({
     width: 600,
-    height: 700,
+    height: Math.floor(700 * 1.33), // 33% taller: ~931px
     minWidth: 500,
     minHeight: 500,
     parent: mainWindow || undefined,
@@ -165,6 +195,36 @@ function createPreferencesWindow() {
     ...(process.platform === 'win32' && {
       icon: path.join(__dirname, '../assets/icon.png'),
     }),
+  });
+
+  // Handle external links in preferences window
+  preferencesWindow.webContents.setWindowOpenHandler(({ url }) => {
+    // Only handle http/https URLs (external links)
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+      // Create browser window with custom dimensions
+      // 33% wider and twice as tall (assuming default ~800x600)
+      const browserWidth = Math.floor(800 * 1.33); // ~1064px
+      const browserHeight = 600 * 2; // 1200px
+      
+      const browserWindow = new BrowserWindow({
+        width: browserWidth,
+        height: browserHeight,
+        minWidth: 400,
+        minHeight: 300,
+        webPreferences: {
+          nodeIntegration: false,
+          contextIsolation: true,
+        },
+        ...(process.platform === 'win32' && {
+          icon: path.join(__dirname, '../assets/icon.png'),
+        }),
+      });
+      
+      browserWindow.loadURL(url);
+      
+      return { action: 'deny' }; // Prevent default handling
+    }
+    return { action: 'allow' }; // Allow other URLs
   });
 
   if (isDev) {
