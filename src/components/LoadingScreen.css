@@ -240,12 +240,12 @@
   }
 }
 
-/* 3D Entry ornaments */
+/* 3D Entry ornaments - spherical crystals */
 .entry-ornament-3d {
   position: absolute;
   width: 8px;
   height: 8px;
-  border-radius: 0;
+  border-radius: 50%;
   transform-style: preserve-3d;
   image-rendering: pixelated;
   image-rendering: crisp-edges;
@@ -259,6 +259,8 @@
   -webkit-backface-visibility: visible;
   outline: 1px solid transparent;
   z-index: 10;
+  /* Create sphere effect with radial gradient */
+  background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.8), currentColor 70%, currentColor);
 }
 
 .infinity-3d-layer {

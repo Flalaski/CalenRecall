@@ -666,7 +666,7 @@ export default function LoadingScreen({ progress, message = 'Loading your journa
             <div className="infinity-3d-container">
             {/* Unified 3D infinity structure - all elements positioned in 3D space */}
             
-            {/* Infinity symbol core - 3D line segments */}
+            {/* Infinity symbol core - 3D line segments with rotated duplicates to fill 3D space */}
             {infinitySegments3D.map((seg, idx) => {
               const isLeft = seg.x1 < LOADING_SCREEN_CONSTANTS.MIDPOINT_X;
               const color = isLeft ? leftColor : rightColor;
@@ -684,22 +684,38 @@ export default function LoadingScreen({ progress, message = 'Loading your journa
               const finalOpacity = Math.max(0.4, baseOpacity - zOpacityFactor);
               
               return (
-                <div
-                  key={`infinity-seg-${idx}`}
-                  className="infinity-segment-3d"
-                  style={{
-                    left: `${seg.x1}px`,
-                    top: `${seg.y1}px`,
-                    width: `${length}px`,
-                    transform: `translateZ(${avgZ}px) rotateZ(${angle}deg)`,
-                    background: `linear-gradient(to right, ${color}, ${isLeft ? rightColor : leftColor})`,
-                    opacity: finalOpacity,
-                  }}
-                />
+                <>
+                  {/* Main segment */}
+                  <div
+                    key={`infinity-seg-${idx}`}
+                    className="infinity-segment-3d"
+                    style={{
+                      left: `${seg.x1}px`,
+                      top: `${seg.y1}px`,
+                      width: `${length}px`,
+                      transform: `translateZ(${avgZ}px) rotateZ(${angle}deg)`,
+                      background: `linear-gradient(to right, ${color}, ${isLeft ? rightColor : leftColor})`,
+                      opacity: finalOpacity,
+                    }}
+                  />
+                  {/* Rotated duplicate to fill 3D space - perpendicular cross */}
+                  <div
+                    key={`infinity-seg-${idx}-perp`}
+                    className="infinity-segment-3d"
+                    style={{
+                      left: `${seg.x1}px`,
+                      top: `${seg.y1}px`,
+                      width: `${length}px`,
+                      transform: `translateZ(${avgZ}px) rotateZ(${angle}deg) rotateY(45deg)`,
+                      background: `linear-gradient(to right, ${color}, ${isLeft ? rightColor : leftColor})`,
+                      opacity: finalOpacity * 0.7, // Slightly more transparent for depth
+                    }}
+                  />
+                </>
               );
             })}
             
-            {/* Branch segments - 3D positioned */}
+            {/* Branch segments - 3D positioned with rotated duplicates to fill 3D space */}
             {branchSegments3D.map((segment, idx) => {
               const isLeft = segment.startX < LOADING_SCREEN_CONSTANTS.MIDPOINT_X;
               const color = isLeft ? leftColor : rightColor;
@@ -717,21 +733,40 @@ export default function LoadingScreen({ progress, message = 'Loading your journa
               const finalOpacity = Math.max(0.3, baseOpacity - zOpacityFactor);
               
               return (
-                <div
-                  key={`branch-seg-${idx}`}
-                  className="branch-segment-3d"
-                  style={{
-                    left: `${segment.startX}px`,
-                    top: `${segment.startY}px`,
-                    width: `${length}px`,
-                    height: `${segment.thickness}px`,
-                    transform: `translateZ(${avgZ}px) rotateZ(${angle}deg)`,
-                    background: color,
-                    opacity: finalOpacity,
-                    animationDelay: `${segment.delay}s`,
-                    animationDuration: `${segment.duration}s`,
-                  }}
-                />
+                <>
+                  {/* Main segment */}
+                  <div
+                    key={`branch-seg-${idx}`}
+                    className="branch-segment-3d"
+                    style={{
+                      left: `${segment.startX}px`,
+                      top: `${segment.startY}px`,
+                      width: `${length}px`,
+                      height: `${segment.thickness}px`,
+                      transform: `translateZ(${avgZ}px) rotateZ(${angle}deg)`,
+                      background: color,
+                      opacity: finalOpacity,
+                      animationDelay: `${segment.delay}s`,
+                      animationDuration: `${segment.duration}s`,
+                    }}
+                  />
+                  {/* Rotated duplicate to fill 3D space - perpendicular cross */}
+                  <div
+                    key={`branch-seg-${idx}-perp`}
+                    className="branch-segment-3d"
+                    style={{
+                      left: `${segment.startX}px`,
+                      top: `${segment.startY}px`,
+                      width: `${length}px`,
+                      height: `${segment.thickness}px`,
+                      transform: `translateZ(${avgZ}px) rotateZ(${angle}deg) rotateY(90deg)`,
+                      background: color,
+                      opacity: finalOpacity * 0.7, // Slightly more transparent for depth
+                      animationDelay: `${segment.delay}s`,
+                      animationDuration: `${segment.duration}s`,
+                    }}
+                  />
+                </>
               );
             })}
             
