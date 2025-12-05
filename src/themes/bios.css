@@ -1,0 +1,2132 @@
+/**
+ * BIOS Theme
+ * Early 2000's DOS-like BIOS menu aesthetic
+ */
+
+[data-theme="bios"] body {
+  background: #000080;
+  color: #ffffff;
+  font-family: 'Courier New', 'MS Sans Serif', 'System', monospace;
+}
+
+/* Ensure all text on grey panels is bright white for readability */
+[data-theme="bios"] .editor-section,
+[data-theme="bios"] .entry-viewer,
+[data-theme="bios"] .journal-list-header,
+[data-theme="bios"] .journal-list-controls,
+[data-theme="bios"] .journal-list-content,
+[data-theme="bios"] .journal-entry-item,
+[data-theme="bios"] .entry-card,
+[data-theme="bios"] .entry-card-full,
+[data-theme="bios"] .modal-header,
+[data-theme="bios"] .modal-content,
+[data-theme="bios"] .calendar-info-panel,
+[data-theme="bios"] .period-entries-controls,
+[data-theme="bios"] .viewer-header {
+  color: #ffffff;
+}
+
+/* Ensure all text elements in grey panels are white for maximum contrast */
+[data-theme="bios"] .editor-section,
+[data-theme="bios"] .entry-viewer,
+[data-theme="bios"] .journal-list-content,
+[data-theme="bios"] .journal-entry-item,
+[data-theme="bios"] .entry-card,
+[data-theme="bios"] .entry-card-full,
+[data-theme="bios"] .modal-content {
+  color: #ffffff;
+}
+
+[data-theme="bios"] .editor-section *:not(button):not(input):not(select):not(textarea),
+[data-theme="bios"] .entry-viewer *:not(button):not(input):not(select):not(textarea),
+[data-theme="bios"] .journal-list-content *:not(button):not(input):not(select):not(textarea),
+[data-theme="bios"] .journal-entry-item *:not(button):not(input):not(select):not(textarea),
+[data-theme="bios"] .entry-card *:not(button):not(input):not(select):not(textarea),
+[data-theme="bios"] .entry-card-full *:not(button):not(input):not(select):not(textarea),
+[data-theme="bios"] .modal-content *:not(button):not(input):not(select):not(textarea) {
+  color: #ffffff;
+}
+
+
+[data-theme="bios"] .app {
+  background: #000080;
+}
+
+[data-theme="bios"] .navigation-bar {
+  background: #000080;
+  border-bottom: 1px solid #c0c0c0;
+}
+
+[data-theme="bios"] .nav-button {
+  background: #000080;
+  border: 1px solid #c0c0c0;
+  color: #ffffff;
+  font-family: 'Courier New', 'MS Sans Serif', monospace;
+  text-shadow: none;
+}
+
+[data-theme="bios"] .nav-button:hover {
+  background: #ffffff;
+  color: #000080;
+}
+
+[data-theme="bios"] .timeline-cell {
+  background: #000080;
+  border: 1px solid #c0c0c0;
+  color: #ffffff;
+}
+
+[data-theme="bios"] .timeline-cell:hover {
+  background: #0000aa;
+  border-color: #ffffff;
+}
+
+[data-theme="bios"] .timeline-cell.today {
+  background: #0000aa;
+  border: 2px solid #ffffff;
+  color: #ffffff;
+}
+
+[data-theme="bios"] .editor-form input,
+[data-theme="bios"] .editor-form textarea {
+  background: #000080;
+  border: 1px solid #c0c0c0;
+  color: #ffffff;
+  font-family: 'Courier New', 'MS Sans Serif', monospace;
+}
+
+[data-theme="bios"] {
+  font-family: 'Courier New', 'MS Sans Serif', 'System', monospace;
+  font-size: 11px;
+}
+
+[data-theme="bios"] .app-content {
+  background: #000080;
+  gap: 1px;
+}
+
+[data-theme="bios"] .timeline-section {
+  background: #000080;
+}
+
+[data-theme="bios"] .editor-section {
+  background: #808080;
+  border-left: 1px solid #c0c0c0;
+}
+
+/* Navigation Bar - Additional */
+[data-theme="bios"] .navigation-bar-top-row {
+  background: #000080;
+  border: 1px solid #c0c0c0;
+}
+
+[data-theme="bios"] .nav-controls {
+  background: transparent;
+}
+
+[data-theme="bios"] .today-button {
+  background: #000080;
+  border: 1px solid #c0c0c0;
+  color: #ffffff;
+  font-family: 'Courier New', monospace;
+  text-shadow: none;
+}
+
+[data-theme="bios"] .today-button:hover {
+  background: #0000aa;
+  box-shadow: none;
+}
+
+[data-theme="bios"] .view-mode-selector {
+  background: transparent;
+}
+
+[data-theme="bios"] .view-mode-button {
+  background: #000080;
+  border: 1px solid #c0c0c0;
+  color: #ffffff;
+  font-family: 'Courier New', monospace;
+  text-shadow: none;
+}
+
+[data-theme="bios"] .view-mode-button:hover {
+  background: #0000aa;
+  box-shadow: none;
+}
+
+[data-theme="bios"] .view-mode-button.active {
+  background: #0000aa;
+  border: 1px solid #c0c0c0;
+  box-shadow: none;
+}
+
+[data-theme="bios"] .date-label {
+  color: #ffffff;
+  font-family: 'Courier New', monospace;
+  text-shadow: none;
+}
+
+[data-theme="bios"] .calendar-selector {
+  background: #000080;
+}
+
+[data-theme="bios"] .calendar-select {
+  background: #000080;
+  border: 1px solid #c0c0c0;
+  color: #ffffff;
+  font-family: 'Courier New', monospace;
+  text-shadow: none;
+}
+
+[data-theme="bios"] .calendar-select:focus {
+  box-shadow: none;
+  outline: 1px solid #ffffff;
+}
+
+[data-theme="bios"] .calendar-info-panel {
+  background: #808080;
+  border: 1px solid #c0c0c0;
+  color: #ffffff;
+  font-family: 'Courier New', monospace;
+}
+
+[data-theme="bios"] .calendar-definition-toggle {
+  background: #000080;
+  border: 1px solid #c0c0c0;
+  color: #ffffff;
+  font-family: 'Courier New', monospace;
+  text-shadow: none;
+}
+
+[data-theme="bios"] .calendar-definition-toggle:hover {
+  background: #0000aa;
+  box-shadow: none;
+}
+
+[data-theme="bios"] .calendar-definition-drawer {
+  background: #000080;
+  border: 1px solid #c0c0c0;
+  color: #ffffff;
+  font-family: 'Courier New', monospace;
+}
+
+/* Calendar View */
+[data-theme="bios"] .calendar-loading {
+  background: #000080;
+  color: #ffffff;
+  font-family: 'Courier New', monospace;
+  text-shadow: none;
+}
+
+[data-theme="bios"] .calendar-grid {
+  background: #000080;
+  border: 1px solid #c0c0c0;
+}
+
+[data-theme="bios"] .calendar-cell {
+  background: #000080;
+  border: 1px solid #c0c0c0;
+  color: #ffffff;
+  font-family: 'Courier New', monospace;
+  text-shadow: none;
+}
+
+[data-theme="bios"] .calendar-cell:hover {
+  background: #0000aa;
+  box-shadow: none;
+}
+
+[data-theme="bios"] .calendar-cell.empty-cell {
+  background: #000080;
+  border: 1px solid #808080;
+  cursor: default;
+}
+
+[data-theme="bios"] .calendar-cell.today {
+  background: #0000aa;
+  border: 1px solid #c0c0c0;
+  box-shadow: none;
+}
+
+[data-theme="bios"] .calendar-cell.selected {
+  background: #0000aa;
+  border: 1px solid #c0c0c0;
+  box-shadow: none;
+}
+
+[data-theme="bios"] .calendar-cell.has-entry {
+  background: #000080;
+  border: 1px solid #c0c0c0;
+  box-shadow: none;
+}
+
+[data-theme="bios"] .calendar-cell.has-entry.today {
+  background: #0000aa;
+  box-shadow: none;
+}
+
+[data-theme="bios"] .cell-content {
+  color: #ffffff;
+}
+
+[data-theme="bios"] .cell-label {
+  color: #ffffff;
+  font-family: 'Courier New', monospace;
+  text-shadow: none;
+}
+
+[data-theme="bios"] .entry-indicator {
+  background: #ffffff;
+  box-shadow: none;
+  border-radius: 0;
+}
+
+[data-theme="bios"] .weekday-header {
+  background: #000080;
+  border: 1px solid #c0c0c0;
+  color: #ffffff;
+  font-family: 'Courier New', monospace;
+  text-shadow: none;
+}
+
+[data-theme="bios"] .weekday-cell {
+  background: #000080;
+  border: 1px solid #c0c0c0;
+  color: #ffffff;
+  font-family: 'Courier New', monospace;
+  text-shadow: none;
+}
+
+[data-theme="bios"] .day-number {
+  color: #ffffff;
+  font-family: 'Courier New', monospace;
+  text-shadow: none;
+}
+
+[data-theme="bios"] .day-name {
+  color: #ffffff;
+  font-family: 'Courier New', monospace;
+  text-shadow: none;
+}
+
+[data-theme="bios"] .day-month {
+  color: #ffffff;
+  font-family: 'Courier New', monospace;
+  text-shadow: none;
+}
+
+/* Timeline View - Additional */
+[data-theme="bios"] .timeline-loading {
+  background: #000080;
+  color: #ffffff;
+  font-family: 'Courier New', monospace;
+  text-shadow: none;
+}
+
+[data-theme="bios"] .timeline-month-view,
+[data-theme="bios"] .timeline-week-view {
+  background: #000080;
+}
+
+[data-theme="bios"] .month-view-content {
+  background: #000080;
+}
+
+[data-theme="bios"] .month-calendar-section {
+  background: #000080;
+}
+
+[data-theme="bios"] .month-week-entries-section {
+  background: #000080;
+  border: 1px solid #c0c0c0;
+}
+
+[data-theme="bios"] .timeline-grid {
+  background: #000080;
+  border: 1px solid #c0c0c0;
+}
+
+[data-theme="bios"] .week-entries-header {
+  background: #000080;
+  border: 1px solid #c0c0c0;
+  color: #ffffff;
+  font-family: 'Courier New', monospace;
+  text-shadow: none;
+}
+
+[data-theme="bios"] .week-entries-list {
+  background: #000080;
+}
+
+[data-theme="bios"] .week-entry-group {
+  background: #000080;
+  border: 1px solid #c0c0c0;
+  color: #ffffff;
+}
+
+[data-theme="bios"] .week-entry-group:hover {
+  box-shadow: none;
+}
+
+[data-theme="bios"] .week-entry-group-header {
+  background: #000080;
+  border: 1px solid #c0c0c0;
+}
+
+[data-theme="bios"] .week-label {
+  color: #ffffff;
+  font-family: 'Courier New', monospace;
+  text-shadow: none;
+}
+
+[data-theme="bios"] .week-entry-count {
+  background: #0000aa;
+  color: #ffffff;
+  border: 1px solid #c0c0c0;
+  font-family: 'Courier New', monospace;
+  text-shadow: none;
+  box-shadow: none;
+}
+
+[data-theme="bios"] .week-entry-items {
+  background: transparent;
+}
+
+[data-theme="bios"] .week-entry-item {
+  background: #000080;
+  border: 1px solid #c0c0c0;
+  color: #ffffff;
+  font-family: 'Courier New', monospace;
+}
+
+[data-theme="bios"] .week-entry-item:hover {
+  background: #0000aa;
+  box-shadow: none;
+}
+
+[data-theme="bios"] .week-entry-title {
+  color: #ffffff;
+  font-family: 'Courier New', monospace;
+  text-shadow: none;
+}
+
+[data-theme="bios"] .week-entry-empty {
+  color: #808080;
+  font-family: 'Courier New', monospace;
+  font-style: italic;
+}
+
+/* Entry Viewer - Additional */
+[data-theme="bios"] .entry-viewer {
+  background: #808080;
+  color: #ffffff;
+}
+
+[data-theme="bios"] .viewer-header {
+  background: #808080;
+  border: 1px solid #c0c0c0;
+}
+
+[data-theme="bios"] .header-top {
+  background: transparent;
+}
+
+[data-theme="bios"] .viewer-header h3,
+[data-theme="bios"] .editor-header h3 {
+  color: #ffffff;
+  font-family: 'Courier New', monospace;
+  text-shadow: none;
+}
+
+[data-theme="bios"] .header-actions {
+  background: transparent;
+}
+
+[data-theme="bios"] .edit-button,
+[data-theme="bios"] .duplicate-button {
+  background: #000080;
+  border: 1px solid #c0c0c0;
+  color: #ffffff;
+  font-family: 'Courier New', monospace;
+  text-shadow: none;
+}
+
+[data-theme="bios"] .edit-button:hover,
+[data-theme="bios"] .duplicate-button:hover {
+  background: #0000aa;
+  box-shadow: none;
+}
+
+[data-theme="bios"] .new-entry-button-header {
+  background: #000080;
+  border: 1px solid #c0c0c0;
+  color: #ffffff;
+  font-family: 'Courier New', monospace;
+  text-shadow: none;
+}
+
+[data-theme="bios"] .new-entry-button-header:hover {
+  background: #0000aa;
+  box-shadow: none;
+}
+
+[data-theme="bios"] .time-range-badge-viewer {
+  background: #000080;
+  border: 1px solid #c0c0c0;
+  color: #ffffff;
+  font-family: 'Courier New', monospace;
+  text-shadow: none;
+}
+
+[data-theme="bios"] .entry-date-display {
+  color: #ffffff;
+  font-family: 'Courier New', monospace;
+  text-shadow: none;
+}
+
+[data-theme="bios"] .viewer-content {
+  background: #606060;
+  color: #ffffff;
+}
+
+[data-theme="bios"] .viewer-title {
+  color: #ffffff;
+  font-family: 'Courier New', monospace;
+  text-shadow: none;
+  border: 1px solid #c0c0c0;
+}
+
+[data-theme="bios"] .viewer-text {
+  color: #ffffff;
+  font-family: 'Courier New', monospace;
+  text-shadow: none;
+}
+
+[data-theme="bios"] .viewer-tags {
+  background: transparent;
+  border: 1px solid #c0c0c0;
+}
+
+[data-theme="bios"] .viewer-tag {
+  background: #000080;
+  border: 1px solid #c0c0c0;
+  color: #ffffff;
+  font-family: 'Courier New', monospace;
+  text-shadow: none;
+}
+
+[data-theme="bios"] .viewer-linked-entries {
+  background: transparent;
+  border: 1px solid #c0c0c0;
+}
+
+[data-theme="bios"] .viewer-linked-entries h4 {
+  color: #ffffff;
+  font-family: 'Courier New', monospace;
+  text-shadow: none;
+}
+
+[data-theme="bios"] .linked-entries-list {
+  background: transparent;
+}
+
+[data-theme="bios"] .linked-entry-item {
+  background: #000080;
+  border: 1px solid #c0c0c0;
+  color: #ffffff;
+  font-family: 'Courier New', monospace;
+}
+
+[data-theme="bios"] .linked-entry-item:hover {
+  background: #0000aa;
+  box-shadow: none;
+}
+
+[data-theme="bios"] .linked-entry-title {
+  color: #ffffff;
+  font-family: 'Courier New', monospace;
+  text-shadow: none;
+}
+
+[data-theme="bios"] .linked-entry-meta {
+  color: #ffffff;
+  font-family: 'Courier New', monospace;
+}
+
+[data-theme="bios"] .linked-entry-date {
+  color: #ffffff;
+}
+
+[data-theme="bios"] .linked-entry-time-range {
+  background: #000080;
+  border: 1px solid #c0c0c0;
+  color: #ffffff;
+  font-family: 'Courier New', monospace;
+  text-shadow: none;
+}
+
+[data-theme="bios"] .viewer-empty {
+  background: #000080;
+  color: #808080;
+  font-family: 'Courier New', monospace;
+  font-style: italic;
+}
+
+[data-theme="bios"] .viewer-loading {
+  background: #000080;
+  color: #ffffff;
+  font-family: 'Courier New', monospace;
+  text-shadow: none;
+}
+
+[data-theme="bios"] .period-entries-controls {
+  background: #808080;
+  border: 1px solid #c0c0c0;
+}
+
+[data-theme="bios"] .period-entries-filter,
+[data-theme="bios"] .period-entries-sort {
+  background: transparent;
+}
+
+[data-theme="bios"] .period-entries-filter label,
+[data-theme="bios"] .period-entries-sort label {
+  color: #ffffff;
+  font-family: 'Courier New', monospace;
+  text-shadow: none;
+}
+
+[data-theme="bios"] .period-entries-tags {
+  background: transparent;
+}
+
+[data-theme="bios"] .period-entry-filter-tag {
+  background: #000080;
+  border: 1px solid #c0c0c0;
+  color: #ffffff;
+  font-family: 'Courier New', monospace;
+  text-shadow: none;
+}
+
+[data-theme="bios"] .period-entry-filter-tag:hover {
+  background: #0000aa;
+  box-shadow: none;
+}
+
+[data-theme="bios"] .period-entry-filter-tag.active {
+  background: #0000aa;
+  border: 1px solid #c0c0c0;
+  box-shadow: none;
+}
+
+[data-theme="bios"] .period-entry-clear-filters {
+  background: #000080;
+  border: 1px solid #c0c0c0;
+  color: #ffffff;
+  font-family: 'Courier New', monospace;
+  text-shadow: none;
+}
+
+[data-theme="bios"] .period-entry-clear-filters:hover {
+  background: #0000aa;
+  box-shadow: none;
+}
+
+[data-theme="bios"] .period-entries-sort select {
+  background: #000080;
+  border: 1px solid #c0c0c0;
+  color: #ffffff;
+  font-family: 'Courier New', monospace;
+  text-shadow: none;
+}
+
+[data-theme="bios"] .period-entries-sort select:focus {
+  box-shadow: none;
+  outline: 1px solid #ffffff;
+}
+
+[data-theme="bios"] .period-entries-list {
+  background: transparent;
+}
+
+[data-theme="bios"] .period-entry-item {
+  background: #000080;
+  border: 1px solid #c0c0c0;
+  color: #ffffff;
+  font-family: 'Courier New', monospace;
+}
+
+[data-theme="bios"] .period-entry-item:hover {
+  background: #0000aa;
+  box-shadow: none;
+}
+
+[data-theme="bios"] .period-entry-header {
+  background: transparent;
+}
+
+[data-theme="bios"] .period-entry-title-row {
+  background: transparent;
+}
+
+[data-theme="bios"] .period-entry-title {
+  color: #ffffff;
+  font-family: 'Courier New', monospace;
+  text-shadow: none;
+}
+
+[data-theme="bios"] .period-entry-actions {
+  background: transparent;
+}
+
+[data-theme="bios"] .period-entry-edit-button {
+  background: #000080;
+  border: 1px solid #c0c0c0;
+  color: #ffffff;
+  font-family: 'Courier New', monospace;
+  text-shadow: none;
+}
+
+[data-theme="bios"] .period-entry-edit-button:hover {
+  background: #0000aa;
+  box-shadow: none;
+}
+
+[data-theme="bios"] .period-entry-badge {
+  background: #0000aa;
+  color: #ffffff;
+  border: 1px solid #c0c0c0;
+  font-family: 'Courier New', monospace;
+  text-shadow: none;
+  box-shadow: none;
+}
+
+[data-theme="bios"] .period-entry-meta {
+  background: transparent;
+}
+
+[data-theme="bios"] .period-entry-date {
+  color: #ffffff;
+  font-family: 'Courier New', monospace;
+  text-decoration: underline;
+}
+
+[data-theme="bios"] .period-entry-content {
+  color: #ffffff;
+  font-family: 'Courier New', monospace;
+  text-shadow: none;
+}
+
+[data-theme="bios"] .period-entry-content-wrapper {
+  background: transparent;
+}
+
+[data-theme="bios"] .period-entry-tags {
+  background: transparent;
+  border: 1px solid #c0c0c0;
+}
+
+[data-theme="bios"] .period-entry-tag {
+  background: #000080;
+  border: 1px solid #c0c0c0;
+  color: #ffffff;
+  font-family: 'Courier New', monospace;
+  text-shadow: none;
+}
+
+/* Journal Editor - Additional */
+[data-theme="bios"] .journal-editor-inline {
+  background: #000080;
+}
+
+[data-theme="bios"] .journal-editor {
+  background: #000080;
+  color: #ffffff;
+}
+
+[data-theme="bios"] .editor-loading {
+  background: #000080;
+  color: #ffffff;
+  font-family: 'Courier New', monospace;
+  text-shadow: none;
+}
+
+[data-theme="bios"] .editor-header {
+  background: #000080;
+  border: 1px solid #c0c0c0;
+}
+
+[data-theme="bios"] .editor-content {
+  background: #000080;
+  color: #ffffff;
+}
+
+[data-theme="bios"] .view-mode-message {
+  background: #000080;
+  color: #808080;
+  font-family: 'Courier New', monospace;
+  font-style: italic;
+}
+
+[data-theme="bios"] .title-input {
+  background: #000080;
+  border: 1px solid #c0c0c0;
+  color: #ffffff;
+  font-family: 'Courier New', monospace;
+  text-shadow: none;
+}
+
+[data-theme="bios"] .title-input:focus {
+  box-shadow: none;
+  outline: 1px solid #ffffff;
+}
+
+[data-theme="bios"] .content-input {
+  background: #000080;
+  border: 1px solid #c0c0c0;
+  color: #ffffff;
+  font-family: 'Courier New', monospace;
+  text-shadow: none;
+}
+
+[data-theme="bios"] .content-input:focus {
+  box-shadow: none;
+  outline: 1px solid #ffffff;
+}
+
+[data-theme="bios"] .tags-section {
+  background: transparent;
+}
+
+[data-theme="bios"] .tags-input-container {
+  background: transparent;
+}
+
+[data-theme="bios"] .tag-input {
+  background: #000080;
+  border: 1px solid #c0c0c0;
+  color: #ffffff;
+  font-family: 'Courier New', monospace;
+  text-shadow: none;
+}
+
+[data-theme="bios"] .tag-input:focus {
+  box-shadow: none;
+  outline: 1px solid #ffffff;
+}
+
+[data-theme="bios"] .add-tag-button {
+  background: #000080;
+  border: 1px solid #c0c0c0;
+  color: #ffffff;
+  font-family: 'Courier New', monospace;
+  text-shadow: none;
+}
+
+[data-theme="bios"] .add-tag-button:hover {
+  background: #0000aa;
+  box-shadow: none;
+}
+
+[data-theme="bios"] .tags-list {
+  background: transparent;
+}
+
+[data-theme="bios"] .tag {
+  background: #000080;
+  border: 1px solid #c0c0c0;
+  color: #ffffff;
+  font-family: 'Courier New', monospace;
+  text-shadow: none;
+}
+
+[data-theme="bios"] .tag-remove {
+  background: transparent;
+  border: none;
+  color: #ffffff;
+}
+
+[data-theme="bios"] .tag-remove:hover {
+  background: #0000aa;
+  color: #ffffff;
+  box-shadow: none;
+}
+
+[data-theme="bios"] .editor-footer {
+  background: #000080;
+  border: 1px solid #c0c0c0;
+}
+
+[data-theme="bios"] .footer-actions {
+  background: transparent;
+}
+
+[data-theme="bios"] .cancel-button {
+  background: #000080;
+  border: 1px solid #c0c0c0;
+  color: #ffffff;
+  font-family: 'Courier New', monospace;
+  text-shadow: none;
+}
+
+[data-theme="bios"] .cancel-button:hover {
+  background: #0000aa;
+  box-shadow: none;
+}
+
+[data-theme="bios"] .delete-button {
+  background: #000080;
+  border: 1px solid #ff0000;
+  color: #ff0000;
+  font-family: 'Courier New', monospace;
+  text-shadow: none;
+}
+
+[data-theme="bios"] .delete-button:hover {
+  background: #330000;
+  box-shadow: none;
+}
+
+[data-theme="bios"] .save-button {
+  background: #000080;
+  border: 1px solid #c0c0c0;
+  color: #ffffff;
+  font-family: 'Courier New', monospace;
+  text-shadow: none;
+}
+
+[data-theme="bios"] .save-button:hover:not(:disabled) {
+  background: #0000aa;
+  box-shadow: none;
+}
+
+[data-theme="bios"] .save-button:disabled {
+  background: #000080;
+  color: #808080;
+  border: 1px solid #808080;
+  cursor: not-allowed;
+  text-shadow: none;
+}
+
+[data-theme="bios"] .confirm-dialog-overlay {
+  background: rgba(0, 0, 0, 0.9);
+}
+
+[data-theme="bios"] .confirm-dialog {
+  background: #000080;
+  border: 1px solid #c0c0c0;
+  color: #ffffff;
+  font-family: 'Courier New', monospace;
+  box-shadow: none;
+}
+
+[data-theme="bios"] .confirm-dialog-buttons {
+  background: transparent;
+}
+
+/* Journal List - Additional */
+[data-theme="bios"] .journal-list {
+  background: #000080;
+  border: 1px solid #c0c0c0;
+}
+
+[data-theme="bios"] .journal-list-loading {
+  background: #000080;
+  color: #ffffff;
+  font-family: 'Courier New', monospace;
+  text-shadow: none;
+}
+
+[data-theme="bios"] .journal-list-header {
+  background: #808080;
+  border: 1px solid #c0c0c0;
+}
+
+[data-theme="bios"] .journal-list-header h3 {
+  color: #ffffff;
+  font-family: 'Courier New', monospace;
+  text-shadow: none;
+}
+
+[data-theme="bios"] .journal-list-header-actions {
+  background: transparent;
+}
+
+[data-theme="bios"] .new-entry-button {
+  background: #000080;
+  border: 1px solid #c0c0c0;
+  color: #ffffff;
+  font-family: 'Courier New', monospace;
+  text-shadow: none;
+}
+
+[data-theme="bios"] .new-entry-button:hover {
+  background: #0000aa;
+  box-shadow: none;
+}
+
+[data-theme="bios"] .bulk-edit-toggle-button {
+  background: #000080;
+  border: 1px solid #c0c0c0;
+  color: #ffffff;
+  font-family: 'Courier New', monospace;
+  text-shadow: none;
+}
+
+[data-theme="bios"] .bulk-edit-toggle-button:hover {
+  background: #0000aa;
+  box-shadow: none;
+}
+
+[data-theme="bios"] .bulk-edit-toggle-button.active {
+  background: #0000aa;
+  border: 1px solid #c0c0c0;
+  box-shadow: none;
+}
+
+[data-theme="bios"] .journal-list-content {
+  background: #606060;
+}
+
+[data-theme="bios"] .journal-list-controls {
+  background: #808080;
+  border: 1px solid #c0c0c0;
+}
+
+[data-theme="bios"] .journal-list-filter,
+[data-theme="bios"] .journal-list-sort {
+  background: transparent;
+}
+
+[data-theme="bios"] .journal-list-filter label,
+[data-theme="bios"] .journal-list-sort label {
+  color: #ffffff;
+  font-family: 'Courier New', monospace;
+  text-shadow: none;
+}
+
+[data-theme="bios"] .journal-list-tags {
+  background: transparent;
+}
+
+[data-theme="bios"] .journal-entry-filter-tag {
+  background: #000080;
+  border: 1px solid #c0c0c0;
+  color: #ffffff;
+  font-family: 'Courier New', monospace;
+  text-shadow: none;
+}
+
+[data-theme="bios"] .journal-entry-filter-tag:hover {
+  background: #0000aa;
+  box-shadow: none;
+}
+
+[data-theme="bios"] .journal-entry-filter-tag.active {
+  background: #0000aa;
+  border: 1px solid #c0c0c0;
+  box-shadow: none;
+}
+
+[data-theme="bios"] .journal-entry-clear-filters {
+  background: #000080;
+  border: 1px solid #c0c0c0;
+  color: #ffffff;
+  font-family: 'Courier New', monospace;
+  text-shadow: none;
+}
+
+[data-theme="bios"] .journal-entry-clear-filters:hover {
+  background: #0000aa;
+  box-shadow: none;
+}
+
+[data-theme="bios"] .journal-list-sort select {
+  background: #000080;
+  border: 1px solid #c0c0c0;
+  color: #ffffff;
+  font-family: 'Courier New', monospace;
+  text-shadow: none;
+}
+
+[data-theme="bios"] .journal-list-sort select:focus {
+  box-shadow: none;
+  outline: 1px solid #ffffff;
+}
+
+[data-theme="bios"] .journal-list-empty {
+  background: #000080;
+  color: #808080;
+  font-family: 'Courier New', monospace;
+  font-style: italic;
+}
+
+[data-theme="bios"] .journal-entries {
+  background: transparent;
+}
+
+[data-theme="bios"] .journal-entry-item {
+  background: #606060;
+  border: 1px solid #808080;
+  color: #ffffff;
+  font-family: 'Courier New', monospace;
+}
+
+[data-theme="bios"] .journal-entry-item:hover {
+  background: #0000aa;
+  box-shadow: none;
+}
+
+[data-theme="bios"] .journal-entry-item.selected {
+  background: #0000aa;
+  border: 1px solid #c0c0c0;
+  box-shadow: none;
+}
+
+[data-theme="bios"] .journal-entry-item.bulk-edit-mode {
+  background: #000080;
+}
+
+[data-theme="bios"] .journal-entry-item.bulk-selected {
+  background: #0000aa;
+  border: 1px solid #c0c0c0;
+  box-shadow: none;
+}
+
+[data-theme="bios"] .entry-item-header {
+  background: transparent;
+}
+
+[data-theme="bios"] .entry-item-title {
+  color: #ffffff;
+  font-family: 'Courier New', monospace;
+  text-shadow: none;
+}
+
+[data-theme="bios"] .entry-item-meta {
+  background: transparent;
+}
+
+[data-theme="bios"] .entry-time-range {
+  background: #000080;
+  border: 1px solid #c0c0c0;
+  color: #ffffff;
+  font-family: 'Courier New', monospace;
+  text-shadow: none;
+}
+
+[data-theme="bios"] .entry-date {
+  color: #ffffff;
+  font-family: 'Courier New', monospace;
+}
+
+[data-theme="bios"] .entry-item-preview {
+  color: #ffffff;
+  font-family: 'Courier New', monospace;
+  text-shadow: none;
+}
+
+[data-theme="bios"] .entry-item-tags {
+  background: transparent;
+}
+
+[data-theme="bios"] .entry-tag {
+  background: #000080;
+  border: 1px solid #c0c0c0;
+  color: #ffffff;
+  font-family: 'Courier New', monospace;
+  text-shadow: none;
+}
+
+[data-theme="bios"] .entry-item-content {
+  background: transparent;
+  color: #ffffff;
+}
+
+[data-theme="bios"] .entry-item-content * {
+  color: #ffffff !important;
+}
+
+[data-theme="bios"] .viewer-content * {
+  color: #ffffff !important;
+}
+
+[data-theme="bios"] .journal-entry-item p,
+[data-theme="bios"] .journal-entry-item span,
+[data-theme="bios"] .entry-card p,
+[data-theme="bios"] .entry-card span,
+[data-theme="bios"] .entry-card-full p,
+[data-theme="bios"] .entry-card-full span {
+  color: #ffffff !important;
+}
+
+[data-theme="bios"] .entry-checkbox-wrapper {
+  background: transparent;
+}
+
+[data-theme="bios"] .entry-checkbox-wrapper input[type="checkbox"] {
+  width: 14px;
+  height: 14px;
+  border: 1px solid #c0c0c0;
+  background: #000080;
+  accent-color: #ffffff;
+}
+
+[data-theme="bios"] .bulk-edit-actions {
+  background: #0000aa;
+  border: 1px solid #c0c0c0;
+  box-shadow: none;
+}
+
+[data-theme="bios"] .bulk-edit-selected-count {
+  color: #ffffff;
+  font-family: 'Courier New', monospace;
+  text-shadow: none;
+}
+
+[data-theme="bios"] .bulk-delete-button {
+  background: #000080;
+  border: 1px solid #ff0000;
+  color: #ff0000;
+  font-family: 'Courier New', monospace;
+  text-shadow: none;
+}
+
+[data-theme="bios"] .bulk-delete-button:hover {
+  background: #330000;
+  box-shadow: none;
+}
+
+[data-theme="bios"] .bulk-edit-select-all {
+  background: #000080;
+  border: 1px solid #c0c0c0;
+}
+
+[data-theme="bios"] .bulk-edit-checkbox-label {
+  color: #ffffff;
+  font-family: 'Courier New', monospace;
+  text-shadow: none;
+}
+
+/* Entry Edit Modal */
+[data-theme="bios"] .entry-edit-modal-overlay {
+  background: rgba(0, 0, 0, 0.9);
+}
+
+[data-theme="bios"] .entry-edit-modal {
+  background: #000080;
+  border: 1px solid #c0c0c0;
+  color: #ffffff;
+  box-shadow: none;
+}
+
+[data-theme="bios"] .modal-header {
+  background: #808080;
+  border: 1px solid #c0c0c0;
+}
+
+[data-theme="bios"] .modal-header-top {
+  background: transparent;
+}
+
+[data-theme="bios"] .modal-header-top h3 {
+  color: #ffffff;
+  font-family: 'Courier New', monospace;
+  text-shadow: none;
+}
+
+[data-theme="bios"] .modal-close-button {
+  background: #000080;
+  border: 1px solid #c0c0c0;
+  color: #ffffff;
+  font-family: 'Courier New', monospace;
+  text-shadow: none;
+}
+
+[data-theme="bios"] .modal-close-button:hover {
+  background: #0000aa;
+  box-shadow: none;
+}
+
+[data-theme="bios"] .modal-entry-meta {
+  background: transparent;
+}
+
+[data-theme="bios"] .modal-entry-meta small {
+  color: #808080;
+  font-family: 'Courier New', monospace;
+}
+
+[data-theme="bios"] .modal-content {
+  background: #606060;
+  color: #ffffff;
+}
+
+[data-theme="bios"] .modal-title-input {
+  background: #000080;
+  border: 1px solid #c0c0c0;
+  color: #ffffff;
+  font-family: 'Courier New', monospace;
+  text-shadow: none;
+}
+
+[data-theme="bios"] .modal-title-input:focus {
+  box-shadow: none;
+  outline: 1px solid #ffffff;
+}
+
+[data-theme="bios"] .modal-content-input {
+  background: #000080;
+  border: 1px solid #c0c0c0;
+  color: #ffffff;
+  font-family: 'Courier New', monospace;
+  text-shadow: none;
+}
+
+[data-theme="bios"] .modal-content-input:focus {
+  box-shadow: none;
+  outline: 1px solid #ffffff;
+}
+
+[data-theme="bios"] .modal-tags-section {
+  background: transparent;
+}
+
+[data-theme="bios"] .modal-tags-input-container {
+  background: transparent;
+}
+
+[data-theme="bios"] .modal-tag-input {
+  background: #000080;
+  border: 1px solid #c0c0c0;
+  color: #ffffff;
+  font-family: 'Courier New', monospace;
+  text-shadow: none;
+}
+
+[data-theme="bios"] .modal-tag-input:focus {
+  box-shadow: none;
+  outline: 1px solid #ffffff;
+}
+
+[data-theme="bios"] .modal-add-tag-button {
+  background: #000080;
+  border: 1px solid #c0c0c0;
+  color: #ffffff;
+  font-family: 'Courier New', monospace;
+  text-shadow: none;
+}
+
+[data-theme="bios"] .modal-add-tag-button:hover {
+  background: #0000aa;
+  box-shadow: none;
+}
+
+[data-theme="bios"] .modal-tags-list {
+  background: transparent;
+}
+
+[data-theme="bios"] .modal-tag {
+  background: #000080;
+  border: 1px solid #c0c0c0;
+  color: #ffffff;
+  font-family: 'Courier New', monospace;
+  text-shadow: none;
+}
+
+[data-theme="bios"] .modal-tag-remove {
+  background: transparent;
+  border: none;
+  color: #ffffff;
+}
+
+[data-theme="bios"] .modal-tag-remove:hover {
+  background: #0000aa;
+  color: #ffffff;
+  box-shadow: none;
+}
+
+[data-theme="bios"] .modal-footer {
+  background: #000080;
+  border: 1px solid #c0c0c0;
+}
+
+[data-theme="bios"] .modal-duplicate-button {
+  background: #000080;
+  border: 1px solid #c0c0c0;
+  color: #ffffff;
+  font-family: 'Courier New', monospace;
+  text-shadow: none;
+}
+
+[data-theme="bios"] .modal-duplicate-button:hover {
+  background: #0000aa;
+  box-shadow: none;
+}
+
+[data-theme="bios"] .modal-delete-button {
+  background: #000080;
+  border: 1px solid #ff0000;
+  color: #ff0000;
+  font-family: 'Courier New', monospace;
+  text-shadow: none;
+}
+
+[data-theme="bios"] .modal-delete-button:hover {
+  background: #330000;
+  box-shadow: none;
+}
+
+[data-theme="bios"] .modal-footer-actions {
+  background: transparent;
+}
+
+[data-theme="bios"] .modal-cancel-button {
+  background: #000080;
+  border: 1px solid #c0c0c0;
+  color: #ffffff;
+  font-family: 'Courier New', monospace;
+  text-shadow: none;
+}
+
+[data-theme="bios"] .modal-cancel-button:hover {
+  background: #0000aa;
+  box-shadow: none;
+}
+
+[data-theme="bios"] .modal-save-button {
+  background: #000080;
+  border: 1px solid #c0c0c0;
+  color: #ffffff;
+  font-family: 'Courier New', monospace;
+  text-shadow: none;
+}
+
+[data-theme="bios"] .modal-save-button:hover:not(:disabled) {
+  background: #0000aa;
+  box-shadow: none;
+}
+
+[data-theme="bios"] .modal-save-button:disabled {
+  background: #000080;
+  color: #808080;
+  border: 1px solid #808080;
+  cursor: not-allowed;
+  text-shadow: none;
+}
+
+/* Search View */
+[data-theme="bios"] .search-view {
+  background: #000080;
+  color: #ffffff;
+}
+
+[data-theme="bios"] .search-header {
+  background: #000080;
+  border: 1px solid #c0c0c0;
+}
+
+[data-theme="bios"] .search-input-container {
+  background: transparent;
+}
+
+[data-theme="bios"] .search-input {
+  background: #000080;
+  border: 1px solid #c0c0c0;
+  color: #ffffff;
+  font-family: 'Courier New', monospace;
+  text-shadow: none;
+}
+
+[data-theme="bios"] .search-input:focus {
+  box-shadow: none;
+  outline: 1px solid #ffffff;
+}
+
+[data-theme="bios"] .search-filters-toggle {
+  background: #000080;
+  border: 1px solid #c0c0c0;
+  color: #ffffff;
+  font-family: 'Courier New', monospace;
+  text-shadow: none;
+}
+
+[data-theme="bios"] .search-filters-toggle:hover {
+  background: #0000aa;
+  box-shadow: none;
+}
+
+[data-theme="bios"] .search-close-button {
+  background: #000080;
+  border: 1px solid #c0c0c0;
+  color: #ffffff;
+  font-family: 'Courier New', monospace;
+  text-shadow: none;
+}
+
+[data-theme="bios"] .search-close-button:hover {
+  background: #0000aa;
+  box-shadow: none;
+}
+
+[data-theme="bios"] .search-filters {
+  background: #000080;
+  border: 1px solid #c0c0c0;
+}
+
+[data-theme="bios"] .filter-group {
+  background: transparent;
+}
+
+[data-theme="bios"] .filter-group label {
+  color: #ffffff;
+  font-family: 'Courier New', monospace;
+  text-shadow: none;
+}
+
+[data-theme="bios"] .filter-tags {
+  background: transparent;
+}
+
+[data-theme="bios"] .filter-tag {
+  background: #000080;
+  border: 1px solid #c0c0c0;
+  color: #ffffff;
+  font-family: 'Courier New', monospace;
+  text-shadow: none;
+}
+
+[data-theme="bios"] .filter-tag:hover {
+  background: #0000aa;
+  box-shadow: none;
+}
+
+[data-theme="bios"] .filter-tag.active {
+  background: #0000aa;
+  border: 1px solid #c0c0c0;
+  box-shadow: none;
+}
+
+[data-theme="bios"] .filter-empty {
+  color: #808080;
+  font-family: 'Courier New', monospace;
+  font-style: italic;
+}
+
+[data-theme="bios"] .filter-time-ranges {
+  background: transparent;
+}
+
+[data-theme="bios"] .filter-time-range {
+  background: #000080;
+  border: 1px solid #c0c0c0;
+  color: #ffffff;
+  font-family: 'Courier New', monospace;
+  text-shadow: none;
+}
+
+[data-theme="bios"] .filter-time-range:hover {
+  background: #0000aa;
+  box-shadow: none;
+}
+
+[data-theme="bios"] .filter-time-range.active {
+  background: #0000aa;
+  border: 1px solid #c0c0c0;
+  box-shadow: none;
+}
+
+[data-theme="bios"] .filter-date-range {
+  background: transparent;
+}
+
+[data-theme="bios"] .filter-date-range input {
+  background: #000080;
+  border: 1px solid #c0c0c0;
+  color: #ffffff;
+  font-family: 'Courier New', monospace;
+  text-shadow: none;
+}
+
+[data-theme="bios"] .filter-date-range input:focus {
+  box-shadow: none;
+  outline: 1px solid #ffffff;
+}
+
+[data-theme="bios"] .filter-sort {
+  background: transparent;
+}
+
+[data-theme="bios"] .filter-sort select {
+  background: #000080;
+  border: 1px solid #c0c0c0;
+  color: #ffffff;
+  font-family: 'Courier New', monospace;
+  text-shadow: none;
+}
+
+[data-theme="bios"] .filter-sort select:focus {
+  box-shadow: none;
+  outline: 1px solid #ffffff;
+}
+
+[data-theme="bios"] .clear-filters-button {
+  background: #000080;
+  border: 1px solid #c0c0c0;
+  color: #ffffff;
+  font-family: 'Courier New', monospace;
+  text-shadow: none;
+}
+
+[data-theme="bios"] .clear-filters-button:hover {
+  background: #0000aa;
+  box-shadow: none;
+}
+
+[data-theme="bios"] .search-results {
+  background: #000080;
+  color: #ffffff;
+}
+
+[data-theme="bios"] .search-loading,
+[data-theme="bios"] .search-empty {
+  background: #000080;
+  color: #808080;
+  font-family: 'Courier New', monospace;
+  font-style: italic;
+}
+
+[data-theme="bios"] .search-results-count {
+  color: #ffffff;
+  font-family: 'Courier New', monospace;
+  text-shadow: none;
+}
+
+[data-theme="bios"] .search-results-list {
+  background: transparent;
+}
+
+[data-theme="bios"] .search-result-item {
+  background: #000080;
+  border: 1px solid #c0c0c0;
+  color: #ffffff;
+  font-family: 'Courier New', monospace;
+}
+
+[data-theme="bios"] .search-result-item:hover {
+  background: #0000aa;
+  box-shadow: none;
+}
+
+[data-theme="bios"] .result-item-header {
+  background: transparent;
+}
+
+[data-theme="bios"] .result-item-title {
+  color: #ffffff;
+  font-family: 'Courier New', monospace;
+  text-shadow: none;
+}
+
+[data-theme="bios"] .result-item-meta {
+  background: transparent;
+}
+
+[data-theme="bios"] .result-time-range-badge {
+  background: #0000aa;
+  color: #ffffff;
+  border: 1px solid #c0c0c0;
+  font-family: 'Courier New', monospace;
+  text-shadow: none;
+  box-shadow: none;
+}
+
+[data-theme="bios"] .result-date {
+  color: #ffffff;
+  font-family: 'Courier New', monospace;
+}
+
+[data-theme="bios"] .result-item-content {
+  color: #ffffff;
+  font-family: 'Courier New', monospace;
+  text-shadow: none;
+}
+
+[data-theme="bios"] .result-item-tags {
+  background: transparent;
+}
+
+[data-theme="bios"] .result-tag {
+  background: #000080;
+  border: 1px solid #c0c0c0;
+  color: #ffffff;
+  font-family: 'Courier New', monospace;
+  text-shadow: none;
+}
+
+/* Preferences */
+[data-theme="bios"] .preferences-container {
+  background: #000080;
+  color: #ffffff;
+}
+
+[data-theme="bios"] .preferences-loading {
+  background: #000080;
+  color: #ffffff;
+  font-family: 'Courier New', monospace;
+  text-shadow: none;
+}
+
+[data-theme="bios"] .preferences-header {
+  background: #000080;
+  border: 1px solid #c0c0c0;
+}
+
+[data-theme="bios"] .preferences-header h1 {
+  color: #ffffff;
+  font-family: 'Courier New', monospace;
+  text-shadow: none;
+}
+
+[data-theme="bios"] .preferences-actions {
+  background: transparent;
+}
+
+[data-theme="bios"] .preferences-button {
+  background: #000080;
+  border: 1px solid #c0c0c0;
+  color: #ffffff;
+  font-family: 'Courier New', monospace;
+  text-shadow: none;
+}
+
+[data-theme="bios"] .preferences-button:hover {
+  background: #0000aa;
+  box-shadow: none;
+}
+
+[data-theme="bios"] .preferences-content {
+  background: #000080;
+}
+
+[data-theme="bios"] .preferences-section {
+  background: #000080;
+  border: 1px solid #c0c0c0;
+}
+
+[data-theme="bios"] .preferences-section h2 {
+  color: #ffffff;
+  font-family: 'Courier New', monospace;
+  text-shadow: none;
+  border: 1px solid #c0c0c0;
+}
+
+[data-theme="bios"] .preference-item {
+  background: transparent;
+}
+
+[data-theme="bios"] .preference-item label {
+  color: #ffffff;
+  font-family: 'Courier New', monospace;
+  text-shadow: none;
+}
+
+[data-theme="bios"] .preference-item input[type="text"],
+[data-theme="bios"] .preference-item input[type="number"],
+[data-theme="bios"] .preference-item select {
+  background: #000080;
+  border: 1px solid #c0c0c0;
+  color: #ffffff;
+  font-family: 'Courier New', monospace;
+  text-shadow: none;
+}
+
+[data-theme="bios"] .preference-item input[type="text"]:focus,
+[data-theme="bios"] .preference-item input[type="number"]:focus,
+[data-theme="bios"] .preference-item select:focus {
+  box-shadow: none;
+  outline: 1px solid #ffffff;
+}
+
+[data-theme="bios"] .preference-item input[type="checkbox"] {
+  width: 14px;
+  height: 14px;
+  border: 1px solid #c0c0c0;
+  background: #000080;
+  accent-color: #ffffff;
+}
+
+[data-theme="bios"] .preference-item small {
+  color: #808080;
+  font-family: 'Courier New', monospace;
+}
+
+[data-theme="bios"] .preference-note {
+  background: #0000aa;
+  border: 1px solid #c0c0c0;
+  color: #ffffff;
+  font-family: 'Courier New', monospace;
+  text-shadow: none;
+}
+
+[data-theme="bios"] .auto-save-indicator {
+  color: #ffffff;
+  font-family: 'Courier New', monospace;
+  text-shadow: none;
+}
+
+[data-theme="bios"] .export-toolbar {
+  background: transparent;
+}
+
+[data-theme="bios"] .export-controls {
+  background: transparent;
+}
+
+[data-theme="bios"] .export-controls select {
+  background: #000080;
+  border: 1px solid #c0c0c0;
+  color: #ffffff;
+  font-family: 'Courier New', monospace;
+  text-shadow: none;
+}
+
+[data-theme="bios"] .export-controls select:focus {
+  box-shadow: none;
+  outline: 1px solid #ffffff;
+}
+
+[data-theme="bios"] .about-section {
+  background: #000080;
+  border: 1px solid #c0c0c0;
+  color: #ffffff;
+}
+
+[data-theme="bios"] .about-section a {
+  color: #ffffff;
+  text-decoration: underline;
+  text-shadow: none;
+}
+
+[data-theme="bios"] .about-section a:hover {
+  color: #ffffff;
+  text-shadow: none;
+}
+
+/* About Page */
+[data-theme="bios"] .about-container {
+  background: #000080;
+  color: #ffffff;
+}
+
+[data-theme="bios"] .about-content {
+  background: #000080;
+  border: 1px solid #c0c0c0;
+  color: #ffffff;
+  box-shadow: none;
+}
+
+[data-theme="bios"] .about-header {
+  background: transparent;
+  border: 1px solid #c0c0c0;
+}
+
+[data-theme="bios"] .about-icon {
+  border: 1px solid #c0c0c0;
+}
+
+[data-theme="bios"] .about-title-section h1 {
+  color: #ffffff;
+  font-family: 'Courier New', monospace;
+  text-shadow: none;
+}
+
+[data-theme="bios"] .about-description {
+  color: #ffffff;
+  font-family: 'Courier New', monospace;
+  text-shadow: none;
+}
+
+[data-theme="bios"] .about-section {
+  background: transparent;
+  border: 1px solid #c0c0c0;
+}
+
+[data-theme="bios"] .about-version {
+  color: #ffffff;
+  font-family: 'Courier New', monospace;
+  text-shadow: none;
+}
+
+[data-theme="bios"] .about-note {
+  color: #808080;
+  font-family: 'Courier New', monospace;
+  font-style: italic;
+}
+
+[data-theme="bios"] .about-credits h2 {
+  color: #ffffff;
+  font-family: 'Courier New', monospace;
+  text-shadow: none;
+}
+
+[data-theme="bios"] .about-credits p {
+  color: #ffffff;
+  font-family: 'Courier New', monospace;
+  text-shadow: none;
+}
+
+[data-theme="bios"] .about-link {
+  color: #ffffff;
+  text-decoration: underline;
+  text-shadow: none;
+}
+
+[data-theme="bios"] .about-link:hover {
+  text-shadow: none;
+}
+
+[data-theme="bios"] .about-credits-detailed {
+  background: transparent;
+}
+
+[data-theme="bios"] .about-credits-detailed h2 {
+  color: #ffffff;
+  font-family: 'Courier New', monospace;
+  text-shadow: none;
+}
+
+[data-theme="bios"] .credits-category {
+  background: transparent;
+}
+
+[data-theme="bios"] .credits-category h3 {
+  color: #ffffff;
+  font-family: 'Courier New', monospace;
+  text-shadow: none;
+}
+
+[data-theme="bios"] .credits-category ul {
+  background: transparent;
+}
+
+[data-theme="bios"] .credits-category li {
+  color: #ffffff;
+  font-family: 'Courier New', monospace;
+  text-shadow: none;
+}
+
+[data-theme="bios"] .credits-category li strong {
+  color: #ffffff;
+  text-shadow: none;
+}
+
+[data-theme="bios"] .credits-category li em {
+  color: #808080;
+  font-style: italic;
+}
+
+[data-theme="bios"] .credits-category p {
+  color: #ffffff;
+  font-family: 'Courier New', monospace;
+  text-shadow: none;
+}
+
+[data-theme="bios"] .credits-note {
+  color: #808080;
+  font-family: 'Courier New', monospace;
+  font-style: italic;
+}
+
+/* Loading Screen */
+[data-theme="bios"] .loading-screen {
+  background: #000080;
+  color: #ffffff;
+}
+
+[data-theme="bios"] .space-background {
+  background: #000080;
+}
+
+[data-theme="bios"] .loading-content {
+  background: transparent;
+  color: #ffffff;
+}
+
+[data-theme="bios"] .loading-title {
+  color: #ffffff;
+  font-family: 'Courier New', monospace;
+  text-shadow: none;
+}
+
+[data-theme="bios"] .loading-message {
+  color: #ffffff;
+  font-family: 'Courier New', monospace;
+  text-shadow: none;
+}
+
+[data-theme="bios"] .loading-progress {
+  background: transparent;
+}
+
+[data-theme="bios"] .loading-progress-bar {
+  background: #000080;
+  border: 1px solid #c0c0c0;
+  box-shadow: none;
+}
+
+[data-theme="bios"] .loading-progress-fill {
+  background: #ffffff;
+  box-shadow: none;
+}
+
+[data-theme="bios"] .loading-progress-text {
+  color: #ffffff;
+  font-family: 'Courier New', monospace;
+  text-shadow: none;
+}
+
+/* Global Timeline Minimap */
+[data-theme="bios"] .global-timeline-minimap {
+  background: #000080;
+  border: 1px solid #c0c0c0;
+}
+
+[data-theme="bios"] .minimap-container {
+  background: #000080;
+  border: 1px solid #c0c0c0;
+}
+
+[data-theme="bios"] .radial-dial-center {
+  background: #c0c0c0;
+  border: 2px solid #000080;
+  box-shadow: none;
+}
+
+[data-theme="bios"] .radial-arrow {
+  color: #ffffff;
+  text-shadow: none;
+}
+
+[data-theme="bios"] .radial-label {
+  background: #000080;
+  border: 1px solid #c0c0c0;
+  color: #ffffff;
+  font-family: 'Courier New', monospace;
+  text-shadow: none;
+  box-shadow: none;
+}
+
+[data-theme="bios"] .timeline-path {
+  stroke: #ffffff;
+  stroke-width: 2px;
+  filter: drop-shadow(0 0 5px #ffffff);
+}
+
+[data-theme="bios"] .segment-indicator {
+  background: #c0c0c0;
+  border: 1px solid #000080;
+  box-shadow: none;
+}
+
+[data-theme="bios"] .timeline-segment.current .segment-indicator {
+  background: #ffffff;
+  border: 2px solid #000080;
+  box-shadow: none;
+}
+
+[data-theme="bios"] .segment-label {
+  background: #000080;
+  color: #ffffff;
+  border: 1px solid #c0c0c0;
+  font-family: 'Courier New', monospace;
+  text-shadow: none;
+  box-shadow: none;
+}
+
+[data-theme="bios"] .entry-indicator {
+  background: #c0c0c0;
+  border: 1px solid #000080;
+  box-shadow: none;
+}
+
+[data-theme="bios"] .scale-label {
+  color: #ffffff;
+  font-family: 'Courier New', monospace;
+  text-shadow: none;
+}
+
+/* Entry badges and cards - preserve time range colors, adapt backgrounds/text */
+[data-theme="bios"] .entry-decade {
+  background: rgba(192, 192, 192, 0.1);
+  color: #ffffff;
+  border-left-color: #808080;
+}
+
+[data-theme="bios"] .entry-year {
+  background: rgba(192, 192, 192, 0.1);
+  color: #ffffff;
+  border-left-color: #ffffff;
+}
+
+[data-theme="bios"] .entry-month {
+  background: rgba(192, 192, 192, 0.1);
+  color: #ffffff;
+  border-left-color: #ffffff;
+}
+
+[data-theme="bios"] .entry-week {
+  background: rgba(192, 192, 192, 0.1);
+  color: #ffffff;
+  border-left-color: #808080;
+}
+
+[data-theme="bios"] .entry-day {
+  background: rgba(192, 192, 192, 0.1);
+  color: #ffffff;
+  border-left-color: #ffffff;
+}
+
+[data-theme="bios"] .entry-card {
+  background: #606060;
+  border-color: #808080;
+}
+
+[data-theme="bios"] .entry-card-full {
+  background: #606060;
+  border-color: #808080;
+}
+
+[data-theme="bios"] .card-title,
+[data-theme="bios"] .card-title-full,
+[data-theme="bios"] .badge-title {
+  color: #ffffff;
+  font-family: 'Courier New', 'MS Sans Serif', monospace;
+  text-shadow: none;
+}
+
+[data-theme="bios"] .entry-item-title {
+  color: #ffffff;
+  font-family: 'Courier New', 'MS Sans Serif', monospace;
+  text-shadow: none;
+}
+
+/* Comprehensive readability fix - ensure ALL text on grey panels is bright white */
+[data-theme="bios"] .journal-entry-item,
+[data-theme="bios"] .entry-card,
+[data-theme="bios"] .entry-card-full,
+[data-theme="bios"] .editor-section,
+[data-theme="bios"] .entry-viewer,
+[data-theme="bios"] .modal-content {
+  color: #ffffff !important;
+}
+
+[data-theme="bios"] .journal-entry-item *,
+[data-theme="bios"] .entry-card *,
+[data-theme="bios"] .entry-card-full *,
+[data-theme="bios"] .editor-section *,
+[data-theme="bios"] .entry-viewer *,
+[data-theme="bios"] .modal-content * {
+  color: #ffffff !important;
+}
+

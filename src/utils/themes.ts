@@ -40,6 +40,10 @@ const BUILT_IN_THEME_METADATA: Record<string, Omit<ThemeInfo, 'name'>> = {
     displayName: 'Terminal',
     description: 'Monochrome terminal aesthetic'
   },
+  'bios': {
+    displayName: 'BIOS',
+    description: 'Early 2000\'s DOS-like BIOS menu aesthetic'
+  },
   'forest': {
     displayName: 'Forest',
     description: 'Nature-inspired green theme'
