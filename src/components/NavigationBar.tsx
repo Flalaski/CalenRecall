@@ -129,7 +129,7 @@ export default function NavigationBar({
       <div className="navigation-bar-top-row">
         <div className="nav-controls">
           <img 
-            src="/icon.png" 
+            src="./icon.png" 
             alt="CalenRecall" 
             className="app-icon"
             style={{ width: '32px', height: '32px', marginRight: '0.5rem' }}

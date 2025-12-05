@@ -120,7 +120,7 @@ export default function PreferencesComponent() {
       <div className="preferences-header">
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           <img 
-            src="/icon.png" 
+            src="./icon.png" 
             alt="CalenRecall" 
             style={{ width: '32px', height: '32px' }}
           />
@@ -377,7 +377,7 @@ export default function PreferencesComponent() {
           <div className="preference-item about-section">
             <div style={{ display: 'flex', alignItems: 'center', gap: '20px', marginBottom: '16px' }}>
               <img 
-                src="/icon.png" 
+                src="./icon.png" 
                 alt="CalenRecall" 
                 style={{ width: '64px', height: '64px', borderRadius: '8px' }}
               />
