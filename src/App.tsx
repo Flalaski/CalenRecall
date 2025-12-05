@@ -284,15 +284,6 @@ function App() {
 
   return (
     <div className="app">
-      {preferences.showMinimap !== false && (
-        <GlobalTimelineMinimap
-          selectedDate={selectedDate}
-          viewMode={viewMode}
-          onTimePeriodSelect={handleTimePeriodSelect}
-          onEntrySelect={handleEntrySelect}
-          minimapSize={preferences.minimapSize || 'medium'}
-        />
-      )}
       <NavigationBar
         viewMode={viewMode}
         onViewModeChange={handleViewModeChange}
@@ -304,6 +295,15 @@ function App() {
           }
         }}
       />
+      {preferences.showMinimap !== false && (
+        <GlobalTimelineMinimap
+          selectedDate={selectedDate}
+          viewMode={viewMode}
+          onTimePeriodSelect={handleTimePeriodSelect}
+          onEntrySelect={handleEntrySelect}
+          minimapSize={preferences.minimapSize || 'medium'}
+        />
+      )}
       <div className="app-content">
         <div className="timeline-section">
           <TimelineView
