@@ -5,6 +5,7 @@ import { addDays, addWeeks, addMonths, addYears, getYear, getMonth, getDate } fr
 import { playMechanicalClick, playMicroBlip, getAudioContext, createSliderNoise, SliderNoise } from '../utils/audioUtils';
 import { calculateEntryColor } from '../utils/entryColorUtils';
 import { useCalendar } from '../contexts/CalendarContext';
+import { getCalendarTierNames } from '../utils/calendarTierNames';
 import './GlobalTimelineMinimap.css';
 
 interface GlobalTimelineMinimapProps {
@@ -148,6 +149,7 @@ export default function GlobalTimelineMinimap({
   minimapSize = 'medium',
 }: GlobalTimelineMinimapProps) {
   const { formatDate, calendar } = useCalendar();
+  const tierNames = getCalendarTierNames(calendar);
   const [entries, setEntries] = useState<JournalEntry[]>([]);
   const [timelineRangeKey, setTimelineRangeKey] = useState(0); // Track timeline range changes to trigger entry reloading
   const [isDragging, setIsDragging] = useState(false);
@@ -3095,36 +3097,36 @@ export default function GlobalTimelineMinimap({
         {/* Edge labels for time sections - positioned at center of each visual band */}
         <div className="edge-labels edge-labels-left">
           <div className="edge-label edge-label-decade" style={{ top: `${scaleYPositions.decade}px` }}>
-            Decade
+            {tierNames.decade}
           </div>
           <div className="edge-label edge-label-year" style={{ top: `${scaleYPositions.year}px` }}>
-            Year
+            {tierNames.year}
           </div>
           <div className="edge-label edge-label-month" style={{ top: `${scaleYPositions.month}px` }}>
-            Month
+            {tierNames.month}
           </div>
           <div className="edge-label edge-label-week" style={{ top: `${scaleYPositions.week}px` }}>
-            Week
+            {tierNames.week}
           </div>
           <div className="edge-label edge-label-day" style={{ top: `${scaleYPositions.day}px` }}>
-            Day
+            {tierNames.day}
           </div>
         </div>
         <div className="edge-labels edge-labels-right">
           <div className="edge-label edge-label-decade" style={{ top: `${scaleYPositions.decade}px` }}>
-            Decade
+            {tierNames.decade}
           </div>
           <div className="edge-label edge-label-year" style={{ top: `${scaleYPositions.year}px` }}>
-            Year
+            {tierNames.year}
           </div>
           <div className="edge-label edge-label-month" style={{ top: `${scaleYPositions.month}px` }}>
-            Month
+            {tierNames.month}
           </div>
           <div className="edge-label edge-label-week" style={{ top: `${scaleYPositions.week}px` }}>
-            Week
+            {tierNames.week}
           </div>
           <div className="edge-label edge-label-day" style={{ top: `${scaleYPositions.day}px` }}>
-            Day
+            {tierNames.day}
           </div>
         </div>
         {/* Fractal web background pattern */}
