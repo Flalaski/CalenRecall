@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { JournalEntry, TimeRange } from '../types';
 import { formatDate, getCanonicalDate } from '../utils/dateUtils';
 import { getEntryForDate, saveJournalEntry, deleteJournalEntry } from '../services/journalService';
@@ -36,6 +36,7 @@ export default function JournalEditor({
   const [originalTitle, setOriginalTitle] = useState('');
   const [originalContent, setOriginalContent] = useState('');
   const [originalTags, setOriginalTags] = useState<string[]>([]);
+  const titleInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (propSelectedEntry) {
@@ -323,6 +324,16 @@ export default function JournalEditor({
     };
   }, [showConfirmDialog, handleConfirmDiscard, handleCancelDiscard]);
 
+  // Focus title input when creating a new entry
+  useEffect(() => {
+    if (isNewEntry && !loading && titleInputRef.current) {
+      // Small delay to ensure the input is rendered
+      setTimeout(() => {
+        titleInputRef.current?.focus();
+      }, 0);
+    }
+  }, [isNewEntry, loading]);
+
   const getDateLabel = () => {
     // Use calendar-aware formatting
     try {
@@ -374,6 +385,7 @@ export default function JournalEditor({
       
       <div className="editor-content">
         <input
+          ref={titleInputRef}
           type="text"
           className="title-input"
           placeholder={`${viewMode.charAt(0).toUpperCase() + viewMode.slice(1)} entry title...`}
