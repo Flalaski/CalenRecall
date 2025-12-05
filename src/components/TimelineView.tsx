@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { JournalEntry, TimeRange } from '../types';
 import { formatDate, getDaysInMonth, getDaysInWeek, isToday, getWeekStart, getWeekEnd, getZodiacColor, getZodiacGradientColor, getZodiacGradientColorForYear, getZodiacColorForDecade, parseISODate } from '../utils/dateUtils';
 import { isSameDay, isSameMonth, isSameYear } from 'date-fns';
@@ -7,6 +7,7 @@ import { calculateEntryColor } from '../utils/entryColorUtils';
 import { useCalendar } from '../contexts/CalendarContext';
 import { dateToCalendarDate } from '../utils/calendars/calendarConverter';
 import { formatCalendarDate } from '../utils/calendars/calendarConverter';
+import { deleteJournalEntry } from '../services/journalService';
 import './TimelineView.css';
 
 interface TimelineViewProps {
@@ -27,9 +28,14 @@ export default function TimelineView({
   const { calendar } = useCalendar();
   const [entries, setEntries] = useState<JournalEntry[]>([]);
   const [loading, setLoading] = useState(false);
+  const [bulkEditMode, setBulkEditMode] = useState(false);
+  const [selectedEntryIds, setSelectedEntryIds] = useState<Set<number>>(new Set());
 
   useEffect(() => {
     loadEntries();
+    // Clear bulk selection when changing date/view
+    setSelectedEntryIds(new Set());
+    setBulkEditMode(false);
   }, [selectedDate, viewMode]);
 
   useEffect(() => {
@@ -91,19 +97,25 @@ export default function TimelineView({
       const startDateStr = formatDate(startDate);
       const endDateStr = formatDate(endDate);
       
-      console.log(`[TimelineView] Loading entries from ${startDateStr} to ${endDateStr} for ${viewMode} view`);
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`[TimelineView] Loading entries from ${startDateStr} to ${endDateStr} for ${viewMode} view`);
+      }
       
       const allEntries = await window.electronAPI.getEntries(startDateStr, endDateStr);
       
-      console.log(`[TimelineView] Loaded ${allEntries.length} entries:`, allEntries.map(e => ({
-        date: e.date,
-        timeRange: e.timeRange,
-        title: e.title
-      })));
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`[TimelineView] Loaded ${allEntries.length} entries:`, allEntries.map(e => ({
+          date: e.date,
+          timeRange: e.timeRange,
+          title: e.title
+        })));
+      }
       
       setEntries(allEntries);
     } catch (error) {
-      console.error('[TimelineView] Error loading entries:', error);
+      if (process.env.NODE_ENV === 'development') {
+        console.error('[TimelineView] Error loading entries:', error);
+      }
       setEntries([]);
     } finally {
       setLoading(false);
@@ -129,7 +141,8 @@ export default function TimelineView({
     }
   };
 
-  const getEntriesForDate = (date: Date, forViewMode?: TimeRange): JournalEntry[] => {
+  // Memoize getEntriesForDate to avoid recalculating on every render
+  const getEntriesForDate = useCallback((date: Date, forViewMode?: TimeRange): JournalEntry[] => {
     const dateStr = formatDate(date);
     const checkYear = date.getFullYear();
     const checkMonth = date.getMonth();
@@ -167,7 +180,7 @@ export default function TimelineView({
       
       return false;
     });
-  };
+  }, [entries, viewMode]);
 
   // Get all entries for a specific year (for pixel map)
   const getAllEntriesForYear = (year: number): JournalEntry[] => {
@@ -448,6 +461,7 @@ export default function TimelineView({
   const renderWeekView = () => {
     const days = getDaysInWeek(selectedDate);
     const weekDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     
     return (
       <div className="timeline-week-view">
@@ -455,14 +469,17 @@ export default function TimelineView({
           {weekDays.map((day, idx) => {
             const dayDate = days[idx];
             const gradientColor = getZodiacGradientColor(dayDate);
+            const dayNumber = dayDate.getDate();
+            const monthName = monthNames[dayDate.getMonth()];
             return (
               <div 
                 key={day} 
                 className="weekday-cell"
                 style={{ '--zodiac-gradient': gradientColor } as React.CSSProperties}
               >
-                <div>{day}</div>
-                <div className="day-number">{dayDate.getDate()}</div>
+                <div className="day-number">{dayNumber}</div>
+                <div className="day-name">{day}</div>
+                <div className="day-month">{monthName}</div>
               </div>
             );
           })}
@@ -531,8 +548,56 @@ export default function TimelineView({
     );
   };
 
+  const toggleEntrySelection = (entryId: number | undefined) => {
+    if (entryId === undefined) return;
+    setSelectedEntryIds(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(entryId)) {
+        newSet.delete(entryId);
+      } else {
+        newSet.add(entryId);
+      }
+      return newSet;
+    });
+  };
+
+  const toggleSelectAll = (dayEntries: JournalEntry[]) => {
+    const entriesWithIds = dayEntries.filter(entry => entry.id !== undefined);
+    if (selectedEntryIds.size === entriesWithIds.length && entriesWithIds.length > 0) {
+      setSelectedEntryIds(new Set());
+    } else {
+      const allIds = new Set(entriesWithIds.map(entry => entry.id!));
+      setSelectedEntryIds(allIds);
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedEntryIds.size === 0) return;
+    
+    const confirmMessage = `Are you sure you want to delete ${selectedEntryIds.size} ${selectedEntryIds.size === 1 ? 'entry' : 'entries'}? This action cannot be undone.`;
+    if (!window.confirm(confirmMessage)) {
+      return;
+    }
+
+    try {
+      const deletePromises = Array.from(selectedEntryIds).map(id => 
+        deleteJournalEntry(id)
+      );
+      await Promise.all(deletePromises);
+      
+      setSelectedEntryIds(new Set());
+      setBulkEditMode(false);
+      loadEntries();
+      window.dispatchEvent(new CustomEvent('journalEntrySaved'));
+    } catch (error) {
+      console.error('Error deleting entries:', error);
+      alert(`Failed to delete entries: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  };
+
   const renderDayView = () => {
     const dayEntries = getEntriesForDate(selectedDate);
+    const entriesWithIds = dayEntries.filter(entry => entry.id !== undefined);
     
     return (
       <div className="timeline-day-view">
@@ -546,7 +611,48 @@ export default function TimelineView({
               }
             })()}
           </h2>
+          {dayEntries.length > 0 && (
+            <div className="day-header-actions">
+              <button 
+                className={`bulk-edit-toggle-button ${bulkEditMode ? 'active' : ''}`}
+                onClick={() => {
+                  setBulkEditMode(!bulkEditMode);
+                  if (bulkEditMode) {
+                    setSelectedEntryIds(new Set());
+                  }
+                }}
+                title={bulkEditMode ? 'Exit bulk edit mode' : 'Enter bulk edit mode'}
+              >
+                {bulkEditMode ? 'Cancel' : 'Bulk Edit'}
+              </button>
+            </div>
+          )}
         </div>
+        {bulkEditMode && selectedEntryIds.size > 0 && (
+          <div className="bulk-edit-actions">
+            <span className="bulk-edit-selected-count">
+              {selectedEntryIds.size} {selectedEntryIds.size === 1 ? 'entry' : 'entries'} selected
+            </span>
+            <button 
+              className="bulk-delete-button"
+              onClick={handleBulkDelete}
+            >
+              Delete Selected
+            </button>
+          </div>
+        )}
+        {bulkEditMode && entriesWithIds.length > 0 && (
+          <div className="bulk-edit-select-all">
+            <label className="bulk-edit-checkbox-label">
+              <input
+                type="checkbox"
+                checked={selectedEntryIds.size === entriesWithIds.length && entriesWithIds.length > 0}
+                onChange={() => toggleSelectAll(dayEntries)}
+              />
+              <span>Select All ({entriesWithIds.length})</span>
+            </label>
+          </div>
+        )}
         <div className="day-entries-list">
           {dayEntries.length === 0 ? (
             <div className="no-entries-message">
@@ -556,20 +662,37 @@ export default function TimelineView({
           ) : (
             dayEntries.map((entry, idx) => {
               const entryColor = calculateEntryColor(entry);
+              const isSelected = bulkEditMode && entry.id !== undefined && selectedEntryIds.has(entry.id);
               return (
                 <div
                   key={idx}
-                  className={`entry-card-full entry-${entry.timeRange}`}
-                  onClick={() => {
-                    playEntrySelectionSound();
-                    onEntrySelect(entry);
+                  className={`entry-card-full entry-${entry.timeRange} ${isSelected ? 'bulk-selected' : ''} ${bulkEditMode ? 'bulk-edit-mode' : ''}`}
+                  onClick={(e) => {
+                    if (bulkEditMode) {
+                      e.stopPropagation();
+                      toggleEntrySelection(entry.id);
+                    } else {
+                      playEntrySelectionSound();
+                      onEntrySelect(entry);
+                    }
                   }}
                   style={{ borderLeftColor: entryColor }}
                 >
+                {bulkEditMode && entry.id !== undefined && (
+                  <div className="entry-checkbox-wrapper">
+                    <input
+                      type="checkbox"
+                      checked={selectedEntryIds.has(entry.id)}
+                      onChange={() => toggleEntrySelection(entry.id)}
+                      onClick={(e) => e.stopPropagation()}
+                    />
+                  </div>
+                )}
+                <div className="entry-card-content-wrapper">
                 <div className="card-header">
                   <div className="card-title-full">{entry.title}</div>
                   <div className="card-meta">
-                    {onEditEntry && (
+                    {onEditEntry && !bulkEditMode && (
                       <button
                         className="card-edit-button"
                         onClick={(e) => {
@@ -594,6 +717,7 @@ export default function TimelineView({
                     ))}
                   </div>
                 )}
+                </div>
               </div>
               );
             })

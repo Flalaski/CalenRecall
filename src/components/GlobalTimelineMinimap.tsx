@@ -1526,27 +1526,53 @@ export default function GlobalTimelineMinimap({
       current = addMonths(current, 1);
     }
 
-    // MONTH SCALE - only calculate if needed
-    if (scalesToCalculate.has('month')) {
-      const monthMajorSet = new Set<number>();
-      current = new Date(startDate);
-      let monthMajorCount = 0;
-      const maxMonthMajors = 24; // Limit to 2 years of months
-      while (current <= endDate && monthMajorCount < maxMonthMajors) {
-        const monthStart = new Date(getYear(current), getMonth(current), 1);
-        const monthKey = monthStart.getTime();
-        if (monthStart >= startDate && monthStart <= endDate && !monthMajorSet.has(monthKey)) {
-          monthMajorSet.add(monthKey);
-          scales.month.major.push({
-            date: monthStart,
-            position: calculatePosition(monthStart),
-            label: formatDate(monthStart, 'MMM YYYY'),
-          });
-          monthMajorCount++;
-        }
-        current = addMonths(current, 1);
+    // MONTH SCALE - Always calculate month major labels (MMM YYYY) to span full minimap
+    // Use adaptive spacing based on viewMode to optimize performance
+    // Decade view: every 6 months (bi-annually: Jan, Jul), Year view: every 3 months (quarterly: Jan, Apr, Jul, Oct), Month view: all months
+    const monthSpacing = viewMode === 'decade' ? 6 : viewMode === 'year' ? 3 : 1;
+    const monthMajorSet = new Set<number>();
+    current = new Date(startDate);
+    // Reset to the first day of the month for accurate month calculations
+    current = new Date(getYear(current), getMonth(current), 1);
+    
+    // Align to standard months: for 6-month spacing use Jan/Jul (0,6), for 3-month use quarters (0,3,6,9)
+    if (monthSpacing > 1) {
+      const startMonth = getMonth(current);
+      // Find the next aligned month
+      let alignedMonth = startMonth;
+      if (monthSpacing === 6) {
+        // Align to Jan (0) or Jul (6)
+        alignedMonth = startMonth < 6 ? 0 : 6;
+      } else if (monthSpacing === 3) {
+        // Align to quarters: Jan (0), Apr (3), Jul (6), Oct (9)
+        alignedMonth = Math.ceil((startMonth + 1) / 3) * 3 - 1;
+        if (alignedMonth > 11) alignedMonth = 9; // Cap at October
       }
+      if (alignedMonth !== startMonth) {
+        current = new Date(getYear(current), alignedMonth, 1);
+        // If we went backwards, move to next period
+        if (current < startDate) {
+          current = addMonths(current, monthSpacing);
+        }
+      }
+    }
+    
+    while (current <= endDate) {
+      const monthStart = new Date(getYear(current), getMonth(current), 1);
+      const monthKey = monthStart.getTime();
+      if (monthStart >= startDate && monthStart <= endDate && !monthMajorSet.has(monthKey)) {
+        monthMajorSet.add(monthKey);
+        scales.month.major.push({
+          date: monthStart,
+          position: calculatePosition(monthStart),
+          label: formatDate(monthStart, 'MMM YYYY'),
+        });
+      }
+      current = addMonths(current, monthSpacing);
+    }
 
+    // Month minor labels (weeks) - only calculate if needed
+    if (scalesToCalculate.has('month')) {
       const monthWeekSet = new Set<number>();
       current = new Date(startDate);
       let monthWeekCount = 0;
@@ -1664,6 +1690,24 @@ export default function GlobalTimelineMinimap({
     return ((Math.abs(hash) % (maxOffset * 2 + 1)) - maxOffset);
   };
 
+  // Calculate available space for each time tier section
+  const sectionHeights = useMemo(() => {
+    const baseHeight = 40 * minimapDimensions.scaleFactor;
+    const focusedExpansion = 25 * minimapDimensions.scaleFactor;
+    const compressionFactor = 0.75;
+    
+    const heights: Record<TimeRange, number> = {} as Record<TimeRange, number>;
+    
+    timeScaleOrder.forEach((range) => {
+      const isFocused = range === viewMode;
+      heights[range] = isFocused 
+        ? baseHeight + focusedExpansion 
+        : baseHeight * compressionFactor;
+    });
+    
+    return heights;
+  }, [viewMode, minimapDimensions.scaleFactor]);
+
   // Calculate entry positions on the timeline with vertical variance and clustering
   const entryPositions = useMemo(() => {
     if (!timelineData.startDate || !timelineData.endDate || entries.length === 0) {
@@ -1675,7 +1719,13 @@ export default function GlobalTimelineMinimap({
       return [];
     }
     
-    const verticalVariance = 60; // Maximum vertical offset in pixels (30px up/down from center)
+    // Calculate adaptive vertical variance based on section height
+    // Use 80% of section height to ensure crystals don't overlap boundaries
+    const getVerticalVariance = (timeRange: TimeRange): number => {
+      const sectionHeight = sectionHeights[timeRange];
+      const maxVariance = Math.max(8, (sectionHeight * 0.8) / 2); // At least 8px, but adapt to section
+      return maxVariance;
+    };
     
     // OPTIMIZATION: Pre-calculate timeline boundaries for quick range checks
     const timelineStartTime = timelineData.startDate.getTime();
@@ -1769,54 +1819,235 @@ export default function GlobalTimelineMinimap({
       clusterIndex?: number;
       clusterSize?: number;
       clusterAngle?: number;
+      clusterHexX?: number; // Hexagonal X position for horizontal offset
+      clusterCrystalSize?: number; // Adaptive crystal size for clusters
       polygonClipPath: string;
       sides: number;
     }> = [];
     
+    // Track positions to prevent overlaps (grouped by timeRange and position bucket)
+    const positionMap = new Map<string, Set<number>>();
+    const getPositionKey = (timeRange: TimeRange, position: number): string => {
+      // Round position to nearest 0.5% to create buckets for collision detection
+      const bucket = Math.round(position * 2) / 2;
+      return `${timeRange}-${bucket}`;
+    };
+    const addPosition = (timeRange: TimeRange, position: number, verticalOffset: number): boolean => {
+      const key = getPositionKey(timeRange, position);
+      if (!positionMap.has(key)) {
+        positionMap.set(key, new Set());
+      }
+      // Round vertical offset to nearest 2px for collision detection
+      const offsetBucket = Math.round(verticalOffset / 2) * 2;
+      const offsets = positionMap.get(key)!;
+      if (offsets.has(offsetBucket)) {
+        return false; // Collision detected
+      }
+      offsets.add(offsetBucket);
+      return true; // Position is available
+    };
+    
     clusterGroups.forEach((group) => {
+      // Get the timeRange for this group (all entries in a cluster have the same timeRange)
+      const groupTimeRange = group[0].entry.timeRange;
+      const sectionHeight = sectionHeights[groupTimeRange];
+      const verticalVariance = getVerticalVariance(groupTimeRange);
+      
       if (group.length === 1) {
-        // Single entry - use hash-based offset
+        // Single entry - use hash-based offset within available space, with collision avoidance
         const entry = group[0];
         const hashInput = `${entry.entry.date}-${entry.entry.timeRange}-${entry.entry.id || 0}`;
-        const verticalOffset = hashToVerticalOffset(hashInput, verticalVariance);
+        let verticalOffset = hashToVerticalOffset(hashInput, verticalVariance);
+        
+        // Try to find a non-overlapping position
+        let attempts = 0;
+        const maxAttempts = 20;
+        const offsetStep = verticalVariance / 10; // Try positions in steps
+        
+        while (!addPosition(groupTimeRange, entry.position, verticalOffset) && attempts < maxAttempts) {
+          // Try different offsets: first try hash-based variations, then systematic search
+          if (attempts < 10) {
+            // Try hash-based variations
+            const variationHash = `${hashInput}-${attempts}`;
+            verticalOffset = hashToVerticalOffset(variationHash, verticalVariance);
+          } else {
+            // Systematic search: try positions in steps
+            const step = (attempts - 10) * offsetStep;
+            verticalOffset = (step % (verticalVariance * 2)) - verticalVariance;
+          }
+          attempts++;
+        }
+        
+        // If still colliding after max attempts, use the last calculated offset anyway
+        // (better to have slight overlap than to hide the entry)
         const sides = calculateCrystalSides(entry.entry);
         const polygonClipPath = generatePolygonClipPath(sides);
         result.push({ ...entry, verticalOffset, polygonClipPath, sides });
       } else {
-        // Multiple entries - create staggered crystalline cluster
-        // Increase radius significantly so individual crystals are clearly visible
-        const clusterRadius = 12 + (group.length * 4); // Larger radius for better visibility
-        const angleStep = (2 * Math.PI) / group.length; // Distribute evenly in circle
+        // Multiple entries - arrange in hexagonal close-packed array pattern
+        // Adaptive sizing: calculate crystal size and spacing to ensure gaps
         
-        group.forEach((entry, idx) => {
-          // Calculate angle for this gem in the cluster (staggered around center)
-          const angle = idx * angleStep;
-          // Add slight rotation offset for more organic feel
-          const rotationOffset = (entry.entry.id || idx) % 3 - 1; // -1, 0, or 1
-          const finalAngle = angle + (rotationOffset * 0.15);
+        // Base crystal size (16px for single crystals)
+        const baseCrystalSize = 16;
+        const minGap = 2; // Minimum gap between crystals in pixels
+        const minCrystalSize = 8; // Minimum crystal size to remain visible
+        
+        // Calculate how many rings are needed for this cluster
+        // Hexagonal rings: ring 0 = 1, ring 1 = 6, ring 2 = 12, ring 3 = 18, etc.
+        // Total for n rings: 1 + 6 * (1 + 2 + ... + n) = 1 + 6 * n * (n + 1) / 2 = 1 + 3 * n * (n + 1)
+        let ringsNeeded = 0;
+        let crystalsInRings = 1; // Center crystal
+        while (crystalsInRings < group.length) {
+          ringsNeeded++;
+          crystalsInRings = 1 + 3 * ringsNeeded * (ringsNeeded + 1); // 1 + 6 + 12 + 18 + ...
+        }
+        
+        // Calculate max available space (use 85% to leave margin)
+        const maxAvailableRadius = Math.min(
+          verticalVariance * 0.85,
+          (sectionHeight * 0.4)
+        );
+        
+        // Calculate required spacing: spacing = crystal_size + gap
+        // For hexagonal grid, the distance from center to outer ring is: spacing * ringsNeeded
+        // We need: spacing * ringsNeeded <= maxAvailableRadius
+        // So: spacing <= maxAvailableRadius / ringsNeeded
+        // And: spacing = crystal_size + gap
+        // Therefore: crystal_size + gap <= maxAvailableRadius / ringsNeeded
+        // crystal_size <= (maxAvailableRadius / ringsNeeded) - gap
+        
+        const maxSpacing = maxAvailableRadius / Math.max(1, ringsNeeded);
+        const calculatedCrystalSize = Math.max(
+          minCrystalSize,
+          Math.min(baseCrystalSize, maxSpacing - minGap)
+        );
+        
+        // Recalculate spacing based on actual crystal size
+        const hexSpacing = calculatedCrystalSize + minGap;
+        
+        // Verify the cluster will fit
+        const requiredRadius = hexSpacing * ringsNeeded;
+        if (requiredRadius > maxAvailableRadius) {
+          // Scale down further if needed
+          const scaleFactor = maxAvailableRadius / requiredRadius;
+          const finalCrystalSize = Math.max(minCrystalSize, calculatedCrystalSize * scaleFactor);
+          const finalSpacing = finalCrystalSize + minGap;
           
-          // Calculate vertical offset from center for cluster positioning
-          const verticalOffset = Math.sin(finalAngle) * clusterRadius;
+          // Use the scaled values
+          const hexSpacingFinal = finalSpacing;
+          const crystalSizeFinal = finalCrystalSize;
           
-          // Each crystal in cluster gets its own polygon shape
-          const sides = calculateCrystalSides(entry.entry);
-          const polygonClipPath = generatePolygonClipPath(sides);
+          const hexPositions: Array<{ x: number; y: number }> = [];
           
-          result.push({ 
-            ...entry, 
-            verticalOffset,
-            clusterIndex: idx,
-            clusterSize: group.length,
-            clusterAngle: finalAngle,
-            polygonClipPath,
-            sides,
+          // Generate hexagonal positions using axial coordinate system
+          // Center position (0, 0)
+          hexPositions.push({ x: 0, y: 0 });
+          
+          // Generate hexagonal rings using axial coordinates
+          let ring = 1;
+          while (hexPositions.length < group.length) {
+            // For each ring, generate hexagons at distance 'ring' from center
+            for (let q = -ring; q <= ring && hexPositions.length < group.length; q++) {
+              const r1 = Math.max(-ring, -q - ring);
+              const r2 = Math.min(ring, -q + ring);
+              
+              for (let r = r1; r <= r2 && hexPositions.length < group.length; r++) {
+                const distance = (Math.abs(q) + Math.abs(r) + Math.abs(q + r)) / 2;
+                if (distance === ring) {
+                  const x = hexSpacingFinal * (Math.sqrt(3) * q + Math.sqrt(3) / 2 * r);
+                  const y = hexSpacingFinal * (3 / 2 * r);
+                  hexPositions.push({ x, y });
+                }
+              }
+            }
+            ring++;
+          }
+          
+          group.forEach((entry, idx) => {
+            const hexPos = hexPositions[idx] || { x: 0, y: 0 };
+            const verticalOffset = hexPos.y;
+            const clusterAngle = hexPos.x !== 0 || hexPos.y !== 0 
+              ? Math.atan2(hexPos.y, hexPos.x)
+              : 0;
+            const sides = calculateCrystalSides(entry.entry);
+            const polygonClipPath = generatePolygonClipPath(sides);
+            
+            result.push({ 
+              ...entry, 
+              verticalOffset,
+              clusterIndex: idx,
+              clusterSize: group.length,
+              clusterAngle: clusterAngle,
+              clusterHexX: hexPos.x,
+              clusterCrystalSize: crystalSizeFinal,
+              polygonClipPath,
+              sides,
+            });
           });
-        });
+        } else {
+          // Cluster fits with calculated size
+          const hexSpacingFinal = hexSpacing;
+          const crystalSizeFinal = calculatedCrystalSize;
+          
+          const hexPositions: Array<{ x: number; y: number }> = [];
+          
+          // Generate hexagonal positions using axial coordinate system
+          // Center position (0, 0)
+          hexPositions.push({ x: 0, y: 0 });
+          
+          // Generate hexagonal rings using axial coordinates
+          let ring = 1;
+          while (hexPositions.length < group.length) {
+            // For each ring, generate hexagons at distance 'ring' from center
+            for (let q = -ring; q <= ring && hexPositions.length < group.length; q++) {
+              const r1 = Math.max(-ring, -q - ring);
+              const r2 = Math.min(ring, -q + ring);
+              
+              for (let r = r1; r <= r2 && hexPositions.length < group.length; r++) {
+                const distance = (Math.abs(q) + Math.abs(r) + Math.abs(q + r)) / 2;
+                if (distance === ring) {
+                  const x = hexSpacingFinal * (Math.sqrt(3) * q + Math.sqrt(3) / 2 * r);
+                  const y = hexSpacingFinal * (3 / 2 * r);
+                  hexPositions.push({ x, y });
+                }
+              }
+            }
+            ring++;
+          }
+          
+          group.forEach((entry, idx) => {
+            const hexPos = hexPositions[idx] || { x: 0, y: 0 };
+            const verticalOffset = hexPos.y;
+            const clusterAngle = hexPos.x !== 0 || hexPos.y !== 0 
+              ? Math.atan2(hexPos.y, hexPos.x)
+              : 0;
+            const sides = calculateCrystalSides(entry.entry);
+            const polygonClipPath = generatePolygonClipPath(sides);
+            
+            result.push({ 
+              ...entry, 
+              verticalOffset,
+              clusterIndex: idx,
+              clusterSize: group.length,
+              clusterAngle: clusterAngle,
+              clusterHexX: hexPos.x,
+              clusterCrystalSize: crystalSizeFinal,
+              polygonClipPath,
+              sides,
+            });
+          });
+        }
+        
+        // Register cluster center position to avoid overlaps with other entries
+        // Use the first entry's position as the cluster center
+        const clusterCenterPosition = group[0].position;
+        const clusterCenterOffset = 0; // Cluster center is at 0 vertical offset
+        addPosition(groupTimeRange, clusterCenterPosition, clusterCenterOffset);
       }
     });
     
     return result;
-  }, [entries, timelineData]);
+  }, [entries, timelineData, sectionHeights]);
 
   // Calculate viewport bounds in SVG coordinates for connection culling
   const viewportBounds = useMemo(() => {
@@ -2951,6 +3182,84 @@ export default function GlobalTimelineMinimap({
     }
   };
 
+  // Performance optimization: Calculate optimized month labels with distance-based prioritization
+  const optimizedMonthLabels = useMemo(() => {
+    // Don't show month labels in decade view to prevent clustering and resource usage
+    if (viewMode === 'decade') {
+      return [];
+    }
+    
+    const indicatorPosition = isFinite(currentIndicatorMetrics.position) 
+      ? Number(currentIndicatorMetrics.position) 
+      : 50;
+    
+    // Define label limits based on viewMode to prevent animation bottlenecks
+    const maxLabels = viewMode === 'year' ? 35 : 50;
+    
+    // Calculate distances and filter valid labels, then sort by distance (closest first)
+    const labelsWithDistance = allScaleMarkings.month.major
+      .filter(mark => {
+        if (!mark.label) return false;
+        if (!isFinite(mark.position)) return false;
+        if (mark.position < 0 || mark.position > 100) return false;
+        return true;
+      })
+      .map(mark => {
+        const labelPosition = Math.max(0, Math.min(100, Number(mark.position)));
+        const absDistance = Math.abs(labelPosition - indicatorPosition);
+        return { mark, labelPosition, absDistance };
+      })
+      .sort((a, b) => a.absDistance - b.absDistance) // Sort by distance, closest first
+      .slice(0, maxLabels); // Limit to closest N labels to prioritize indicators
+    
+    return labelsWithDistance.map(({ mark, labelPosition, absDistance }, idx) => {
+      const monthDate = mark.date ? new Date(mark.date.getFullYear(), mark.date.getMonth(), 15) : new Date();
+      const zodiacColor = getZodiacColor(monthDate);
+      const lightenedColor = lightenColor(zodiacColor, 0.5);
+      
+      const distanceFromIndicator = labelPosition - indicatorPosition;
+      const maxDistanceForFade = 50;
+      const calculatedOpacity = 1 - (absDistance / maxDistanceForFade);
+      const labelOpacity = Math.max(0.1, Math.min(1, calculatedOpacity));
+      
+      // Skip labels with very low opacity
+      if (labelOpacity < 0.05) {
+        return null;
+      }
+      
+      const magnificationScale = calculateMagnificationScale(distanceFromIndicator, maxDistanceForFade);
+      const baseFontSize = 0.8;
+      const fontSize = `${baseFontSize * magnificationScale}rem`;
+      
+      const monthDateTimestamp = mark.date ? mark.date.getTime() : Date.now() + idx;
+      const monthUniqueKey = `month-label-${monthDateTimestamp}-${labelPosition}-${idx}`;
+      
+      return (
+        <div
+          key={monthUniqueKey}
+          className={`scale-label month-label ${viewMode === 'month' ? 'current-scale' : ''}`}
+          style={{ 
+            position: 'absolute',
+            left: `${labelPosition}%`, 
+            top: '85px', 
+            color: lightenedColor,
+            fontSize: fontSize,
+            opacity: labelOpacity,
+            transform: 'translate3d(-50%, 0, 0)',
+            WebkitTransform: 'translate3d(-50%, 0, 0)',
+            msTransform: 'translate3d(-50%, 0, 0)',
+            zIndex: 2,
+            pointerEvents: 'none',
+          }}
+          data-position={labelPosition}
+          data-label={mark.label}
+        >
+          {mark.label}
+        </div>
+      );
+    }).filter(Boolean);
+  }, [allScaleMarkings.month.major, currentIndicatorMetrics.position, viewMode]);
+
   return (
     <div className="global-timeline-minimap">
       {/* Drag limits visualization - positioned relative to radial dial */}
@@ -3833,6 +4142,8 @@ export default function GlobalTimelineMinimap({
             })}
           {allScaleMarkings.year.minor
             .filter(mark => {
+              // Don't show month labels in decade view to prevent clustering
+              if (viewMode === 'decade') return false;
               // Ensure we have a valid label and a valid numeric position
               if (!mark.label) return false;
               if (!mark.date) return false;
@@ -3937,67 +4248,8 @@ export default function GlobalTimelineMinimap({
               );
             })}
           
-          {/* Month labels */}
-          {allScaleMarkings.month.major
-            .filter(mark => {
-              // Ensure we have a valid label and a valid numeric position
-              if (!mark.label) return false;
-              if (!isFinite(mark.position)) return false;
-              if (mark.position < 0 || mark.position > 100) return false;
-              return true;
-            })
-            .map((mark, idx) => {
-              // Explicitly ensure position is a valid number between 0 and 100
-              const labelPosition = Math.max(0, Math.min(100, Number(mark.position)));
-              
-              const monthDate = mark.date ? new Date(mark.date.getFullYear(), mark.date.getMonth(), 15) : new Date();
-              const zodiacColor = getZodiacColor(monthDate);
-              // Lighten the color for better readability on dark minimap background
-              const lightenedColor = lightenColor(zodiacColor, 0.5);
-              
-              // Calculate opacity and magnification based on distance from indicator
-              const indicatorPosition = isFinite(currentIndicatorMetrics.position) 
-                ? Number(currentIndicatorMetrics.position) 
-                : 50; // Default to center if invalid
-              const distanceFromIndicator = labelPosition - indicatorPosition;
-              const absDistance = Math.abs(distanceFromIndicator);
-              const maxDistanceForFade = 50; // Maximum distance for full fade (50% of timeline)
-              const calculatedOpacity = 1 - (absDistance / maxDistanceForFade);
-              const labelOpacity = Math.max(0.1, Math.min(1, calculatedOpacity));
-              
-              // Calculate magnification scale using curve
-              const magnificationScale = calculateMagnificationScale(distanceFromIndicator, maxDistanceForFade);
-              const baseFontSize = 0.8;
-              const fontSize = `${baseFontSize * magnificationScale}rem`;
-              
-              // Use truly unique key based on date, position, and index to prevent React element reuse
-              const monthDateTimestamp = mark.date ? mark.date.getTime() : Date.now() + idx;
-              const monthUniqueKey = `month-label-${monthDateTimestamp}-${labelPosition}-${idx}`;
-              
-              return (
-                <div
-                  key={monthUniqueKey}
-                  className={`scale-label month-label ${viewMode === 'month' ? 'current-scale' : ''}`}
-                  style={{ 
-                    position: 'absolute',
-                    left: `${labelPosition}%`, 
-                    top: '85px', 
-                    color: lightenedColor,
-                    fontSize: fontSize,
-                    opacity: labelOpacity,
-                    transform: 'translate3d(-50%, 0, 0)',
-                    WebkitTransform: 'translate3d(-50%, 0, 0)',
-                    msTransform: 'translate3d(-50%, 0, 0)',
-                    zIndex: 2,
-                    pointerEvents: 'none',
-                  }}
-                  data-position={labelPosition}
-                  data-label={mark.label}
-                >
-                  {mark.label}
-                </div>
-              );
-            })}
+          {/* Month labels - Performance optimized with distance-based prioritization */}
+          {optimizedMonthLabels}
           {allScaleMarkings.month.minor
             .filter(mark => {
               // Ensure we have a valid label and a valid numeric position
@@ -4175,7 +4427,7 @@ export default function GlobalTimelineMinimap({
 
         {/* Entry indicators */}
         <div className="entry-indicators">
-          {entryPositions.map(({ entry, position, color, clusterIndex, clusterSize, clusterAngle, polygonClipPath, sides }, idx) => {
+          {entryPositions.map(({ entry, position, color, clusterIndex, clusterSize, clusterHexX, clusterCrystalSize, verticalOffset, polygonClipPath, sides }, idx) => {
             const handleClick = (e: React.MouseEvent) => {
               e.stopPropagation();
               const entryDate = parseISODate(entry.date);
@@ -4187,13 +4439,12 @@ export default function GlobalTimelineMinimap({
             };
             
             const isInCluster = clusterSize !== undefined && clusterSize > 1;
-            const clusterRadius = isInCluster ? (8 + (clusterSize! * 2)) : 0;
-            const horizontalOffset = isInCluster && clusterAngle !== undefined 
-              ? Math.cos(clusterAngle) * clusterRadius 
+            // Use hexagonal X position directly for horizontal offset
+            const horizontalOffset = isInCluster && clusterHexX !== undefined 
+              ? clusterHexX 
               : 0;
-            const clusterVerticalOffset = isInCluster && clusterAngle !== undefined
-              ? Math.sin(clusterAngle) * clusterRadius
-              : 0;
+            // Use vertical offset from hexagonal arrangement (already calculated in entryPositions)
+            const clusterVerticalOffset = isInCluster ? verticalOffset : 0;
             
             // Check if this entry's time section is currently focused
             const isFocusedSection = entry.timeRange === viewMode;
@@ -4217,6 +4468,8 @@ export default function GlobalTimelineMinimap({
                     : `translate(-50%, -50%) ${isFocusedSection ? 'scale(1.4)' : 'scale(1)'}`,
                   zIndex: isInCluster ? (clusterIndex || 0) + 4 : (isFocusedSection ? 5 : 4),
                   transition: 'transform 0.5s cubic-bezier(0.4, 0, 0.2, 1), z-index 0.5s ease',
+                  width: isInCluster && clusterCrystalSize !== undefined ? `${clusterCrystalSize}px` : undefined,
+                  height: isInCluster && clusterCrystalSize !== undefined ? `${clusterCrystalSize}px` : undefined,
                 }}
                 onClick={handleClick}
                 title={`${entry.title} (${entry.timeRange})${isInCluster ? ` - ${clusterSize} entries` : ''}`}

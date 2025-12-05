@@ -930,12 +930,13 @@
 }
 
 .entry-indicator-wrapper.focused-section .entry-indicator {
-  filter: brightness(1.4) saturate(3) 
+  filter: brightness(1.2) saturate(4) 
     drop-shadow(0 0 6px var(--gem-color))
     drop-shadow(0 0 12px var(--gem-color))
     drop-shadow(0 0 20px var(--gem-color))
     drop-shadow(0 0 30px var(--gem-color))
-    drop-shadow(0 0 45px var(--gem-color));
+    drop-shadow(0 0 45px var(--gem-color))
+    drop-shadow(0 0 60px color-mix(in srgb, var(--gem-color) 50%, transparent));
 }
 
 .entry-indicator-wrapper:hover:not(.in-cluster) {
@@ -980,45 +981,54 @@
 
 /* Enhanced glow for cluster gems - make them even more visible with vibrant saturation */
 .entry-indicator-wrapper.in-cluster .entry-indicator {
-  filter: brightness(1.3) saturate(2.6) 
+  filter: brightness(1.2) saturate(4) 
     drop-shadow(0 0 5px var(--gem-color))
     drop-shadow(0 0 10px var(--gem-color))
     drop-shadow(0 0 15px var(--gem-color))
     drop-shadow(0 0 25px var(--gem-color))
     drop-shadow(0 0 35px var(--gem-color))
-    drop-shadow(0 0 45px var(--gem-color));
+    drop-shadow(0 0 45px var(--gem-color))
+    drop-shadow(0 0 60px color-mix(in srgb, var(--gem-color) 50%, transparent));
   box-shadow: 
-    /* Enhanced outer glow for cluster gems */
+    /* Enhanced outer glow for cluster gems - all using gem color */
     0 0 10px var(--gem-color),
     0 0 20px var(--gem-color),
     0 0 30px var(--gem-color),
     0 0 40px var(--gem-color),
     0 0 50px var(--gem-color),
     0 0 60px var(--gem-color),
-    /* Enhanced inner lighting */
-    inset 0 -8px 20px rgba(255, 255, 255, 0.5),
-    inset 0 0 15px rgba(255, 255, 255, 0.3),
+    0 0 75px color-mix(in srgb, var(--gem-color) 40%, transparent),
+    /* Enhanced inner lighting - using gem color tints */
+    inset 0 -8px 20px color-mix(in srgb, var(--gem-color) 50%, white),
+    inset 0 0 15px color-mix(in srgb, var(--gem-color) 40%, white),
     /* Enhanced inner shadows */
-    inset 0 8px 15px rgba(0, 0, 0, 0.8),
-    inset -4px -4px 12px rgba(0, 0, 0, 0.7),
-    /* Enhanced side highlights */
-    inset 4px 4px 10px rgba(255, 255, 255, 0.4),
-    inset -2px 2px 8px rgba(0, 0, 0, 0.5),
-    inset 2px -2px 6px rgba(255, 255, 255, 0.2);
+    inset 0 8px 15px color-mix(in srgb, var(--gem-color) 25%, black),
+    inset -4px -4px 12px color-mix(in srgb, var(--gem-color) 20%, black),
+    /* Enhanced side highlights - using gem color */
+    inset 4px 4px 10px color-mix(in srgb, var(--gem-color) 45%, white),
+    inset -2px 2px 8px color-mix(in srgb, var(--gem-color) 15%, black),
+    inset 2px -2px 6px color-mix(in srgb, var(--gem-color) 35%, white);
 }
 
 .entry-indicator-wrapper.in-cluster:hover .entry-indicator {
-  filter: brightness(1.7) saturate(3.2) drop-shadow(0 0 16px var(--gem-color)) drop-shadow(0 0 32px var(--gem-color)) drop-shadow(0 0 48px var(--gem-color)) drop-shadow(0 0 64px var(--gem-color));
+  filter: brightness(1.4) saturate(4.5) 
+    drop-shadow(0 0 16px var(--gem-color)) 
+    drop-shadow(0 0 32px var(--gem-color)) 
+    drop-shadow(0 0 48px var(--gem-color)) 
+    drop-shadow(0 0 64px var(--gem-color))
+    drop-shadow(0 0 80px color-mix(in srgb, var(--gem-color) 40%, transparent));
   box-shadow: 
     0 0 22px var(--gem-color),
     0 0 44px var(--gem-color),
     0 0 66px var(--gem-color),
     0 0 88px var(--gem-color),
     0 0 110px var(--gem-color),
-    inset 0 0 35px rgba(255, 255, 255, 0.6),
-    inset -6px -6px 14px rgba(0, 0, 0, 0.9),
-    inset 6px 6px 14px rgba(255, 255, 255, 0.5),
-    inset -4px 4px 10px rgba(0, 0, 0, 0.6);
+    0 0 130px color-mix(in srgb, var(--gem-color) 30%, transparent),
+    /* Enhanced inner lighting - using gem color tints */
+    inset 0 0 35px color-mix(in srgb, var(--gem-color) 65%, white),
+    inset -6px -6px 14px color-mix(in srgb, var(--gem-color) 30%, black),
+    inset 6px 6px 14px color-mix(in srgb, var(--gem-color) 60%, white),
+    inset -4px 4px 10px color-mix(in srgb, var(--gem-color) 20%, black);
 }
 
 /* Cluster pulse animation - creates a subtle breathing effect */
@@ -1042,10 +1052,11 @@
   height: 100%;
   transform: translateZ(0) rotate(45deg);
   transition: transform 0.3s ease, filter 0.3s ease;
-  /* Optimized: Reduced drop-shadow layers, using box-shadow for outer glow instead */
-  filter: brightness(1.2) saturate(2.5) 
+  /* Increased saturation and ensure glows use gem color */
+  filter: brightness(1.1) saturate(3.5) 
     drop-shadow(0 0 8px var(--gem-color))
-    drop-shadow(0 0 20px var(--gem-color));
+    drop-shadow(0 0 20px var(--gem-color))
+    drop-shadow(0 0 35px var(--gem-color));
   animation: gemGlow 3s ease-in-out infinite;
   will-change: transform, filter, opacity;
   /* Create faceted gem shape - randomized polygon based on entry properties */
@@ -1059,40 +1070,41 @@
     0% 70%, 
     0% 30%
   ));
-  /* Enhanced 3D gradient for physical crystal depth - more vibrant */
+  /* Enhanced 3D gradient for physical crystal depth - fully saturated with gem color */
   background: 
     /* Noise texture overlay for active noise effect */
-    url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.15'/%3E%3C/svg%3E"),
-    /* Base vibrant gradient */
+    url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.1'/%3E%3C/svg%3E"),
+    /* Base vibrant gradient - using gem color tints instead of white */
     linear-gradient(
       135deg,
-      rgba(255, 255, 255, 0.3) 0%,
+      color-mix(in srgb, var(--gem-color) 80%, white) 0%,
       var(--gem-color) 20%,
       var(--gem-color) 40%,
-      rgba(0, 0, 0, 0.4) 55%,
+      color-mix(in srgb, var(--gem-color) 60%, black) 55%,
       var(--gem-color) 70%,
       var(--gem-color) 85%,
-      rgba(255, 255, 255, 0.2) 100%
+      color-mix(in srgb, var(--gem-color) 70%, white) 100%
     );
   background-blend-mode: overlay, normal;
-  /* Optimized: Reduced shadow layers while maintaining visual quality */
+  /* Optimized: All glows use gem color, no white overlays */
   box-shadow: 
-    /* Gradient fade glow border - optimized outer layers */
+    /* Gradient fade glow border - all using gem color */
     0 0 12px var(--gem-color),
     0 0 24px var(--gem-color),
     0 0 36px var(--gem-color),
-    /* Inner lighting - subtle top highlight */
-    inset 0 -6px 15px rgba(255, 255, 255, 0.2),
-    inset 0 0 10px rgba(255, 255, 255, 0.15),
+    0 0 48px color-mix(in srgb, var(--gem-color) 60%, transparent),
+    /* Inner lighting - using gem color tints instead of white */
+    inset 0 -6px 15px color-mix(in srgb, var(--gem-color) 40%, white),
+    inset 0 0 10px color-mix(in srgb, var(--gem-color) 30%, white),
     /* Inner shadows - bottom depth */
-    inset 0 8px 15px rgba(0, 0, 0, 0.6),
-    inset -4px -4px 12px rgba(0, 0, 0, 0.5),
-    /* Side highlights for faceted look */
-    inset 4px 4px 10px rgba(255, 255, 255, 0.2),
-    inset -2px 2px 8px rgba(0, 0, 0, 0.4);
+    inset 0 8px 15px color-mix(in srgb, var(--gem-color) 20%, black),
+    inset -4px -4px 12px color-mix(in srgb, var(--gem-color) 15%, black),
+    /* Side highlights for faceted look - using gem color */
+    inset 4px 4px 10px color-mix(in srgb, var(--gem-color) 35%, white),
+    inset -2px 2px 8px color-mix(in srgb, var(--gem-color) 10%, black);
 }
 
-/* Soft starburst effect - replaces blocking white shine dot */
+/* Soft starburst effect - using gem color instead of white */
 .entry-indicator::before {
   content: '';
   position: absolute;
@@ -1103,22 +1115,22 @@
   transform: translate3d(-50%, -50%, 0) rotate(-45deg);
   pointer-events: none;
   will-change: transform, opacity;
-  /* Create soft starburst using radial gradient with multiple rays */
+  /* Create soft starburst using radial gradient with gem color rays */
   background: 
-    /* Outer soft rays */
+    /* Outer soft rays - using gem color */
     repeating-conic-gradient(
       from 0deg at 50% 50%,
       transparent 0deg,
-      rgba(255, 255, 255, 0.15) 2deg,
+      color-mix(in srgb, var(--gem-color) 40%, white) 2deg,
       transparent 4deg,
       transparent 8deg
     ),
-    /* Inner soft glow */
+    /* Inner soft glow - using gem color */
     radial-gradient(
       circle at 50% 50%,
-      rgba(255, 255, 255, 0.25) 0%,
-      rgba(255, 255, 255, 0.15) 15%,
-      rgba(255, 255, 255, 0.08) 30%,
+      color-mix(in srgb, var(--gem-color) 50%, white) 0%,
+      color-mix(in srgb, var(--gem-color) 35%, white) 15%,
+      color-mix(in srgb, var(--gem-color) 20%, white) 30%,
       transparent 50%
     );
   /* Use the same polygon shape as the parent */
@@ -1134,8 +1146,8 @@
   ));
   animation: starburstPulse 3s ease-in-out infinite;
   filter: blur(1px);
-  opacity: 0.6;
-  mix-blend-mode: overlay;
+  opacity: 0.7;
+  mix-blend-mode: screen;
 }
 
 /* Additional starburst layer for depth */
@@ -1181,26 +1193,28 @@
 }
 
 .entry-indicator-wrapper:hover .entry-indicator {
-  filter: brightness(1.6) saturate(3) 
+  filter: brightness(1.3) saturate(4) 
     drop-shadow(0 0 12px var(--gem-color))
     drop-shadow(0 0 30px var(--gem-color))
-    drop-shadow(0 0 50px var(--gem-color));
+    drop-shadow(0 0 50px var(--gem-color))
+    drop-shadow(0 0 70px var(--gem-color));
   box-shadow: 
-    /* Enhanced outer glow on hover - optimized */
+    /* Enhanced outer glow on hover - all using gem color */
     0 0 24px var(--gem-color),
     0 0 48px var(--gem-color),
     0 0 72px var(--gem-color),
     0 0 96px var(--gem-color),
-    /* Enhanced inner lighting */
-    inset 0 -10px 25px rgba(255, 255, 255, 0.6),
-    inset 0 0 20px rgba(255, 255, 255, 0.4),
+    0 0 120px color-mix(in srgb, var(--gem-color) 50%, transparent),
+    /* Enhanced inner lighting - using gem color tints */
+    inset 0 -10px 25px color-mix(in srgb, var(--gem-color) 60%, white),
+    inset 0 0 20px color-mix(in srgb, var(--gem-color) 50%, white),
     /* Enhanced inner shadows */
-    inset 0 10px 20px rgba(0, 0, 0, 0.9),
-    inset -5px -5px 15px rgba(0, 0, 0, 0.8),
-    /* Enhanced side highlights */
-    inset 5px 5px 12px rgba(255, 255, 255, 0.5),
-    inset -3px 3px 10px rgba(0, 0, 0, 0.6),
-    inset 3px -3px 8px rgba(255, 255, 255, 0.3);
+    inset 0 10px 20px color-mix(in srgb, var(--gem-color) 25%, black),
+    inset -5px -5px 15px color-mix(in srgb, var(--gem-color) 20%, black),
+    /* Enhanced side highlights - using gem color */
+    inset 5px 5px 12px color-mix(in srgb, var(--gem-color) 55%, white),
+    inset -3px 3px 10px color-mix(in srgb, var(--gem-color) 15%, black),
+    inset 3px -3px 8px color-mix(in srgb, var(--gem-color) 45%, white);
 }
 
 @keyframes starburstPulse {
@@ -1230,16 +1244,18 @@
 
 @keyframes gemGlow {
   0%, 100% {
-    filter: brightness(1.2) saturate(2.5) 
+    filter: brightness(1.1) saturate(3.5) 
       drop-shadow(0 0 8px var(--gem-color))
-      drop-shadow(0 0 20px var(--gem-color));
+      drop-shadow(0 0 20px var(--gem-color))
+      drop-shadow(0 0 35px var(--gem-color));
     opacity: 1;
   }
   50% {
-    filter: brightness(1.4) saturate(2.8) 
+    filter: brightness(1.2) saturate(4) 
       drop-shadow(0 0 12px var(--gem-color))
       drop-shadow(0 0 30px var(--gem-color))
-      drop-shadow(0 0 45px var(--gem-color));
+      drop-shadow(0 0 45px var(--gem-color))
+      drop-shadow(0 0 60px color-mix(in srgb, var(--gem-color) 50%, transparent));
     opacity: 1.05;
   }
 }

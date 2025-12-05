@@ -33,10 +33,10 @@ export function calculateEntryColor(entry: JournalEntry): string {
   const combinedValue = (textValue + timeValue + timeRangeValue) % 360; // Use modulo 360 for hue
   
   // Calculate hue, saturation, and lightness with more variation
-  // Increased base saturation for vibrant colors (CSS filter will multiply this)
+  // Increased base saturation and lightness for vibrant, visible colors
   const hue = combinedValue; // 0-360 degrees
-  const saturation = 75 + (textValue % 20); // 75-95% saturation (very vibrant base)
-  const lightness = 45 + (timeValue % 15); // 45-60% lightness (more visible)
+  const saturation = 85 + (textValue % 15); // 85-100% saturation (very vibrant)
+  const lightness = 50 + (timeValue % 20); // 50-70% lightness (brighter, more visible)
   
   return `hsl(${hue}, ${saturation}%, ${lightness}%)`;
 }

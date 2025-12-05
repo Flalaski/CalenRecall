@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { TimeRange } from '../types';
 import {
   getDaysInMonth,
@@ -104,21 +104,27 @@ export default function CalendarView({
       const startDateStr = formatDate(startDate);
       const endDateStr = formatDate(endDate);
       
-      console.log(`[CalendarView] Loading entries from ${startDateStr} to ${endDateStr} for ${viewMode} view`);
-      console.log(`[CalendarView] Selected date: ${formatDate(selectedDate)}`);
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`[CalendarView] Loading entries from ${startDateStr} to ${endDateStr} for ${viewMode} view`);
+        console.log(`[CalendarView] Selected date: ${formatDate(selectedDate)}`);
+      }
       
       const allEntries = await window.electronAPI.getEntries(startDateStr, endDateStr);
       
-      console.log(`[CalendarView] Loaded ${allEntries.length} entries from database:`, allEntries.map(e => ({
-        date: e.date,
-        timeRange: e.timeRange,
-        title: e.title
-      })));
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`[CalendarView] Loaded ${allEntries.length} entries from database:`, allEntries.map(e => ({
+          date: e.date,
+          timeRange: e.timeRange,
+          title: e.title
+        })));
+      }
       
       // Store all entries - the hasEntry function will check if each date falls within any entry's range
       setEntries(allEntries);
     } catch (error) {
-      console.error('[CalendarView] Error loading entries:', error);
+      if (process.env.NODE_ENV === 'development') {
+        console.error('[CalendarView] Error loading entries:', error);
+      }
       setEntries([]);
     } finally {
       setLoading(false);
@@ -144,75 +150,84 @@ export default function CalendarView({
     }
   };
 
-  // Check if a date falls within any entry's time range
-  // Similar to TimelineView's getEntriesForDate logic
-  const hasEntry = (date: Date): boolean => {
+  // Memoize hasEntry to avoid recalculating on every render
+  // Create a memoized map of dates to boolean for quick lookup
+  const entryDateMap = useMemo(() => {
+    const map = new Map<string, boolean>();
     if (entries.length === 0) {
-      return false;
+      return map;
     }
     
-    const dateStr = formatDate(date);
-    const result = entries.some(entry => {
+    // Pre-calculate which dates have entries
+    // This is more efficient than checking on every render
+    entries.forEach(entry => {
       const entryDate = parseISODate(entry.date);
       
-      // Check if date falls within entry's time range
       if (entry.timeRange === 'day') {
-        const matches = entry.date === dateStr;
-        if (matches) {
-          console.log(`[hasEntry] Day entry matches: ${dateStr} === ${entry.date}`);
-        }
-        return matches;
+        map.set(entry.date, true);
       } else if (entry.timeRange === 'month') {
-        // For month entries, check if the date is in the same year and month
-        const matches = entryDate.getFullYear() === date.getFullYear() && 
-               entryDate.getMonth() === date.getMonth();
-        if (matches) {
-          console.log(`[hasEntry] Month entry matches: ${dateStr} is in ${entryDate.getFullYear()}-${entryDate.getMonth()}`);
+        // Mark all days in the month
+        const year = entryDate.getFullYear();
+        const month = entryDate.getMonth();
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+        for (let day = 1; day <= daysInMonth; day++) {
+          const dateKey = formatDate(new Date(year, month, day));
+          map.set(dateKey, true);
         }
-        return matches;
       } else if (entry.timeRange === 'week') {
-        // Calculate week start (Monday) for the entry
+        // Mark all days in the week
         const weekStart = new Date(entryDate);
         const dayOfWeek = weekStart.getDay();
         const daysToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
         weekStart.setDate(weekStart.getDate() - daysToMonday);
         weekStart.setHours(0, 0, 0, 0);
         
-        // Calculate week end (Sunday)
-        const weekEnd = new Date(weekStart);
-        weekEnd.setDate(weekEnd.getDate() + 6);
-        weekEnd.setHours(23, 59, 59, 999);
-        
-        const checkDate = new Date(date);
-        checkDate.setHours(12, 0, 0, 0);
-        const matches = checkDate >= weekStart && checkDate <= weekEnd;
-        if (matches) {
-          console.log(`[hasEntry] Week entry matches: ${dateStr} is in week starting ${formatDate(weekStart)}`);
+        for (let i = 0; i < 7; i++) {
+          const weekDay = new Date(weekStart);
+          weekDay.setDate(weekStart.getDate() + i);
+          const dateKey = formatDate(weekDay);
+          map.set(dateKey, true);
         }
-        return matches;
       } else if (entry.timeRange === 'year') {
-        const matches = entryDate.getFullYear() === date.getFullYear();
-        if (matches) {
-          console.log(`[hasEntry] Year entry matches: ${dateStr} is in year ${entryDate.getFullYear()}`);
-        }
-        return matches;
+        // Mark all days in the year (simplified - just mark year key)
+        const year = entryDate.getFullYear();
+        map.set(`year:${year}`, true);
       } else if (entry.timeRange === 'decade') {
         const decadeStart = Math.floor(entryDate.getFullYear() / 10) * 10;
-        const dateDecade = Math.floor(date.getFullYear() / 10) * 10;
-        const matches = decadeStart === dateDecade;
-        if (matches) {
-          console.log(`[hasEntry] Decade entry matches: ${dateStr} is in decade ${decadeStart}s`);
-        }
-        return matches;
+        map.set(`decade:${decadeStart}`, true);
       }
-      return false;
     });
     
-    if (result) {
-      console.log(`[hasEntry] Found entry for date ${dateStr}`);
+    return map;
+  }, [entries]);
+
+  // Memoized hasEntry function using the pre-calculated map
+  const hasEntry = useCallback((date: Date): boolean => {
+    if (entries.length === 0) {
+      return false;
     }
-    return result;
-  };
+    
+    const dateStr = formatDate(date);
+    
+    // Check day entry
+    if (entryDateMap.has(dateStr)) {
+      return true;
+    }
+    
+    // Check year entry
+    const year = date.getFullYear();
+    if (entryDateMap.has(`year:${year}`)) {
+      return true;
+    }
+    
+    // Check decade entry
+    const decadeStart = Math.floor(year / 10) * 10;
+    if (entryDateMap.has(`decade:${decadeStart}`)) {
+      return true;
+    }
+    
+    return false;
+  }, [entries.length, entryDateMap]);
 
   const renderDecadeView = () => {
     const years = getYearsInDecade(selectedDate);
@@ -347,16 +362,23 @@ export default function CalendarView({
   const renderWeekView = () => {
     const days = getDaysInWeek(selectedDate);
     const weekDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     
     return (
       <div className="calendar-week-view">
         <div className="weekday-header">
-          {weekDays.map((day, idx) => (
-            <div key={day} className="weekday-cell">
-              <div>{day}</div>
-              <div className="day-number">{days[idx].getDate()}</div>
-            </div>
-          ))}
+          {weekDays.map((day, idx) => {
+            const dayDate = days[idx];
+            const dayNumber = dayDate.getDate();
+            const monthName = monthNames[dayDate.getMonth()];
+            return (
+              <div key={day} className="weekday-cell">
+                <div className="day-number">{dayNumber}</div>
+                <div className="day-name">{day}</div>
+                <div className="day-month">{monthName}</div>
+              </div>
+            );
+          })}
         </div>
         <div className="calendar-grid week-view">
           {days.map((day, idx) => {

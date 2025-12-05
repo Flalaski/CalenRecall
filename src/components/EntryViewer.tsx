@@ -1,10 +1,10 @@
-import { useState, useEffect, useCallback, Fragment } from 'react';
+import { useState, useEffect, useCallback, Fragment, useMemo } from 'react';
 import { JournalEntry, TimeRange } from '../types';
 import { formatDate, getWeekStart, getWeekEnd, getMonthStart, getYearStart, getDecadeStart, parseISODate } from '../utils/dateUtils';
 import { playEditSound, playNewEntrySound, playAddSound } from '../utils/audioUtils';
 import { useCalendar } from '../contexts/CalendarContext';
 import { getTimeRangeLabelInCalendar } from '../utils/calendars/timeRangeConverter';
-import { saveJournalEntry } from '../services/journalService';
+import { saveJournalEntry, deleteJournalEntry } from '../services/journalService';
 import './EntryViewer.css';
 
 interface EntryViewerProps {
@@ -30,16 +30,20 @@ export default function EntryViewer({
 }: EntryViewerProps) {
   const { calendar } = useCalendar();
   const [periodEntries, setPeriodEntries] = useState<JournalEntry[]>([]);
-  const [filteredEntries, setFilteredEntries] = useState<JournalEntry[]>([]);
   const [loading, setLoading] = useState(false);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [sortBy, setSortBy] = useState<'date' | 'title' | 'timeRange'>('date');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const [linkedEntries, setLinkedEntries] = useState<JournalEntry[]>([]);
   const [loadingLinked, setLoadingLinked] = useState(false);
+  const [bulkEditMode, setBulkEditMode] = useState(false);
+  const [selectedEntryIds, setSelectedEntryIds] = useState<Set<number>>(new Set());
 
   useEffect(() => {
     loadPeriodEntries();
+    // Clear bulk selection when changing date/view
+    setSelectedEntryIds(new Set());
+    setBulkEditMode(false);
   }, [date, viewMode]);
 
   const loadLinkedEntries = useCallback(async () => {
@@ -50,18 +54,21 @@ export default function EntryViewer({
 
     setLoadingLinked(true);
     try {
-      const loaded: JournalEntry[] = [];
-      for (const linkedId of entry.linkedEntries) {
-        if (window.electronAPI) {
-          const linkedEntry = await window.electronAPI.getEntryById(linkedId);
-          if (linkedEntry) {
-            loaded.push(linkedEntry);
-          }
-        }
+      // Batch load all linked entries in parallel instead of sequentially
+      if (window.electronAPI) {
+        const linkedEntriesPromises = entry.linkedEntries.map(id => 
+          window.electronAPI.getEntryById(id)
+        );
+        const loaded = await Promise.all(linkedEntriesPromises);
+        // Filter out null/undefined entries
+        setLinkedEntries(loaded.filter((entry): entry is JournalEntry => entry !== null));
+      } else {
+        setLinkedEntries([]);
       }
-      setLinkedEntries(loaded);
     } catch (error) {
-      console.error('Error loading linked entries:', error);
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Error loading linked entries:', error);
+      }
       setLinkedEntries([]);
     } finally {
       setLoadingLinked(false);
@@ -174,15 +181,17 @@ export default function EntryViewer({
       
       setPeriodEntries(filteredEntries);
     } catch (error) {
-      console.error('Error loading period entries:', error);
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Error loading period entries:', error);
+      }
       setPeriodEntries([]);
     } finally {
       setLoading(false);
     }
   };
 
-  // Apply filters and sorting when entries or filter settings change
-  useEffect(() => {
+  // Memoize filtered and sorted entries to avoid recalculating on every render
+  const filteredEntries = useMemo(() => {
     let filtered = [...periodEntries];
 
     // Filter by tags
@@ -218,15 +227,22 @@ export default function EntryViewer({
       return sortOrder === 'asc' ? comparison : -comparison;
     });
 
-    setFilteredEntries(filtered);
+    return filtered;
   }, [periodEntries, selectedTags, sortBy, sortOrder]);
+
+  // Memoize entries with IDs for bulk edit operations
+  const filteredEntriesWithIds = useMemo(() => {
+    return filteredEntries.filter(entry => entry.id !== undefined);
+  }, [filteredEntries]);
 
   const getDateLabel = () => {
     // Use calendar-aware formatting
     try {
       return getTimeRangeLabelInCalendar(date, viewMode, calendar);
     } catch (e) {
-      console.error('Error formatting date in calendar:', e);
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Error formatting date in calendar:', e);
+      }
       // Fallback to Gregorian formatting
       switch (viewMode) {
         case 'decade':
@@ -320,6 +336,70 @@ export default function EntryViewer({
     setSelectedTags([]);
   };
 
+  const toggleEntrySelection = (entryId: number | undefined) => {
+    if (entryId === undefined) return;
+    setSelectedEntryIds(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(entryId)) {
+        newSet.delete(entryId);
+      } else {
+        newSet.add(entryId);
+      }
+      return newSet;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedEntryIds.size === filteredEntriesWithIds.length && filteredEntriesWithIds.length > 0) {
+      // Deselect all
+      setSelectedEntryIds(new Set());
+    } else {
+      // Select all visible entries that have IDs
+      const allIds = new Set(filteredEntriesWithIds.map(entry => entry.id!));
+      setSelectedEntryIds(allIds);
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedEntryIds.size === 0) return;
+    
+    const confirmMessage = `Are you sure you want to delete ${selectedEntryIds.size} ${selectedEntryIds.size === 1 ? 'entry' : 'entries'}? This action cannot be undone.`;
+    if (!window.confirm(confirmMessage)) {
+      return;
+    }
+
+    try {
+      // Delete all selected entries
+      const deletePromises = Array.from(selectedEntryIds).map(id => 
+        deleteJournalEntry(id)
+      );
+      await Promise.all(deletePromises);
+      
+      // Clear selection and exit bulk edit mode
+      setSelectedEntryIds(new Set());
+      setBulkEditMode(false);
+      
+      // Reload entries
+      loadPeriodEntries();
+      
+      // Trigger refresh event
+      window.dispatchEvent(new CustomEvent('journalEntrySaved'));
+    } catch (error) {
+      console.error('Error deleting entries:', error);
+      alert(`Failed to delete entries: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  };
+
+  const handlePeriodEntryClick = (periodEntry: JournalEntry, event?: React.MouseEvent) => {
+    // In bulk edit mode, clicking should toggle selection instead of selecting the entry
+    if (bulkEditMode) {
+      event?.stopPropagation();
+      toggleEntrySelection(periodEntry.id);
+      return;
+    }
+    onEntrySelect(periodEntry);
+  };
+
   const handleDuplicate = async () => {
     if (!entry) return;
 
@@ -346,7 +426,9 @@ export default function EntryViewer({
         onEntryDuplicated();
       }
     } catch (error) {
-      console.error('Error duplicating entry:', error);
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Error duplicating entry:', error);
+      }
       alert('Failed to duplicate entry. Please try again.');
     }
   };
@@ -427,12 +509,28 @@ export default function EntryViewer({
       <div className="viewer-header">
         <div className="header-top">
           <h3>{getDateLabel()}</h3>
-          <button className="new-entry-button-header" onClick={() => {
-            playNewEntrySound();
-            onNewEntry();
-          }}>
-            {getNewEntryButtonText()}
-          </button>
+          <div className="header-actions">
+            {periodEntries.length > 0 && (
+              <button 
+                className={`bulk-edit-toggle-button ${bulkEditMode ? 'active' : ''}`}
+                onClick={() => {
+                  setBulkEditMode(!bulkEditMode);
+                  if (bulkEditMode) {
+                    setSelectedEntryIds(new Set());
+                  }
+                }}
+                title={bulkEditMode ? 'Exit bulk edit mode' : 'Enter bulk edit mode'}
+              >
+                {bulkEditMode ? 'Cancel' : 'Bulk Edit'}
+              </button>
+            )}
+            <button className="new-entry-button-header" onClick={() => {
+              playNewEntrySound();
+              onNewEntry();
+            }}>
+              {getNewEntryButtonText()}
+            </button>
+          </div>
         </div>
       </div>
       
@@ -446,7 +544,20 @@ export default function EntryViewer({
           </div>
         ) : (
           <Fragment>
-            {(allTags.length > 0 || periodEntries.length > 1) && (
+            {bulkEditMode && selectedEntryIds.size > 0 && (
+              <div className="bulk-edit-actions">
+                <span className="bulk-edit-selected-count">
+                  {selectedEntryIds.size} {selectedEntryIds.size === 1 ? 'entry' : 'entries'} selected
+                </span>
+                <button 
+                  className="bulk-delete-button"
+                  onClick={handleBulkDelete}
+                >
+                  Delete Selected
+                </button>
+              </div>
+            )}
+            {(allTags.length > 0 || periodEntries.length > 1) && !bulkEditMode && (
               <div className="period-entries-controls">
                 {allTags.length > 0 && (
                   <div className="period-entries-filter">
@@ -485,6 +596,18 @@ export default function EntryViewer({
                 )}
               </div>
             )}
+            {bulkEditMode && filteredEntriesWithIds.length > 0 && (
+              <div className="bulk-edit-select-all">
+                <label className="bulk-edit-checkbox-label">
+                  <input
+                    type="checkbox"
+                    checked={selectedEntryIds.size === filteredEntriesWithIds.length && filteredEntriesWithIds.length > 0}
+                    onChange={toggleSelectAll}
+                  />
+                  <span>Select All ({filteredEntriesWithIds.length})</span>
+                </label>
+              </div>
+            )}
             {filteredEntries.length === 0 && periodEntries.length > 0 ? (
               <div className="viewer-empty">
                 <p>No entries match the selected filters.</p>
@@ -497,9 +620,20 @@ export default function EntryViewer({
                 {filteredEntries.map((periodEntry) => (
               <div
                 key={periodEntry.id || `${periodEntry.date}-${periodEntry.timeRange}-${periodEntry.createdAt}`}
-                className="period-entry-item"
-                onClick={() => onEntrySelect(periodEntry)}
+                className={`period-entry-item ${bulkEditMode && periodEntry.id !== undefined && selectedEntryIds.has(periodEntry.id) ? 'bulk-selected' : ''} ${bulkEditMode ? 'bulk-edit-mode' : ''}`}
+                onClick={(e) => handlePeriodEntryClick(periodEntry, e)}
               >
+                {bulkEditMode && periodEntry.id !== undefined && (
+                  <div className="entry-checkbox-wrapper">
+                    <input
+                      type="checkbox"
+                      checked={selectedEntryIds.has(periodEntry.id)}
+                      onChange={() => toggleEntrySelection(periodEntry.id)}
+                      onClick={(e) => e.stopPropagation()}
+                    />
+                  </div>
+                )}
+                <div className="period-entry-content-wrapper">
                 <div className="period-entry-header">
                   <div className="period-entry-title-row">
                     <span className="period-entry-title">{periodEntry.title}</span>
@@ -547,6 +681,7 @@ export default function EntryViewer({
                     ))}
                   </div>
                 )}
+                </div>
               </div>
             ))}
           </div>

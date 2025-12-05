@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { JournalEntry, TimeRange } from '../types';
-import { getEntriesForRange } from '../services/journalService';
+import { getEntriesForRange, deleteJournalEntry } from '../services/journalService';
 import { formatDate, parseISODate } from '../utils/dateUtils';
 import { playNewEntrySound } from '../utils/audioUtils';
 import { useCalendar } from '../contexts/CalendarContext';
@@ -28,15 +28,22 @@ export default function JournalList({
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [sortBy, setSortBy] = useState<'date' | 'title' | 'timeRange'>('date');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+  const [bulkEditMode, setBulkEditMode] = useState(false);
+  const [selectedEntryIds, setSelectedEntryIds] = useState<Set<number>>(new Set());
 
   useEffect(() => {
     loadEntries();
     setSelectedEntryId(undefined);
+    // Clear bulk selection when changing date/view
+    setSelectedEntryIds(new Set());
+    setBulkEditMode(false);
   }, [selectedDate, viewMode]);
 
   useEffect(() => {
     const handleEntrySaved = () => {
-      console.log('JournalList: journalEntrySaved event received, reloading entries');
+      if (process.env.NODE_ENV === 'development') {
+        console.log('JournalList: journalEntrySaved event received, reloading entries');
+      }
       loadEntries();
     };
     window.addEventListener('journalEntrySaved', handleEntrySaved);
@@ -48,12 +55,18 @@ export default function JournalList({
   const loadEntries = async () => {
     setLoading(true);
     try {
-      console.log('JournalList: Loading entries for', { viewMode, selectedDate: selectedDate.toISOString() });
+      if (process.env.NODE_ENV === 'development') {
+        console.log('JournalList: Loading entries for', { viewMode, selectedDate: selectedDate.toISOString() });
+      }
       const loadedEntries = await getEntriesForRange(viewMode, selectedDate);
-      console.log('JournalList: Loaded entries:', loadedEntries.length, loadedEntries);
+      if (process.env.NODE_ENV === 'development') {
+        console.log('JournalList: Loaded entries:', loadedEntries.length, loadedEntries);
+      }
       setEntries(loadedEntries);
     } catch (error) {
-      console.error('Error loading entries:', error);
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Error loading entries:', error);
+      }
     } finally {
       setLoading(false);
     }
@@ -99,9 +112,74 @@ export default function JournalList({
     setFilteredEntries(filtered);
   }, [entries, selectedTags, sortBy, sortOrder]);
 
-  const handleEntryClick = (entry: JournalEntry) => {
+  // Memoize entries with IDs for bulk edit operations
+  const filteredEntriesWithIds = useMemo(() => {
+    return filteredEntries.filter(entry => entry.id !== undefined);
+  }, [filteredEntries]);
+
+  const handleEntryClick = (entry: JournalEntry, event?: React.MouseEvent) => {
+    // In bulk edit mode, clicking should toggle selection instead of selecting the entry
+    if (bulkEditMode) {
+      event?.stopPropagation();
+      toggleEntrySelection(entry.id);
+      return;
+    }
     setSelectedEntryId(entry.id);
     onEntrySelect(entry);
+  };
+
+  const toggleEntrySelection = (entryId: number | undefined) => {
+    if (entryId === undefined) return;
+    setSelectedEntryIds(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(entryId)) {
+        newSet.delete(entryId);
+      } else {
+        newSet.add(entryId);
+      }
+      return newSet;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedEntryIds.size === filteredEntriesWithIds.length && filteredEntriesWithIds.length > 0) {
+      // Deselect all
+      setSelectedEntryIds(new Set());
+    } else {
+      // Select all visible entries that have IDs
+      const allIds = new Set(filteredEntriesWithIds.map(entry => entry.id!));
+      setSelectedEntryIds(allIds);
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedEntryIds.size === 0) return;
+    
+    const confirmMessage = `Are you sure you want to delete ${selectedEntryIds.size} ${selectedEntryIds.size === 1 ? 'entry' : 'entries'}? This action cannot be undone.`;
+    if (!window.confirm(confirmMessage)) {
+      return;
+    }
+
+    try {
+      // Delete all selected entries
+      const deletePromises = Array.from(selectedEntryIds).map(id => 
+        deleteJournalEntry(id)
+      );
+      await Promise.all(deletePromises);
+      
+      // Clear selection and exit bulk edit mode
+      setSelectedEntryIds(new Set());
+      setBulkEditMode(false);
+      
+      // Reload entries
+      loadEntries();
+      
+      // Trigger refresh event
+      window.dispatchEvent(new CustomEvent('journalEntrySaved'));
+    } catch (error) {
+      console.error('Error deleting entries:', error);
+      alert(`Failed to delete entries: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
   };
 
   const getTimeRangeLabel = (timeRange: TimeRange): string => {
@@ -173,12 +251,28 @@ export default function JournalList({
     <div className="journal-list">
       <div className="journal-list-header">
         <h3>Journal Entries</h3>
-        <button className="new-entry-button" onClick={() => {
-          playNewEntrySound();
-          onNewEntry();
-        }}>
-          {getNewEntryButtonText()}
-        </button>
+        <div className="journal-list-header-actions">
+          {entries.length > 0 && (
+            <button 
+              className={`bulk-edit-toggle-button ${bulkEditMode ? 'active' : ''}`}
+              onClick={() => {
+                setBulkEditMode(!bulkEditMode);
+                if (bulkEditMode) {
+                  setSelectedEntryIds(new Set());
+                }
+              }}
+              title={bulkEditMode ? 'Exit bulk edit mode' : 'Enter bulk edit mode'}
+            >
+              {bulkEditMode ? 'Cancel' : 'Bulk Edit'}
+            </button>
+          )}
+          <button className="new-entry-button" onClick={() => {
+            playNewEntrySound();
+            onNewEntry();
+          }}>
+            {getNewEntryButtonText()}
+          </button>
+        </div>
       </div>
       <div className="journal-list-content">
         {entries.length === 0 ? (
@@ -188,7 +282,20 @@ export default function JournalList({
           </div>
         ) : (
           <>
-            {(allTags.length > 0 || entries.length > 1) && (
+            {bulkEditMode && selectedEntryIds.size > 0 && (
+              <div className="bulk-edit-actions">
+                <span className="bulk-edit-selected-count">
+                  {selectedEntryIds.size} {selectedEntryIds.size === 1 ? 'entry' : 'entries'} selected
+                </span>
+                <button 
+                  className="bulk-delete-button"
+                  onClick={handleBulkDelete}
+                >
+                  Delete Selected
+                </button>
+              </div>
+            )}
+            {(allTags.length > 0 || entries.length > 1) && !bulkEditMode && (
               <div className="journal-list-controls">
                 {allTags.length > 0 && (
                   <div className="journal-list-filter">
@@ -227,6 +334,18 @@ export default function JournalList({
                 )}
               </div>
             )}
+            {bulkEditMode && filteredEntriesWithIds.length > 0 && (
+              <div className="bulk-edit-select-all">
+                <label className="bulk-edit-checkbox-label">
+                  <input
+                    type="checkbox"
+                    checked={selectedEntryIds.size === filteredEntriesWithIds.length && filteredEntriesWithIds.length > 0}
+                    onChange={toggleSelectAll}
+                  />
+                  <span>Select All ({filteredEntriesWithIds.length})</span>
+                </label>
+              </div>
+            )}
             {filteredEntries.length === 0 && entries.length > 0 ? (
               <div className="journal-list-empty">
                 <p>No entries match the selected filters.</p>
@@ -239,27 +358,39 @@ export default function JournalList({
                 {filteredEntries.map((entry) => (
               <div
                 key={entry.id}
-                className={`journal-entry-item ${selectedEntryId === entry.id ? 'selected' : ''}`}
-                onClick={() => handleEntryClick(entry)}
+                className={`journal-entry-item ${!bulkEditMode && selectedEntryId === entry.id ? 'selected' : ''} ${bulkEditMode && entry.id !== undefined && selectedEntryIds.has(entry.id) ? 'bulk-selected' : ''} ${bulkEditMode ? 'bulk-edit-mode' : ''}`}
+                onClick={(e) => handleEntryClick(entry, e)}
               >
-                <div className="entry-item-header">
-                  <div className="entry-item-title">{entry.title}</div>
-                  <div className="entry-item-meta">
-                    <span className="entry-time-range">{getTimeRangeLabel(entry.timeRange)}</span>
-                    <span className="entry-date">{formatEntryDate(entry)}</span>
-                  </div>
-                </div>
-                <div className="entry-item-preview">
-                  {entry.content.substring(0, 100)}
-                  {entry.content.length > 100 && '...'}
-                </div>
-                {entry.tags && entry.tags.length > 0 && (
-                  <div className="entry-item-tags">
-                    {entry.tags.map((tag, idx) => (
-                      <span key={idx} className="entry-tag">{tag}</span>
-                    ))}
+                {bulkEditMode && entry.id !== undefined && (
+                  <div className="entry-checkbox-wrapper">
+                    <input
+                      type="checkbox"
+                      checked={selectedEntryIds.has(entry.id)}
+                      onChange={() => toggleEntrySelection(entry.id)}
+                      onClick={(e) => e.stopPropagation()}
+                    />
                   </div>
                 )}
+                <div className="entry-item-content">
+                  <div className="entry-item-header">
+                    <div className="entry-item-title">{entry.title}</div>
+                    <div className="entry-item-meta">
+                      <span className="entry-time-range">{getTimeRangeLabel(entry.timeRange)}</span>
+                      <span className="entry-date">{formatEntryDate(entry)}</span>
+                    </div>
+                  </div>
+                  <div className="entry-item-preview">
+                    {entry.content.substring(0, 100)}
+                    {entry.content.length > 100 && '...'}
+                  </div>
+                  {entry.tags && entry.tags.length > 0 && (
+                    <div className="entry-item-tags">
+                      {entry.tags.map((tag, idx) => (
+                        <span key={idx} className="entry-tag">{tag}</span>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
             ))}
           </div>
