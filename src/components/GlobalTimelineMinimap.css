@@ -173,16 +173,23 @@
 .mechanical-scale-label {
   text-align: center;
   font-size: 1rem;
-  font-weight: 700;
+  font-weight: 400;
   color: #4a90e2;
   text-transform: uppercase;
-  letter-spacing: 2px;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  letter-spacing: 0.15em;
+  text-shadow: 
+    1.5px 1.5px 0px rgba(0, 0, 0, 0.15),
+    3px 3px 0px rgba(0, 0, 0, 0.1),
+    4px 4px 6px rgba(0, 0, 0, 0.08),
+    0 0 1px rgba(0, 0, 0, 0.1);
   background: rgba(255, 255, 255, 0.9);
   padding: 4px 12px;
   border-radius: 4px;
   border: 2px solid #4a90e2;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  font-family: 'Bebas Neue', 'Impact', 'Arial Black', 'Franklin Gothic Heavy', 'Arial Narrow', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 @keyframes mechanicalClick {
@@ -760,10 +767,19 @@
   padding: 2px 8px;
   border-radius: 4px;
   font-size: 0.7rem;
-  font-weight: 600;
+  font-weight: 400;
   white-space: nowrap;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
   pointer-events: none;
+  font-family: 'Bebas Neue', 'Impact', 'Arial Black', 'Franklin Gothic Heavy', 'Arial Narrow', sans-serif;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  text-shadow: 
+    1px 1px 0px rgba(0, 0, 0, 0.2),
+    2px 2px 0px rgba(0, 0, 0, 0.15),
+    3px 3px 4px rgba(0, 0, 0, 0.1);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 .segment-label::after {
@@ -1247,27 +1263,29 @@
   transform: translate3d(-50%, 0, 0);
   font-size: 0.7rem; /* Increased base font size for better legibility */
   color: #555;
-  font-weight: 600;
+  font-weight: 400;
   white-space: nowrap;
   pointer-events: none;
-  /* Improved font rendering for better legibility */
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1); /* Subtle shadow for better contrast */
-  font-family: 'Noto Sans', 'Noto Sans SC', 'Noto Sans Arabic', 'Noto Sans Hebrew', 'Noto Sans Thai',
-    'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+  /* Wall-painted font styling */
+  font-family: 'Bebas Neue', 'Impact', 'Arial Black', 'Franklin Gothic Heavy', 'Arial Narrow', sans-serif;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  text-shadow: 
+    1px 1px 0px rgba(0, 0, 0, 0.15),
+    2px 2px 0px rgba(0, 0, 0, 0.1),
+    3px 3px 4px rgba(0, 0, 0, 0.08);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
-  /* Better letter spacing for readability */
-  letter-spacing: 0.02em;
   /* Smooth transitions for magnification effect */
-  transition: font-size 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease;
+  transition: font-size 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease, color 0.3s ease;
   will-change: transform, opacity;
 }
 
 .scale-label.decade-label {
   font-size: 0.9rem; /* Increased base - will be overridden by inline style with magnification */
-  font-weight: 700;
-  /* Color will be set via inline style (zodiac color) */
+  font-weight: 400;
+  color: #9c27b0; /* Purple for decade */
   top: 2px;
   /* Allow left to be set via inline styles - no default left value */
 }
@@ -1275,12 +1293,13 @@
 .scale-label.decade-label.current-scale {
   /* Keep current-scale styling but allow color override from inline style */
   font-size: 0.95rem; /* Increased - will be overridden by inline style with magnification */
+  color: #9c27b0; /* Purple for decade */
 }
 
 .scale-label.year-label {
   font-size: 0.85rem; /* Increased base - will be overridden by inline style with magnification */
-  font-weight: 700;
-  /* Color will be set via inline style (zodiac color) */
+  font-weight: 400;
+  color: #0277bd; /* Blue for year */
   top: 45px;
   /* Allow left to be set via inline styles - no default left value */
 }
@@ -1288,59 +1307,62 @@
 .scale-label.year-label.current-scale {
   /* Keep current-scale styling but allow color override from inline style */
   font-size: 0.9rem; /* Increased - will be overridden by inline style with magnification */
+  color: #0277bd; /* Blue for year */
 }
 
 .scale-label.year-minor-label {
   font-size: 0.7rem; /* Increased base - will be overridden by inline style with magnification */
-  font-weight: 500;
-  color: #666;
+  font-weight: 400;
+  color: #0277bd; /* Blue for year (lighter variant) */
+  opacity: 0.7;
   top: 48px;
   /* Allow left to be set via inline styles - no default left value */
 }
 
 .scale-label.month-label {
   font-size: 0.8rem; /* Increased base - will be overridden by inline style with magnification */
-  font-weight: 600;
-  color: #444;
+  font-weight: 400;
+  color: #ef6c00; /* Orange for month */
   top: 85px;
 }
 
 .scale-label.month-label.current-scale {
-  color: #4a90e2;
-  font-weight: 700;
+  color: #ef6c00; /* Orange for month */
+  font-weight: 400;
   font-size: 0.85rem; /* Increased - will be overridden by inline style with magnification */
 }
 
 .scale-label.month-minor-label {
   font-size: 0.65rem; /* Increased base - will be overridden by inline style with magnification */
-  font-weight: 500;
-  color: #777;
+  font-weight: 400;
+  color: #ef6c00; /* Orange for month (lighter variant) */
+  opacity: 0.7;
   top: 88px;
 }
 
 .scale-label.week-label {
   font-size: 0.75rem; /* Increased base - will be overridden by inline style with magnification */
-  font-weight: 600;
-  color: #555;
+  font-weight: 400;
+  color: #2e7d32; /* Green for week */
   top: 125px;
 }
 
 .scale-label.week-label.current-scale {
-  color: #4a90e2;
-  font-weight: 700;
+  color: #2e7d32; /* Green for week */
+  font-weight: 400;
   font-size: 0.8rem; /* Increased - will be overridden by inline style with magnification */
 }
 
 .scale-label.day-label {
   font-size: 0.7rem; /* Increased base - will be overridden by inline style with magnification */
-  font-weight: 600;
-  color: #666;
+  font-weight: 400;
+  color: #c2185b; /* Pink for day */
   top: 165px;
 }
 
 .scale-label.day-label.current-scale {
-  color: #4a90e2;
-  font-weight: 700;
+  color: #c2185b; /* Pink for day */
+  font-weight: 400;
   font-size: 0.75rem; /* Increased - will be overridden by inline style with magnification */
 }
 
