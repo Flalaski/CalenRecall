@@ -60,6 +60,10 @@ const BUILT_IN_THEME_METADATA: Record<string, Omit<ThemeInfo, 'name'>> = {
     displayName: 'Modern Minimal',
     description: 'Clean minimal design with subtle colors'
   },
+  'modern-minimal-oled': {
+    displayName: 'Modern Minimal OLED',
+    description: 'OLED-optimized dark variant with true black backgrounds for maximum power efficiency'
+  },
   'auto': {
     displayName: 'Auto (System)',
     description: 'Follows your system theme preference'

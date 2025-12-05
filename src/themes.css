@@ -22,6 +22,7 @@
 @import './themes/sunset.css';
 @import './themes/retro80s.css';
 @import './themes/modern-minimal.css';
+@import './themes/modern-minimal-oled.css';
 
 /* Custom themes are automatically imported via themeLoader.ts */
 /* You can still manually add @import statements here if needed for explicit control */

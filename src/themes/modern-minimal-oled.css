@@ -1,0 +1,1841 @@
+/**
+ * Modern Minimal OLED Theme
+ * OLED-optimized dark variant with true black backgrounds for maximum power efficiency
+ */
+
+[data-theme="modern-minimal-oled"] body {
+  background: #000000;
+  color: #e0e0e0;
+}
+
+[data-theme="modern-minimal-oled"] .app {
+  background: #000000;
+}
+
+[data-theme="modern-minimal-oled"] .navigation-bar {
+  background: #0a0a0a;
+  border-bottom: 1px solid #1a1a1a;
+  box-shadow: none;
+}
+
+[data-theme="modern-minimal-oled"] .nav-button {
+  background: transparent;
+  border: 1px solid transparent;
+  color: #808080;
+  text-shadow: none;
+}
+
+[data-theme="modern-minimal-oled"] .nav-button:hover {
+  background: #151515;
+  border-color: #1a1a1a;
+}
+
+[data-theme="modern-minimal-oled"] .timeline-cell {
+  background: #0a0a0a;
+  border: 1px solid #0f0f0f;
+  color: #b0b0b0;
+}
+
+[data-theme="modern-minimal-oled"] .timeline-cell:hover {
+  background: #151515;
+  border-color: #1a1a1a;
+}
+
+[data-theme="modern-minimal-oled"] .timeline-cell.today {
+  background: #0a0a0a;
+  border: 2px solid #4a4a4a;
+  color: #e0e0e0;
+}
+
+[data-theme="modern-minimal-oled"] .week-entry-group {
+  background: #0a0a0a;
+  border: 1px solid #0f0f0f;
+  box-shadow: none;
+}
+
+[data-theme="modern-minimal-oled"] {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica', 'Arial', sans-serif;
+  font-size: 14px;
+}
+
+[data-theme="modern-minimal-oled"] .app-content {
+  background: #000000;
+  gap: 1px;
+}
+
+[data-theme="modern-minimal-oled"] .timeline-section {
+  background: #000000;
+}
+
+[data-theme="modern-minimal-oled"] .editor-section {
+  background: #000000;
+  border-left: 1px solid #1a1a1a;
+}
+
+/* Navigation Bar - Additional */
+[data-theme="modern-minimal-oled"] .navigation-bar-top-row {
+  background: #0a0a0a;
+  border-bottom: 1px solid #1a1a1a;
+}
+
+[data-theme="modern-minimal-oled"] .nav-controls {
+  background: transparent;
+}
+
+[data-theme="modern-minimal-oled"] .today-button {
+  background: transparent;
+  border: 1px solid transparent;
+  color: #808080;
+  text-shadow: none;
+}
+
+[data-theme="modern-minimal-oled"] .today-button:hover {
+  background: #151515;
+  border-color: #1a1a1a;
+}
+
+[data-theme="modern-minimal-oled"] .view-mode-selector {
+  background: transparent;
+}
+
+[data-theme="modern-minimal-oled"] .view-mode-button {
+  background: transparent;
+  border: 1px solid transparent;
+  color: #808080;
+  text-shadow: none;
+}
+
+[data-theme="modern-minimal-oled"] .view-mode-button:hover {
+  background: #151515;
+  border-color: #1a1a1a;
+}
+
+[data-theme="modern-minimal-oled"] .view-mode-button.active {
+  background: #0a0a0a;
+  color: #e0e0e0;
+  border-bottom: 2px solid #4a4a4a;
+}
+
+[data-theme="modern-minimal-oled"] .date-label {
+  color: #e0e0e0;
+  text-shadow: none;
+}
+
+[data-theme="modern-minimal-oled"] .calendar-selector {
+  background: transparent;
+}
+
+[data-theme="modern-minimal-oled"] .calendar-select {
+  background: #0a0a0a;
+  border: 1px solid #1a1a1a;
+  color: #b0b0b0;
+  text-shadow: none;
+}
+
+[data-theme="modern-minimal-oled"] .calendar-select:focus {
+  border-color: #4a4a4a;
+  outline: 1px solid #4a4a4a;
+}
+
+[data-theme="modern-minimal-oled"] .calendar-info-panel {
+  background: #0a0a0a;
+  border: 1px solid #1a1a1a;
+  color: #b0b0b0;
+}
+
+[data-theme="modern-minimal-oled"] .calendar-definition-toggle {
+  background: transparent;
+  border: 1px solid transparent;
+  color: #808080;
+  text-shadow: none;
+}
+
+[data-theme="modern-minimal-oled"] .calendar-definition-toggle:hover {
+  background: #151515;
+  border-color: #1a1a1a;
+}
+
+[data-theme="modern-minimal-oled"] .calendar-definition-drawer {
+  background: #0a0a0a;
+  border: 1px solid #1a1a1a;
+  color: #b0b0b0;
+}
+
+/* Calendar View */
+[data-theme="modern-minimal-oled"] .calendar-loading {
+  background: #000000;
+  color: #808080;
+  text-shadow: none;
+}
+
+[data-theme="modern-minimal-oled"] .calendar-grid {
+  background: #0a0a0a;
+  border: 1px solid #1a1a1a;
+}
+
+[data-theme="modern-minimal-oled"] .calendar-cell {
+  background: #0a0a0a;
+  border: 1px solid #0f0f0f;
+  color: #b0b0b0;
+  text-shadow: none;
+}
+
+[data-theme="modern-minimal-oled"] .calendar-cell:hover {
+  background: #151515;
+  border-color: #1a1a1a;
+}
+
+[data-theme="modern-minimal-oled"] .calendar-cell.empty-cell {
+  background: #000000;
+  border: 1px solid #f5f5f5;
+  cursor: default;
+}
+
+[data-theme="modern-minimal-oled"] .calendar-cell.today {
+  background: #0a0a0a;
+  border: 2px solid #4a4a4a;
+  color: #e0e0e0;
+}
+
+[data-theme="modern-minimal-oled"] .calendar-cell.selected {
+  background: #0a0a0a;
+  border: 2px solid #4a4a4a;
+  color: #e0e0e0;
+}
+
+[data-theme="modern-minimal-oled"] .calendar-cell.has-entry {
+  background: #0a0a0a;
+  border: 2px solid #bdbdbd;
+}
+
+[data-theme="modern-minimal-oled"] .calendar-cell.has-entry.today {
+  background: #0a0a0a;
+  border: 2px solid #4a4a4a;
+}
+
+[data-theme="modern-minimal-oled"] .cell-content {
+  color: inherit;
+}
+
+[data-theme="modern-minimal-oled"] .cell-label {
+  color: inherit;
+  text-shadow: none;
+}
+
+[data-theme="modern-minimal-oled"] .entry-indicator {
+  background: #4a4a4a;
+  border: none;
+}
+
+[data-theme="modern-minimal-oled"] .weekday-header {
+  background: #0a0a0a;
+  border-bottom: 1px solid #1a1a1a;
+  color: #808080;
+  text-shadow: none;
+}
+
+[data-theme="modern-minimal-oled"] .weekday-cell {
+  background: #0a0a0a;
+  border: 1px solid #0f0f0f;
+  color: #808080;
+  text-shadow: none;
+}
+
+[data-theme="modern-minimal-oled"] .day-number {
+  color: inherit;
+  text-shadow: none;
+}
+
+[data-theme="modern-minimal-oled"] .day-name {
+  color: inherit;
+  text-shadow: none;
+}
+
+[data-theme="modern-minimal-oled"] .day-month {
+  color: inherit;
+  text-shadow: none;
+}
+
+/* Timeline View - Additional */
+[data-theme="modern-minimal-oled"] .timeline-loading {
+  background: #000000;
+  color: #808080;
+  text-shadow: none;
+}
+
+[data-theme="modern-minimal-oled"] .timeline-month-view,
+[data-theme="modern-minimal-oled"] .timeline-week-view {
+  background: #000000;
+}
+
+[data-theme="modern-minimal-oled"] .month-view-content {
+  background: #000000;
+}
+
+[data-theme="modern-minimal-oled"] .month-calendar-section {
+  background: #000000;
+}
+
+[data-theme="modern-minimal-oled"] .month-week-entries-section {
+  background: #000000;
+  border-left: 1px solid #1a1a1a;
+}
+
+[data-theme="modern-minimal-oled"] .timeline-grid {
+  background: #0a0a0a;
+  border: 1px solid #1a1a1a;
+}
+
+[data-theme="modern-minimal-oled"] .week-entries-header {
+  background: #0a0a0a;
+  border-bottom: 1px solid #1a1a1a;
+  color: #808080;
+  text-shadow: none;
+}
+
+[data-theme="modern-minimal-oled"] .week-entries-list {
+  background: #000000;
+}
+
+[data-theme="modern-minimal-oled"] .week-entry-group-header {
+  background: #0a0a0a;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+[data-theme="modern-minimal-oled"] .week-label {
+  color: #b0b0b0;
+  text-shadow: none;
+}
+
+[data-theme="modern-minimal-oled"] .week-entry-count {
+  background: #4a4a4a;
+  color: #e0e0e0;
+  border: none;
+  text-shadow: none;
+}
+
+[data-theme="modern-minimal-oled"] .week-entry-items {
+  background: transparent;
+}
+
+[data-theme="modern-minimal-oled"] .week-entry-item {
+  background: #0a0a0a;
+  border: 1px solid #0f0f0f;
+  color: #b0b0b0;
+  text-shadow: none;
+}
+
+[data-theme="modern-minimal-oled"] .week-entry-item:hover {
+  background: #151515;
+  border-color: #1a1a1a;
+}
+
+[data-theme="modern-minimal-oled"] .week-entry-title {
+  color: inherit;
+  text-shadow: none;
+}
+
+[data-theme="modern-minimal-oled"] .week-entry-empty {
+  color: #666666;
+  font-style: italic;
+}
+
+/* Entry Viewer - Additional */
+[data-theme="modern-minimal-oled"] .entry-viewer {
+  background: #000000;
+  color: #e0e0e0;
+}
+
+[data-theme="modern-minimal-oled"] .viewer-header {
+  background: #0a0a0a;
+  border-bottom: 1px solid #1a1a1a;
+}
+
+[data-theme="modern-minimal-oled"] .header-top {
+  background: transparent;
+}
+
+[data-theme="modern-minimal-oled"] .viewer-header h3,
+[data-theme="modern-minimal-oled"] .editor-header h3 {
+  color: #e0e0e0;
+  text-shadow: none;
+}
+
+[data-theme="modern-minimal-oled"] .header-actions {
+  background: transparent;
+}
+
+[data-theme="modern-minimal-oled"] .edit-button,
+[data-theme="modern-minimal-oled"] .duplicate-button {
+  background: transparent;
+  border: 1px solid transparent;
+  color: #808080;
+  text-shadow: none;
+}
+
+[data-theme="modern-minimal-oled"] .edit-button:hover,
+[data-theme="modern-minimal-oled"] .duplicate-button:hover {
+  background: #151515;
+  border-color: #1a1a1a;
+}
+
+[data-theme="modern-minimal-oled"] .new-entry-button-header {
+  background: #0a0a0a;
+  border: 1px solid #1a1a1a;
+  color: #b0b0b0;
+  text-shadow: none;
+}
+
+[data-theme="modern-minimal-oled"] .new-entry-button-header:hover {
+  background: #151515;
+  border-color: #666666;
+}
+
+[data-theme="modern-minimal-oled"] .time-range-badge-viewer {
+  background: #151515;
+  border: 1px solid #1a1a1a;
+  color: #808080;
+  text-shadow: none;
+}
+
+[data-theme="modern-minimal-oled"] .entry-date-display {
+  color: #808080;
+  text-shadow: none;
+}
+
+[data-theme="modern-minimal-oled"] .viewer-content {
+  background: #0a0a0a;
+  color: #e0e0e0;
+  text-shadow: none;
+}
+
+[data-theme="modern-minimal-oled"] .viewer-title {
+  color: #e0e0e0;
+  text-shadow: none;
+  border-bottom: 1px solid #1a1a1a;
+}
+
+[data-theme="modern-minimal-oled"] .viewer-text {
+  color: #b0b0b0;
+  text-shadow: none;
+}
+
+[data-theme="modern-minimal-oled"] .viewer-tags {
+  background: transparent;
+  border-top: 1px solid #1a1a1a;
+}
+
+[data-theme="modern-minimal-oled"] .viewer-tag {
+  background: #151515;
+  border: 1px solid #1a1a1a;
+  color: #808080;
+  text-shadow: none;
+}
+
+[data-theme="modern-minimal-oled"] .viewer-linked-entries {
+  background: transparent;
+  border-top: 1px solid #1a1a1a;
+}
+
+[data-theme="modern-minimal-oled"] .viewer-linked-entries h4 {
+  color: #e0e0e0;
+  text-shadow: none;
+}
+
+[data-theme="modern-minimal-oled"] .linked-entries-list {
+  background: transparent;
+}
+
+[data-theme="modern-minimal-oled"] .linked-entry-item {
+  background: #0a0a0a;
+  border: 1px solid #0f0f0f;
+  color: #b0b0b0;
+  text-shadow: none;
+}
+
+[data-theme="modern-minimal-oled"] .linked-entry-item:hover {
+  background: #151515;
+  border-color: #1a1a1a;
+}
+
+[data-theme="modern-minimal-oled"] .linked-entry-title {
+  color: inherit;
+  text-shadow: none;
+}
+
+[data-theme="modern-minimal-oled"] .linked-entry-meta {
+  color: inherit;
+}
+
+[data-theme="modern-minimal-oled"] .linked-entry-date {
+  color: inherit;
+}
+
+[data-theme="modern-minimal-oled"] .linked-entry-time-range {
+  background: #151515;
+  border: 1px solid #1a1a1a;
+  color: #808080;
+  text-shadow: none;
+}
+
+[data-theme="modern-minimal-oled"] .viewer-empty {
+  background: #000000;
+  color: #666666;
+  font-style: italic;
+}
+
+[data-theme="modern-minimal-oled"] .viewer-loading {
+  background: #000000;
+  color: #808080;
+  text-shadow: none;
+}
+
+[data-theme="modern-minimal-oled"] .period-entries-controls {
+  background: #0a0a0a;
+  border-bottom: 1px solid #1a1a1a;
+}
+
+[data-theme="modern-minimal-oled"] .period-entries-filter,
+[data-theme="modern-minimal-oled"] .period-entries-sort {
+  background: transparent;
+}
+
+[data-theme="modern-minimal-oled"] .period-entries-filter label,
+[data-theme="modern-minimal-oled"] .period-entries-sort label {
+  color: #808080;
+  text-shadow: none;
+}
+
+[data-theme="modern-minimal-oled"] .period-entries-tags {
+  background: transparent;
+}
+
+[data-theme="modern-minimal-oled"] .period-entry-filter-tag {
+  background: #0a0a0a;
+  border: 1px solid #1a1a1a;
+  color: #808080;
+  text-shadow: none;
+}
+
+[data-theme="modern-minimal-oled"] .period-entry-filter-tag:hover {
+  background: #151515;
+  border-color: #666666;
+}
+
+[data-theme="modern-minimal-oled"] .period-entry-filter-tag.active {
+  background: #0a0a0a;
+  color: #e0e0e0;
+  border-bottom: 2px solid #4a4a4a;
+}
+
+[data-theme="modern-minimal-oled"] .period-entry-clear-filters {
+  background: transparent;
+  border: 1px solid transparent;
+  color: #808080;
+  text-shadow: none;
+}
+
+[data-theme="modern-minimal-oled"] .period-entry-clear-filters:hover {
+  background: #151515;
+  border-color: #1a1a1a;
+}
+
+[data-theme="modern-minimal-oled"] .period-entries-sort select {
+  background: #0a0a0a;
+  border: 1px solid #1a1a1a;
+  color: #b0b0b0;
+  text-shadow: none;
+}
+
+[data-theme="modern-minimal-oled"] .period-entries-sort select:focus {
+  border-color: #4a4a4a;
+  outline: 1px solid #4a4a4a;
+}
+
+[data-theme="modern-minimal-oled"] .period-entries-list {
+  background: transparent;
+}
+
+[data-theme="modern-minimal-oled"] .period-entry-item {
+  background: #0a0a0a;
+  border: 1px solid #0f0f0f;
+  color: #b0b0b0;
+  text-shadow: none;
+}
+
+[data-theme="modern-minimal-oled"] .period-entry-item:hover {
+  background: #151515;
+  border-color: #1a1a1a;
+}
+
+[data-theme="modern-minimal-oled"] .period-entry-header {
+  background: transparent;
+}
+
+[data-theme="modern-minimal-oled"] .period-entry-title-row {
+  background: transparent;
+}
+
+[data-theme="modern-minimal-oled"] .period-entry-title {
+  color: inherit;
+  text-shadow: none;
+}
+
+[data-theme="modern-minimal-oled"] .period-entry-actions {
+  background: transparent;
+}
+
+[data-theme="modern-minimal-oled"] .period-entry-edit-button {
+  background: transparent;
+  border: 1px solid transparent;
+  color: #808080;
+  text-shadow: none;
+}
+
+[data-theme="modern-minimal-oled"] .period-entry-edit-button:hover {
+  background: #151515;
+  border-color: #1a1a1a;
+}
+
+[data-theme="modern-minimal-oled"] .period-entry-badge {
+  background: #4a4a4a;
+  color: #e0e0e0;
+  border: none;
+  text-shadow: none;
+}
+
+[data-theme="modern-minimal-oled"] .period-entry-meta {
+  background: transparent;
+}
+
+[data-theme="modern-minimal-oled"] .period-entry-date {
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-color: #666666;
+}
+
+[data-theme="modern-minimal-oled"] .period-entry-content {
+  color: inherit;
+  text-shadow: none;
+}
+
+[data-theme="modern-minimal-oled"] .period-entry-content-wrapper {
+  background: transparent;
+}
+
+[data-theme="modern-minimal-oled"] .period-entry-tags {
+  background: transparent;
+  border-top: 1px solid #1a1a1a;
+}
+
+[data-theme="modern-minimal-oled"] .period-entry-tag {
+  background: #151515;
+  border: 1px solid #1a1a1a;
+  color: #808080;
+  text-shadow: none;
+}
+
+/* Journal Editor - Additional */
+[data-theme="modern-minimal-oled"] .journal-editor-inline {
+  background: #000000;
+}
+
+[data-theme="modern-minimal-oled"] .journal-editor {
+  background: #000000;
+  color: #e0e0e0;
+}
+
+[data-theme="modern-minimal-oled"] .editor-loading {
+  background: #000000;
+  color: #808080;
+  text-shadow: none;
+}
+
+[data-theme="modern-minimal-oled"] .editor-header {
+  background: #0a0a0a;
+  border-bottom: 1px solid #1a1a1a;
+}
+
+[data-theme="modern-minimal-oled"] .editor-content {
+  background: #0a0a0a;
+  color: #e0e0e0;
+  text-shadow: none;
+}
+
+[data-theme="modern-minimal-oled"] .view-mode-message {
+  background: #000000;
+  color: #666666;
+  font-style: italic;
+}
+
+[data-theme="modern-minimal-oled"] .title-input {
+  background: #0a0a0a;
+  border: 1px solid #1a1a1a;
+  color: #e0e0e0;
+  text-shadow: none;
+}
+
+[data-theme="modern-minimal-oled"] .title-input:focus {
+  border-color: #4a4a4a;
+  outline: 1px solid #4a4a4a;
+}
+
+[data-theme="modern-minimal-oled"] .content-input {
+  background: #0a0a0a;
+  border: 1px solid #1a1a1a;
+  color: #e0e0e0;
+  text-shadow: none;
+}
+
+[data-theme="modern-minimal-oled"] .content-input:focus {
+  border-color: #4a4a4a;
+  outline: 1px solid #4a4a4a;
+}
+
+[data-theme="modern-minimal-oled"] .tags-section {
+  background: transparent;
+}
+
+[data-theme="modern-minimal-oled"] .tags-input-container {
+  background: transparent;
+}
+
+[data-theme="modern-minimal-oled"] .tag-input {
+  background: #0a0a0a;
+  border: 1px solid #1a1a1a;
+  color: #e0e0e0;
+  text-shadow: none;
+}
+
+[data-theme="modern-minimal-oled"] .tag-input:focus {
+  border-color: #4a4a4a;
+  outline: 1px solid #4a4a4a;
+}
+
+[data-theme="modern-minimal-oled"] .add-tag-button {
+  background: #0a0a0a;
+  border: 1px solid #1a1a1a;
+  color: #b0b0b0;
+  text-shadow: none;
+}
+
+[data-theme="modern-minimal-oled"] .add-tag-button:hover {
+  background: #151515;
+  border-color: #666666;
+}
+
+[data-theme="modern-minimal-oled"] .tags-list {
+  background: transparent;
+}
+
+[data-theme="modern-minimal-oled"] .tag {
+  background: #151515;
+  border: 1px solid #1a1a1a;
+  color: #808080;
+  text-shadow: none;
+}
+
+[data-theme="modern-minimal-oled"] .tag-remove {
+  background: transparent;
+  border: none;
+  color: #808080;
+}
+
+[data-theme="modern-minimal-oled"] .tag-remove:hover {
+  background: #e0e0e0;
+  color: #e0e0e0;
+}
+
+[data-theme="modern-minimal-oled"] .editor-footer {
+  background: #0a0a0a;
+  border-top: 1px solid #1a1a1a;
+}
+
+[data-theme="modern-minimal-oled"] .footer-actions {
+  background: transparent;
+}
+
+[data-theme="modern-minimal-oled"] .cancel-button {
+  background: transparent;
+  border: 1px solid transparent;
+  color: #808080;
+  text-shadow: none;
+}
+
+[data-theme="modern-minimal-oled"] .cancel-button:hover {
+  background: #151515;
+  border-color: #1a1a1a;
+}
+
+[data-theme="modern-minimal-oled"] .delete-button {
+  background: transparent;
+  border: 1px solid transparent;
+  color: #ff6666;
+  text-shadow: none;
+}
+
+[data-theme="modern-minimal-oled"] .delete-button:hover {
+  background: #2a1515;
+  border-color: #cc3333;
+}
+
+[data-theme="modern-minimal-oled"] .save-button {
+  background: #0a0a0a;
+  border: 1px solid #1a1a1a;
+  color: #b0b0b0;
+  text-shadow: none;
+}
+
+[data-theme="modern-minimal-oled"] .save-button:hover:not(:disabled) {
+  background: #151515;
+  border-color: #666666;
+}
+
+[data-theme="modern-minimal-oled"] .save-button:disabled {
+  background: #000000;
+  color: #666666;
+  border: 1px solid #0f0f0f;
+  cursor: not-allowed;
+}
+
+[data-theme="modern-minimal-oled"] .confirm-dialog-overlay {
+  background: rgba(0, 0, 0, 0.8);
+}
+
+[data-theme="modern-minimal-oled"] .confirm-dialog {
+  background: #0a0a0a;
+  border: 1px solid #1a1a1a;
+  color: #e0e0e0;
+  text-shadow: none;
+}
+
+[data-theme="modern-minimal-oled"] .confirm-dialog-buttons {
+  background: transparent;
+}
+
+/* Journal List - Additional */
+[data-theme="modern-minimal-oled"] .journal-list {
+  background: #000000;
+  border-right: 1px solid #1a1a1a;
+}
+
+[data-theme="modern-minimal-oled"] .journal-list-loading {
+  background: #000000;
+  color: #808080;
+  text-shadow: none;
+}
+
+[data-theme="modern-minimal-oled"] .journal-list-header {
+  background: #0a0a0a;
+  border-bottom: 1px solid #1a1a1a;
+}
+
+[data-theme="modern-minimal-oled"] .journal-list-header h3 {
+  color: #e0e0e0;
+  text-shadow: none;
+}
+
+[data-theme="modern-minimal-oled"] .journal-list-header-actions {
+  background: transparent;
+}
+
+[data-theme="modern-minimal-oled"] .new-entry-button {
+  background: #0a0a0a;
+  border: 1px solid #1a1a1a;
+  color: #b0b0b0;
+  text-shadow: none;
+}
+
+[data-theme="modern-minimal-oled"] .new-entry-button:hover {
+  background: #151515;
+  border-color: #666666;
+}
+
+[data-theme="modern-minimal-oled"] .bulk-edit-toggle-button {
+  background: transparent;
+  border: 1px solid transparent;
+  color: #808080;
+  text-shadow: none;
+}
+
+[data-theme="modern-minimal-oled"] .bulk-edit-toggle-button:hover {
+  background: #151515;
+  border-color: #1a1a1a;
+}
+
+[data-theme="modern-minimal-oled"] .bulk-edit-toggle-button.active {
+  background: #0a0a0a;
+  color: #e0e0e0;
+  border-bottom: 2px solid #4a4a4a;
+}
+
+[data-theme="modern-minimal-oled"] .journal-list-content {
+  background: #000000;
+}
+
+[data-theme="modern-minimal-oled"] .journal-list-controls {
+  background: #0a0a0a;
+  border-bottom: 1px solid #1a1a1a;
+}
+
+[data-theme="modern-minimal-oled"] .journal-list-filter,
+[data-theme="modern-minimal-oled"] .journal-list-sort {
+  background: transparent;
+}
+
+[data-theme="modern-minimal-oled"] .journal-list-filter label,
+[data-theme="modern-minimal-oled"] .journal-list-sort label {
+  color: #808080;
+  text-shadow: none;
+}
+
+[data-theme="modern-minimal-oled"] .journal-list-tags {
+  background: transparent;
+}
+
+[data-theme="modern-minimal-oled"] .journal-entry-filter-tag {
+  background: #0a0a0a;
+  border: 1px solid #1a1a1a;
+  color: #808080;
+  text-shadow: none;
+}
+
+[data-theme="modern-minimal-oled"] .journal-entry-filter-tag:hover {
+  background: #151515;
+  border-color: #666666;
+}
+
+[data-theme="modern-minimal-oled"] .journal-entry-filter-tag.active {
+  background: #0a0a0a;
+  color: #e0e0e0;
+  border-bottom: 2px solid #4a4a4a;
+}
+
+[data-theme="modern-minimal-oled"] .journal-entry-clear-filters {
+  background: transparent;
+  border: 1px solid transparent;
+  color: #808080;
+  text-shadow: none;
+}
+
+[data-theme="modern-minimal-oled"] .journal-entry-clear-filters:hover {
+  background: #151515;
+  border-color: #1a1a1a;
+}
+
+[data-theme="modern-minimal-oled"] .journal-list-sort select {
+  background: #0a0a0a;
+  border: 1px solid #1a1a1a;
+  color: #b0b0b0;
+  text-shadow: none;
+}
+
+[data-theme="modern-minimal-oled"] .journal-list-sort select:focus {
+  border-color: #4a4a4a;
+  outline: 1px solid #4a4a4a;
+}
+
+[data-theme="modern-minimal-oled"] .journal-list-empty {
+  background: #000000;
+  color: #666666;
+  font-style: italic;
+}
+
+[data-theme="modern-minimal-oled"] .journal-entries {
+  background: transparent;
+}
+
+[data-theme="modern-minimal-oled"] .journal-entry-item {
+  background: #0a0a0a;
+  border: 1px solid #0f0f0f;
+  color: #b0b0b0;
+  text-shadow: none;
+}
+
+[data-theme="modern-minimal-oled"] .journal-entry-item:hover {
+  background: #151515;
+  border-color: #1a1a1a;
+}
+
+[data-theme="modern-minimal-oled"] .journal-entry-item.selected {
+  background: #0a0a0a;
+  border: 2px solid #4a4a4a;
+  color: #e0e0e0;
+}
+
+[data-theme="modern-minimal-oled"] .journal-entry-item.bulk-edit-mode {
+  background: #0a0a0a;
+}
+
+[data-theme="modern-minimal-oled"] .journal-entry-item.bulk-selected {
+  background: #1a1a0a;
+  border: 2px solid #3a3a1a;
+}
+
+[data-theme="modern-minimal-oled"] .entry-item-header {
+  background: transparent;
+}
+
+[data-theme="modern-minimal-oled"] .entry-item-title {
+  color: inherit;
+  text-shadow: none;
+}
+
+[data-theme="modern-minimal-oled"] .entry-item-meta {
+  background: transparent;
+}
+
+[data-theme="modern-minimal-oled"] .entry-time-range {
+  background: #151515;
+  border: 1px solid #1a1a1a;
+  color: #808080;
+  text-shadow: none;
+}
+
+[data-theme="modern-minimal-oled"] .entry-date {
+  color: inherit;
+}
+
+[data-theme="modern-minimal-oled"] .entry-item-preview {
+  color: inherit;
+  text-shadow: none;
+}
+
+[data-theme="modern-minimal-oled"] .entry-item-tags {
+  background: transparent;
+}
+
+[data-theme="modern-minimal-oled"] .entry-tag {
+  background: #151515;
+  border: 1px solid #1a1a1a;
+  color: #808080;
+  text-shadow: none;
+}
+
+[data-theme="modern-minimal-oled"] .entry-item-content {
+  background: transparent;
+}
+
+[data-theme="modern-minimal-oled"] .entry-checkbox-wrapper {
+  background: transparent;
+}
+
+[data-theme="modern-minimal-oled"] .entry-checkbox-wrapper input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  border: 1px solid #1a1a1a;
+  background: #0a0a0a;
+  accent-color: #4a4a4a;
+}
+
+[data-theme="modern-minimal-oled"] .bulk-edit-actions {
+  background: #1a1a0a;
+  border-bottom: 1px solid #fdd835;
+}
+
+[data-theme="modern-minimal-oled"] .bulk-edit-selected-count {
+  color: #e0e0e0;
+  text-shadow: none;
+}
+
+[data-theme="modern-minimal-oled"] .bulk-delete-button {
+  background: transparent;
+  border: 1px solid transparent;
+  color: #ff6666;
+  text-shadow: none;
+}
+
+[data-theme="modern-minimal-oled"] .bulk-delete-button:hover {
+  background: #2a1515;
+  border-color: #cc3333;
+}
+
+[data-theme="modern-minimal-oled"] .bulk-edit-select-all {
+  background: #0a0a0a;
+  border-bottom: 1px solid #1a1a1a;
+}
+
+[data-theme="modern-minimal-oled"] .bulk-edit-checkbox-label {
+  color: #808080;
+  text-shadow: none;
+}
+
+/* Entry Edit Modal */
+[data-theme="modern-minimal-oled"] .entry-edit-modal-overlay {
+  background: rgba(0, 0, 0, 0.8);
+}
+
+[data-theme="modern-minimal-oled"] .entry-edit-modal {
+  background: #0a0a0a;
+  border: 1px solid #1a1a1a;
+  color: #e0e0e0;
+  text-shadow: none;
+}
+
+[data-theme="modern-minimal-oled"] .modal-header {
+  background: #0a0a0a;
+  border-bottom: 1px solid #1a1a1a;
+}
+
+[data-theme="modern-minimal-oled"] .modal-header-top {
+  background: transparent;
+}
+
+[data-theme="modern-minimal-oled"] .modal-header-top h3 {
+  color: #e0e0e0;
+  text-shadow: none;
+}
+
+[data-theme="modern-minimal-oled"] .modal-close-button {
+  background: transparent;
+  border: 1px solid transparent;
+  color: #808080;
+  text-shadow: none;
+}
+
+[data-theme="modern-minimal-oled"] .modal-close-button:hover {
+  background: #151515;
+  border-color: #1a1a1a;
+}
+
+[data-theme="modern-minimal-oled"] .modal-entry-meta {
+  background: transparent;
+}
+
+[data-theme="modern-minimal-oled"] .modal-entry-meta small {
+  color: #666666;
+}
+
+[data-theme="modern-minimal-oled"] .modal-content {
+  background: #0a0a0a;
+  color: #e0e0e0;
+  text-shadow: none;
+}
+
+[data-theme="modern-minimal-oled"] .modal-title-input {
+  background: #0a0a0a;
+  border: 1px solid #1a1a1a;
+  color: #e0e0e0;
+  text-shadow: none;
+}
+
+[data-theme="modern-minimal-oled"] .modal-title-input:focus {
+  border-color: #4a4a4a;
+  outline: 1px solid #4a4a4a;
+}
+
+[data-theme="modern-minimal-oled"] .modal-content-input {
+  background: #0a0a0a;
+  border: 1px solid #1a1a1a;
+  color: #e0e0e0;
+  text-shadow: none;
+}
+
+[data-theme="modern-minimal-oled"] .modal-content-input:focus {
+  border-color: #4a4a4a;
+  outline: 1px solid #4a4a4a;
+}
+
+[data-theme="modern-minimal-oled"] .modal-tags-section {
+  background: transparent;
+}
+
+[data-theme="modern-minimal-oled"] .modal-tags-input-container {
+  background: transparent;
+}
+
+[data-theme="modern-minimal-oled"] .modal-tag-input {
+  background: #0a0a0a;
+  border: 1px solid #1a1a1a;
+  color: #e0e0e0;
+  text-shadow: none;
+}
+
+[data-theme="modern-minimal-oled"] .modal-tag-input:focus {
+  border-color: #4a4a4a;
+  outline: 1px solid #4a4a4a;
+}
+
+[data-theme="modern-minimal-oled"] .modal-add-tag-button {
+  background: #0a0a0a;
+  border: 1px solid #1a1a1a;
+  color: #b0b0b0;
+  text-shadow: none;
+}
+
+[data-theme="modern-minimal-oled"] .modal-add-tag-button:hover {
+  background: #151515;
+  border-color: #666666;
+}
+
+[data-theme="modern-minimal-oled"] .modal-tags-list {
+  background: transparent;
+}
+
+[data-theme="modern-minimal-oled"] .modal-tag {
+  background: #151515;
+  border: 1px solid #1a1a1a;
+  color: #808080;
+  text-shadow: none;
+}
+
+[data-theme="modern-minimal-oled"] .modal-tag-remove {
+  background: transparent;
+  border: none;
+  color: #808080;
+}
+
+[data-theme="modern-minimal-oled"] .modal-tag-remove:hover {
+  background: #e0e0e0;
+  color: #e0e0e0;
+}
+
+[data-theme="modern-minimal-oled"] .modal-footer {
+  background: #0a0a0a;
+  border-top: 1px solid #1a1a1a;
+}
+
+[data-theme="modern-minimal-oled"] .modal-duplicate-button {
+  background: transparent;
+  border: 1px solid transparent;
+  color: #808080;
+  text-shadow: none;
+}
+
+[data-theme="modern-minimal-oled"] .modal-duplicate-button:hover {
+  background: #151515;
+  border-color: #1a1a1a;
+}
+
+[data-theme="modern-minimal-oled"] .modal-delete-button {
+  background: transparent;
+  border: 1px solid transparent;
+  color: #ff6666;
+  text-shadow: none;
+}
+
+[data-theme="modern-minimal-oled"] .modal-delete-button:hover {
+  background: #2a1515;
+  border-color: #cc3333;
+}
+
+[data-theme="modern-minimal-oled"] .modal-footer-actions {
+  background: transparent;
+}
+
+[data-theme="modern-minimal-oled"] .modal-cancel-button {
+  background: transparent;
+  border: 1px solid transparent;
+  color: #808080;
+  text-shadow: none;
+}
+
+[data-theme="modern-minimal-oled"] .modal-cancel-button:hover {
+  background: #151515;
+  border-color: #1a1a1a;
+}
+
+[data-theme="modern-minimal-oled"] .modal-save-button {
+  background: #0a0a0a;
+  border: 1px solid #1a1a1a;
+  color: #b0b0b0;
+  text-shadow: none;
+}
+
+[data-theme="modern-minimal-oled"] .modal-save-button:hover:not(:disabled) {
+  background: #151515;
+  border-color: #666666;
+}
+
+[data-theme="modern-minimal-oled"] .modal-save-button:disabled {
+  background: #000000;
+  color: #666666;
+  border: 1px solid #0f0f0f;
+  cursor: not-allowed;
+}
+
+/* Search View */
+[data-theme="modern-minimal-oled"] .search-view {
+  background: #000000;
+  color: #e0e0e0;
+}
+
+[data-theme="modern-minimal-oled"] .search-header {
+  background: #0a0a0a;
+  border-bottom: 1px solid #1a1a1a;
+}
+
+[data-theme="modern-minimal-oled"] .search-input-container {
+  background: transparent;
+}
+
+[data-theme="modern-minimal-oled"] .search-input {
+  background: #0a0a0a;
+  border: 1px solid #1a1a1a;
+  color: #e0e0e0;
+  text-shadow: none;
+}
+
+[data-theme="modern-minimal-oled"] .search-input:focus {
+  border-color: #4a4a4a;
+  outline: 1px solid #4a4a4a;
+}
+
+[data-theme="modern-minimal-oled"] .search-filters-toggle {
+  background: transparent;
+  border: 1px solid transparent;
+  color: #808080;
+  text-shadow: none;
+}
+
+[data-theme="modern-minimal-oled"] .search-filters-toggle:hover {
+  background: #151515;
+  border-color: #1a1a1a;
+}
+
+[data-theme="modern-minimal-oled"] .search-close-button {
+  background: transparent;
+  border: 1px solid transparent;
+  color: #808080;
+  text-shadow: none;
+}
+
+[data-theme="modern-minimal-oled"] .search-close-button:hover {
+  background: #151515;
+  border-color: #1a1a1a;
+}
+
+[data-theme="modern-minimal-oled"] .search-filters {
+  background: #0a0a0a;
+  border-bottom: 1px solid #1a1a1a;
+}
+
+[data-theme="modern-minimal-oled"] .filter-group {
+  background: transparent;
+}
+
+[data-theme="modern-minimal-oled"] .filter-group label {
+  color: #808080;
+  text-shadow: none;
+}
+
+[data-theme="modern-minimal-oled"] .filter-tags {
+  background: transparent;
+}
+
+[data-theme="modern-minimal-oled"] .filter-tag {
+  background: #0a0a0a;
+  border: 1px solid #1a1a1a;
+  color: #808080;
+  text-shadow: none;
+}
+
+[data-theme="modern-minimal-oled"] .filter-tag:hover {
+  background: #151515;
+  border-color: #666666;
+}
+
+[data-theme="modern-minimal-oled"] .filter-tag.active {
+  background: #0a0a0a;
+  color: #e0e0e0;
+  border-bottom: 2px solid #4a4a4a;
+}
+
+[data-theme="modern-minimal-oled"] .filter-empty {
+  color: #666666;
+  font-style: italic;
+}
+
+[data-theme="modern-minimal-oled"] .filter-time-ranges {
+  background: transparent;
+}
+
+[data-theme="modern-minimal-oled"] .filter-time-range {
+  background: #0a0a0a;
+  border: 1px solid #1a1a1a;
+  color: #808080;
+  text-shadow: none;
+}
+
+[data-theme="modern-minimal-oled"] .filter-time-range:hover {
+  background: #151515;
+  border-color: #666666;
+}
+
+[data-theme="modern-minimal-oled"] .filter-time-range.active {
+  background: #0a0a0a;
+  color: #e0e0e0;
+  border-bottom: 2px solid #4a4a4a;
+}
+
+[data-theme="modern-minimal-oled"] .filter-date-range {
+  background: transparent;
+}
+
+[data-theme="modern-minimal-oled"] .filter-date-range input {
+  background: #0a0a0a;
+  border: 1px solid #1a1a1a;
+  color: #e0e0e0;
+  text-shadow: none;
+}
+
+[data-theme="modern-minimal-oled"] .filter-date-range input:focus {
+  border-color: #4a4a4a;
+  outline: 1px solid #4a4a4a;
+}
+
+[data-theme="modern-minimal-oled"] .filter-sort {
+  background: transparent;
+}
+
+[data-theme="modern-minimal-oled"] .filter-sort select {
+  background: #0a0a0a;
+  border: 1px solid #1a1a1a;
+  color: #b0b0b0;
+  text-shadow: none;
+}
+
+[data-theme="modern-minimal-oled"] .filter-sort select:focus {
+  border-color: #4a4a4a;
+  outline: 1px solid #4a4a4a;
+}
+
+[data-theme="modern-minimal-oled"] .clear-filters-button {
+  background: transparent;
+  border: 1px solid transparent;
+  color: #808080;
+  text-shadow: none;
+}
+
+[data-theme="modern-minimal-oled"] .clear-filters-button:hover {
+  background: #151515;
+  border-color: #1a1a1a;
+}
+
+[data-theme="modern-minimal-oled"] .search-results {
+  background: #000000;
+  color: #e0e0e0;
+}
+
+[data-theme="modern-minimal-oled"] .search-loading,
+[data-theme="modern-minimal-oled"] .search-empty {
+  background: #000000;
+  color: #666666;
+  font-style: italic;
+}
+
+[data-theme="modern-minimal-oled"] .search-results-count {
+  color: #808080;
+  text-shadow: none;
+}
+
+[data-theme="modern-minimal-oled"] .search-results-list {
+  background: transparent;
+}
+
+[data-theme="modern-minimal-oled"] .search-result-item {
+  background: #0a0a0a;
+  border: 1px solid #0f0f0f;
+  color: #b0b0b0;
+  text-shadow: none;
+}
+
+[data-theme="modern-minimal-oled"] .search-result-item:hover {
+  background: #151515;
+  border-color: #1a1a1a;
+}
+
+[data-theme="modern-minimal-oled"] .result-item-header {
+  background: transparent;
+}
+
+[data-theme="modern-minimal-oled"] .result-item-title {
+  color: inherit;
+  text-shadow: none;
+}
+
+[data-theme="modern-minimal-oled"] .result-item-meta {
+  background: transparent;
+}
+
+[data-theme="modern-minimal-oled"] .result-time-range-badge {
+  background: #4a4a4a;
+  color: #e0e0e0;
+  border: none;
+  text-shadow: none;
+}
+
+[data-theme="modern-minimal-oled"] .result-date {
+  color: inherit;
+}
+
+[data-theme="modern-minimal-oled"] .result-item-content {
+  color: inherit;
+  text-shadow: none;
+}
+
+[data-theme="modern-minimal-oled"] .result-item-tags {
+  background: transparent;
+}
+
+[data-theme="modern-minimal-oled"] .result-tag {
+  background: #151515;
+  border: 1px solid #1a1a1a;
+  color: #808080;
+  text-shadow: none;
+}
+
+/* Preferences */
+[data-theme="modern-minimal-oled"] .preferences-container {
+  background: #000000;
+  color: #e0e0e0;
+}
+
+[data-theme="modern-minimal-oled"] .preferences-loading {
+  background: #000000;
+  color: #808080;
+  text-shadow: none;
+}
+
+[data-theme="modern-minimal-oled"] .preferences-header {
+  background: #0a0a0a;
+  border-bottom: 1px solid #1a1a1a;
+}
+
+[data-theme="modern-minimal-oled"] .preferences-header h1 {
+  color: #e0e0e0;
+  text-shadow: none;
+}
+
+[data-theme="modern-minimal-oled"] .preferences-actions {
+  background: transparent;
+}
+
+[data-theme="modern-minimal-oled"] .preferences-button {
+  background: transparent;
+  border: 1px solid transparent;
+  color: #808080;
+  text-shadow: none;
+}
+
+[data-theme="modern-minimal-oled"] .preferences-button:hover {
+  background: #151515;
+  border-color: #1a1a1a;
+}
+
+[data-theme="modern-minimal-oled"] .preferences-content {
+  background: #000000;
+}
+
+[data-theme="modern-minimal-oled"] .preferences-section {
+  background: #0a0a0a;
+  border: 1px solid #1a1a1a;
+}
+
+[data-theme="modern-minimal-oled"] .preferences-section h2 {
+  color: #e0e0e0;
+  text-shadow: none;
+  border-bottom: 1px solid #1a1a1a;
+}
+
+[data-theme="modern-minimal-oled"] .preference-item {
+  background: transparent;
+}
+
+[data-theme="modern-minimal-oled"] .preference-item label {
+  color: #808080;
+  text-shadow: none;
+}
+
+[data-theme="modern-minimal-oled"] .preference-item input[type="text"],
+[data-theme="modern-minimal-oled"] .preference-item input[type="number"],
+[data-theme="modern-minimal-oled"] .preference-item select {
+  background: #0a0a0a;
+  border: 1px solid #1a1a1a;
+  color: #e0e0e0;
+  text-shadow: none;
+}
+
+[data-theme="modern-minimal-oled"] .preference-item input[type="text"]:focus,
+[data-theme="modern-minimal-oled"] .preference-item input[type="number"]:focus,
+[data-theme="modern-minimal-oled"] .preference-item select:focus {
+  border-color: #4a4a4a;
+  outline: 1px solid #4a4a4a;
+}
+
+[data-theme="modern-minimal-oled"] .preference-item input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  border: 1px solid #1a1a1a;
+  background: #0a0a0a;
+  accent-color: #4a4a4a;
+}
+
+[data-theme="modern-minimal-oled"] .preference-item small {
+  color: #666666;
+}
+
+[data-theme="modern-minimal-oled"] .preference-note {
+  background: #151515;
+  border-left: 2px solid #9e9e9e;
+  color: #808080;
+  text-shadow: none;
+}
+
+[data-theme="modern-minimal-oled"] .auto-save-indicator {
+  color: #66bb6a;
+  text-shadow: none;
+}
+
+[data-theme="modern-minimal-oled"] .export-toolbar {
+  background: transparent;
+}
+
+[data-theme="modern-minimal-oled"] .export-controls {
+  background: transparent;
+}
+
+[data-theme="modern-minimal-oled"] .export-controls select {
+  background: #0a0a0a;
+  border: 1px solid #1a1a1a;
+  color: #b0b0b0;
+  text-shadow: none;
+}
+
+[data-theme="modern-minimal-oled"] .export-controls select:focus {
+  border-color: #4a4a4a;
+  outline: 1px solid #4a4a4a;
+}
+
+[data-theme="modern-minimal-oled"] .about-section {
+  background: #0a0a0a;
+  border: 1px solid #1a1a1a;
+  color: #e0e0e0;
+}
+
+[data-theme="modern-minimal-oled"] .about-section a {
+  color: #808080;
+  text-decoration: underline;
+  text-shadow: none;
+}
+
+[data-theme="modern-minimal-oled"] .about-section a:hover {
+  color: #e0e0e0;
+}
+
+/* About Page */
+[data-theme="modern-minimal-oled"] .about-container {
+  background: #000000;
+  color: #e0e0e0;
+}
+
+[data-theme="modern-minimal-oled"] .about-content {
+  background: #0a0a0a;
+  border: 1px solid #1a1a1a;
+  color: #e0e0e0;
+  text-shadow: none;
+}
+
+[data-theme="modern-minimal-oled"] .about-header {
+  background: transparent;
+  border-bottom: 1px solid #1a1a1a;
+}
+
+[data-theme="modern-minimal-oled"] .about-icon {
+  border: 1px solid #1a1a1a;
+}
+
+[data-theme="modern-minimal-oled"] .about-title-section h1 {
+  color: #e0e0e0;
+  text-shadow: none;
+}
+
+[data-theme="modern-minimal-oled"] .about-description {
+  color: #b0b0b0;
+  text-shadow: none;
+}
+
+[data-theme="modern-minimal-oled"] .about-section {
+  background: transparent;
+  border-top: 1px solid #1a1a1a;
+}
+
+[data-theme="modern-minimal-oled"] .about-version {
+  color: #808080;
+  text-shadow: none;
+}
+
+[data-theme="modern-minimal-oled"] .about-note {
+  color: #666666;
+}
+
+[data-theme="modern-minimal-oled"] .about-credits h2 {
+  color: #e0e0e0;
+  text-shadow: none;
+}
+
+[data-theme="modern-minimal-oled"] .about-credits p {
+  color: #b0b0b0;
+  text-shadow: none;
+}
+
+[data-theme="modern-minimal-oled"] .about-link {
+  color: #808080;
+  text-decoration: underline;
+  text-shadow: none;
+}
+
+[data-theme="modern-minimal-oled"] .about-link:hover {
+  color: #e0e0e0;
+}
+
+[data-theme="modern-minimal-oled"] .about-credits-detailed {
+  background: transparent;
+}
+
+[data-theme="modern-minimal-oled"] .about-credits-detailed h2 {
+  color: #e0e0e0;
+  text-shadow: none;
+}
+
+[data-theme="modern-minimal-oled"] .credits-category {
+  background: transparent;
+}
+
+[data-theme="modern-minimal-oled"] .credits-category h3 {
+  color: #808080;
+  text-shadow: none;
+}
+
+[data-theme="modern-minimal-oled"] .credits-category ul {
+  background: transparent;
+}
+
+[data-theme="modern-minimal-oled"] .credits-category li {
+  color: #b0b0b0;
+  text-shadow: none;
+}
+
+[data-theme="modern-minimal-oled"] .credits-category li strong {
+  color: #e0e0e0;
+  text-shadow: none;
+}
+
+[data-theme="modern-minimal-oled"] .credits-category li em {
+  color: #666666;
+}
+
+[data-theme="modern-minimal-oled"] .credits-category p {
+  color: #b0b0b0;
+  text-shadow: none;
+}
+
+[data-theme="modern-minimal-oled"] .credits-note {
+  color: #666666;
+  font-style: italic;
+}
+
+/* Loading Screen */
+[data-theme="modern-minimal-oled"] .loading-screen {
+  background: #000000;
+  color: #e0e0e0;
+}
+
+[data-theme="modern-minimal-oled"] .space-background {
+  background: #0a0a0a;
+}
+
+[data-theme="modern-minimal-oled"] .loading-content {
+  background: transparent;
+  color: #e0e0e0;
+}
+
+[data-theme="modern-minimal-oled"] .loading-title {
+  color: #e0e0e0;
+  text-shadow: none;
+}
+
+[data-theme="modern-minimal-oled"] .loading-message {
+  color: #808080;
+  text-shadow: none;
+}
+
+[data-theme="modern-minimal-oled"] .loading-progress {
+  background: transparent;
+}
+
+[data-theme="modern-minimal-oled"] .loading-progress-bar {
+  background: #151515;
+  border: 1px solid #1a1a1a;
+}
+
+[data-theme="modern-minimal-oled"] .loading-progress-fill {
+  background: #4a4a4a;
+  border: none;
+}
+
+[data-theme="modern-minimal-oled"] .loading-progress-text {
+  color: #808080;
+  text-shadow: none;
+}
+
+/* Global Timeline Minimap */
+[data-theme="modern-minimal-oled"] .global-timeline-minimap {
+  background: #0a0a0a;
+  border-bottom: 1px solid #1a1a1a;
+}
+
+[data-theme="modern-minimal-oled"] .minimap-container {
+  background: #000000;
+  border: 1px solid #1a1a1a;
+}
+
+[data-theme="modern-minimal-oled"] .radial-dial-center {
+  background: #4a4a4a;
+  border: 1px solid #3a3a3a;
+}
+
+[data-theme="modern-minimal-oled"] .radial-arrow {
+  color: #808080;
+  text-shadow: none;
+}
+
+[data-theme="modern-minimal-oled"] .radial-label {
+  background: #0a0a0a;
+  border: 1px solid #1a1a1a;
+  color: #808080;
+  text-shadow: none;
+}
+
+[data-theme="modern-minimal-oled"] .timeline-path {
+  stroke: #4a4a4a;
+  stroke-width: 1px;
+}
+
+[data-theme="modern-minimal-oled"] .segment-indicator {
+  background: #bdbdbd;
+  border: 1px solid #9e9e9e;
+}
+
+[data-theme="modern-minimal-oled"] .timeline-segment.current .segment-indicator {
+  background: #4a4a4a;
+  border: 2px solid #3a3a3a;
+}
+
+[data-theme="modern-minimal-oled"] .segment-label {
+  background: #4a4a4a;
+  color: #e0e0e0;
+  border: 1px solid #3a3a3a;
+  text-shadow: none;
+}
+
+[data-theme="modern-minimal-oled"] .entry-indicator {
+  background: #4a4a4a;
+  border: 1px solid #3a3a3a;
+}
+
+[data-theme="modern-minimal-oled"] .scale-label {
+  color: #808080;
+  text-shadow: none;
+}
+
