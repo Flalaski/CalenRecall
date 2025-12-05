@@ -2123,65 +2123,6 @@ export default function GlobalTimelineMinimap({
   };
 
 
-  // Handle wheel scroll with reduced sensitivity
-  // Note: This is called from a native event listener with { passive: false }
-  // to allow preventDefault() to work
-  const handleWheel = (e: WheelEvent) => {
-    if (!containerRef.current || !timelineDataRef.current.startDate || !timelineDataRef.current.endDate) return;
-    
-    e.preventDefault();
-    
-    // Calculate scroll increment based on visible range
-    const totalTime = timelineDataRef.current.endDate.getTime() - timelineDataRef.current.startDate.getTime();
-    const visibleRangeDays = totalTime / (1000 * 60 * 60 * 24);
-    
-    // Scroll through a small portion of the visible range (about 5-10%)
-    const scrollPercentage = Math.max(0.5, Math.min(2, visibleRangeDays / 100));
-    const scrollDays = scrollPercentage * (e.deltaY > 0 ? 1 : -1);
-    
-    let newDate: Date;
-    
-    // Use smaller increments that are proportional to the visible range
-    const currentViewMode = viewModeRef.current;
-    const currentSelectedDate = selectedDateRef.current;
-    const currentOnTimePeriodSelect = onTimePeriodSelectRef.current;
-    
-    switch (currentViewMode) {
-      case 'decade': {
-        // Scroll by about 1 year per scroll step
-        const yearsToScroll = Math.max(1, Math.round(Math.abs(scrollDays) / 365));
-        newDate = addMonths(currentSelectedDate, (scrollDays > 0 ? 1 : -1) * yearsToScroll * 12);
-        break;
-      }
-      case 'year': {
-        // Scroll by about 1 month per scroll step
-        const monthsToScroll = Math.max(1, Math.round(Math.abs(scrollDays) / 30));
-        newDate = addMonths(currentSelectedDate, (scrollDays > 0 ? 1 : -1) * monthsToScroll);
-        break;
-      }
-      case 'month': {
-        // Scroll by about 1 week per scroll step
-        const weeksToScroll = Math.max(1, Math.round(Math.abs(scrollDays) / 7));
-        newDate = addWeeks(currentSelectedDate, (scrollDays > 0 ? 1 : -1) * weeksToScroll);
-        break;
-      }
-      case 'week': {
-        // Scroll by about 1 day per scroll step
-        const daysToScroll = Math.max(1, Math.round(Math.abs(scrollDays)));
-        newDate = addDays(currentSelectedDate, (scrollDays > 0 ? 1 : -1) * daysToScroll);
-        break;
-      }
-      case 'day': {
-        // Scroll by 1 day per scroll step
-        newDate = addDays(currentSelectedDate, scrollDays > 0 ? 1 : -1);
-        break;
-      }
-      default:
-        return;
-    }
-    
-    currentOnTimePeriodSelect(newDate, currentViewMode);
-  };
 
   // Store refs for drag handler to avoid recreating on every render
   const timelineDataRef = useRef(timelineData);
@@ -2215,8 +2156,10 @@ export default function GlobalTimelineMinimap({
         return;
       }
 
-      // Only handle arrow keys
-      if (!['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(e.key)) {
+      // Only handle arrow keys and WASD keys
+      const isArrowKey = ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(e.key);
+      const isWASDKey = ['a', 'A', 'd', 'D', 'w', 'W', 's', 'S'].includes(e.key);
+      if (!isArrowKey && !isWASDKey) {
         return;
       }
 
@@ -2227,9 +2170,16 @@ export default function GlobalTimelineMinimap({
       const currentSelectedDate = selectedDateRef.current;
       const currentOnTimePeriodSelect = onTimePeriodSelectRef.current;
 
-      if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+      // Map WASD to arrow key equivalents
+      const normalizedKey = e.key.toLowerCase();
+      const isLeft = e.key === 'ArrowLeft' || normalizedKey === 'a';
+      const isRight = e.key === 'ArrowRight' || normalizedKey === 'd';
+      const isUp = e.key === 'ArrowUp' || normalizedKey === 'w';
+      const isDown = e.key === 'ArrowDown' || normalizedKey === 's';
+
+      if (isLeft || isRight) {
         // Navigate time horizontally (earlier/later)
-        const direction = e.key === 'ArrowLeft' ? -1 : 1;
+        const direction = isLeft ? -1 : 1;
         let newDate: Date;
 
         switch (currentViewMode) {
@@ -2255,19 +2205,19 @@ export default function GlobalTimelineMinimap({
         // Play micro blip for date change
         playMicroBlip();
         currentOnTimePeriodSelect(newDate, currentViewMode);
-      } else if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+      } else if (isUp || isDown) {
         // Change time scale (zoom in/out)
         const scaleOrder: TimeRange[] = ['decade', 'year', 'month', 'week', 'day'];
         const currentIndex = scaleOrder.indexOf(currentViewMode);
 
-        if (e.key === 'ArrowUp' && currentIndex < scaleOrder.length - 1) {
+        if (isUp && currentIndex < scaleOrder.length - 1) {
           // Zoom in (more detail)
           const newViewMode = scaleOrder[currentIndex + 1];
           playMechanicalClick('up');
           setMechanicalClick({ scale: newViewMode, direction: 'up' });
           setTimeout(() => setMechanicalClick(null), 300);
           currentOnTimePeriodSelect(currentSelectedDate, newViewMode);
-        } else if (e.key === 'ArrowDown' && currentIndex > 0) {
+        } else if (isDown && currentIndex > 0) {
           // Zoom out (less detail)
           const newViewMode = scaleOrder[currentIndex - 1];
           playMechanicalClick('down');
@@ -2288,6 +2238,68 @@ export default function GlobalTimelineMinimap({
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
+
+    // Define handleWheel inside useEffect to avoid stale closures
+    const handleWheel = (e: WheelEvent) => {
+      if (!containerRef.current || !timelineDataRef.current.startDate || !timelineDataRef.current.endDate) return;
+      
+      e.preventDefault();
+      
+      // Calculate scroll increment based on visible range
+      const totalTime = timelineDataRef.current.endDate.getTime() - timelineDataRef.current.startDate.getTime();
+      const visibleRangeDays = totalTime / (1000 * 60 * 60 * 24);
+      
+      // Scroll through a small portion of the visible range (about 5-10%)
+      const scrollPercentage = Math.max(0.5, Math.min(2, visibleRangeDays / 100));
+      const scrollDays = scrollPercentage * (e.deltaY > 0 ? 1 : -1);
+      
+      let newDate: Date;
+      
+      // Use smaller increments that are proportional to the visible range
+      const currentViewMode = viewModeRef.current;
+      const currentSelectedDate = selectedDateRef.current;
+      const currentOnTimePeriodSelect = onTimePeriodSelectRef.current;
+      
+      switch (currentViewMode) {
+        case 'decade': {
+          // Scroll by about 1 year per scroll step
+          const yearsToScroll = Math.max(1, Math.round(Math.abs(scrollDays) / 365));
+          newDate = addMonths(currentSelectedDate, (scrollDays > 0 ? 1 : -1) * yearsToScroll * 12);
+          break;
+        }
+        case 'year': {
+          // Scroll by about 1 month per scroll step
+          const monthsToScroll = Math.max(1, Math.round(Math.abs(scrollDays) / 30));
+          newDate = addMonths(currentSelectedDate, (scrollDays > 0 ? 1 : -1) * monthsToScroll);
+          break;
+        }
+        case 'month': {
+          // Scroll by about 1 week per scroll step
+          const weeksToScroll = Math.max(1, Math.round(Math.abs(scrollDays) / 7));
+          newDate = addWeeks(currentSelectedDate, (scrollDays > 0 ? 1 : -1) * weeksToScroll);
+          break;
+        }
+        case 'week': {
+          // Scroll by about 1 day per scroll step
+          const daysToScroll = Math.max(1, Math.round(Math.abs(scrollDays)));
+          newDate = addDays(currentSelectedDate, (scrollDays > 0 ? 1 : -1) * daysToScroll);
+          break;
+        }
+        case 'day': {
+          // Scroll by 1 day per scroll step
+          newDate = addDays(currentSelectedDate, scrollDays > 0 ? 1 : -1);
+          break;
+        }
+        default:
+          return;
+      }
+      
+      // Only call onTimePeriodSelect if the date actually changed
+      // This prevents infinite update loops
+      if (newDate.getTime() !== currentSelectedDate.getTime()) {
+        currentOnTimePeriodSelect(newDate, currentViewMode);
+      }
+    };
 
     container.addEventListener('wheel', handleWheel, { passive: false });
     return () => {

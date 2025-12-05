@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react';
 import { TimeRange } from '../types';
 import { format, addMonths, addYears, addWeeks, addDays } from 'date-fns';
 import { playNavigationSound, playModeSelectionSound, playSettingsSound } from '../utils/audioUtils';
@@ -18,6 +19,14 @@ export default function NavigationBar({
   onDateChange,
   onOpenPreferences,
 }: NavigationBarProps) {
+  // Use ref to access current onDateChange in keyboard handler
+  const onDateChangeRef = useRef(onDateChange);
+  
+  // Keep ref updated
+  useEffect(() => {
+    onDateChangeRef.current = onDateChange;
+  }, [onDateChange]);
+
   const navigate = (direction: 'prev' | 'next') => {
     playNavigationSound();
     let newDate: Date;
@@ -67,6 +76,39 @@ export default function NavigationBar({
     playNavigationSound();
     onDateChange(new Date());
   };
+
+  // Handle keyboard shortcut for Today button (T key)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Don't handle keys if user is typing in an input, textarea, or contenteditable element
+      const target = e.target as HTMLElement;
+      if (
+        target.tagName === 'INPUT' ||
+        target.tagName === 'TEXTAREA' ||
+        target.isContentEditable ||
+        (target.closest('input') || target.closest('textarea') || target.closest('[contenteditable="true"]'))
+      ) {
+        return;
+      }
+
+      // Only handle T key (case-insensitive)
+      if (e.key.toLowerCase() !== 't') {
+        return;
+      }
+
+      // Prevent default behavior
+      e.preventDefault();
+
+      // Trigger Today button - use ref to get current onDateChange
+      playNavigationSound();
+      onDateChangeRef.current(new Date());
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, []); // Empty deps - we use ref to access current values
 
   return (
     <div className="navigation-bar">
