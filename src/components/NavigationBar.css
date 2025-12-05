@@ -41,7 +41,7 @@
 .date-label {
   font-size: 3.5rem;
   font-weight: 900;
-  font-family: 'Times New Roman', Times, serif;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   margin: 0;
   margin-left: 1rem;
   line-height: 1;

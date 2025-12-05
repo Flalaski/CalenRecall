@@ -315,7 +315,7 @@ body::before,
 }
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
     'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
     sans-serif;
   -webkit-font-smoothing: antialiased;
@@ -424,6 +424,15 @@ body {
   border-color: #555;
 }
 
+/* Override entry-badge color for light-colored entry types */
+[data-theme="dark"] .entry-badge.entry-day,
+[data-theme="dark"] .entry-badge.entry-week,
+[data-theme="dark"] .entry-badge.entry-month,
+[data-theme="dark"] .entry-badge.entry-year,
+[data-theme="dark"] .entry-badge.entry-decade {
+  color: inherit; /* Let the entry type class set the color */
+}
+
 [data-theme="dark"] .month-week-entries-section {
   background: #252525;
   border-left-color: #404040;
@@ -449,22 +458,31 @@ body {
 }
 
 [data-theme="dark"] .week-entry-title {
-  color: #ffffff;
+  color: #1a1a1a;
   font-weight: 600;
 }
 
 [data-theme="dark"] .badge-title {
-  color: #ffffff;
+  color: #1a1a1a;
   font-weight: 500;
 }
 
+/* Ensure badge titles are dark on light-colored entry backgrounds */
+[data-theme="dark"] .entry-day .badge-title,
+[data-theme="dark"] .entry-week .badge-title,
+[data-theme="dark"] .entry-month .badge-title,
+[data-theme="dark"] .entry-year .badge-title,
+[data-theme="dark"] .entry-decade .badge-title {
+  color: #1a1a1a;
+}
+
 [data-theme="dark"] .card-title {
-  color: #ffffff;
+  color: #1a1a1a;
   font-weight: 600;
 }
 
 [data-theme="dark"] .card-title-full {
-  color: #ffffff;
+  color: #1a1a1a;
   font-weight: 600;
 }
 
@@ -599,13 +617,27 @@ body {
 }
 
 [data-theme="dark"] .card-title {
-  color: #ffffff;
+  color: #1a1a1a;
   font-weight: 600;
 }
 
 [data-theme="dark"] .card-title-full {
-  color: #ffffff;
+  color: #1a1a1a;
   font-weight: 600;
+}
+
+/* Ensure card titles are dark on light-colored entry card backgrounds */
+[data-theme="dark"] .entry-card-full.entry-day .card-title-full,
+[data-theme="dark"] .entry-card-full.entry-week .card-title-full,
+[data-theme="dark"] .entry-card-full.entry-month .card-title-full,
+[data-theme="dark"] .entry-card-full.entry-year .card-title-full,
+[data-theme="dark"] .entry-card-full.entry-decade .card-title-full,
+[data-theme="dark"] .entry-card.entry-day .card-title,
+[data-theme="dark"] .entry-card.entry-week .card-title,
+[data-theme="dark"] .entry-card.entry-month .card-title,
+[data-theme="dark"] .entry-card.entry-year .card-title,
+[data-theme="dark"] .entry-card.entry-decade .card-title {
+  color: #1a1a1a;
 }
 
 [data-theme="dark"] .day-header h2 {
