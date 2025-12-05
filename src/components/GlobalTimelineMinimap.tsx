@@ -1562,10 +1562,13 @@ export default function GlobalTimelineMinimap({
       const monthKey = monthStart.getTime();
       if (monthStart >= startDate && monthStart <= endDate && !monthMajorSet.has(monthKey)) {
         monthMajorSet.add(monthKey);
+        // In year view, show only the year since month abbreviations are shown above
+        // In month view, show full "MMM YYYY" format
+        const labelFormat = viewMode === 'year' ? 'YYYY' : 'MMM YYYY';
         scales.month.major.push({
           date: monthStart,
           position: calculatePosition(monthStart),
-          label: formatDate(monthStart, 'MMM YYYY'),
+          label: formatDate(monthStart, labelFormat),
         });
       }
       current = addMonths(current, monthSpacing);
