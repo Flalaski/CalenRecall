@@ -1,6 +1,6 @@
 import { useMemo, useState, useEffect, useRef } from 'react';
 import { TimeRange, JournalEntry } from '../types';
-import { formatDate as formatDateUtils, getWeekStart, getWeekEnd, getMonthStart, getMonthEnd, getYearEnd, getDecadeEnd, getZodiacColor, getZodiacColorForDecade, getCanonicalDate, parseISODate } from '../utils/dateUtils';
+import { getWeekStart, getWeekEnd, getMonthStart, getMonthEnd, getYearEnd, getDecadeEnd, getZodiacColor, getZodiacColorForDecade, getCanonicalDate, parseISODate } from '../utils/dateUtils';
 import { addDays, addWeeks, addMonths, addYears, getYear, getMonth, getDate } from 'date-fns';
 import { playMechanicalClick, playMicroBlip, getAudioContext, createSliderNoise, SliderNoise } from '../utils/audioUtils';
 import { calculateEntryColor } from '../utils/entryColorUtils';
@@ -4385,10 +4385,7 @@ export default function GlobalTimelineMinimap({
                 height: 'auto',
               };
               
-              // Debug: Log if label position is very small (might be clustering)
-              if (labelPosition < 5 && idx < 10) {
-                console.log(`[DEBUG] Year minor label cluster check: "${mark.label}" at position ${labelPosition}%, date: ${mark.date ? formatDateUtils(mark.date) : 'no date'}, style left: ${labelStyle.left}`);
-              }
+              // Debug logging removed - was causing performance issues due to excessive console output
               
               return (
                 <div
