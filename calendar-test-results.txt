@@ -1,42 +1,1877 @@
-========================================
+﻿
+> calenrecall@2025.12.04.2 test:calendars
+> ts-node --project scripts/tsconfig.json scripts/test-calendar-accuracy.ts
+
+============================================================
 Calendar Accuracy Test Suite
-========================================
+============================================================
 
-Running: npm run test:calendars
-
-
-> calenrecall@2025.12.04.1 test:calendars
-> tsc -p scripts/tsconfig.json && node scripts/test-calendar-accuracy.js
-
-node:internal/modules/cjs/loader:1404
-  throw err;
-  ^
-
-Error: Cannot find module './types'
-Require stack:
-- B:\Coding\CalenRecall\src\utils\calendars\islamic.js
-- B:\Coding\CalenRecall\src\utils\calendars\calendarConverter.js
-- B:\Coding\CalenRecall\scripts\test-calendar-accuracy.js
-    at Function._resolveFilename (node:internal/modules/cjs/loader:1401:15)
-    at defaultResolveImpl (node:internal/modules/cjs/loader:1057:19)
-    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1062:22)
-    at Function._load (node:internal/modules/cjs/loader:1211:37)
-    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
-    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)
-    at Module.require (node:internal/modules/cjs/loader:1487:12)
-    at require (node:internal/modules/helpers:135:16)
-    at Object.<anonymous> (B:\Coding\CalenRecall\src\utils\calendars\islamic.js:19:17)
-    at Module._compile (node:internal/modules/cjs/loader:1730:14) {
-  code: 'MODULE_NOT_FOUND',
-  requireStack: [
-    'B:\\Coding\\CalenRecall\\src\\utils\\calendars\\islamic.js',
-    'B:\\Coding\\CalenRecall\\src\\utils\\calendars\\calendarConverter.js',
-    'B:\\Coding\\CalenRecall\\scripts\\test-calendar-accuracy.js'
-  ]
+=== Test 1: JDN Consistency ===
+Ô£ù JDN Consistency (islamic, -100-7-4): JDN mismatch: 1912828 vs 1912822
+  Details: {
+  "original": {
+    "year": -100,
+    "month": 7,
+    "day": 4
+  },
+  "converted": {
+    "year": -100,
+    "month": 6,
+    "day": 27,
+    "calendar": "islamic",
+    "era": "AH"
+  },
+  "jdn": 1912828,
+  "jdn2": 1912822
+}
+Ô£ù JDN Consistency (hebrew, 0-1-1): JDN mismatch: 347642 vs 347289
+  Details: {
+  "original": {
+    "year": 0,
+    "month": 1,
+    "day": 1
+  },
+  "converted": {
+    "year": -1,
+    "month": 1,
+    "day": 1,
+    "calendar": "hebrew",
+    "era": "AM"
+  },
+  "jdn": 347642,
+  "jdn2": 347289
+}
+Ô£ù JDN Consistency (hebrew, -100-7-4): JDN mismatch: 311458 vs 311482
+  Details: {
+  "original": {
+    "year": -100,
+    "month": 7,
+    "day": 4
+  },
+  "converted": {
+    "year": -100,
+    "month": 7,
+    "day": 28,
+    "calendar": "hebrew",
+    "era": "AM"
+  },
+  "jdn": 311458,
+  "jdn2": 311482
+}
+Ô£ù JDN Consistency (persian, -100-7-4): JDN mismatch: 1911618 vs 1911605
+  Details: {
+  "original": {
+    "year": -100,
+    "month": 7,
+    "day": 4
+  },
+  "converted": {
+    "year": -100,
+    "month": 6,
+    "day": 22,
+    "calendar": "persian",
+    "era": "SH"
+  },
+  "jdn": 1911618,
+  "jdn2": 1911605
+}
+Ô£ù JDN Consistency (chinese, 1000-12-31): Error: Error: Invalid Chinese day: 31 (month 12 has 29 days)
+  Details: {
+  "original": {
+    "year": 1000,
+    "month": 12,
+    "day": 31
+  },
+  "error": "Error: Invalid Chinese day: 31 (month 12 has 29 days)"
+}
+Ô£ù JDN Consistency (indian-saka, 1000-12-31): JDN mismatch: 2114873 vs 2114507
+  Details: {
+  "original": {
+    "year": 1000,
+    "month": 12,
+    "day": 31
+  },
+  "converted": {
+    "year": 1000,
+    "month": 1,
+    "day": 1,
+    "calendar": "indian-saka",
+    "era": "Saka"
+  },
+  "jdn": 2114873,
+  "jdn2": 2114507
+}
+Ô£ù JDN Consistency (indian-saka, 0-1-1): JDN mismatch: 1749264 vs 1749630
+  Details: {
+  "original": {
+    "year": 0,
+    "month": 1,
+    "day": 1
+  },
+  "converted": {
+    "year": 0,
+    "month": 12,
+    "day": 31,
+    "calendar": "indian-saka",
+    "era": "Saka"
+  },
+  "jdn": 1749264,
+  "jdn2": 1749630
+}
+Ô£ù JDN Consistency (indian-saka, -100-7-4): JDN mismatch: 1712929 vs 1712916
+  Details: {
+  "original": {
+    "year": -100,
+    "month": 7,
+    "day": 4
+  },
+  "converted": {
+    "year": -100,
+    "month": 6,
+    "day": 22,
+    "calendar": "indian-saka",
+    "era": "Saka"
+  },
+  "jdn": 1712929,
+  "jdn2": 1712916
+}
+Ô£ù JDN Consistency (mayan-haab, 1000-12-31): Error: Error: Invalid day in Haab' month: 31 (month 12 has 20 days)
+  Details: {
+  "original": {
+    "year": 1000,
+    "month": 12,
+    "day": 31
+  },
+  "error": "Error: Invalid day in Haab' month: 31 (month 12 has 20 days)"
+}
+Ô£ù JDN Consistency (mayan-haab, 2024-2-29): Error: Error: Invalid day in Haab' month: 29 (month 2 has 20 days)
+  Details: {
+  "original": {
+    "year": 2024,
+    "month": 2,
+    "day": 29
+  },
+  "error": "Error: Invalid day in Haab' month: 29 (month 2 has 20 days)"
+}
+Ô£ù JDN Consistency (mayan-haab, -100-7-4): JDN mismatch: 547660 vs 547177
+  Details: {
+  "original": {
+    "year": -100,
+    "month": 7,
+    "day": 4
+  },
+  "converted": {
+    "year": -101,
+    "month": 13,
+    "day": 2,
+    "calendar": "mayan-haab",
+    "era": ""
+  },
+  "jdn": 547660,
+  "jdn2": 547177
+}
+Ô£ù JDN Consistency (aztec-xiuhpohualli, 1000-12-31): Error: Error: Invalid day in Xiuhpohualli month: 31 (month 12 has 20 days)
+  Details: {
+  "original": {
+    "year": 1000,
+    "month": 12,
+    "day": 31
+  },
+  "error": "Error: Invalid day in Xiuhpohualli month: 31 (month 12 has 20 days)"
+}
+Ô£ù JDN Consistency (aztec-xiuhpohualli, 2024-2-29): Error: Error: Invalid day in Xiuhpohualli month: 29 (month 2 has 20 days)
+  Details: {
+  "original": {
+    "year": 2024,
+    "month": 2,
+    "day": 29
+  },
+  "error": "Error: Invalid day in Xiuhpohualli month: 29 (month 2 has 20 days)"
+}
+Ô£ù JDN Consistency (aztec-xiuhpohualli, -100-7-4): JDN mismatch: 547660 vs 547177
+  Details: {
+  "original": {
+    "year": -100,
+    "month": 7,
+    "day": 4
+  },
+  "converted": {
+    "year": -101,
+    "month": 13,
+    "day": 2,
+    "calendar": "aztec-xiuhpohualli",
+    "era": ""
+  },
+  "jdn": 547660,
+  "jdn2": 547177
 }
 
-Node.js v22.17.1
+=== Test 2: Cross-Calendar Alignment ===
+Ô£ù Cross-Calendar Alignment (Gregorian Epoch -> islamic): JDN difference: 82 days (expected <= 1)
+  Details: {
+  "gregorian": {
+    "year": 1,
+    "month": 1,
+    "day": 1
+  },
+  "converted": {
+    "year": -640,
+    "month": 8,
+    "day": 12,
+    "calendar": "islamic",
+    "era": "AH"
+  },
+  "jdn": 1721426,
+  "convertedJDN": 1721508,
+  "diff": 82
+}
+Ô£ù Cross-Calendar Alignment (Gregorian Epoch -> persian): JDN difference: 211 days (expected <= 1)
+  Details: {
+  "gregorian": {
+    "year": 1,
+    "month": 1,
+    "day": 1
+  },
+  "converted": {
+    "year": -621,
+    "month": 3,
+    "day": 16,
+    "calendar": "persian",
+    "era": "SH"
+  },
+  "jdn": 1721426,
+  "convertedJDN": 1721215,
+  "diff": 211
+}
+Ô£ù Cross-Calendar Alignment (Gregorian Epoch -> chinese): JDN difference: 672877 days (expected <= 2)
+  Details: {
+  "gregorian": {
+    "year": 1,
+    "month": 1,
+    "day": 1
+  },
+  "converted": {
+    "year": -58,
+    "month": 8,
+    "day": 15,
+    "calendar": "chinese",
+    "era": "CE"
+  },
+  "jdn": 1721426,
+  "convertedJDN": 2394303,
+  "diff": 672877
+}
+Ô£ù Cross-Calendar Alignment (Gregorian Epoch -> ethiopian): JDN difference: 111 days (expected <= 1)
+  Details: {
+  "gregorian": {
+    "year": 1,
+    "month": 1,
+    "day": 1
+  },
+  "converted": {
+    "year": -7,
+    "month": 8,
+    "day": 29,
+    "calendar": "ethiopian",
+    "era": "EE"
+  },
+  "jdn": 1721426,
+  "convertedJDN": 1721537,
+  "diff": 111
+}
+Ô£ù Cross-Calendar Alignment (Gregorian Epoch -> coptic): JDN difference: 111 days (expected <= 1)
+  Details: {
+  "gregorian": {
+    "year": 1,
+    "month": 1,
+    "day": 1
+  },
+  "converted": {
+    "year": -283,
+    "month": 8,
+    "day": 29,
+    "calendar": "coptic",
+    "era": "AM"
+  },
+  "jdn": 1721426,
+  "convertedJDN": 1721537,
+  "diff": 111
+}
+Ô£ù Cross-Calendar Alignment (Gregorian Epoch -> indian-saka): JDN difference: 207 days (expected <= 1)
+  Details: {
+  "gregorian": {
+    "year": 1,
+    "month": 1,
+    "day": 1
+  },
+  "converted": {
+    "year": -77,
+    "month": 3,
+    "day": 18,
+    "calendar": "indian-saka",
+    "era": "Saka"
+  },
+  "jdn": 1721426,
+  "convertedJDN": 1721219,
+  "diff": 207
+}
+Ô£ù Cross-Calendar Alignment (Gregorian Epoch -> mayan-longcount): JDN difference: 263 days (expected <= 1)
+  Details: {
+  "gregorian": {
+    "year": 1,
+    "month": 1,
+    "day": 1
+  },
+  "converted": {
+    "year": 7,
+    "month": 17,
+    "day": 18,
+    "calendar": "mayan-longcount",
+    "era": ""
+  },
+  "jdn": 1721426,
+  "convertedJDN": 1721163,
+  "diff": 263
+}
+Ô£ù Cross-Calendar Alignment (Julian Epoch -> islamic): JDN difference: 82 days (expected <= 1)
+  Details: {
+  "gregorian": {
+    "year": 1,
+    "month": 1,
+    "day": 1
+  },
+  "converted": {
+    "year": -640,
+    "month": 8,
+    "day": 12,
+    "calendar": "islamic",
+    "era": "AH"
+  },
+  "jdn": 1721426,
+  "convertedJDN": 1721508,
+  "diff": 82
+}
+Ô£ù Cross-Calendar Alignment (Julian Epoch -> persian): JDN difference: 211 days (expected <= 1)
+  Details: {
+  "gregorian": {
+    "year": 1,
+    "month": 1,
+    "day": 1
+  },
+  "converted": {
+    "year": -621,
+    "month": 3,
+    "day": 16,
+    "calendar": "persian",
+    "era": "SH"
+  },
+  "jdn": 1721426,
+  "convertedJDN": 1721215,
+  "diff": 211
+}
+Ô£ù Cross-Calendar Alignment (Julian Epoch -> chinese): JDN difference: 672877 days (expected <= 2)
+  Details: {
+  "gregorian": {
+    "year": 1,
+    "month": 1,
+    "day": 1
+  },
+  "converted": {
+    "year": -58,
+    "month": 8,
+    "day": 15,
+    "calendar": "chinese",
+    "era": "CE"
+  },
+  "jdn": 1721426,
+  "convertedJDN": 2394303,
+  "diff": 672877
+}
+Ô£ù Cross-Calendar Alignment (Julian Epoch -> ethiopian): JDN difference: 111 days (expected <= 1)
+  Details: {
+  "gregorian": {
+    "year": 1,
+    "month": 1,
+    "day": 1
+  },
+  "converted": {
+    "year": -7,
+    "month": 8,
+    "day": 29,
+    "calendar": "ethiopian",
+    "era": "EE"
+  },
+  "jdn": 1721426,
+  "convertedJDN": 1721537,
+  "diff": 111
+}
+Ô£ù Cross-Calendar Alignment (Julian Epoch -> coptic): JDN difference: 111 days (expected <= 1)
+  Details: {
+  "gregorian": {
+    "year": 1,
+    "month": 1,
+    "day": 1
+  },
+  "converted": {
+    "year": -283,
+    "month": 8,
+    "day": 29,
+    "calendar": "coptic",
+    "era": "AM"
+  },
+  "jdn": 1721426,
+  "convertedJDN": 1721537,
+  "diff": 111
+}
+Ô£ù Cross-Calendar Alignment (Julian Epoch -> indian-saka): JDN difference: 207 days (expected <= 1)
+  Details: {
+  "gregorian": {
+    "year": 1,
+    "month": 1,
+    "day": 1
+  },
+  "converted": {
+    "year": -77,
+    "month": 3,
+    "day": 18,
+    "calendar": "indian-saka",
+    "era": "Saka"
+  },
+  "jdn": 1721426,
+  "convertedJDN": 1721219,
+  "diff": 207
+}
+Ô£ù Cross-Calendar Alignment (Julian Epoch -> mayan-longcount): JDN difference: 263 days (expected <= 1)
+  Details: {
+  "gregorian": {
+    "year": 1,
+    "month": 1,
+    "day": 1
+  },
+  "converted": {
+    "year": 7,
+    "month": 17,
+    "day": 18,
+    "calendar": "mayan-longcount",
+    "era": ""
+  },
+  "jdn": 1721426,
+  "convertedJDN": 1721163,
+  "diff": 263
+}
+Ô£ù Cross-Calendar Alignment (Islamic Epoch -> islamic): JDN difference: 350 days (expected <= 1)
+  Details: {
+  "gregorian": {
+    "year": 622,
+    "month": 7,
+    "day": 16
+  },
+  "converted": {
+    "year": 0,
+    "month": 1,
+    "day": 3,
+    "calendar": "islamic",
+    "era": "AH"
+  },
+  "jdn": 1948437,
+  "convertedJDN": 1948087,
+  "diff": 350
+}
+Ô£ù Cross-Calendar Alignment (Islamic Epoch -> mayan-longcount): JDN difference: 114 days (expected <= 1)
+  Details: {
+  "gregorian": {
+    "year": 622,
+    "month": 7,
+    "day": 16
+  },
+  "converted": {
+    "year": 9,
+    "month": 9,
+    "day": 9,
+    "calendar": "mayan-longcount",
+    "era": ""
+  },
+  "jdn": 1948437,
+  "convertedJDN": 1948323,
+  "diff": 114
+}
+Ô£ù Cross-Calendar Alignment (Hebrew Epoch -> islamic): JDN difference: 149 days (expected <= 1)
+  Details: {
+  "gregorian": {
+    "year": -3761,
+    "month": 10,
+    "day": 7
+  },
+  "converted": {
+    "year": -4517,
+    "month": 4,
+    "day": 15,
+    "calendar": "islamic",
+    "era": "AH"
+  },
+  "jdn": 347662,
+  "convertedJDN": 347513,
+  "diff": 149
+}
+Ô£ù Cross-Calendar Alignment (Hebrew Epoch -> hebrew): JDN difference: 315 days (expected <= 2)
+  Details: {
+  "gregorian": {
+    "year": -3761,
+    "month": 10,
+    "day": 7
+  },
+  "converted": {
+    "year": 0,
+    "month": 12,
+    "day": 10,
+    "calendar": "hebrew",
+    "era": "AM"
+  },
+  "jdn": 347662,
+  "convertedJDN": 347977,
+  "diff": 315
+}
+Ô£ù Cross-Calendar Alignment (Hebrew Epoch -> persian): JDN difference: 37 days (expected <= 1)
+  Details: {
+  "gregorian": {
+    "year": -3761,
+    "month": 10,
+    "day": 7
+  },
+  "converted": {
+    "year": -4382,
+    "month": 6,
+    "day": 10,
+    "calendar": "persian",
+    "era": "SH"
+  },
+  "jdn": 347662,
+  "convertedJDN": 347625,
+  "diff": 37
+}
+Ô£ù Cross-Calendar Alignment (Hebrew Epoch -> chinese): JDN difference: 674066 days (expected <= 2)
+  Details: {
+  "gregorian": {
+    "year": -3761,
+    "month": 10,
+    "day": 7
+  },
+  "converted": {
+    "year": -3935,
+    "month": 12,
+    "day": 14,
+    "calendar": "chinese",
+    "era": "CE"
+  },
+  "jdn": 347662,
+  "convertedJDN": 1021728,
+  "diff": 674066
+}
+Ô£ù Cross-Calendar Alignment (Hebrew Epoch -> ethiopian): JDN difference: 228 days (expected <= 1)
+  Details: {
+  "gregorian": {
+    "year": -3761,
+    "month": 10,
+    "day": 7
+  },
+  "converted": {
+    "year": -3768,
+    "month": 10,
+    "day": 28,
+    "calendar": "ethiopian",
+    "era": "EE"
+  },
+  "jdn": 347662,
+  "convertedJDN": 347890,
+  "diff": 228
+}
+Ô£ù Cross-Calendar Alignment (Hebrew Epoch -> coptic): JDN difference: 228 days (expected <= 1)
+  Details: {
+  "gregorian": {
+    "year": -3761,
+    "month": 10,
+    "day": 7
+  },
+  "converted": {
+    "year": -4044,
+    "month": 10,
+    "day": 28,
+    "calendar": "coptic",
+    "era": "AM"
+  },
+  "jdn": 347662,
+  "convertedJDN": 347890,
+  "diff": 228
+}
+Ô£ù Cross-Calendar Alignment (Hebrew Epoch -> indian-saka): JDN difference: 31 days (expected <= 1)
+  Details: {
+  "gregorian": {
+    "year": -3761,
+    "month": 10,
+    "day": 7
+  },
+  "converted": {
+    "year": -3838,
+    "month": 6,
+    "day": 13,
+    "calendar": "indian-saka",
+    "era": "Saka"
+  },
+  "jdn": 347662,
+  "convertedJDN": 347631,
+  "diff": 31
+}
+Ô£ù Cross-Calendar Alignment (Hebrew Epoch -> mayan-haab): JDN difference: 527 days (expected <= 1)
+  Details: {
+  "gregorian": {
+    "year": -3761,
+    "month": 10,
+    "day": 7
+  },
+  "converted": {
+    "year": -649,
+    "month": 14,
+    "day": 4,
+    "calendar": "mayan-haab",
+    "era": ""
+  },
+  "jdn": 347662,
+  "convertedJDN": 347135,
+  "diff": 527
+}
+Ô£ù Cross-Calendar Alignment (Hebrew Epoch -> mayan-longcount): JDN difference: 101 days (expected <= 1)
+  Details: {
+  "gregorian": {
+    "year": -3761,
+    "month": 10,
+    "day": 7
+  },
+  "converted": {
+    "year": -1,
+    "month": -12,
+    "day": -17,
+    "calendar": "mayan-longcount",
+    "era": "BCE"
+  },
+  "jdn": 347662,
+  "convertedJDN": 347763,
+  "diff": 101
+}
+Ô£ù Cross-Calendar Alignment (Hebrew Epoch -> aztec-xiuhpohualli): JDN difference: 527 days (expected <= 1)
+  Details: {
+  "gregorian": {
+    "year": -3761,
+    "month": 10,
+    "day": 7
+  },
+  "converted": {
+    "year": -649,
+    "month": 14,
+    "day": 4,
+    "calendar": "aztec-xiuhpohualli",
+    "era": ""
+  },
+  "jdn": 347662,
+  "convertedJDN": 347135,
+  "diff": 527
+}
+Ô£ù Cross-Calendar Alignment (Persian Epoch -> islamic): JDN difference: 112 days (expected <= 1)
+  Details: {
+  "gregorian": {
+    "year": 622,
+    "month": 3,
+    "day": 19
+  },
+  "converted": {
+    "year": 0,
+    "month": 5,
+    "day": 4,
+    "calendar": "islamic",
+    "era": "AH"
+  },
+  "jdn": 1948318,
+  "convertedJDN": 1948206,
+  "diff": 112
+}
+Ô£ù Cross-Calendar Alignment (Persian Epoch -> persian): JDN difference: 357 days (expected <= 1)
+  Details: {
+  "gregorian": {
+    "year": 622,
+    "month": 3,
+    "day": 19
+  },
+  "converted": {
+    "year": 0,
+    "month": 1,
+    "day": 9,
+    "calendar": "persian",
+    "era": "SH"
+  },
+  "jdn": 1948318,
+  "convertedJDN": 1947961,
+  "diff": 357
+}
+Ô£ù Cross-Calendar Alignment (Persian Epoch -> mayan-longcount): JDN difference: 355 days (expected <= 1)
+  Details: {
+  "gregorian": {
+    "year": 622,
+    "month": 3,
+    "day": 19
+  },
+  "converted": {
+    "year": 9,
+    "month": 9,
+    "day": 8,
+    "calendar": "mayan-longcount",
+    "era": ""
+  },
+  "jdn": 1948318,
+  "convertedJDN": 1947963,
+  "diff": 355
+}
+Ô£ù Cross-Calendar Alignment (Mayan Epoch -> islamic): JDN difference: 64 days (expected <= 1)
+  Details: {
+  "gregorian": {
+    "year": -3114,
+    "month": 8,
+    "day": 11
+  },
+  "converted": {
+    "year": -3850,
+    "month": 8,
+    "day": 3,
+    "calendar": "islamic",
+    "era": "AH"
+  },
+  "jdn": 583918,
+  "convertedJDN": 583982,
+  "diff": 64
+}
+Ô£ù Cross-Calendar Alignment (Mayan Epoch -> persian): JDN difference: 75 days (expected <= 1)
+  Details: {
+  "gregorian": {
+    "year": -3114,
+    "month": 8,
+    "day": 11
+  },
+  "converted": {
+    "year": -3735,
+    "month": 8,
+    "day": 5,
+    "calendar": "persian",
+    "era": "SH"
+  },
+  "jdn": 583918,
+  "convertedJDN": 583993,
+  "diff": 75
+}
+Ô£ù Cross-Calendar Alignment (Mayan Epoch -> chinese): JDN difference: 674035 days (expected <= 2)
+  Details: {
+  "gregorian": {
+    "year": -3114,
+    "month": 8,
+    "day": 11
+  },
+  "converted": {
+    "year": -3268,
+    "month": 8,
+    "day": 25,
+    "calendar": "chinese",
+    "era": "CE"
+  },
+  "jdn": 583918,
+  "convertedJDN": 1257953,
+  "diff": 674035
+}
+Ô£ù Cross-Calendar Alignment (Mayan Epoch -> ethiopian): JDN difference: 349 days (expected <= 1)
+  Details: {
+  "gregorian": {
+    "year": -3114,
+    "month": 8,
+    "day": 11
+  },
+  "converted": {
+    "year": -3121,
+    "month": 12,
+    "day": 28,
+    "calendar": "ethiopian",
+    "era": "EE"
+  },
+  "jdn": 583918,
+  "convertedJDN": 584267,
+  "diff": 349
+}
+Ô£ù Cross-Calendar Alignment (Mayan Epoch -> coptic): JDN difference: 349 days (expected <= 1)
+  Details: {
+  "gregorian": {
+    "year": -3114,
+    "month": 8,
+    "day": 11
+  },
+  "converted": {
+    "year": -3397,
+    "month": 12,
+    "day": 28,
+    "calendar": "coptic",
+    "era": "AM"
+  },
+  "jdn": 583918,
+  "convertedJDN": 584267,
+  "diff": 349
+}
+Ô£ù Cross-Calendar Alignment (Mayan Epoch -> indian-saka): JDN difference: 81 days (expected <= 1)
+  Details: {
+  "gregorian": {
+    "year": -3114,
+    "month": 8,
+    "day": 11
+  },
+  "converted": {
+    "year": -3191,
+    "month": 8,
+    "day": 8,
+    "calendar": "indian-saka",
+    "era": "Saka"
+  },
+  "jdn": 583918,
+  "convertedJDN": 583999,
+  "diff": 81
+}
+Ô£ù Cross-Calendar Alignment (Mayan Epoch -> mayan-haab): JDN difference: 364 days (expected <= 1)
+  Details: {
+  "gregorian": {
+    "year": -3114,
+    "month": 8,
+    "day": 11
+  },
+  "converted": {
+    "year": -1,
+    "month": 19,
+    "day": 5,
+    "calendar": "mayan-haab",
+    "era": ""
+  },
+  "jdn": 583918,
+  "convertedJDN": 583554,
+  "diff": 364
+}
+Ô£ù Cross-Calendar Alignment (Mayan Epoch -> mayan-longcount): JDN difference: 5 days (expected <= 1)
+  Details: {
+  "gregorian": {
+    "year": -3114,
+    "month": 8,
+    "day": 11
+  },
+  "converted": {
+    "year": 0,
+    "month": 0,
+    "day": -1,
+    "calendar": "mayan-longcount",
+    "era": "BCE"
+  },
+  "jdn": 583918,
+  "convertedJDN": 583923,
+  "diff": 5
+}
+Ô£ù Cross-Calendar Alignment (Mayan Epoch -> aztec-xiuhpohualli): JDN difference: 364 days (expected <= 1)
+  Details: {
+  "gregorian": {
+    "year": -3114,
+    "month": 8,
+    "day": 11
+  },
+  "converted": {
+    "year": -1,
+    "month": 19,
+    "day": 5,
+    "calendar": "aztec-xiuhpohualli",
+    "era": ""
+  },
+  "jdn": 583918,
+  "convertedJDN": 583554,
+  "diff": 364
+}
+Ô£ù Cross-Calendar Alignment (Modern Date -> mayan-longcount): JDN difference: 68 days (expected <= 1)
+  Details: {
+  "gregorian": {
+    "year": 2024,
+    "month": 1,
+    "day": 1
+  },
+  "converted": {
+    "year": 13,
+    "month": 0,
+    "day": 11,
+    "calendar": "mayan-longcount",
+    "era": ""
+  },
+  "jdn": 2460311,
+  "convertedJDN": 2460243,
+  "diff": 68
+}
+Ô£ù Cross-Calendar Alignment (Leap Year Date -> bahai): JDN difference: 4 days (expected <= 1)
+  Details: {
+  "gregorian": {
+    "year": 2024,
+    "month": 2,
+    "day": 29
+  },
+  "converted": {
+    "year": 180,
+    "month": 19,
+    "day": 4,
+    "calendar": "bahai",
+    "era": "BE"
+  },
+  "jdn": 2460370,
+  "convertedJDN": 2460374,
+  "diff": 4
+}
+Ô£ù Cross-Calendar Alignment (Leap Year Date -> mayan-longcount): JDN difference: 127 days (expected <= 1)
+  Details: {
+  "gregorian": {
+    "year": 2024,
+    "month": 2,
+    "day": 29
+  },
+  "converted": {
+    "year": 13,
+    "month": 0,
+    "day": 11,
+    "calendar": "mayan-longcount",
+    "era": ""
+  },
+  "jdn": 2460370,
+  "convertedJDN": 2460243,
+  "diff": 127
+}
+Ô£ù Cross-Calendar Alignment (Negative Year -> islamic): JDN difference: 154 days (expected <= 1)
+  Details: {
+  "gregorian": {
+    "year": -100,
+    "month": 1,
+    "day": 1
+  },
+  "converted": {
+    "year": -744,
+    "month": 9,
+    "day": 19,
+    "calendar": "islamic",
+    "era": "AH"
+  },
+  "jdn": 1684536,
+  "convertedJDN": 1684690,
+  "diff": 154
+}
+Ô£ù Cross-Calendar Alignment (Negative Year -> persian): JDN difference: 211 days (expected <= 1)
+  Details: {
+  "gregorian": {
+    "year": -100,
+    "month": 1,
+    "day": 1
+  },
+  "converted": {
+    "year": -722,
+    "month": 3,
+    "day": 16,
+    "calendar": "persian",
+    "era": "SH"
+  },
+  "jdn": 1684536,
+  "convertedJDN": 1684325,
+  "diff": 211
+}
+Ô£ù Cross-Calendar Alignment (Negative Year -> chinese): JDN difference: 672987 days (expected <= 2)
+  Details: {
+  "gregorian": {
+    "year": -100,
+    "month": 1,
+    "day": 1
+  },
+  "converted": {
+    "year": -162,
+    "month": 7,
+    "day": 9,
+    "calendar": "chinese",
+    "era": "CE"
+  },
+  "jdn": 1684536,
+  "convertedJDN": 2357523,
+  "diff": 672987
+}
+Ô£ù Cross-Calendar Alignment (Negative Year -> ethiopian): JDN difference: 110 days (expected <= 1)
+  Details: {
+  "gregorian": {
+    "year": -100,
+    "month": 1,
+    "day": 1
+  },
+  "converted": {
+    "year": -108,
+    "month": 8,
+    "day": 29,
+    "calendar": "ethiopian",
+    "era": "EE"
+  },
+  "jdn": 1684536,
+  "convertedJDN": 1684646,
+  "diff": 110
+}
+Ô£ù Cross-Calendar Alignment (Negative Year -> coptic): JDN difference: 110 days (expected <= 1)
+  Details: {
+  "gregorian": {
+    "year": -100,
+    "month": 1,
+    "day": 1
+  },
+  "converted": {
+    "year": -384,
+    "month": 8,
+    "day": 29,
+    "calendar": "coptic",
+    "era": "AM"
+  },
+  "jdn": 1684536,
+  "convertedJDN": 1684646,
+  "diff": 110
+}
+Ô£ù Cross-Calendar Alignment (Negative Year -> indian-saka): JDN difference: 205 days (expected <= 1)
+  Details: {
+  "gregorian": {
+    "year": -100,
+    "month": 1,
+    "day": 1
+  },
+  "converted": {
+    "year": -178,
+    "month": 3,
+    "day": 19,
+    "calendar": "indian-saka",
+    "era": "Saka"
+  },
+  "jdn": 1684536,
+  "convertedJDN": 1684331,
+  "diff": 205
+}
+Ô£ù Cross-Calendar Alignment (Negative Year -> mayan-longcount): JDN difference: 93 days (expected <= 1)
+  Details: {
+  "gregorian": {
+    "year": -100,
+    "month": 1,
+    "day": 1
+  },
+  "converted": {
+    "year": 7,
+    "month": 12,
+    "day": 16,
+    "calendar": "mayan-longcount",
+    "era": ""
+  },
+  "jdn": 1684536,
+  "convertedJDN": 1684443,
+  "diff": 93
+}
+Ô£ù Cross-Calendar Alignment (Year Zero -> islamic): JDN difference: 106 days (expected <= 1)
+  Details: {
+  "gregorian": {
+    "year": 0,
+    "month": 1,
+    "day": 1
+  },
+  "converted": {
+    "year": -641,
+    "month": 8,
+    "day": 24,
+    "calendar": "islamic",
+    "era": "AH"
+  },
+  "jdn": 1721060,
+  "convertedJDN": 1721166,
+  "diff": 106
+}
+Ô£ù Cross-Calendar Alignment (Year Zero -> persian): JDN difference: 210 days (expected <= 1)
+  Details: {
+  "gregorian": {
+    "year": 0,
+    "month": 1,
+    "day": 1
+  },
+  "converted": {
+    "year": -622,
+    "month": 3,
+    "day": 17,
+    "calendar": "persian",
+    "era": "SH"
+  },
+  "jdn": 1721060,
+  "convertedJDN": 1720850,
+  "diff": 210
+}
+Ô£ù Cross-Calendar Alignment (Year Zero -> chinese): JDN difference: 672900 days (expected <= 2)
+  Details: {
+  "gregorian": {
+    "year": 0,
+    "month": 1,
+    "day": 1
+  },
+  "converted": {
+    "year": -59,
+    "month": 8,
+    "day": 4,
+    "calendar": "chinese",
+    "era": "CE"
+  },
+  "jdn": 1721060,
+  "convertedJDN": 2393960,
+  "diff": 672900
+}
+Ô£ù Cross-Calendar Alignment (Year Zero -> ethiopian): JDN difference: 112 days (expected <= 1)
+  Details: {
+  "gregorian": {
+    "year": 0,
+    "month": 1,
+    "day": 1
+  },
+  "converted": {
+    "year": -8,
+    "month": 8,
+    "day": 30,
+    "calendar": "ethiopian",
+    "era": "EE"
+  },
+  "jdn": 1721060,
+  "convertedJDN": 1721172,
+  "diff": 112
+}
+Ô£ù Cross-Calendar Alignment (Year Zero -> coptic): JDN difference: 112 days (expected <= 1)
+  Details: {
+  "gregorian": {
+    "year": 0,
+    "month": 1,
+    "day": 1
+  },
+  "converted": {
+    "year": -284,
+    "month": 8,
+    "day": 30,
+    "calendar": "coptic",
+    "era": "AM"
+  },
+  "jdn": 1721060,
+  "convertedJDN": 1721172,
+  "diff": 112
+}
+Ô£ù Cross-Calendar Alignment (Year Zero -> indian-saka): JDN difference: 205 days (expected <= 1)
+  Details: {
+  "gregorian": {
+    "year": 0,
+    "month": 1,
+    "day": 1
+  },
+  "converted": {
+    "year": -78,
+    "month": 3,
+    "day": 19,
+    "calendar": "indian-saka",
+    "era": "Saka"
+  },
+  "jdn": 1721060,
+  "convertedJDN": 1720855,
+  "diff": 205
+}
+Ô£ù Cross-Calendar Alignment (Year Zero -> mayan-longcount): JDN difference: 257 days (expected <= 1)
+  Details: {
+  "gregorian": {
+    "year": 0,
+    "month": 1,
+    "day": 1
+  },
+  "converted": {
+    "year": 7,
+    "month": 17,
+    "day": 17,
+    "calendar": "mayan-longcount",
+    "era": ""
+  },
+  "jdn": 1721060,
+  "convertedJDN": 1720803,
+  "diff": 257
+}
 
-========================================
-Test Complete
-========================================
+=== Test 3: Round-Trip Conversions ===
+Ô£ù Round-Trip (gregorian -> mayan-longcount -> gregorian): JDN difference: 68 days
+  Details: {
+  "sourceDate": {
+    "year": 2024,
+    "month": 1,
+    "day": 1,
+    "calendar": "gregorian",
+    "era": "CE"
+  },
+  "toTarget": {
+    "year": 13,
+    "month": 0,
+    "day": 11,
+    "calendar": "mayan-longcount",
+    "era": ""
+  },
+  "backToSource": {
+    "year": 2023,
+    "month": 10,
+    "day": 25,
+    "calendar": "gregorian",
+    "era": "CE"
+  },
+  "sourceJDN": 2460311,
+  "backJDN": 2460243,
+  "diff": 68
+}
+Ô£ù Round-Trip (gregorian -> islamic -> gregorian): JDN difference: 275 days
+  Details: {
+  "sourceDate": {
+    "year": 100,
+    "month": 6,
+    "day": 15,
+    "calendar": "gregorian",
+    "era": "CE"
+  },
+  "toTarget": {
+    "year": -538,
+    "month": 2,
+    "day": 11,
+    "calendar": "islamic",
+    "era": "AH"
+  },
+  "backToSource": {
+    "year": 99,
+    "month": 9,
+    "day": 13,
+    "calendar": "gregorian",
+    "era": "CE"
+  },
+  "sourceJDN": 1757750,
+  "backJDN": 1757475,
+  "diff": 275
+}
+Ô£ù Round-Trip (gregorian -> persian -> gregorian): JDN difference: 189 days
+  Details: {
+  "sourceDate": {
+    "year": 100,
+    "month": 6,
+    "day": 15,
+    "calendar": "gregorian",
+    "era": "CE"
+  },
+  "toTarget": {
+    "year": -521,
+    "month": 10,
+    "day": 2,
+    "calendar": "persian",
+    "era": "SH"
+  },
+  "backToSource": {
+    "year": 100,
+    "month": 12,
+    "day": 21,
+    "calendar": "gregorian",
+    "era": "CE"
+  },
+  "sourceJDN": 1757750,
+  "backJDN": 1757939,
+  "diff": 189
+}
+Ô£ù Round-Trip (gregorian -> coptic -> gregorian): JDN difference: 218 days
+  Details: {
+  "sourceDate": {
+    "year": 100,
+    "month": 6,
+    "day": 15,
+    "calendar": "gregorian",
+    "era": "CE"
+  },
+  "toTarget": {
+    "year": -184,
+    "month": 3,
+    "day": 15,
+    "calendar": "coptic",
+    "era": "AM"
+  },
+  "backToSource": {
+    "year": 99,
+    "month": 11,
+    "day": 9,
+    "calendar": "gregorian",
+    "era": "CE"
+  },
+  "sourceJDN": 1757750,
+  "backJDN": 1757532,
+  "diff": 218
+}
+Ô£ù Round-Trip (gregorian -> mayan-longcount -> gregorian): JDN difference: 227 days
+  Details: {
+  "sourceDate": {
+    "year": 100,
+    "month": 6,
+    "day": 15,
+    "calendar": "gregorian",
+    "era": "CE"
+  },
+  "toTarget": {
+    "year": 8,
+    "month": 2,
+    "day": 19,
+    "calendar": "mayan-longcount",
+    "era": ""
+  },
+  "backToSource": {
+    "year": 99,
+    "month": 10,
+    "day": 31,
+    "calendar": "gregorian",
+    "era": "CE"
+  },
+  "sourceJDN": 1757750,
+  "backJDN": 1757523,
+  "diff": 227
+}
+Ô£ù Round-Trip (gregorian -> islamic -> gregorian): JDN difference: 106 days
+  Details: {
+  "sourceDate": {
+    "year": 0,
+    "month": 1,
+    "day": 1,
+    "calendar": "gregorian",
+    "era": "BCE"
+  },
+  "toTarget": {
+    "year": -641,
+    "month": 8,
+    "day": 24,
+    "calendar": "islamic",
+    "era": "AH"
+  },
+  "backToSource": {
+    "year": 0,
+    "month": 4,
+    "day": 16,
+    "calendar": "gregorian",
+    "era": "BCE"
+  },
+  "sourceJDN": 1721060,
+  "backJDN": 1721166,
+  "diff": 106
+}
+Ô£ù Round-Trip (gregorian -> persian -> gregorian): JDN difference: 210 days
+  Details: {
+  "sourceDate": {
+    "year": 0,
+    "month": 1,
+    "day": 1,
+    "calendar": "gregorian",
+    "era": "BCE"
+  },
+  "toTarget": {
+    "year": -622,
+    "month": 3,
+    "day": 17,
+    "calendar": "persian",
+    "era": "SH"
+  },
+  "backToSource": {
+    "year": -1,
+    "month": 6,
+    "day": 5,
+    "calendar": "gregorian",
+    "era": "BCE"
+  },
+  "sourceJDN": 1721060,
+  "backJDN": 1720850,
+  "diff": 210
+}
+Ô£ù Round-Trip (gregorian -> chinese -> gregorian): JDN difference: 672900 days
+  Details: {
+  "sourceDate": {
+    "year": 0,
+    "month": 1,
+    "day": 1,
+    "calendar": "gregorian",
+    "era": "BCE"
+  },
+  "toTarget": {
+    "year": -59,
+    "month": 8,
+    "day": 4,
+    "calendar": "chinese",
+    "era": "CE"
+  },
+  "backToSource": {
+    "year": 1842,
+    "month": 5,
+    "day": 4,
+    "calendar": "gregorian",
+    "era": "CE"
+  },
+  "sourceJDN": 1721060,
+  "backJDN": 2393960,
+  "diff": 672900
+}
+Ô£ù Round-Trip (gregorian -> ethiopian -> gregorian): JDN difference: 112 days
+  Details: {
+  "sourceDate": {
+    "year": 0,
+    "month": 1,
+    "day": 1,
+    "calendar": "gregorian",
+    "era": "BCE"
+  },
+  "toTarget": {
+    "year": -8,
+    "month": 8,
+    "day": 30,
+    "calendar": "ethiopian",
+    "era": "EE"
+  },
+  "backToSource": {
+    "year": 0,
+    "month": 4,
+    "day": 22,
+    "calendar": "gregorian",
+    "era": "BCE"
+  },
+  "sourceJDN": 1721060,
+  "backJDN": 1721172,
+  "diff": 112
+}
+Ô£ù Round-Trip (gregorian -> coptic -> gregorian): JDN difference: 112 days
+  Details: {
+  "sourceDate": {
+    "year": 0,
+    "month": 1,
+    "day": 1,
+    "calendar": "gregorian",
+    "era": "BCE"
+  },
+  "toTarget": {
+    "year": -284,
+    "month": 8,
+    "day": 30,
+    "calendar": "coptic",
+    "era": "AM"
+  },
+  "backToSource": {
+    "year": 0,
+    "month": 4,
+    "day": 22,
+    "calendar": "gregorian",
+    "era": "BCE"
+  },
+  "sourceJDN": 1721060,
+  "backJDN": 1721172,
+  "diff": 112
+}
+Ô£ù Round-Trip (gregorian -> indian-saka -> gregorian): JDN difference: 205 days
+  Details: {
+  "sourceDate": {
+    "year": 0,
+    "month": 1,
+    "day": 1,
+    "calendar": "gregorian",
+    "era": "BCE"
+  },
+  "toTarget": {
+    "year": -78,
+    "month": 3,
+    "day": 19,
+    "calendar": "indian-saka",
+    "era": "Saka"
+  },
+  "backToSource": {
+    "year": -1,
+    "month": 6,
+    "day": 10,
+    "calendar": "gregorian",
+    "era": "BCE"
+  },
+  "sourceJDN": 1721060,
+  "backJDN": 1720855,
+  "diff": 205
+}
+Ô£ù Round-Trip (gregorian -> mayan-longcount -> gregorian): JDN difference: 257 days
+  Details: {
+  "sourceDate": {
+    "year": 0,
+    "month": 1,
+    "day": 1,
+    "calendar": "gregorian",
+    "era": "BCE"
+  },
+  "toTarget": {
+    "year": 7,
+    "month": 17,
+    "day": 17,
+    "calendar": "mayan-longcount",
+    "era": ""
+  },
+  "backToSource": {
+    "year": -1,
+    "month": 4,
+    "day": 19,
+    "calendar": "gregorian",
+    "era": "BCE"
+  },
+  "sourceJDN": 1721060,
+  "backJDN": 1720803,
+  "diff": 257
+}
+Ô£ù Round-Trip (gregorian -> islamic -> gregorian): JDN difference: 214 days
+  Details: {
+  "sourceDate": {
+    "year": -100,
+    "month": 7,
+    "day": 4,
+    "calendar": "gregorian",
+    "era": "BCE"
+  },
+  "toTarget": {
+    "year": -744,
+    "month": 3,
+    "day": 12,
+    "calendar": "islamic",
+    "era": "AH"
+  },
+  "backToSource": {
+    "year": -101,
+    "month": 12,
+    "day": 2,
+    "calendar": "gregorian",
+    "era": "BCE"
+  },
+  "sourceJDN": 1684720,
+  "backJDN": 1684506,
+  "diff": 214
+}
+Ô£ù Round-Trip (gregorian -> persian -> gregorian): JDN difference: 152 days
+  Details: {
+  "sourceDate": {
+    "year": -100,
+    "month": 7,
+    "day": 4,
+    "calendar": "gregorian",
+    "era": "BCE"
+  },
+  "toTarget": {
+    "year": -721,
+    "month": 9,
+    "day": 14,
+    "calendar": "persian",
+    "era": "SH"
+  },
+  "backToSource": {
+    "year": -100,
+    "month": 12,
+    "day": 3,
+    "calendar": "gregorian",
+    "era": "BCE"
+  },
+  "sourceJDN": 1684720,
+  "backJDN": 1684872,
+  "diff": 152
+}
+Ô£ù Round-Trip (gregorian -> chinese -> gregorian): JDN difference: 673327 days
+  Details: {
+  "sourceDate": {
+    "year": -100,
+    "month": 7,
+    "day": 4,
+    "calendar": "gregorian",
+    "era": "BCE"
+  },
+  "toTarget": {
+    "year": -161,
+    "month": 1,
+    "day": 16,
+    "calendar": "chinese",
+    "era": "CE"
+  },
+  "backToSource": {
+    "year": 1744,
+    "month": 1,
+    "day": 5,
+    "calendar": "gregorian",
+    "era": "CE"
+  },
+  "sourceJDN": 1684720,
+  "backJDN": 2358047,
+  "diff": 673327
+}
+Ô£ù Round-Trip (gregorian -> ethiopian -> gregorian): JDN difference: 258 days
+  Details: {
+  "sourceDate": {
+    "year": -100,
+    "month": 7,
+    "day": 4,
+    "calendar": "gregorian",
+    "era": "BCE"
+  },
+  "toTarget": {
+    "year": -108,
+    "month": 2,
+    "day": 25,
+    "calendar": "ethiopian",
+    "era": "EE"
+  },
+  "backToSource": {
+    "year": -101,
+    "month": 10,
+    "day": 19,
+    "calendar": "gregorian",
+    "era": "BCE"
+  },
+  "sourceJDN": 1684720,
+  "backJDN": 1684462,
+  "diff": 258
+}
+Ô£ù Round-Trip (gregorian -> coptic -> gregorian): JDN difference: 258 days
+  Details: {
+  "sourceDate": {
+    "year": -100,
+    "month": 7,
+    "day": 4,
+    "calendar": "gregorian",
+    "era": "BCE"
+  },
+  "toTarget": {
+    "year": -384,
+    "month": 2,
+    "day": 25,
+    "calendar": "coptic",
+    "era": "AM"
+  },
+  "backToSource": {
+    "year": -101,
+    "month": 10,
+    "day": 19,
+    "calendar": "gregorian",
+    "era": "BCE"
+  },
+  "sourceJDN": 1684720,
+  "backJDN": 1684462,
+  "diff": 258
+}
+Ô£ù Round-Trip (gregorian -> indian-saka -> gregorian): JDN difference: 157 days
+  Details: {
+  "sourceDate": {
+    "year": -100,
+    "month": 7,
+    "day": 4,
+    "calendar": "gregorian",
+    "era": "BCE"
+  },
+  "toTarget": {
+    "year": -177,
+    "month": 9,
+    "day": 16,
+    "calendar": "indian-saka",
+    "era": "Saka"
+  },
+  "backToSource": {
+    "year": -100,
+    "month": 12,
+    "day": 8,
+    "calendar": "gregorian",
+    "era": "BCE"
+  },
+  "sourceJDN": 1684720,
+  "backJDN": 1684877,
+  "diff": 157
+}
+Ô£ù Round-Trip (gregorian -> mayan-longcount -> gregorian): JDN difference: 277 days
+  Details: {
+  "sourceDate": {
+    "year": -100,
+    "month": 7,
+    "day": 4,
+    "calendar": "gregorian",
+    "era": "BCE"
+  },
+  "toTarget": {
+    "year": 7,
+    "month": 12,
+    "day": 16,
+    "calendar": "mayan-longcount",
+    "era": ""
+  },
+  "backToSource": {
+    "year": -101,
+    "month": 9,
+    "day": 30,
+    "calendar": "gregorian",
+    "era": "BCE"
+  },
+  "sourceJDN": 1684720,
+  "backJDN": 1684443,
+  "diff": 277
+}
+
+=== Test 4: Known Reference Dates ===
+Ô£ô Known Reference (Gregorian Epoch): JDN matches: 1721426
+Ô£ô Known Reference (Julian Epoch): JDN matches: 1721426
+Ô£ù Known Reference (Islamic Epoch): JDN mismatch: expected 1948439, got 1948440
+  Details: {
+  "refDate": {
+    "name": "Islamic Epoch",
+    "gregorian": {
+      "year": 622,
+      "month": 7,
+      "day": 16
+    },
+    "jdn": 1948439,
+    "description": "July 16, 622 CE (Julian) - Hijra - start of Islamic calendar",
+    "useJulian": true
+  },
+  "expectedJDN": 1948439,
+  "actualJDN": 1948440
+}
+Ô£ù Known Reference (Hebrew Epoch): JDN mismatch: expected 347997, got 347632
+  Details: {
+  "refDate": {
+    "name": "Hebrew Epoch",
+    "gregorian": {
+      "year": -3761,
+      "month": 10,
+      "day": 7
+    },
+    "jdn": 347997,
+    "description": "October 7, 3761 BCE (Julian) - Creation - start of Hebrew calendar",
+    "useJulian": true
+  },
+  "expectedJDN": 347997,
+  "actualJDN": 347632
+}
+Ô£ô Known Reference (Persian Epoch): JDN matches: 1948318
+Ô£ù Known Reference (Mayan Epoch): JDN mismatch: expected 584283, got 583918
+  Details: {
+  "refDate": {
+    "name": "Mayan Epoch",
+    "gregorian": {
+      "year": -3114,
+      "month": 8,
+      "day": 11
+    },
+    "jdn": 584283,
+    "description": "August 11, 3114 BCE (Gregorian) - GMT correlation - Mayan epoch",
+    "useJulian": false
+  },
+  "expectedJDN": 584283,
+  "actualJDN": 583918
+}
+Ô£ô Known Reference (Modern Date): JDN matches: 2460311
+Ô£ô Known Reference (Leap Year Date): JDN matches: 2460370
+Ô£ô Known Reference (Negative Year): JDN matches: 1684536
+Ô£ô Known Reference (Year Zero): JDN matches: 1721060
+
+=== Test 5: Era Designations ===
+
+=== Test 6: Formatting and Parsing ===
+
+=== Test 7: Edge Cases ===
+
+============================================================
+Test Summary
+============================================================
+Total Tests: 98
+Passed: 7 (7.1%)
+Failed: 91 (92.9%)
+
+Failed Tests:
+  - JDN Consistency (islamic, -100-7-4): JDN mismatch: 1912828 vs 1912822
+  - JDN Consistency (hebrew, 0-1-1): JDN mismatch: 347642 vs 347289
+  - JDN Consistency (hebrew, -100-7-4): JDN mismatch: 311458 vs 311482
+  - JDN Consistency (persian, -100-7-4): JDN mismatch: 1911618 vs 1911605
+  - JDN Consistency (chinese, 1000-12-31): Error: Error: Invalid Chinese day: 31 (month 12 has 29 days)
+  - JDN Consistency (indian-saka, 1000-12-31): JDN mismatch: 2114873 vs 2114507
+  - JDN Consistency (indian-saka, 0-1-1): JDN mismatch: 1749264 vs 1749630
+  - JDN Consistency (indian-saka, -100-7-4): JDN mismatch: 1712929 vs 1712916
+  - JDN Consistency (mayan-haab, 1000-12-31): Error: Error: Invalid day in Haab' month: 31 (month 12 has 20 days)
+  - JDN Consistency (mayan-haab, 2024-2-29): Error: Error: Invalid day in Haab' month: 29 (month 2 has 20 days)
+  - JDN Consistency (mayan-haab, -100-7-4): JDN mismatch: 547660 vs 547177
+  - JDN Consistency (aztec-xiuhpohualli, 1000-12-31): Error: Error: Invalid day in Xiuhpohualli month: 31 (month 12 has 20 days)
+  - JDN Consistency (aztec-xiuhpohualli, 2024-2-29): Error: Error: Invalid day in Xiuhpohualli month: 29 (month 2 has 20 days)
+  - JDN Consistency (aztec-xiuhpohualli, -100-7-4): JDN mismatch: 547660 vs 547177
+  - Cross-Calendar Alignment (Gregorian Epoch -> islamic): JDN difference: 82 days (expected <= 1)
+  - Cross-Calendar Alignment (Gregorian Epoch -> persian): JDN difference: 211 days (expected <= 1)
+  - Cross-Calendar Alignment (Gregorian Epoch -> chinese): JDN difference: 672877 days (expected <= 2)
+  - Cross-Calendar Alignment (Gregorian Epoch -> ethiopian): JDN difference: 111 days (expected <= 1)
+  - Cross-Calendar Alignment (Gregorian Epoch -> coptic): JDN difference: 111 days (expected <= 1)
+  - Cross-Calendar Alignment (Gregorian Epoch -> indian-saka): JDN difference: 207 days (expected <= 1)
+  - Cross-Calendar Alignment (Gregorian Epoch -> mayan-longcount): JDN difference: 263 days (expected <= 1)
+  - Cross-Calendar Alignment (Julian Epoch -> islamic): JDN difference: 82 days (expected <= 1)
+  - Cross-Calendar Alignment (Julian Epoch -> persian): JDN difference: 211 days (expected <= 1)
+  - Cross-Calendar Alignment (Julian Epoch -> chinese): JDN difference: 672877 days (expected <= 2)
+  - Cross-Calendar Alignment (Julian Epoch -> ethiopian): JDN difference: 111 days (expected <= 1)
+  - Cross-Calendar Alignment (Julian Epoch -> coptic): JDN difference: 111 days (expected <= 1)
+  - Cross-Calendar Alignment (Julian Epoch -> indian-saka): JDN difference: 207 days (expected <= 1)
+  - Cross-Calendar Alignment (Julian Epoch -> mayan-longcount): JDN difference: 263 days (expected <= 1)
+  - Cross-Calendar Alignment (Islamic Epoch -> islamic): JDN difference: 350 days (expected <= 1)
+  - Cross-Calendar Alignment (Islamic Epoch -> mayan-longcount): JDN difference: 114 days (expected <= 1)
+  - Cross-Calendar Alignment (Hebrew Epoch -> islamic): JDN difference: 149 days (expected <= 1)
+  - Cross-Calendar Alignment (Hebrew Epoch -> hebrew): JDN difference: 315 days (expected <= 2)
+  - Cross-Calendar Alignment (Hebrew Epoch -> persian): JDN difference: 37 days (expected <= 1)
+  - Cross-Calendar Alignment (Hebrew Epoch -> chinese): JDN difference: 674066 days (expected <= 2)
+  - Cross-Calendar Alignment (Hebrew Epoch -> ethiopian): JDN difference: 228 days (expected <= 1)
+  - Cross-Calendar Alignment (Hebrew Epoch -> coptic): JDN difference: 228 days (expected <= 1)
+  - Cross-Calendar Alignment (Hebrew Epoch -> indian-saka): JDN difference: 31 days (expected <= 1)
+  - Cross-Calendar Alignment (Hebrew Epoch -> mayan-haab): JDN difference: 527 days (expected <= 1)
+  - Cross-Calendar Alignment (Hebrew Epoch -> mayan-longcount): JDN difference: 101 days (expected <= 1)
+  - Cross-Calendar Alignment (Hebrew Epoch -> aztec-xiuhpohualli): JDN difference: 527 days (expected <= 1)
+  - Cross-Calendar Alignment (Persian Epoch -> islamic): JDN difference: 112 days (expected <= 1)
+  - Cross-Calendar Alignment (Persian Epoch -> persian): JDN difference: 357 days (expected <= 1)
+  - Cross-Calendar Alignment (Persian Epoch -> mayan-longcount): JDN difference: 355 days (expected <= 1)
+  - Cross-Calendar Alignment (Mayan Epoch -> islamic): JDN difference: 64 days (expected <= 1)
+  - Cross-Calendar Alignment (Mayan Epoch -> persian): JDN difference: 75 days (expected <= 1)
+  - Cross-Calendar Alignment (Mayan Epoch -> chinese): JDN difference: 674035 days (expected <= 2)
+  - Cross-Calendar Alignment (Mayan Epoch -> ethiopian): JDN difference: 349 days (expected <= 1)
+  - Cross-Calendar Alignment (Mayan Epoch -> coptic): JDN difference: 349 days (expected <= 1)
+  - Cross-Calendar Alignment (Mayan Epoch -> indian-saka): JDN difference: 81 days (expected <= 1)
+  - Cross-Calendar Alignment (Mayan Epoch -> mayan-haab): JDN difference: 364 days (expected <= 1)
+  - Cross-Calendar Alignment (Mayan Epoch -> mayan-longcount): JDN difference: 5 days (expected <= 1)
+  - Cross-Calendar Alignment (Mayan Epoch -> aztec-xiuhpohualli): JDN difference: 364 days (expected <= 1)
+  - Cross-Calendar Alignment (Modern Date -> mayan-longcount): JDN difference: 68 days (expected <= 1)
+  - Cross-Calendar Alignment (Leap Year Date -> bahai): JDN difference: 4 days (expected <= 1)
+  - Cross-Calendar Alignment (Leap Year Date -> mayan-longcount): JDN difference: 127 days (expected <= 1)
+  - Cross-Calendar Alignment (Negative Year -> islamic): JDN difference: 154 days (expected <= 1)
+  - Cross-Calendar Alignment (Negative Year -> persian): JDN difference: 211 days (expected <= 1)
+  - Cross-Calendar Alignment (Negative Year -> chinese): JDN difference: 672987 days (expected <= 2)
+  - Cross-Calendar Alignment (Negative Year -> ethiopian): JDN difference: 110 days (expected <= 1)
+  - Cross-Calendar Alignment (Negative Year -> coptic): JDN difference: 110 days (expected <= 1)
+  - Cross-Calendar Alignment (Negative Year -> indian-saka): JDN difference: 205 days (expected <= 1)
+  - Cross-Calendar Alignment (Negative Year -> mayan-longcount): JDN difference: 93 days (expected <= 1)
+  - Cross-Calendar Alignment (Year Zero -> islamic): JDN difference: 106 days (expected <= 1)
+  - Cross-Calendar Alignment (Year Zero -> persian): JDN difference: 210 days (expected <= 1)
+  - Cross-Calendar Alignment (Year Zero -> chinese): JDN difference: 672900 days (expected <= 2)
+  - Cross-Calendar Alignment (Year Zero -> ethiopian): JDN difference: 112 days (expected <= 1)
+  - Cross-Calendar Alignment (Year Zero -> coptic): JDN difference: 112 days (expected <= 1)
+  - Cross-Calendar Alignment (Year Zero -> indian-saka): JDN difference: 205 days (expected <= 1)
+  - Cross-Calendar Alignment (Year Zero -> mayan-longcount): JDN difference: 257 days (expected <= 1)
+  - Round-Trip (gregorian -> mayan-longcount -> gregorian): JDN difference: 68 days
+  - Round-Trip (gregorian -> islamic -> gregorian): JDN difference: 275 days
+  - Round-Trip (gregorian -> persian -> gregorian): JDN difference: 189 days
+  - Round-Trip (gregorian -> coptic -> gregorian): JDN difference: 218 days
+  - Round-Trip (gregorian -> mayan-longcount -> gregorian): JDN difference: 227 days
+  - Round-Trip (gregorian -> islamic -> gregorian): JDN difference: 106 days
+  - Round-Trip (gregorian -> persian -> gregorian): JDN difference: 210 days
+  - Round-Trip (gregorian -> chinese -> gregorian): JDN difference: 672900 days
+  - Round-Trip (gregorian -> ethiopian -> gregorian): JDN difference: 112 days
+  - Round-Trip (gregorian -> coptic -> gregorian): JDN difference: 112 days
+  - Round-Trip (gregorian -> indian-saka -> gregorian): JDN difference: 205 days
+  - Round-Trip (gregorian -> mayan-longcount -> gregorian): JDN difference: 257 days
+  - Round-Trip (gregorian -> islamic -> gregorian): JDN difference: 214 days
+  - Round-Trip (gregorian -> persian -> gregorian): JDN difference: 152 days
+  - Round-Trip (gregorian -> chinese -> gregorian): JDN difference: 673327 days
+  - Round-Trip (gregorian -> ethiopian -> gregorian): JDN difference: 258 days
+  - Round-Trip (gregorian -> coptic -> gregorian): JDN difference: 258 days
+  - Round-Trip (gregorian -> indian-saka -> gregorian): JDN difference: 157 days
+  - Round-Trip (gregorian -> mayan-longcount -> gregorian): JDN difference: 277 days
+  - Known Reference (Islamic Epoch): JDN mismatch: expected 1948439, got 1948440
+  - Known Reference (Hebrew Epoch): JDN mismatch: expected 347997, got 347632
+  - Known Reference (Mayan Epoch): JDN mismatch: expected 584283, got 583918

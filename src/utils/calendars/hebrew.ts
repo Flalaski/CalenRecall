@@ -284,8 +284,8 @@ export function hebrewToJDN(year: number, month: number, day: number): number {
   // Handle negative years (before epoch)
   if (year < 1) {
     // For negative years, calculate days before epoch
-    // Work backwards: calculate total days from year down to year 0 (inclusive)
-    // Then subtract the days remaining in the target year
+    // Epoch is start of year 1, so we need days from start of year 'year' to start of year 1
+    // This includes: all years from 'year' to -1 (inclusive), minus days from start of year to date
     
     // Pre-compute year length once to avoid recursion
     const yearLength = getDaysInHebrewYear(year);
@@ -297,13 +297,13 @@ export function hebrewToJDN(year: number, month: number, day: number): number {
       daysInYear += getDaysInHebrewMonth(year, m, yearLength);
     }
     
-    // Calculate total days in all years from year down to 0 (inclusive)
+    // Calculate total days from start of year 'year' to start of epoch (start of year 1)
     let totalDaysInYears = 0;
-    for (let y = year; y <= 0; y++) {
+    for (let y = year; y <= -1; y++) {
       totalDaysInYears += getDaysInHebrewYear(y);
     }
     
-    // Days before epoch = total days in all years from year to 0, minus days remaining in target year
+    // Days before epoch = total days from start of year 'year' to start of epoch, minus days from start of year to date
     const daysBeforeEpoch = totalDaysInYears - daysInYear;
     
     return HEBREW_EPOCH - daysBeforeEpoch;
@@ -343,8 +343,9 @@ export function jdnToHebrew(jdn: number): { year: number; month: number; day: nu
   // Handle dates before epoch (negative years)
   if (days < 0) {
     // Work backwards from epoch
+    // Epoch is start of year 1, so days < 0 means we're in a negative year
     let remainingDays = -days;
-    let year = 0;
+    let year = -1; // Start from year -1 (year 0 doesn't exist, epoch is start of year 1)
     
     // Find the year by working backwards with safety limit
     let iterations = 0;
@@ -371,17 +372,21 @@ export function jdnToHebrew(jdn: number): { year: number; month: number; day: nu
           break;
         }
       } else {
-        // Found the year, now find month and day
-        // Pre-compute year length once to avoid recursion
-        const yearLength = getDaysInHebrewYear(year);
+        // Found the year
+        // remainingDays now represents days from the date to the end of the year (before epoch)
+        // We need to convert this to days from the start of the year to the date
+        const yearLength2 = getDaysInHebrewYear(year);
+        const daysFromStartOfYear = yearLength2 - remainingDays;
+        
+        // Now find month and day from daysFromStartOfYear
         const months = getMonthsInHebrewYear(year);
         let month = 1;
-        let day = remainingDays; // 0-based day
+        let day = daysFromStartOfYear; // 0-based day
         
         // Calculate month and day by iterating through months
         // Pass precomputed year length to avoid recursion
         for (let m = 1; m <= months; m++) {
-          const monthLength = getDaysInHebrewMonth(year, m, yearLength);
+          const monthLength = getDaysInHebrewMonth(year, m, yearLength2);
           // Safety check
           if (monthLength <= 0 || monthLength > 31) {
             console.warn(`Invalid Hebrew month length ${monthLength} for year ${year}, month ${m}`);

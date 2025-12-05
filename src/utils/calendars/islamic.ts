@@ -59,12 +59,8 @@ export function islamicToJDN(year: number, month: number, day: number): number {
   // Handle negative years (before epoch)
   if (year < 1) {
     // For negative years, calculate days before epoch
-    // Work backwards: calculate total days from year down to 0 (inclusive)
-    let totalDaysInYears = 0;
-    for (let y = year; y <= 0; y++) {
-      const isLeap = isIslamicLeapYear(y);
-      totalDaysInYears += isLeap ? 355 : 354;
-    }
+    // Epoch is start of year 1, so we need days from start of year 'year' to start of year 1
+    // This includes: all years from 'year' to -1 (inclusive), plus days from start of year to date
     
     // Calculate days in the target year up to this date
     const isLeap = isIslamicLeapYear(year);
@@ -77,7 +73,15 @@ export function islamicToJDN(year: number, month: number, day: number): number {
       daysInYear += monthLengths[m - 1];
     }
     
-    // Days before epoch = total days in all years from year to 0, minus days remaining in target year
+    // Calculate total days from start of year 'year' to start of epoch (start of year 1)
+    // This is: total days in years from 'year' to -1 (inclusive), plus days from start of year to date
+    let totalDaysInYears = 0;
+    for (let y = year; y <= -1; y++) {
+      const yIsLeap = isIslamicLeapYear(y);
+      totalDaysInYears += yIsLeap ? 355 : 354;
+    }
+    
+    // Days before epoch = total days from start of year 'year' to start of epoch, minus days from start of year to date
     const daysBeforeEpoch = totalDaysInYears - daysInYear;
     
     return ISLAMIC_EPOCH - daysBeforeEpoch;
@@ -128,40 +132,48 @@ export function jdnToIslamic(jdn: number): { year: number; month: number; day: n
   // Handle dates before epoch (negative years)
   if (days < 0) {
     // Work backwards from epoch
+    // Epoch is start of year 1, so days < 0 means we're in a negative year
     let remainingDays = -days;
-    let year = 0;
+    let year = -1; // Start from year -1 (year 0 doesn't exist, epoch is start of year 1)
     
     // Find the year by working backwards
     while (remainingDays > 0) {
       const isLeap = isIslamicLeapYear(year);
       const yearLength = isLeap ? 355 : 354;
-      if (remainingDays > yearLength) {
+      if (remainingDays >= yearLength) {
         remainingDays -= yearLength;
         year--;
       } else {
-        // Found the year, now find month and day
+        // Found the year
+        // remainingDays now represents days from the date to the end of the year (before epoch)
+        // We need to convert this to days from the start of the year to the date
         const isLeapYear = isIslamicLeapYear(year);
+        const yearLength2 = isLeapYear ? 355 : 354;
+        const daysFromStartOfYear = yearLength2 - remainingDays;
+        
+        // Now find month and day from daysFromStartOfYear
         const monthLengths = isLeapYear 
           ? [30, 29, 30, 29, 30, 29, 30, 29, 30, 29, 30, 30]
           : [30, 29, 30, 29, 30, 29, 30, 29, 30, 29, 30, 29];
         
         let month = 1;
-        let day = remainingDays + 1;
+        let day = daysFromStartOfYear; // 0-based day offset
         
         for (let m = 0; m < 12; m++) {
-          if (day <= monthLengths[m]) {
+          if (day < monthLengths[m]) {
             month = m + 1;
             break;
           }
           day -= monthLengths[m];
         }
         
-        return { year, month, day };
+        // Convert to 1-based day
+        return { year, month, day: day + 1 };
       }
     }
     
-    // Should not reach here, but return year 0, month 1, day 1 as fallback
-    return { year: 0, month: 1, day: 1 };
+    // Should not reach here, but return year -1, month 1, day 1 as fallback
+    return { year: -1, month: 1, day: 1 };
   }
   
   // Normal case: days >= 0 (year >= 1)

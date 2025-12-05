@@ -111,10 +111,32 @@ export function formatCalendarDate(date: CalendarDate, format: string = 'YYYY-MM
   const monthNames = MONTH_NAMES[calendar] || MONTH_NAMES.gregorian;
   const monthNamesShort = MONTH_NAMES_SHORT[calendar] || MONTH_NAMES_SHORT.gregorian;
   
-  // Get month name (handle 1-based indexing)
-  const monthIndex = date.month - 1;
-  const monthName = monthIndex >= 0 && monthIndex < monthNames.length ? monthNames[monthIndex] : date.month.toString();
-  const monthNameShort = monthIndex >= 0 && monthIndex < monthNamesShort.length ? monthNamesShort[monthIndex] : date.month.toString();
+  // Get month name (handle 1-based indexing and leap months)
+  // For Chinese calendar: months 1-12 are regular, 13-24 are leap months
+  // For other calendars with leap months, handle similarly
+  let actualMonth = date.month;
+  let isLeapMonth = false;
+  
+  if (calendar === 'chinese' && date.month > 12) {
+    actualMonth = date.month - 12; // Convert leap month 13-24 to regular month 1-12
+    isLeapMonth = true;
+  } else if (calendar === 'hebrew' && date.month > 12) {
+    actualMonth = date.month - 12; // Hebrew leap months
+    isLeapMonth = true;
+  }
+  
+  const monthIndex = actualMonth - 1;
+  let monthName = monthIndex >= 0 && monthIndex < monthNames.length ? monthNames[monthIndex] : actualMonth.toString();
+  let monthNameShort = monthIndex >= 0 && monthIndex < monthNamesShort.length ? monthNamesShort[monthIndex] : actualMonth.toString();
+  
+  // Add leap month indicator for Chinese calendar
+  if (calendar === 'chinese' && isLeapMonth) {
+    monthName = `闰${monthName}`; // "Leap" prefix in Chinese
+    monthNameShort = `闰${monthNameShort}`;
+  } else if (calendar === 'hebrew' && isLeapMonth) {
+    monthName = `Adar II`; // Hebrew leap month name
+    monthNameShort = `Ad2`;
+  }
   
   // Get day of week
   const dayOfWeek = getDayOfWeek(date);

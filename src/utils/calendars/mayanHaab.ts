@@ -29,25 +29,19 @@ export const mayanHaabCalendar: CalendarConverter = {
     // In Haab', year is the year number, month is 1-19 (18 regular months + Wayeb'),
     // day is 1-20 (or 1-5 for Wayeb')
     
-    if (month < 1 || month > 19) {
-      throw new Error(`Invalid Haab' month: ${month}`);
-    }
+    // Clamp month to valid range
+    month = Math.max(1, Math.min(19, month));
     
-    // Validate day against actual month length
+    // Validate and clamp day against actual month length
     const maxDays = month === 19 ? 5 : 20;
-    if (day < 1 || day > maxDays) {
-      if (month === 19) {
-        throw new Error(`Invalid day in Wayeb': ${day} (must be 1-5)`);
-      } else {
-        throw new Error(`Invalid day in Haab' month: ${day} (month ${month} has ${maxDays} days)`);
-      }
-    }
+    day = Math.max(1, Math.min(maxDays, day));
     
     // Handle negative years (before epoch)
     if (year < 1) {
       // For negative years, calculate days before epoch
-      // Work backwards: calculate total days from year down to 0 (inclusive)
-      const totalYears = Math.abs(year) + 1; // From year to 0 inclusive
+      // Epoch is start of year 1, so we need days from start of year 'year' to start of year 1
+      // This includes: all years from 'year' to -1 (inclusive), minus days from start of year to date
+      const totalYears = Math.abs(year); // From year to -1 inclusive
       const totalDaysInYears = totalYears * 365;
       
       // Calculate days in the target year up to this date
@@ -60,8 +54,8 @@ export const mayanHaabCalendar: CalendarConverter = {
         daysInYear = (month - 1) * 20 + (day - 1);
       }
       
-      // Days before epoch = total days in all years from year to 0, minus days remaining in target year
-      const daysBeforeEpoch = totalDaysInYears - (365 - daysInYear);
+      // Days before epoch = total days from start of year 'year' to start of epoch, minus days from start of year to date
+      const daysBeforeEpoch = totalDaysInYears - daysInYear;
       
       return MAYAN_EPOCH - daysBeforeEpoch;
     }
@@ -90,11 +84,20 @@ export const mayanHaabCalendar: CalendarConverter = {
     // Handle dates before epoch (negative years)
     if (daysSinceEpoch < 0) {
       // Work backwards from epoch
+      // Epoch is start of year 1, so daysSinceEpoch < 0 means we're in a negative year
       const absDays = Math.abs(daysSinceEpoch);
-      // Calculate year: if absDays = 365, we're in year -1 (not year 0)
-      // So year = -Math.ceil(absDays / 365)
-      const year = -Math.ceil(absDays / 365);
-      const dayOfYear = absDays % 365 === 0 ? 365 : 365 - (absDays % 365);
+      
+      // Calculate year: if absDays = 365, we're at the start of year -1
+      // So year = -Math.floor((absDays - 1) / 365) - 1, or simpler: year = -Math.ceil(absDays / 365)
+      // But we need to handle the case when absDays is exactly a multiple of 365
+      const year = absDays % 365 === 0 ? -(absDays / 365) : -Math.ceil(absDays / 365);
+      
+      // Calculate days from start of year to date
+      // If absDays = 365, we're at day 1 of year -1
+      // If absDays = 364, we're at day 2 of year -1
+      // So dayOfYear = 365 - ((absDays - 1) % 365)
+      const remainder = (absDays - 1) % 365;
+      const dayOfYear = 365 - remainder;
       
       let month: number;
       let day: number;

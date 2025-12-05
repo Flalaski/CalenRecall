@@ -32,12 +32,21 @@ const PERSIAN_EPOCH = 1948318;
  */
 export function isPersianLeapYear(year: number): boolean {
   // In 33-year cycle, leap years are at positions: 1, 5, 9, 13, 17, 22, 26, 30
-  // Handle negative years by normalizing to positive cycle position
+  // Handle negative years and year 0 by normalizing to positive cycle position
   let normalizedYear = year;
   if (year < 1) {
-    // For negative years, find equivalent position in cycle
-    const cycles = Math.ceil(Math.abs(year) / 33);
-    normalizedYear = year + (cycles * 33);
+    // For negative years and year 0, find equivalent position in cycle
+    // Year 0 should be treated as position 33 (the position before 1)
+    if (year === 0) {
+      normalizedYear = 33; // Treat year 0 as position 33 in cycle
+    } else {
+      const cycles = Math.ceil(Math.abs(year) / 33);
+      normalizedYear = year + (cycles * 33);
+      // Ensure it's positive
+      while (normalizedYear < 1) {
+        normalizedYear += 33;
+      }
+    }
   }
   const cyclePosition = ((normalizedYear - 1) % 33) + 1;
   const leapPositions = [1, 5, 9, 13, 17, 22, 26, 30];
@@ -73,15 +82,11 @@ export function getDaysInPersianMonth(year: number, month: number): number {
  * @returns Julian Day Number
  */
 export function persianToJDN(year: number, month: number, day: number): number {
-  // Handle negative years (before epoch)
+  // Handle negative years and year 0 (before epoch)
   if (year < 1) {
-    // For negative years, calculate days before epoch
-    // Work backwards: calculate total days from year down to 0 (inclusive)
-    let totalDaysInYears = 0;
-    for (let y = year; y <= 0; y++) {
-      const isLeap = isPersianLeapYear(y);
-      totalDaysInYears += isLeap ? 366 : 365;
-    }
+    // For negative years and year 0, calculate days before epoch
+    // Epoch is start of year 1, so we need days from start of year 'year' to start of year 1
+    // Year 0 is treated as the year immediately before year 1
     
     // Calculate days in the target year up to this date
     let daysInYear = day - 1;
@@ -89,8 +94,35 @@ export function persianToJDN(year: number, month: number, day: number): number {
       daysInYear += getDaysInPersianMonth(year, m);
     }
     
-    // Days before epoch = total days in all years from year to 0, minus days remaining in target year
+    // Calculate total days from start of year 'year' to start of epoch (start of year 1)
+    // If year is 0, we need to include year 0's days. If year < 0, we need years from 'year' to -1, plus year 0
+    let totalDaysInYears = 0;
+    if (year === 0) {
+      // Year 0 is the year immediately before epoch
+      // Calculate the length of year 0
+      const isLeap = isPersianLeapYear(0);
+      totalDaysInYears = isLeap ? 366 : 365;
+    } else {
+      // Years from 'year' to -1 (inclusive), plus year 0
+      for (let y = year; y <= -1; y++) {
+        const isLeap = isPersianLeapYear(y);
+        totalDaysInYears += isLeap ? 366 : 365;
+      }
+      // Add year 0
+      const isLeap0 = isPersianLeapYear(0);
+      totalDaysInYears += isLeap0 ? 366 : 365;
+    }
+    
+    // Days before epoch = total days from start of year 'year' to start of epoch, minus days from start of year to date
+    // For year 0-1-1: daysInYear = 0, totalDaysInYears = 365/366, so daysBeforeEpoch = 365/366
+    // This means year 0-1-1 is 365/366 days before the epoch
     const daysBeforeEpoch = totalDaysInYears - daysInYear;
+    
+    // Ensure we don't return the epoch itself for year 0
+    if (daysBeforeEpoch === 0 && year === 0) {
+      // This shouldn't happen, but if it does, year 0-1-1 should be 365 days before epoch
+      return PERSIAN_EPOCH - 365;
+    }
     
     return PERSIAN_EPOCH - daysBeforeEpoch;
   }
@@ -135,11 +167,12 @@ export function persianToJDN(year: number, month: number, day: number): number {
 export function jdnToPersian(jdn: number): { year: number; month: number; day: number } {
   const days = jdn - PERSIAN_EPOCH;
   
-  // Handle dates before epoch (negative years)
+  // Handle dates before epoch (negative years and year 0)
   if (days < 0) {
     // Work backwards from epoch
+    // Epoch is start of year 1, so days < 0 means we're in year 0 or a negative year
     let remainingDays = -days;
-    let year = 0;
+    let year = 0; // Start from year 0 (the year immediately before epoch)
     
     // Find the year by working backwards
     while (remainingDays > 0) {
@@ -148,21 +181,33 @@ export function jdnToPersian(jdn: number): { year: number; month: number; day: n
       if (remainingDays > yearLength) {
         remainingDays -= yearLength;
         year--;
+      } else if (remainingDays === yearLength) {
+        // Exactly at the start of this year (end of previous year)
+        // Return the first day of this year
+        return { year, month: 1, day: 1 };
       } else {
-        // Found the year, now find month and day
+        // Found the year
+        // remainingDays now represents days from the date to the end of the year (before epoch)
+        // We need to convert this to days from the start of the year to the date
+        const isLeapYear = isPersianLeapYear(year);
+        const yearLength2 = isLeapYear ? 366 : 365;
+        const daysFromStartOfYear = yearLength2 - remainingDays;
+        
+        // Now find month and day from daysFromStartOfYear
         let month = 1;
-        let day = remainingDays + 1;
+        let day = daysFromStartOfYear; // 0-based day offset
         
         for (let m = 1; m <= 12; m++) {
           const monthDays = getDaysInPersianMonth(year, m);
-          if (day <= monthDays) {
+          if (day < monthDays) {
             month = m;
             break;
           }
           day -= monthDays;
         }
         
-        return { year, month, day };
+        // Convert to 1-based day
+        return { year, month, day: day + 1 };
       }
     }
     

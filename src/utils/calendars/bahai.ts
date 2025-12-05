@@ -14,6 +14,7 @@
 import { CalendarConverter, CalendarDate, CalendarInfo } from './types';
 import { CALENDAR_INFO } from './types';
 import { gregorianToJDN, jdnToGregorian, isGregorianLeapYear } from './julianDayUtils';
+import { vernalEquinoxJDN } from './astronomicalUtils';
 
 // Baháʼí epoch: March 21, 1844 CE (JDN = 2394647)
 const BAHAI_EPOCH = 2394647;
@@ -25,17 +26,25 @@ const BAHAI_MONTH_NAMES = [
 ];
 
 /**
- * Calculate the approximate date of Naw-Rúz (vernal equinox) for a given Baháʼí year
- * This is a simplified calculation - the actual date varies slightly
+ * Calculate the date of Naw-Rúz (vernal equinox) for a given Baháʼí year
+ * 
+ * Naw-Rúz is determined by the astronomical vernal equinox, which
+ * can fall on March 20 or 21 depending on the year. This is a holy day in
+ * the Baha'i faith, so accuracy is important.
+ * 
+ * Implementation uses accurate astronomical calculation of the vernal equinox
+ * based on solar longitude calculations.
+ * 
+ * Reference: "Calendrical Calculations" by Dershowitz & Reingold, Chapter 7
+ *            "Astronomical Algorithms" by Jean Meeus, Chapter 27
  */
 function getNawRuzJDN(bahaiYear: number): number {
-  // Naw-Rúz is approximately March 21, but can be March 20 or 21
-  // For simplicity, we use March 21 for most years
+  // Naw-Rúz is determined by the astronomical vernal equinox
+  // Convert Baháʼí year to Gregorian year
   const gregorianYear = 1844 + bahaiYear - 1;
   
-  // Simple approximation: March 21, but check if it's a leap year
-  // In practice, the exact date is determined astronomically
-  return gregorianToJDN(gregorianYear, 3, 21);
+  // Calculate the actual astronomical vernal equinox
+  return vernalEquinoxJDN(gregorianYear);
 }
 
 /**

@@ -67,46 +67,37 @@ function daysToLongCount(days: number): { baktun: number; katun: number; tun: nu
 /**
  * Convert Long Count date to JDN
  * 
- * For our CalendarDate interface, we'll use:
+ * For our CalendarDate interface, we encode all 5 components:
  * - year = baktun
  * - month = katun
- * - day = tun (we'll combine uinal and kin into a fractional day representation)
+ * - day = tun * 400 + uinal * 20 + kin
+ *   This encoding allows us to store all components in the day field:
+ *   - tun: floor(day / 400)
+ *   - uinal: floor((day % 400) / 20)
+ *   - kin: day % 20
  * 
- * Actually, let's use a simpler approach:
- * - year = baktun
- * - month = katun
- * - day = tun * 18 + uinal (combining tun and uinal, with kin as remainder)
- * 
- * Or even simpler: store total days since epoch in a way that can be converted back.
- * Let's use: year = baktun, month = katun, day = tun, and store uinal/kin separately.
- * 
- * Actually, the cleanest approach for our system:
- * - Store the total days since epoch
- * - Convert to/from Long Count notation for display
- * - Use year/month/day to represent baktun/katun/tun, with uinal and kin encoded
+ * This allows full Long Count representation while working within the CalendarDate interface.
  */
 export const mayanLongCountCalendar: CalendarConverter = {
   toJDN(year: number, month: number, day: number): number {
-    // In our CalendarDate interface:
-    // year = baktun
-    // month = katun
-    // day = tun
-    // We'll encode uinal and kin in the day value using a special encoding
-    // For simplicity, let's assume day represents tun, and we'll use a fixed encoding
-    // Actually, let's use a different approach: store total days directly
-    
-    // For now, let's interpret:
-    // year = baktun
-    // month = katun  
-    // day = tun (we'll default uinal and kin to 0 for simplicity)
-    // This is a limitation, but allows basic functionality
-    
-    // Use year as-is (no conversion needed - JDN utilities handle year numbering correctly)
+    // Decode components from CalendarDate format
     const baktun = year;
     const katun = month;
-    const tun = Math.floor(day);
-    const uinal = 0; // Default to 0 for now
-    const kin = 0;   // Default to 0 for now
+    
+    // Decode tun, uinal, kin from day field
+    // day = tun * 400 + uinal * 20 + kin
+    const tun = Math.floor(day / 400);
+    const remainingAfterTun = day % 400;
+    const uinal = Math.floor(remainingAfterTun / 20);
+    const kin = remainingAfterTun % 20;
+    
+    // Validate components
+    if (uinal >= 18) {
+      throw new Error(`Invalid uinal: ${uinal} (must be 0-17)`);
+    }
+    if (kin >= 20) {
+      throw new Error(`Invalid kin: ${kin} (must be 0-19)`);
+    }
     
     const daysSinceEpoch = longCountToDays(baktun, katun, tun, uinal, kin);
     return MAYAN_EPOCH + daysSinceEpoch;
@@ -117,35 +108,36 @@ export const mayanLongCountCalendar: CalendarConverter = {
     
     // Handle negative days (dates before epoch)
     if (daysSinceEpoch < 0) {
-      // For dates before epoch, we need to calculate backwards
-      const { baktun, katun, tun } = daysToLongCount(Math.abs(daysSinceEpoch));
+      // For dates before epoch, calculate components
+      // Long Count doesn't traditionally use negative numbers, but we'll represent
+      // pre-epoch dates by working backwards from epoch
+      const absDays = Math.abs(daysSinceEpoch);
+      const { baktun, katun, tun, uinal, kin } = daysToLongCount(absDays);
       
-      // Convert to negative representation
-      // Note: This is a simplified approach - full implementation would handle
-      // the positional notation for negative dates more carefully
-      const year = -baktun;
+      // Return negative representation for pre-epoch dates
+      // Encode tun, uinal, kin in day field
+      const encodedDay = tun * 400 + uinal * 20 + kin;
       
       return {
-        year,
+        year: -baktun,
         month: -katun,
-        day: -tun,
+        day: -encodedDay,
         calendar: 'mayan-longcount',
         era: 'BCE'
       };
     }
     
-    const { baktun, katun, tun } = daysToLongCount(daysSinceEpoch);
+    // Normal case: dates at or after epoch
+    const { baktun, katun, tun, uinal, kin } = daysToLongCount(daysSinceEpoch);
     
-    // For dates at or after epoch, baktun should be >= 0
-    // In Long Count, baktun 0-12 covers most historical dates
-    // We'll store baktun as year, katun as month, tun as day
-    // Use baktun as-is (no conversion needed)
-    const year = baktun;
+    // Encode tun, uinal, kin in day field
+    // day = tun * 400 + uinal * 20 + kin
+    const encodedDay = tun * 400 + uinal * 20 + kin;
     
     return {
-      year,
+      year: baktun,
       month: katun,
-      day: tun,
+      day: encodedDay,
       calendar: 'mayan-longcount',
       era: ''
     };
@@ -156,42 +148,60 @@ export const mayanLongCountCalendar: CalendarConverter = {
   },
 
   formatDate(date: CalendarDate, format: string = 'YYYY.MM.DD'): string {
-    // For Long Count, we format as baktun.katun.tun.uinal.kin
-    // But our CalendarDate only stores baktun/katun/tun
-    // We'll format what we have: baktun.katun.tun.0.0
-    
-    // Use year/month/day as-is (they represent baktun/katun/tun directly)
+    // Decode all 5 components from CalendarDate format
     const baktun = date.year;
     const katun = date.month;
-    const tun = date.day;
+    
+    // Decode tun, uinal, kin from day field
+    const absDay = Math.abs(date.day);
+    const tun = Math.floor(absDay / 400);
+    const remainingAfterTun = absDay % 400;
+    const uinal = Math.floor(remainingAfterTun / 20);
+    const kin = remainingAfterTun % 20;
+    
+    // Handle negative dates (before epoch)
+    const signPrefix = date.day < 0 ? '-' : '';
     
     // Default format for Long Count: baktun.katun.tun.uinal.kin
     if (format.includes('.')) {
-      return `${baktun}.${katun}.${tun}.0.0`;
+      return `${signPrefix}${baktun}.${katun}.${tun}.${uinal}.${kin}`;
     }
     
     // Fallback to standard formatting
-    return `${baktun}.${katun}.${tun}`;
+    return `${signPrefix}${baktun}.${katun}.${tun}.${uinal}.${kin}`;
   },
 
   parseDate(dateString: string): CalendarDate {
     // Parse Long Count notation: baktun.katun.tun.uinal.kin
-    const parts = dateString.split('.').map(p => parseInt(p, 10));
+    // Also handle negative dates: -baktun.katun.tun.uinal.kin
+    const trimmed = dateString.trim();
+    const isNegative = trimmed.startsWith('-');
+    const parts = (isNegative ? trimmed.substring(1) : trimmed)
+      .split('.')
+      .map(p => parseInt(p.trim(), 10));
     
     if (parts.length < 3) {
-      throw new Error(`Invalid Long Count date format: ${dateString}`);
+      throw new Error(`Invalid Long Count date format: ${dateString} (need at least baktun.katun.tun)`);
     }
     
-    const baktun = parts[0] || 0;
-    const katun = parts[1] || 0;
+    const baktun = (parts[0] || 0) * (isNegative ? -1 : 1);
+    const katun = (parts[1] || 0) * (isNegative ? -1 : 1);
     const tun = parts[2] || 0;
     const uinal = parts[3] || 0;
     const kin = parts[4] || 0;
     
+    // Validate components
+    if (uinal < 0 || uinal >= 18) {
+      throw new Error(`Invalid uinal: ${uinal} (must be 0-17)`);
+    }
+    if (kin < 0 || kin >= 20) {
+      throw new Error(`Invalid kin: ${kin} (must be 0-19)`);
+    }
+    
     // Convert to JDN first, then back to our format
     // Note: uinal and kin are included in the conversion for accuracy
-    const daysSinceEpoch = longCountToDays(baktun, katun, tun, uinal, kin);
-    const jdn = MAYAN_EPOCH + daysSinceEpoch;
+    const daysSinceEpoch = longCountToDays(Math.abs(baktun), Math.abs(katun), tun, uinal, kin);
+    const jdn = MAYAN_EPOCH + (isNegative ? -daysSinceEpoch : daysSinceEpoch);
     
     return this.fromJDN(jdn);
   }

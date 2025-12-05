@@ -30,7 +30,7 @@
     "preview": "vite preview",
     "version:show": "node -p \"require('./package.json').version\"",
     "generate:icon": "node scripts/generate-icon.js",
-    "test:calendars": "tsc -p scripts/tsconfig.json && node scripts/test-calendar-accuracy.js"
+    "test:calendars": "ts-node --project scripts/tsconfig.json scripts/test-calendar-accuracy.ts"
   },
   "dependencies": {
     "better-sqlite3": "^12.5.0",
@@ -42,7 +42,7 @@
   "devDependencies": {
     "@electron/rebuild": "^3.7.2",
     "@types/better-sqlite3": "^7.6.13",
-    "@types/node": "^20.10.6",
+    "@types/node": "^20.19.25",
     "@types/react": "^18.2.45",
     "@types/react-dom": "^18.2.18",
     "@vitejs/plugin-react": "^4.2.1",
@@ -50,6 +50,7 @@
     "electron": "^39.2.5",
     "electron-builder": "^24.9.1",
     "sharp": "^0.34.5",
+    "ts-node": "^10.9.2",
     "typescript": "^5.3.3",
     "vite": "^7.2.6",
     "wait-on": "^7.2.0"

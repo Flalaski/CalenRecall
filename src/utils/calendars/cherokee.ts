@@ -1,13 +1,22 @@
 /**
  * Cherokee Calendar Converter
  * 
- * The Cherokee calendar is a lunar calendar that was adapted to align with
- * the 12-month Gregorian calendar. Each month retains traditional Cherokee
- * names and cultural significance.
+ * CULTURAL NOTE:
+ * The Cherokee calendar historically used lunar months and seasonal observations.
+ * In the 19th century, it was adapted to align with the 12-month Gregorian
+ * calendar structure while preserving traditional Cherokee month names and
+ * their cultural significance.
+ * 
+ * This implementation maps Cherokee month names to the Gregorian calendar
+ * structure, which reflects the historical adaptation. However, we should
+ * consult with Cherokee cultural experts to ensure this representation is
+ * accurate and respectful.
  * 
  * Traditional month names are preserved while mapping to Gregorian months
- * for practical use. This is an approximation that honors the traditional
- * naming while providing compatibility with modern date systems.
+ * for practical use. This reflects the historical adaptation of the calendar.
+ * 
+ * TODO: Consult with Cherokee cultural experts to verify accuracy and
+ * appropriateness of this implementation.
  */
 
 import { CalendarConverter, CalendarDate, CalendarInfo } from './types';

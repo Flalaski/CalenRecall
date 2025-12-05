@@ -69,11 +69,8 @@ export function sakaToJDN(year: number, month: number, day: number): number {
   // Handle negative years (before epoch)
   if (year < 1) {
     // For negative years, calculate days before epoch
-    // Work backwards: calculate total days from year down to 0 (inclusive)
-    let totalDaysInYears = 0;
-    for (let y = year; y <= 0; y++) {
-      totalDaysInYears += getDaysInSakaYear(y);
-    }
+    // Epoch is start of year 1, so we need days from start of year 'year' to start of year 1
+    // This includes: all years from 'year' to -1 (inclusive), minus days from start of year to date
     
     // Calculate days in the target year up to this date
     let daysInYear = day - 1;
@@ -81,7 +78,13 @@ export function sakaToJDN(year: number, month: number, day: number): number {
       daysInYear += getDaysInSakaMonth(year, m);
     }
     
-    // Days before epoch = total days in all years from year to 0, minus days remaining in target year
+    // Calculate total days from start of year 'year' to start of epoch (start of year 1)
+    let totalDaysInYears = 0;
+    for (let y = year; y <= -1; y++) {
+      totalDaysInYears += getDaysInSakaYear(y);
+    }
+    
+    // Days before epoch = total days from start of year 'year' to start of epoch, minus days from start of year to date
     const daysBeforeEpoch = totalDaysInYears - daysInYear;
     
     return SAKA_EPOCH - daysBeforeEpoch;
@@ -116,35 +119,43 @@ export function jdnToSaka(jdn: number): { year: number; month: number; day: numb
   // Handle dates before epoch (negative years)
   if (days < 0) {
     // Work backwards from epoch
+    // Epoch is start of year 1, so days < 0 means we're in a negative year
     let remainingDays = -days;
-    let year = 0;
+    let year = -1; // Start from year -1 (year 0 doesn't exist, epoch is start of year 1)
     
     // Find the year by working backwards
     while (remainingDays > 0) {
       const yearLength = getDaysInSakaYear(year);
-      if (remainingDays > yearLength) {
+      if (remainingDays >= yearLength) {
         remainingDays -= yearLength;
         year--;
       } else {
-        // Found the year, now find month and day
+        // Found the year
+        // remainingDays now represents days from the date to the end of the year (before epoch)
+        // We need to convert this to days from the start of the year to the date
+        const yearLength2 = getDaysInSakaYear(year);
+        const daysFromStartOfYear = yearLength2 - remainingDays;
+        
+        // Now find month and day from daysFromStartOfYear
         let month = 1;
-        let day = remainingDays + 1;
+        let day = daysFromStartOfYear; // 0-based day offset
         
         for (let m = 1; m <= 12; m++) {
           const monthDays = getDaysInSakaMonth(year, m);
-          if (day <= monthDays) {
+          if (day < monthDays) {
             month = m;
             break;
           }
           day -= monthDays;
         }
         
-        return { year, month, day };
+        // Convert to 1-based day
+        return { year, month, day: day + 1 };
       }
     }
     
-    // Should not reach here, but return year 0, month 1, day 1 as fallback
-    return { year: 0, month: 1, day: 1 };
+    // Should not reach here, but return year -1, month 1, day 1 as fallback
+    return { year: -1, month: 1, day: 1 };
   }
   
   // Normal case: days >= 0 (year >= 1)
@@ -158,27 +169,37 @@ export function jdnToSaka(jdn: number): { year: number; month: number; day: numb
       totalDays += getDaysInSakaYear(y);
     }
     
+    const yearLength = getDaysInSakaYear(year);
+    
     if (days < totalDays) {
       year--;
+      continue;
+    }
+    
+    // Check if we're beyond this year
+    if (days >= totalDays + yearLength) {
+      year++;
       continue;
     }
     
     const remainingDays = days - totalDays;
     
     // Calculate month and day
+    // remainingDays is 0-based (0 = first day of year, 365/366 = last day)
     let month = 1;
-    let day = remainingDays + 1;
+    let day = remainingDays; // Keep as 0-based for calculation
     
     for (let m = 1; m <= 12; m++) {
       const monthDays = getDaysInSakaMonth(year, m);
-      if (day <= monthDays) {
+      if (day < monthDays) {
         month = m;
         break;
       }
       day -= monthDays;
     }
     
-    return { year, month, day };
+    // Convert to 1-based day
+    return { year, month, day: day + 1 };
   }
 }
 
