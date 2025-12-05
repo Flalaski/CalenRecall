@@ -4,6 +4,316 @@
   box-sizing: border-box;
 }
 
+/* Paper-like noise texture - ever-shifting, more visible in shadows */
+@keyframes paperNoise {
+  0% {
+    background-position: 0% 0%;
+    opacity: 0.02;
+  }
+  25% {
+    background-position: 100% 50%;
+    opacity: 0.035;
+  }
+  50% {
+    background-position: 50% 100%;
+    opacity: 0.025;
+  }
+  75% {
+    background-position: 0% 75%;
+    opacity: 0.04;
+  }
+  100% {
+    background-position: 100% 0%;
+    opacity: 0.02;
+  }
+}
+
+/* Generate noise texture using SVG filter */
+.paper-texture::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+  background-size: 200px 200px;
+  animation: paperNoise 20s ease-in-out infinite;
+  mix-blend-mode: overlay;
+  opacity: 0.15;
+  z-index: 1;
+}
+
+/* Dark theme - noise more visible in shadows */
+[data-theme="dark"] .paper-texture::before {
+  mix-blend-mode: screen;
+  opacity: 0.25;
+  filter: contrast(1.2) brightness(0.8);
+}
+
+/* Apply paper texture to all elements with backgrounds */
+body,
+.app,
+.app-content,
+.timeline-section,
+.editor-section,
+.navigation-bar,
+.journal-list,
+.journal-list-header,
+.journal-entry-item,
+.entry-viewer,
+.viewer-header,
+.viewer-content,
+.journal-editor,
+.editor-header,
+.timeline-grid,
+.timeline-cell,
+.entry-badge,
+.week-entry-group,
+.week-entries-header,
+.period-entry-item,
+.export-bar,
+.nav-button,
+.view-mode-button,
+.preferences-container,
+.preferences-header,
+.preferences-section,
+.preference-note,
+.about-section,
+.editor-form,
+.editor-footer,
+.confirm-dialog,
+.week-entry-item,
+.month-week-entries-section,
+.entry-card,
+.entry-card-full,
+.cell-date,
+.day-header,
+.hotkey-diagram-hologram,
+.hotkey-key-item,
+.hotkey-key,
+.tag,
+.new-entry-button,
+.new-entry-button-header,
+.add-tag-button,
+.save-button,
+.cancel-button,
+.delete-button,
+.reset-button,
+.export-button,
+.export-select,
+.global-timeline-minimap,
+.minimap-container {
+  position: relative;
+}
+
+body::before,
+.app::before,
+.app-content::before,
+.timeline-section::before,
+.editor-section::before,
+.navigation-bar::before,
+.journal-list::before,
+.journal-list-header::before,
+.journal-entry-item::before,
+.entry-viewer::before,
+.viewer-header::before,
+.viewer-content::before,
+.journal-editor::before,
+.editor-header::before,
+.timeline-grid::before,
+.timeline-cell::before,
+.entry-badge::before,
+.week-entry-group::before,
+.week-entries-header::before,
+.period-entry-item::before,
+.export-bar::before,
+.nav-button::before,
+.view-mode-button::before,
+.preferences-container::before,
+.preferences-header::before,
+.preferences-section::before,
+.preference-note::before,
+.about-section::before,
+.editor-form::before,
+.editor-footer::before,
+.confirm-dialog::before,
+.week-entry-item::before,
+.month-week-entries-section::before,
+.entry-card::before,
+.entry-card-full::before,
+.cell-date::before,
+.day-header::before,
+.hotkey-diagram-hologram::before,
+.hotkey-key-item::before,
+.hotkey-key::before,
+.tag::before,
+.new-entry-button::before,
+.new-entry-button-header::before,
+.add-tag-button::before,
+.save-button::before,
+.cancel-button::before,
+.delete-button::before,
+.reset-button::before,
+.export-button::before,
+.export-select::before,
+.global-timeline-minimap::before,
+.minimap-container::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+  background-size: 200px 200px;
+  animation: paperNoise 20s ease-in-out infinite;
+  mix-blend-mode: overlay;
+  opacity: 0.15;
+  z-index: 1;
+  border-radius: inherit;
+}
+
+/* Only show noise on elements that have a background color/image */
+body::before,
+.app::before,
+.app-content::before,
+.timeline-section::before,
+.editor-section::before,
+.navigation-bar::before,
+.journal-list::before,
+.journal-list-header::before,
+.journal-entry-item::before,
+.entry-viewer::before,
+.viewer-header::before,
+.viewer-content::before,
+.journal-editor::before,
+.editor-header::before,
+.timeline-grid::before,
+.timeline-cell::before,
+.entry-badge::before,
+.week-entry-group::before,
+.week-entries-header::before,
+.period-entry-item::before,
+.export-bar::before,
+.nav-button::before,
+.view-mode-button::before,
+.preferences-container::before,
+.preferences-header::before,
+.preferences-section::before,
+.preference-note::before,
+.about-section::before,
+.editor-form::before,
+.editor-footer::before,
+.confirm-dialog::before,
+.week-entry-item::before,
+.month-week-entries-section::before,
+.entry-card::before,
+.entry-card-full::before,
+.cell-date::before,
+.day-header::before,
+.hotkey-diagram-hologram::before,
+.hotkey-key-item::before,
+.hotkey-key::before,
+.tag::before,
+.new-entry-button::before,
+.new-entry-button-header::before,
+.add-tag-button::before,
+.save-button::before,
+.cancel-button::before,
+.delete-button::before,
+.reset-button::before,
+.export-button::before,
+.export-select::before {
+  opacity: 0.15;
+}
+
+[data-theme="dark"] body::before,
+[data-theme="dark"] .app::before,
+[data-theme="dark"] .app-content::before,
+[data-theme="dark"] .timeline-section::before,
+[data-theme="dark"] .editor-section::before,
+[data-theme="dark"] .navigation-bar::before,
+[data-theme="dark"] .journal-list::before,
+[data-theme="dark"] .journal-list-header::before,
+[data-theme="dark"] .journal-entry-item::before,
+[data-theme="dark"] .entry-viewer::before,
+[data-theme="dark"] .viewer-header::before,
+[data-theme="dark"] .viewer-content::before,
+[data-theme="dark"] .journal-editor::before,
+[data-theme="dark"] .editor-header::before,
+[data-theme="dark"] .timeline-grid::before,
+[data-theme="dark"] .timeline-cell::before,
+[data-theme="dark"] .entry-badge::before,
+[data-theme="dark"] .week-entry-group::before,
+[data-theme="dark"] .week-entries-header::before,
+[data-theme="dark"] .period-entry-item::before,
+[data-theme="dark"] .export-bar::before,
+[data-theme="dark"] .nav-button::before,
+[data-theme="dark"] .view-mode-button::before,
+[data-theme="dark"] .preferences-container::before,
+[data-theme="dark"] .preferences-header::before,
+[data-theme="dark"] .preferences-section::before,
+[data-theme="dark"] .preference-note::before,
+[data-theme="dark"] .about-section::before,
+[data-theme="dark"] .editor-form::before,
+[data-theme="dark"] .editor-footer::before,
+[data-theme="dark"] .confirm-dialog::before,
+[data-theme="dark"] .week-entry-item::before,
+[data-theme="dark"] .month-week-entries-section::before,
+[data-theme="dark"] .entry-card::before,
+[data-theme="dark"] .entry-card-full::before,
+[data-theme="dark"] .cell-date::before,
+[data-theme="dark"] .day-header::before,
+[data-theme="dark"] .hotkey-diagram-hologram::before,
+[data-theme="dark"] .hotkey-key-item::before,
+[data-theme="dark"] .hotkey-key::before,
+[data-theme="dark"] .tag::before,
+[data-theme="dark"] .new-entry-button::before,
+[data-theme="dark"] .new-entry-button-header::before,
+[data-theme="dark"] .add-tag-button::before,
+[data-theme="dark"] .save-button::before,
+[data-theme="dark"] .cancel-button::before,
+[data-theme="dark"] .delete-button::before,
+[data-theme="dark"] .reset-button::before,
+[data-theme="dark"] .export-button::before,
+[data-theme="dark"] .export-select::before,
+[data-theme="dark"] .global-timeline-minimap::before,
+[data-theme="dark"] .minimap-container::before {
+  mix-blend-mode: screen;
+  opacity: 0.25;
+  filter: contrast(1.2) brightness(0.8);
+}
+
+/* Minimap enhanced shadow depth with noise - shadows glow with saturation and depth */
+.global-timeline-minimap::after,
+.minimap-container::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+  background-size: 150px 150px;
+  animation: paperNoise 25s ease-in-out infinite reverse;
+  mix-blend-mode: multiply;
+  opacity: 0.2;
+  z-index: 0;
+  filter: blur(0.5px) saturate(1.5) contrast(1.2);
+}
+
+/* Dark theme - enhanced glow in shadows with deeper saturation */
+[data-theme="dark"] .global-timeline-minimap::after,
+[data-theme="dark"] .minimap-container::after {
+  mix-blend-mode: color-burn;
+  opacity: 0.3;
+  filter: blur(1px) saturate(1.8) contrast(1.4) brightness(0.85);
+}
+
 body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
     'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
