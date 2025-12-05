@@ -22,7 +22,7 @@ const LOADING_SCREEN_CONSTANTS = {
   NEBULA_DIMENSIONS: { width: 800, height: 600 },
   PROGRESS_THRESHOLDS: { slow: 20, fast: 80 },
   PROGRESS_PERCENTAGES: { slow: 0.05, fast: 0.80, finish: 0.15 },
-  ORNAMENT_SIZE: 2,
+  ORNAMENT_SIZE: 4,
   MAX_ANIMATION_DELAY: 2,
   OPACITY_DIVISORS: { infinity: 100, branch: 150 },
   ANIMATION_INTERVAL_MS: 16, // ~60fps
@@ -700,9 +700,9 @@ export default function LoadingScreen({ progress, message = 'Loading your journa
               const avgZ = (seg.z1 + seg.z2) / 2;
               
               // Ensure minimum opacity so segments remain visible and connected
-              const baseOpacity = 0.9;
+              const baseOpacity = 0.4; // Semi-transparent
               const zOpacityFactor = Math.abs(avgZ) / LOADING_SCREEN_CONSTANTS.OPACITY_DIVISORS.infinity;
-              const finalOpacity = Math.max(0.4, baseOpacity - zOpacityFactor);
+              const finalOpacity = Math.max(0.2, baseOpacity - zOpacityFactor);
               
               // Create cylindrical gradient for thin cylinder appearance
               const cylindricalGradient = createCylindricalGradient(baseColor);
@@ -736,9 +736,9 @@ export default function LoadingScreen({ progress, message = 'Loading your journa
               const avgZ = (segment.startZ + segment.endZ) / 2;
               
               // Ensure minimum opacity so segments remain visible
-              const baseOpacity = 0.8;
+              const baseOpacity = 0.35; // Semi-transparent
               const zOpacityFactor = Math.abs(avgZ) / LOADING_SCREEN_CONSTANTS.OPACITY_DIVISORS.branch;
-              const finalOpacity = Math.max(0.3, baseOpacity - zOpacityFactor);
+              const finalOpacity = Math.max(0.15, baseOpacity - zOpacityFactor);
               
               // Create cylindrical gradient for thin cylinder appearance
               const cylindricalGradient = createCylindricalGradient(color);
