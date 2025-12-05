@@ -128,6 +128,24 @@
   height: 400px;
   perspective: 2000px;
   perspective-origin: center center;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: -webkit-crisp-edges;
+}
+
+.camera-wrapper {
+  transform-style: preserve-3d;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: -webkit-crisp-edges;
+  -webkit-font-smoothing: none;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeSpeed;
+  will-change: transform;
+  backface-visibility: visible;
+  -webkit-backface-visibility: visible;
 }
 
 .infinity-3d-container {
@@ -137,26 +155,68 @@
   transform-style: preserve-3d;
   animation: infinity3DRotate 20s linear infinite;
   transform-origin: center center;
+  will-change: transform;
+  backface-visibility: visible;
+  -webkit-backface-visibility: visible;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: -webkit-crisp-edges;
+  -webkit-font-smoothing: none;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeSpeed;
+  overflow: visible;
 }
 
-/* 3D Infinity symbol segments */
+/* 3D Infinity symbol segments - structural foundation of time tree */
 .infinity-segment-3d {
   position: absolute;
   height: 3px;
+  min-height: 3px;
   transform-origin: left center;
   transform-style: preserve-3d;
-  box-shadow: 0 0 4px currentColor;
-  border-radius: 2px;
+  border-radius: 0;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: -webkit-crisp-edges;
+  -webkit-font-smoothing: none;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeSpeed;
+  will-change: transform, opacity;
+  backface-visibility: visible;
+  -webkit-backface-visibility: visible;
+  outline: 1px solid transparent;
+  overflow: visible;
+  z-index: 1;
+  /* Ensure segments connect end-to-end and are double-sided */
+  box-sizing: border-box;
 }
 
-/* 3D Branch segments */
+/* 3D Branch segments - time tree polarity branches (past=blue/left, future=red/right) */
 .branch-segment-3d {
   position: absolute;
+  min-width: 1px;
+  min-height: 1px;
   transform-origin: left center;
   transform-style: preserve-3d;
-  box-shadow: 0 0 3px currentColor;
-  border-radius: 1px;
+  border-radius: 0;
   animation: branchFlow3D 3s linear infinite, branchPulse3D 2.5s ease-in-out infinite;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: -webkit-crisp-edges;
+  -webkit-font-smoothing: none;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeSpeed;
+  will-change: transform, opacity;
+  backface-visibility: visible;
+  -webkit-backface-visibility: visible;
+  outline: 1px solid transparent;
+  overflow: visible;
+  z-index: 2;
+  /* Ensure segments connect end-to-end to form complete tree structure and are double-sided */
+  box-sizing: border-box;
 }
 
 @keyframes branchFlow3D {
@@ -185,10 +245,19 @@
   position: absolute;
   width: 8px;
   height: 8px;
-  border-radius: 50%;
+  border-radius: 0;
   transform-style: preserve-3d;
   image-rendering: pixelated;
   image-rendering: crisp-edges;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: -webkit-crisp-edges;
+  -webkit-font-smoothing: none;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeSpeed;
+  will-change: transform, opacity;
+  backface-visibility: visible;
+  -webkit-backface-visibility: visible;
+  outline: 1px solid transparent;
   z-index: 10;
 }
 
@@ -374,24 +443,69 @@
   transform-style: preserve-3d;
   pointer-events: none;
   z-index: 10;
-  /* Ensure it rotates with the container */
+  /* Ensure it rotates with the container and is double-sided */
   transform-origin: center center;
+  will-change: transform;
+  backface-visibility: visible;
+  -webkit-backface-visibility: visible;
 }
 
+/* Pixelated star blast - singularity of the present moment */
 .singularity-core {
   position: absolute;
   top: 50%;
   left: 50%;
-  width: 24px;
-  height: 24px;
-  margin: -12px 0 0 -12px;
-  background: radial-gradient(circle, rgba(255, 255, 255, 1) 0%, rgba(255, 255, 255, 0.8) 50%, rgba(255, 255, 255, 0) 100%);
-  border-radius: 50%;
-  animation: singularityPulse 2s ease-in-out infinite;
-  box-shadow: 
-    0 0 20px rgba(255, 255, 255, 0.8),
-    0 0 40px rgba(255, 255, 255, 0.6),
-    0 0 60px rgba(255, 255, 255, 0.4);
+  width: 0;
+  height: 0;
+  transform: translate(-50%, -50%);
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: -webkit-crisp-edges;
+  -webkit-font-smoothing: none;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeSpeed;
+  will-change: transform, opacity;
+  backface-visibility: visible;
+  -webkit-backface-visibility: visible;
+  pointer-events: none;
+}
+
+/* Star blast pixel points - radiating outward from center */
+.singularity-star-point {
+  position: absolute;
+  width: 2px;
+  height: 2px;
+  background: #ffffff;
+  border-radius: 0;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: -webkit-crisp-edges;
+  -webkit-font-smoothing: none;
+  -moz-osx-font-smoothing: grayscale;
+  backface-visibility: visible;
+  -webkit-backface-visibility: visible;
+  animation: starBlastPulse 2s ease-in-out infinite;
+}
+
+.singularity-star-point:nth-child(odd) {
+  animation-delay: 0s;
+}
+
+.singularity-star-point:nth-child(even) {
+  animation-delay: 1s;
+}
+
+@keyframes starBlastPulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.6;
+    transform: scale(1.5);
+  }
 }
 
 .singularity-rings {
@@ -406,9 +520,20 @@
   top: 50%;
   left: 50%;
   border: 2px solid rgba(255, 255, 255, 0.6);
-  border-radius: 50%;
+  border-radius: 0;
   transform: translate(-50%, -50%);
   animation: singularityRingExpand 3s ease-out infinite;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: -webkit-crisp-edges;
+  -webkit-font-smoothing: none;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeSpeed;
+  will-change: transform, opacity;
+  backface-visibility: visible;
+  -webkit-backface-visibility: visible;
+  outline: 1px solid transparent;
 }
 
 .singularity-ring.ring-1 {

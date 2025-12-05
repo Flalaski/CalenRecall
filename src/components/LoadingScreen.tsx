@@ -16,9 +16,9 @@ const LOADING_SCREEN_CONSTANTS = {
   RIGHT_LOOP_CENTER: { x: 300, y: 200 },
   MIDPOINT_X: 250,
   INFINITY_AMPLITUDE: 50,
-  INFINITY_SEGMENTS: 120,
-  BRANCHES_PER_SIDE: 16,
-  STAR_COUNT: 200,
+  INFINITY_SEGMENTS: 432,
+  BRANCHES_PER_SIDE: 33,
+  STAR_COUNT: 216,
   NEBULA_DIMENSIONS: { width: 800, height: 600 },
   PROGRESS_THRESHOLDS: { slow: 20, fast: 80 },
   PROGRESS_PERCENTAGES: { slow: 0.05, fast: 0.80, finish: 0.15 },
@@ -27,7 +27,7 @@ const LOADING_SCREEN_CONSTANTS = {
   OPACITY_DIVISORS: { infinity: 100, branch: 150 },
   ANIMATION_INTERVAL_MS: 16, // ~60fps
   POLARITY_PHASE_INCREMENT: 0.01,
-  CAMERA_ZOOM: 11.0, // Higher = more zoomed in (1.0 = normal, 2.0 = 2x zoom, 0.5 = zoomed out)
+  CAMERA_ZOOM: 8.0, // Higher = more zoomed in (1.0 = normal, 2.0 = 2x zoom, 0.5 = zoomed out)
   CAMERA_DISTANCE: 0, // translateZ offset for camera position (negative = closer, positive = farther)
 } as const;
 
@@ -80,6 +80,7 @@ function generateInfinityBranches3D(): Array<BranchSegment3D> {
     }
     
     // Create main branch segment
+    // Ensure exact endpoint calculation for proper connections
     const segment: BranchSegment3D = {
       startX,
       startY,
@@ -87,7 +88,7 @@ function generateInfinityBranches3D(): Array<BranchSegment3D> {
       endX,
       endY,
       endZ,
-      thickness: 2 - depth * 0.3,
+      thickness: Math.max(1, 2 - depth * 0.3), // Ensure minimum thickness for visibility
       color: baseColor,
       delay: delay + depth * 0.1,
       duration: 2.5 + Math.random() * 1.5,
@@ -98,14 +99,18 @@ function generateInfinityBranches3D(): Array<BranchSegment3D> {
     const allPoints = [...points];
     
     // Create 2-3 sub-branches (like vein bifurcations)
+    // Ensure branches connect properly to parent segment endpoints
     const numBranches = depth === 0 ? 3 : 2;
     for (let i = 0; i < numBranches; i++) {
       const branchAngle = angle + (i - 1) * 0.6 + (Math.random() - 0.5) * 0.4;
       const branchLength = length * (0.5 + Math.random() * 0.3);
-      const branchStartT = 0.3 + Math.random() * 0.4;
-      const branchStartX = startX + (endX - startX) * branchStartT;
-      const branchStartY = startY + (endY - startY) * branchStartT;
-      const branchStartZ = startZ + (endZ - startZ) * branchStartT;
+      // For first sub-branch, start at the exact end of parent segment to ensure connection
+      // For subsequent branches, start along the parent segment but ensure they connect
+      const branchStartT = i === 0 ? 1.0 : (0.4 + Math.random() * 0.3);
+      // Use exact endpoint coordinates for first branch to ensure connection
+      const branchStartX = i === 0 ? endX : (startX + (endX - startX) * branchStartT);
+      const branchStartY = i === 0 ? endY : (startY + (endY - startY) * branchStartT);
+      const branchStartZ = i === 0 ? endZ : (startZ + (endZ - startZ) * branchStartT);
       
       const subBranch = createVeinBranch3D(
         branchStartX, 
@@ -479,7 +484,6 @@ export default function LoadingScreen({ progress, message = 'Loading your journa
             className="camera-wrapper"
             style={{
               transform: `translateZ(${LOADING_SCREEN_CONSTANTS.CAMERA_DISTANCE}px) scale(${LOADING_SCREEN_CONSTANTS.CAMERA_ZOOM})`,
-              transformStyle: 'preserve-3d',
             }}
           >
             <div className="infinity-3d-container">
@@ -495,6 +499,11 @@ export default function LoadingScreen({ progress, message = 'Loading your journa
               const angle = Math.atan2(dy, dx) * (180 / Math.PI);
               const avgZ = (seg.z1 + seg.z2) / 2;
               
+              // Ensure minimum opacity so segments remain visible and connected
+              const baseOpacity = 0.9;
+              const zOpacityFactor = Math.abs(avgZ) / LOADING_SCREEN_CONSTANTS.OPACITY_DIVISORS.infinity;
+              const finalOpacity = Math.max(0.4, baseOpacity - zOpacityFactor);
+              
               return (
                 <div
                   key={`infinity-seg-${idx}`}
@@ -505,7 +514,7 @@ export default function LoadingScreen({ progress, message = 'Loading your journa
                     width: `${length}px`,
                     transform: `translateZ(${avgZ}px) rotateZ(${angle}deg)`,
                     background: `linear-gradient(to right, ${color}, ${isLeft ? rightColor : leftColor})`,
-                    opacity: 0.8 - Math.abs(avgZ) / LOADING_SCREEN_CONSTANTS.OPACITY_DIVISORS.infinity,
+                    opacity: finalOpacity,
                   }}
                 />
               );
@@ -521,6 +530,11 @@ export default function LoadingScreen({ progress, message = 'Loading your journa
               const angle = Math.atan2(dy, dx) * (180 / Math.PI);
               const avgZ = (segment.startZ + segment.endZ) / 2;
               
+              // Ensure minimum opacity so segments remain visible
+              const baseOpacity = 0.8;
+              const zOpacityFactor = Math.abs(avgZ) / LOADING_SCREEN_CONSTANTS.OPACITY_DIVISORS.branch;
+              const finalOpacity = Math.max(0.3, baseOpacity - zOpacityFactor);
+              
               return (
                 <div
                   key={`branch-seg-${idx}`}
@@ -532,7 +546,7 @@ export default function LoadingScreen({ progress, message = 'Loading your journa
                     height: `${segment.thickness}px`,
                     transform: `translateZ(${avgZ}px) rotateZ(${angle}deg)`,
                     background: color,
-                    opacity: 0.7 - Math.abs(avgZ) / LOADING_SCREEN_CONSTANTS.OPACITY_DIVISORS.branch,
+                    opacity: finalOpacity,
                     animationDelay: `${segment.delay}s`,
                     animationDuration: `${segment.duration}s`,
                   }}
@@ -556,16 +570,59 @@ export default function LoadingScreen({ progress, message = 'Loading your journa
                     background: entryColor,
                     width: `${LOADING_SCREEN_CONSTANTS.ORNAMENT_SIZE}px`,
                     height: `${LOADING_SCREEN_CONSTANTS.ORNAMENT_SIZE}px`,
-                    boxShadow: `0 0 4px ${entryColor}, 0 0 8px ${entryColor}`,
                     animation: `ornamentAppear 0.6s ease-out ${delay}s both`,
                   }}
                 />
               );
             })}
             
-            {/* Unified singularity point - centered in 3D space */}
+            {/* Unified singularity point - pixelated star blast at center representing present moment */}
             <div className="singularity-unified">
-              <div className="singularity-core"></div>
+              <div className="singularity-core">
+                {/* Generate pixelated star blast - radiating points from center */}
+                {Array.from({ length: 16 }, (_, i) => {
+                  const angle = (i / 16) * Math.PI * 2;
+                  const distance = 8 + (i % 3) * 3; // Vary distance for layered effect
+                  const x = Math.cos(angle) * distance;
+                  const y = Math.sin(angle) * distance;
+                  const delay = (i % 4) * 0.2;
+                  
+                  return (
+                    <div
+                      key={`star-point-${i}`}
+                      className="singularity-star-point"
+                      style={{
+                        left: `${x}px`,
+                        top: `${y}px`,
+                        transform: `translate(-50%, -50%)`,
+                        animationDelay: `${delay}s`,
+                      }}
+                    />
+                  );
+                })}
+                {/* Additional inner layer for more density */}
+                {Array.from({ length: 8 }, (_, i) => {
+                  const angle = (i / 8) * Math.PI * 2 + Math.PI / 8; // Offset angle
+                  const distance = 4;
+                  const x = Math.cos(angle) * distance;
+                  const y = Math.sin(angle) * distance;
+                  
+                  return (
+                    <div
+                      key={`star-point-inner-${i}`}
+                      className="singularity-star-point"
+                      style={{
+                        left: `${x}px`,
+                        top: `${y}px`,
+                        transform: `translate(-50%, -50%)`,
+                        width: '1px',
+                        height: '1px',
+                        animationDelay: `${(i % 2) * 0.5}s`,
+                      }}
+                    />
+                  );
+                })}
+              </div>
               <div className="singularity-rings">
                 <div className="singularity-ring ring-1"></div>
                 <div className="singularity-ring ring-2"></div>
