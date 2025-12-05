@@ -826,8 +826,10 @@ export default function GlobalTimelineMinimap({
     isEntryEnd: boolean = true // Track if endX/endY is the entry crystal
   ): string => {
     // Early termination for performance
+    // Always end exactly at the target coordinates (entry crystal center)
     if (depth >= maxDepth) {
-      return `L ${endX},${endY}`;
+      // Use precise coordinates to ensure exact alignment with crystal center
+      return `L ${endX.toFixed(2)},${endY.toFixed(2)}`;
     }
 
     // Cache distance calculation
@@ -837,8 +839,10 @@ export default function GlobalTimelineMinimap({
     const distance = Math.sqrt(distanceSq);
     
     // Skip recursion for very short distances (performance optimization)
+    // Always end exactly at the target coordinates (entry crystal center)
     if (distance < 10 && depth > 0) {
-      return `L ${endX},${endY}`;
+      // Use precise coordinates to ensure exact alignment with crystal center
+      return `L ${endX.toFixed(2)},${endY.toFixed(2)}`;
     }
 
     const midX = (startX + endX) * 0.5;
@@ -943,8 +947,8 @@ export default function GlobalTimelineMinimap({
       }
     }
     
-    // Always end at entry crystal position
-    timeFlow.push(`L ${entryX},${entryY}`);
+    // Always end exactly at entry crystal center - use precise coordinates
+    timeFlow.push(`L ${entryX.toFixed(2)},${entryY.toFixed(2)}`);
     
     return timeFlow.join(' ');
   };
@@ -995,8 +999,8 @@ export default function GlobalTimelineMinimap({
       }
     }
     
-    // Always end at entry crystal position - no jitter on final point
-    lightning.push(`L ${entryX},${entryY}`);
+    // Always end exactly at entry crystal center - no jitter on final point, use precise coordinates
+    lightning.push(`L ${entryX.toFixed(2)},${entryY.toFixed(2)}`);
     return lightning.join(' ');
   };
 
@@ -1114,8 +1118,8 @@ export default function GlobalTimelineMinimap({
             spiralPath.push(`L ${branchX},${branchY} M ${x},${y}`);
           }
         }
-        // Always end at entry crystal position
-        spiralPath.push(`L ${entryX},${entryY}`);
+        // Always end exactly at entry crystal center - use precise coordinates
+        spiralPath.push(`L ${entryX.toFixed(2)},${entryY.toFixed(2)}`);
         path = spiralPath.join(' ');
         break;
 
@@ -1763,8 +1767,22 @@ export default function GlobalTimelineMinimap({
       }
 
       // Convert entry position to SVG coordinates
+      // entryX should match the center of the entry indicator
+      // The indicator uses left: ${position}% with transform: translate3d(-50%, -50%, 0)
+      // The -50% in translate3d is relative to the element's own size (16px), moving it -8px
+      // So the center is at position% of container width
+      // The SVG has viewBox="0 0 1000 ${minimapDimensions.height}" with preserveAspectRatio="none"
+      // So it stretches to fill the container. To convert percentage to SVG coordinates:
+      // entryX = (position / 100) * 1000 (SVG viewBox width)
+      // This ensures the connection ends at the exact center of the crystal
       const entryX = (position / 100) * 1000;
       const baseYPosition = scaleYPositions[entry.timeRange];
+      // entryY should match the center of the entry indicator
+      // The indicator uses top: ${yPositionPercent}% with transform: translate3d(-50%, -50%, 0)
+      // where yPositionPercent = (baseYPosition / minimapDimensions.height) * 100
+      // The -50% in translate3d moves the 16px indicator -8px, so center is at the top position
+      // So the center is at baseYPosition pixels from top in SVG coordinates
+      // The SVG height matches minimapDimensions.height, so this aligns perfectly
       const entryY = baseYPosition + verticalOffset;
 
       // Find nearest web nodes with distance calculation
@@ -3176,6 +3194,7 @@ export default function GlobalTimelineMinimap({
               return (
                 <g key={connectionKey}>
                   {/* Connection path with adaptive styling */}
+                  {/* Ensure path ends exactly at entry crystal center by using precise coordinates */}
                   <path
                     d={connection.path}
                     stroke={connectionColor}
@@ -3189,6 +3208,7 @@ export default function GlobalTimelineMinimap({
                     style={{
                       filter: `drop-shadow(0 0 ${connection.strokeWidth * 2}px ${connectionColor})`,
                     }}
+                    shapeRendering="geometricPrecision"
                   />
                   
                   {/* Connection glow layer for depth */}
@@ -3451,9 +3471,9 @@ export default function GlobalTimelineMinimap({
                 color: zodiacColor,
                 opacity: labelOpacity,
                 fontSize: fontSize,
-                transform: 'translateX(-50%)',
-                WebkitTransform: 'translateX(-50%)',
-                msTransform: 'translateX(-50%)',
+                transform: 'translate3d(-50%, 0, 0)',
+                WebkitTransform: 'translate3d(-50%, 0, 0)',
+                msTransform: 'translate3d(-50%, 0, 0)',
                 zIndex: 2,
                 pointerEvents: 'none',
                 marginLeft: 0,
@@ -3519,9 +3539,9 @@ export default function GlobalTimelineMinimap({
                 color: zodiacColor,
                 opacity: labelOpacity,
                 fontSize: fontSize,
-                transform: 'translateX(-50%)',
-                WebkitTransform: 'translateX(-50%)',
-                msTransform: 'translateX(-50%)',
+                transform: 'translate3d(-50%, 0, 0)',
+                WebkitTransform: 'translate3d(-50%, 0, 0)',
+                msTransform: 'translate3d(-50%, 0, 0)',
                 zIndex: 2,
                 pointerEvents: 'none',
                 marginLeft: 0,
@@ -3616,9 +3636,9 @@ export default function GlobalTimelineMinimap({
                 color: zodiacColor,
                 opacity: labelOpacity,
                 fontSize: fontSize,
-                transform: 'translateX(-50%)',
-                WebkitTransform: 'translateX(-50%)',
-                msTransform: 'translateX(-50%)',
+                transform: 'translate3d(-50%, 0, 0)',
+                WebkitTransform: 'translate3d(-50%, 0, 0)',
+                msTransform: 'translate3d(-50%, 0, 0)',
                 zIndex: 2,
                 pointerEvents: 'none',
                 marginLeft: 0,
@@ -3676,6 +3696,7 @@ export default function GlobalTimelineMinimap({
                     color: zodiacColor,
                     fontSize: fontSize,
                     opacity: labelOpacity,
+                    transform: 'translate3d(-50%, 0, 0)',
                   }}
                 >
                   {mark.label}
@@ -3708,6 +3729,7 @@ export default function GlobalTimelineMinimap({
                     color: zodiacColor,
                     fontSize: fontSize,
                     opacity: labelOpacity,
+                    transform: 'translate3d(-50%, 0, 0)',
                   }}
                 >
                   {mark.label}
@@ -3739,6 +3761,7 @@ export default function GlobalTimelineMinimap({
                     top: '125px',
                     fontSize: fontSize,
                     opacity: labelOpacity,
+                    transform: 'translate3d(-50%, 0, 0)',
                   }}
                 >
                   {mark.label}
@@ -3770,6 +3793,7 @@ export default function GlobalTimelineMinimap({
                     top: '165px',
                     fontSize: fontSize,
                     opacity: labelOpacity,
+                    transform: 'translate3d(-50%, 0, 0)',
                   }}
                 >
                   {mark.label}

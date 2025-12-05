@@ -85,13 +85,28 @@ export default function JournalEditor({
 
     setSaving(true);
     try {
-      const canonicalDate = getCanonicalDate(date, viewMode);
       const defaultTitle = getDefaultTitle();
+      
+      // If editing an existing entry, preserve its original date and timeRange
+      // Otherwise, calculate canonical date from current date/viewMode for new entries
+      let entryDate: string;
+      let entryTimeRange: TimeRange;
+      
+      if (currentEntry?.id) {
+        // Preserve original date and timeRange when editing existing entry
+        entryDate = currentEntry.date;
+        entryTimeRange = currentEntry.timeRange;
+      } else {
+        // Calculate canonical date for new entries
+        const canonicalDate = getCanonicalDate(date, viewMode);
+        entryDate = formatDate(canonicalDate);
+        entryTimeRange = viewMode;
+      }
       
       const entry: JournalEntry = {
         id: currentEntry?.id, // Preserve ID if editing existing entry
-        date: formatDate(canonicalDate),
-        timeRange: viewMode,
+        date: entryDate,
+        timeRange: entryTimeRange,
         title: title.trim() || defaultTitle,
         content: content.trim(),
         tags: tags,

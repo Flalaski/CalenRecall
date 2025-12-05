@@ -1244,7 +1244,7 @@
 
 .scale-label {
   position: absolute;
-  transform: translateX(-50%);
+  transform: translate3d(-50%, 0, 0);
   font-size: 0.7rem; /* Increased base font size for better legibility */
   color: #555;
   font-weight: 600;
@@ -1260,6 +1260,7 @@
   letter-spacing: 0.02em;
   /* Smooth transitions for magnification effect */
   transition: font-size 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease;
+  will-change: transform, opacity;
 }
 
 .scale-label.decade-label {

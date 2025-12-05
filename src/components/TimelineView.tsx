@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { JournalEntry, TimeRange } from '../types';
 import { formatDate, getDaysInMonth, getDaysInWeek, isToday, getWeekStart, getWeekEnd, getZodiacColor, getZodiacGradientColor, getZodiacGradientColorForYear, getZodiacColorForDecade } from '../utils/dateUtils';
 import { isSameDay, isSameMonth, isSameYear } from 'date-fns';
-import { playCalendarSelectionSound, playEntrySelectionSound } from '../utils/audioUtils';
+import { playCalendarSelectionSound, playEntrySelectionSound, playEditSound } from '../utils/audioUtils';
 import './TimelineView.css';
 
 interface TimelineViewProps {
@@ -10,6 +10,7 @@ interface TimelineViewProps {
   viewMode: TimeRange;
   onTimePeriodSelect: (date: Date, viewMode: TimeRange) => void;
   onEntrySelect: (entry: JournalEntry) => void;
+  onEditEntry?: (entry: JournalEntry) => void;
 }
 
 export default function TimelineView({
@@ -17,6 +18,7 @@ export default function TimelineView({
   viewMode,
   onTimePeriodSelect,
   onEntrySelect,
+  onEditEntry,
 }: TimelineViewProps) {
   const [entries, setEntries] = useState<JournalEntry[]>([]);
   const [loading, setLoading] = useState(false);
@@ -501,7 +503,22 @@ export default function TimelineView({
                         onEntrySelect(entry);
                       }}
                     >
-                      <div className="card-title">{entry.title}</div>
+                      <div className="card-title-row">
+                        <div className="card-title">{entry.title}</div>
+                        {onEditEntry && (
+                          <button
+                            className="card-edit-button-small"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              playEditSound();
+                              onEditEntry(entry);
+                            }}
+                            title="Edit entry"
+                          >
+                            Edit
+                          </button>
+                        )}
+                      </div>
                       <div className="card-preview">{entry.content.substring(0, 50)}...</div>
                       {entry.tags && entry.tags.length > 0 && (
                         <div className="card-tags">
@@ -548,6 +565,19 @@ export default function TimelineView({
                 <div className="card-header">
                   <div className="card-title-full">{entry.title}</div>
                   <div className="card-meta">
+                    {onEditEntry && (
+                      <button
+                        className="card-edit-button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          playEditSound();
+                          onEditEntry(entry);
+                        }}
+                        title="Edit entry"
+                      >
+                        Edit
+                      </button>
+                    )}
                     <span className="time-range-badge">{entry.timeRange}</span>
                     <span className="card-date">{formatDate(new Date(entry.date), 'MMM d')}</span>
                   </div>

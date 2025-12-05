@@ -11,6 +11,7 @@ interface EntryViewerProps {
   onEdit: () => void;
   onNewEntry: () => void;
   onEntrySelect: (entry: JournalEntry) => void;
+  onEditEntry?: (entry: JournalEntry) => void;
 }
 
 export default function EntryViewer({
@@ -20,6 +21,7 @@ export default function EntryViewer({
   onEdit,
   onNewEntry,
   onEntrySelect,
+  onEditEntry,
 }: EntryViewerProps) {
   const [periodEntries, setPeriodEntries] = useState<JournalEntry[]>([]);
   const [loading, setLoading] = useState(false);
@@ -280,12 +282,27 @@ export default function EntryViewer({
                 <div className="period-entry-header">
                   <div className="period-entry-title-row">
                     <span className="period-entry-title">{periodEntry.title}</span>
-                    <span
-                      className="period-entry-badge"
-                      style={{ backgroundColor: getTimeRangeColor(periodEntry.timeRange) }}
-                    >
-                      {getTimeRangeLabel(periodEntry.timeRange)}
-                    </span>
+                    <div className="period-entry-actions">
+                      {onEditEntry && (
+                        <button
+                          className="period-entry-edit-button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            playEditSound();
+                            onEditEntry(periodEntry);
+                          }}
+                          title="Edit entry"
+                        >
+                          Edit
+                        </button>
+                      )}
+                      <span
+                        className="period-entry-badge"
+                        style={{ backgroundColor: getTimeRangeColor(periodEntry.timeRange) }}
+                      >
+                        {getTimeRangeLabel(periodEntry.timeRange)}
+                      </span>
+                    </div>
                   </div>
                   <div className="period-entry-meta">
                     <span className="period-entry-date">

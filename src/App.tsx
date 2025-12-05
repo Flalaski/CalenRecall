@@ -4,6 +4,7 @@ import JournalEditor from './components/JournalEditor';
 import EntryViewer from './components/EntryViewer';
 import NavigationBar from './components/NavigationBar';
 import GlobalTimelineMinimap from './components/GlobalTimelineMinimap';
+import EntryEditModal from './components/EntryEditModal';
 import { TimeRange, JournalEntry, Preferences } from './types';
 import { getEntryForDate } from './services/journalService';
 import './App.css';
@@ -16,6 +17,7 @@ function App() {
   const [isEditing, setIsEditing] = useState(false);
   const [preferences, setPreferences] = useState<Preferences>({});
   const [preferencesLoaded, setPreferencesLoaded] = useState(false);
+  const [editingEntry, setEditingEntry] = useState<JournalEntry | null>(null);
   
   // Track if initial load has completed - after this, default view mode should NEVER be applied
   const initialLoadCompleteRef = useRef(false);
@@ -191,7 +193,13 @@ function App() {
   const handleEntrySelect = (entry: JournalEntry) => {
     hasUserInteractedRef.current = true; // Mark that user has interacted
     // Navigate to the entry's date and time range, then select the entry
-    const entryDate = new Date(entry.date);
+    // Parse date string to avoid timezone issues (YYYY-MM-DD format)
+    const [entryYearStr, entryMonthStr, entryDayStr] = entry.date.split('-');
+    const entryDate = new Date(
+      parseInt(entryYearStr, 10),
+      parseInt(entryMonthStr, 10) - 1,
+      parseInt(entryDayStr, 10)
+    );
     setSelectedDate(entryDate);
     setViewMode(entry.timeRange);
     setSelectedEntry(entry);
@@ -215,6 +223,20 @@ function App() {
     setIsEditing(false);
     setIsNewEntry(false);
     loadCurrentEntry();
+  };
+
+  const handleEditEntry = (entry: JournalEntry) => {
+    setEditingEntry(entry);
+  };
+
+  const handleModalClose = () => {
+    setEditingEntry(null);
+  };
+
+  const handleModalEntrySaved = () => {
+    // Refresh the current view
+    loadCurrentEntry();
+    setEditingEntry(null);
   };
 
   if (!preferencesLoaded) {
@@ -250,6 +272,7 @@ function App() {
             viewMode={viewMode}
             onTimePeriodSelect={handleTimePeriodSelect}
             onEntrySelect={handleEntrySelect}
+            onEditEntry={handleEditEntry}
           />
         </div>
         <div className="editor-section">
@@ -274,10 +297,19 @@ function App() {
               onEdit={handleEdit}
               onNewEntry={handleNewEntry}
               onEntrySelect={handleEntrySelect}
+              onEditEntry={handleEditEntry}
             />
           )}
         </div>
       </div>
+      {editingEntry && (
+        <EntryEditModal
+          entry={editingEntry}
+          isOpen={true}
+          onClose={handleModalClose}
+          onEntrySaved={handleModalEntrySaved}
+        />
+      )}
     </div>
   );
 }
