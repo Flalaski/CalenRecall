@@ -799,6 +799,423 @@ export default function GlobalTimelineMinimap({
     return `M ${centerX},100 L ${midX1},${midY1} L ${midX2},${midY2} L ${endX},${yTarget}`;
   };
 
+  // Connection strategy types for adaptive extend variants
+  type ConnectionStrategy = 'direct' | 'curved' | 'hierarchical' | 'web' | 'spiral' | 'organic';
+
+  // Calculate connection path from fractal web to entry point
+  interface ConnectionPath {
+    path: string;
+    strategy: ConnectionStrategy;
+    distance: number;
+    opacity: number;
+    strokeWidth: number;
+  }
+
+  // Optimized fractal chain lightning path generator - performance-focused
+  // Always ensures entry crystal is connected (endX, endY is entry position)
+  const generateFractalLightningBranch = (
+    startX: number,
+    startY: number,
+    endX: number,
+    endY: number,
+    depth: number,
+    maxDepth: number,
+    entry: JournalEntry,
+    branchSeed: string,
+    allowSplits: boolean = true,
+    isEntryEnd: boolean = true // Track if endX/endY is the entry crystal
+  ): string => {
+    // Early termination for performance
+    if (depth >= maxDepth) {
+      return `L ${endX},${endY}`;
+    }
+
+    // Cache distance calculation
+    const dx = endX - startX;
+    const dy = endY - startY;
+    const distanceSq = dx * dx + dy * dy;
+    const distance = Math.sqrt(distanceSq);
+    
+    // Skip recursion for very short distances (performance optimization)
+    if (distance < 10 && depth > 0) {
+      return `L ${endX},${endY}`;
+    }
+
+    const midX = (startX + endX) * 0.5;
+    const midY = (startY + endY) * 0.5;
+    
+    // Optimize: only calculate perpendicular if we need it
+    const perpX = -dy / distance;
+    const perpY = dx / distance;
+    
+    // Optimized jitter calculation - cache seed
+    const jitterSeed = `${branchSeed}-${depth}`;
+    const jitterMagnitude = distance * (0.15 - depth * 0.02);
+    const jitterX = hashToVerticalOffset(jitterSeed, jitterMagnitude);
+    const jitterY = hashToVerticalOffset(`${jitterSeed}-y`, jitterMagnitude);
+    
+    // Create branching point
+    const branchX = midX + perpX * jitterX + (jitterX * 0.3);
+    const branchY = midY + perpY * jitterY + (jitterY * 0.3);
+    
+    // Optimized split decision - only allow splits at shallow depths and for certain entries
+    const shouldSplit = allowSplits && 
+                       depth < 2 && // Only split at first 2 levels
+                       depth < maxDepth - 1 &&
+                       (entry.id || 0) % (5 + depth * 2) === 0; // Less frequent splits
+    
+    if (shouldSplit) {
+      // Simplified possibility branches - only create one side branch for performance
+      const splitAngle = Math.PI / 6;
+      const splitDistance = distance * 0.2; // Reduced from 0.25
+      const baseAngle = Math.atan2(dy, dx);
+      
+      // Only create right branch (skip left for performance)
+      const rightX = branchX + Math.cos(baseAngle + splitAngle) * splitDistance;
+      const rightY = branchY + Math.sin(baseAngle + splitAngle) * splitDistance;
+      
+      // Recursively generate branches (limit recursion)
+      // Main branch always connects to entry crystal
+      const rightBranch = generateFractalLightningBranch(
+        branchX, branchY, rightX, rightY, depth + 1, maxDepth, entry, `${branchSeed}-R`, false, false // Side branch, not entry
+      );
+      const mainBranch = generateFractalLightningBranch(
+        branchX, branchY, endX, endY, depth + 1, maxDepth, entry, `${branchSeed}-M`, false, isEntryEnd // Main branch to entry
+      );
+      
+      return `L ${branchX},${branchY} ${rightBranch} M ${branchX},${branchY} ${mainBranch}`;
+    } else {
+      // Continue main branch - always ensure it reaches entry crystal
+      const nextBranch = generateFractalLightningBranch(
+        branchX, branchY, endX, endY, depth + 1, maxDepth, entry, branchSeed, false, isEntryEnd
+      );
+      return `L ${branchX},${branchY} ${nextBranch}`;
+    }
+  };
+
+  // Optimized cosmic timeline flow - performance-focused
+  // Always ends at entry crystal
+  const generateCosmicTimelineFlow = (
+    webNodeX: number,
+    webNodeY: number,
+    entryX: number,
+    entryY: number,
+    entry: JournalEntry,
+    levelIndex: number,
+    simplified: boolean = false
+  ): string => {
+    const dx = entryX - webNodeX;
+    const dy = entryY - webNodeY;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+    
+    // Reduce steps for performance
+    const flowSteps = simplified ? 4 : Math.min(6 + levelIndex, 10); // Cap at 10 steps
+    const timeFlow: string[] = [`M ${webNodeX},${webNodeY}`];
+    
+    // Pre-calculate constants
+    const entryIdHash = (entry.id || 0) * 0.1;
+    const amplitudeBase = distance * 0.08;
+    
+    // Create flowing timeline with cosmic curvature
+    for (let i = 0; i < flowSteps; i++) {
+      const t = i / flowSteps;
+      const baseX = webNodeX + dx * t;
+      const baseY = webNodeY + dy * t;
+      
+      // Optimized cosmic flow calculation
+      const timePhase = entryIdHash + t * Math.PI * 2;
+      const cosmicAmplitude = amplitudeBase * (1 - t * 0.5);
+      const sinPhase = Math.sin(timePhase);
+      const cosPhase = Math.cos(timePhase * 1.3);
+      
+      const flowX = baseX + sinPhase * cosmicAmplitude;
+      const flowY = baseY + cosPhase * cosmicAmplitude * 0.7;
+      
+      // Reduced ripple frequency for performance (only every 4th step)
+      if (!simplified && i % 4 === 0 && i > 0 && i < flowSteps) {
+        const rippleAngle = timePhase * 2;
+        const rippleRadius = distance * 0.02; // Reduced from 0.03
+        const rippleX = flowX + Math.cos(rippleAngle) * rippleRadius;
+        const rippleY = flowY + Math.sin(rippleAngle) * rippleRadius;
+        timeFlow.push(`L ${rippleX},${rippleY} L ${flowX},${flowY}`);
+      } else {
+        timeFlow.push(`L ${flowX},${flowY}`);
+      }
+    }
+    
+    // Always end at entry crystal position
+    timeFlow.push(`L ${entryX},${entryY}`);
+    
+    return timeFlow.join(' ');
+  };
+
+  // Optimized chain lightning generator - performance-focused
+  // Always ends at entry crystal
+  const generateChainLightning = (
+    webNodeX: number,
+    webNodeY: number,
+    entryX: number,
+    entryY: number,
+    entry: JournalEntry,
+    levelIndex: number,
+    simplified: boolean = false
+  ): string => {
+    // Cap segments for performance
+    const segments = simplified ? 3 : Math.min(4 + levelIndex, 6); // Cap at 6 segments
+    const lightning: string[] = [`M ${webNodeX},${webNodeY}`];
+    
+    const dx = entryX - webNodeX;
+    const dy = entryY - webNodeY;
+    const entryId = entry.id || 0;
+    
+    // Generate intermediate points, but always end at entry crystal
+    for (let i = 1; i < segments; i++) {
+      const t = i / segments;
+      const baseX = webNodeX + dx * t;
+      const baseY = webNodeY + dy * t;
+      
+      // Optimized lightning jitter
+      const lightningSeed = `${entryId}-${i}`;
+      const jitterScale = 20 * (1 - t * 0.7);
+      const jitterX = hashToVerticalOffset(lightningSeed, jitterScale);
+      const jitterY = hashToVerticalOffset(`${lightningSeed}-y`, jitterScale);
+      
+      const lightningX = baseX + jitterX;
+      const lightningY = baseY + jitterY;
+      
+      lightning.push(`L ${lightningX},${lightningY}`);
+      
+      // Reduced side branch frequency for performance (only every 3rd segment)
+      if (!simplified && i % 3 === 0 && i < segments) {
+        const branchLength = 12 * (1 - t); // Reduced from 15
+        const branchAngle = (entryId % 360) * Math.PI / 180;
+        const branchX = lightningX + Math.cos(branchAngle) * branchLength;
+        const branchY = lightningY + Math.sin(branchAngle) * branchLength;
+        lightning.push(`L ${branchX},${branchY} M ${lightningX},${lightningY}`);
+      }
+    }
+    
+    // Always end at entry crystal position - no jitter on final point
+    lightning.push(`L ${entryX},${entryY}`);
+    return lightning.join(' ');
+  };
+
+  // Build adaptive connection path from web node to entry point
+  // Enhanced with fractal chain lightning and cosmic timeline nature
+  // Localized to entry crystal with viewport culling
+  const buildConnectionPath = (
+    webNodeX: number,
+    webNodeY: number,
+    entryX: number,
+    entryY: number,
+    strategy: ConnectionStrategy,
+    entry: JournalEntry,
+    levelIndex: number,
+    viewportBounds?: { minX: number; maxX: number; minY: number; maxY: number },
+    lodLevel?: 'high' | 'medium' | 'low' | 'minimal' | 'ultraMinimal'
+  ): ConnectionPath | null => {
+    const distance = Math.sqrt(Math.pow(entryX - webNodeX, 2) + Math.pow(entryY - webNodeY, 2));
+    
+    // Localization: Limit connection distance to keep them near entry crystals
+    const maxLocalizedDistance = 300; // Maximum distance from entry crystal
+    if (distance > maxLocalizedDistance) {
+      // Clamp web node to be within localized distance
+      const angle = Math.atan2(entryY - webNodeY, entryX - webNodeX);
+      webNodeX = entryX - Math.cos(angle) * maxLocalizedDistance;
+      webNodeY = entryY - Math.sin(angle) * maxLocalizedDistance;
+    }
+    
+    // Viewport culling: Check if connection is visible
+    if (viewportBounds) {
+      const entryVisible = entryX >= viewportBounds.minX - 50 && 
+                          entryX <= viewportBounds.maxX + 50 &&
+                          entryY >= viewportBounds.minY - 50 && 
+                          entryY <= viewportBounds.maxY + 50;
+      const webNodeVisible = webNodeX >= viewportBounds.minX - 50 && 
+                            webNodeX <= viewportBounds.maxX + 50 &&
+                            webNodeY >= viewportBounds.minY - 50 && 
+                            webNodeY <= viewportBounds.maxY + 50;
+      
+      // If neither entry nor web node is visible, skip this connection
+      if (!entryVisible && !webNodeVisible) {
+        return null;
+      }
+    }
+    
+    const maxDistance = 1000; // Maximum expected distance in SVG coordinates
+    const normalizedDistance = Math.min(1, distance / maxDistance);
+    
+    // Calculate opacity based on distance and entry properties
+    const baseOpacity = 0.3 + (1 - normalizedDistance) * 0.4;
+    const timeRangeOpacity = entry.timeRange === viewMode ? 1.0 : 0.6;
+    const finalOpacity = baseOpacity * timeRangeOpacity;
+    
+    // Calculate stroke width based on distance and time range
+    const baseStrokeWidth = 0.8 + (1 - normalizedDistance) * 0.4;
+    const timeRangeWeight = entry.timeRange === 'decade' ? 1.5 : 
+                           entry.timeRange === 'year' ? 1.3 :
+                           entry.timeRange === 'month' ? 1.1 :
+                           entry.timeRange === 'week' ? 0.9 : 0.7;
+    const finalStrokeWidth = baseStrokeWidth * timeRangeWeight;
+
+    let path: string;
+    const branchSeed = `${entry.id || entry.date}-${webNodeX}-${webNodeY}`;
+    
+    // Performance optimization: use simplified paths for low LOD or distant connections
+    // Ultra-minimal LOD (decades view with many entries) uses very simple paths
+    const useSimplified = normalizedDistance > 0.7 || distance > 500 || lodLevel === 'ultraMinimal';
+    // For ultra-minimal, use depth 1 (straight line with minimal branching)
+    const maxDepth = lodLevel === 'ultraMinimal' ? 1 : (useSimplified ? 2 : Math.min(3 + Math.floor(levelIndex / 2), 4)); // Cap at 4
+
+    switch (strategy) {
+      case 'direct':
+        // Fractal chain lightning - optimized recursion, always ends at entry crystal
+        path = `M ${webNodeX},${webNodeY} ${generateFractalLightningBranch(webNodeX, webNodeY, entryX, entryY, 0, maxDepth, entry, branchSeed, !useSimplified, true)}`;
+        break;
+
+      case 'curved':
+        // Cosmic timeline flow - always ends at entry crystal
+        path = generateCosmicTimelineFlow(webNodeX, webNodeY, entryX, entryY, entry, levelIndex, useSimplified);
+        break;
+
+      case 'hierarchical':
+        // Chain lightning - always ends at entry crystal
+        path = generateChainLightning(webNodeX, webNodeY, entryX, entryY, entry, levelIndex, useSimplified);
+        break;
+
+      case 'web':
+        // Fractal web - limited depth, always ends at entry crystal
+        const webMaxDepth = useSimplified ? 2 : Math.min(3, 2 + levelIndex);
+        path = `M ${webNodeX},${webNodeY} ${generateFractalLightningBranch(webNodeX, webNodeY, entryX, entryY, 0, webMaxDepth, entry, `${branchSeed}-web`, false, true)}`;
+        break;
+
+      case 'spiral':
+        // Optimized spiral with fewer branches, always ends at entry crystal
+        const centerX = (webNodeX + entryX) * 0.5;
+        const centerY = (webNodeY + entryY) * 0.5;
+        const radius = distance * 0.5;
+        const spiralTurns = 0.5 + levelIndex * 0.2;
+        const spiralPath: string[] = [`M ${webNodeX},${webNodeY}`];
+        const spiralSteps = useSimplified ? 10 : 15; // Reduced from 20
+        for (let i = 0; i < spiralSteps; i++) {
+          const t = i / spiralSteps;
+          const angle = t * Math.PI * 2 * spiralTurns;
+          const r = radius * t;
+          const x = centerX + r * Math.cos(angle);
+          const y = centerY + r * Math.sin(angle);
+          spiralPath.push(`${i === 0 ? 'M' : 'L'} ${x},${y}`);
+          
+          // Reduced branch frequency (every 7th step instead of 5th)
+          if (!useSimplified && i % 7 === 0 && i > 0 && i < spiralSteps) {
+            const branchAngle = angle + Math.PI / 4;
+            const branchLength = radius * 0.12; // Reduced from 0.15
+            const branchX = x + Math.cos(branchAngle) * branchLength;
+            const branchY = y + Math.sin(branchAngle) * branchLength;
+            spiralPath.push(`L ${branchX},${branchY} M ${x},${y}`);
+          }
+        }
+        // Always end at entry crystal position
+        spiralPath.push(`L ${entryX},${entryY}`);
+        path = spiralPath.join(' ');
+        break;
+
+      case 'organic':
+        // Simplified organic - single path instead of overlay, always ends at entry crystal
+        const organicMaxDepth = useSimplified ? 2 : Math.min(3, 2 + levelIndex);
+        if (useSimplified) {
+          // Use simple cosmic flow for simplified mode
+          path = generateCosmicTimelineFlow(webNodeX, webNodeY, entryX, entryY, entry, levelIndex, true);
+        } else {
+          const organicBase = generateFractalLightningBranch(webNodeX, webNodeY, entryX, entryY, 0, organicMaxDepth, entry, `${branchSeed}-organic`, false, true);
+          path = `M ${webNodeX},${webNodeY} ${organicBase}`;
+        }
+        break;
+
+      default:
+        // Default to optimized fractal, always ends at entry crystal
+        path = `M ${webNodeX},${webNodeY} ${generateFractalLightningBranch(webNodeX, webNodeY, entryX, entryY, 0, maxDepth, entry, branchSeed, false, true)}`;
+    }
+
+    return {
+      path,
+      strategy,
+      distance,
+      opacity: finalOpacity,
+      strokeWidth: finalStrokeWidth,
+    };
+  };
+
+  // Check if a point is within viewport bounds (with margin)
+  const isPointInViewport = (
+    x: number,
+    y: number,
+    viewportBounds: { minX: number; maxX: number; minY: number; maxY: number },
+    margin: number = 50
+  ): boolean => {
+    return x >= viewportBounds.minX - margin &&
+           x <= viewportBounds.maxX + margin &&
+           y >= viewportBounds.minY - margin &&
+           y <= viewportBounds.maxY + margin;
+  };
+
+  // Calculate web nodes for fractal connections
+  // These are strategic points on the fractal web that serve as connection hubs
+  const webNodes = useMemo(() => {
+    const nodes: Array<{ x: number; y: number; scale: TimeRange; level: number }> = [];
+    
+    // Create nodes along the infinity tree branches
+    timeScaleOrder.forEach((scale, levelIndex) => {
+      const yPos = scaleYPositions[scale];
+      
+      // Primary nodes on left and right branches
+      const leftBranchX = centerX - (80 + levelIndex * 25);
+      const rightBranchX = centerX + (80 + levelIndex * 25);
+      
+      nodes.push(
+        { x: leftBranchX, y: yPos, scale, level: levelIndex },
+        { x: rightBranchX, y: yPos, scale, level: levelIndex }
+      );
+      
+      // Secondary nodes for web density
+      if (levelIndex > 0) {
+        const secondaryLeftX = centerX - (40 + levelIndex * 15);
+        const secondaryRightX = centerX + (40 + levelIndex * 15);
+        nodes.push(
+          { x: secondaryLeftX, y: yPos, scale, level: levelIndex },
+          { x: secondaryRightX, y: yPos, scale, level: levelIndex }
+        );
+      }
+      
+      // Tertiary nodes for fine-grained connections
+      if (levelIndex > 1) {
+        const tertiaryLeftX = centerX - (20 + levelIndex * 8);
+        const tertiaryRightX = centerX + (20 + levelIndex * 8);
+        nodes.push(
+          { x: tertiaryLeftX, y: yPos, scale, level: levelIndex },
+          { x: tertiaryRightX, y: yPos, scale, level: levelIndex }
+        );
+      }
+    });
+    
+    // Add center trunk nodes
+    const trunkNodes = 5;
+    for (let i = 0; i < trunkNodes; i++) {
+      const yPos = (minimapDimensions.height / trunkNodes) * (i + 0.5);
+      nodes.push({ x: centerX, y: yPos, scale: viewMode, level: 0 });
+    }
+    
+    return nodes;
+  }, [centerX, scaleYPositions, timeScaleOrder, viewMode, minimapDimensions.height]);
+
+  // Performance optimization: Level of Detail (LOD) thresholds
+  const LOD_THRESHOLDS = {
+    high: 50,    // Show all connections with full detail
+    medium: 150, // Show primary connections only
+    low: 300,    // Show only same-scale connections
+    minimal: 500, // Show only nearest connections
+    ultraMinimal: 1000, // Decades view: minimal connections, no entry-to-entry
+  };
+
   // Calculate detailed scale markings for ALL time scale levels simultaneously
   const allScaleMarkings = useMemo(() => {
     if (!timelineData.startDate || !timelineData.endDate) {
@@ -814,6 +1231,13 @@ export default function GlobalTimelineMinimap({
     const startDate = timelineData.startDate;
     const endDate = timelineData.endDate;
     const totalTime = endDate.getTime() - startDate.getTime();
+    
+    // Determine which scales to calculate based on viewMode
+    // Always calculate current scale + one level above/below for context
+    const scalesToCalculate = new Set<TimeRange>([viewMode]);
+    const scaleIndex = timeScaleOrder.indexOf(viewMode);
+    if (scaleIndex > 0) scalesToCalculate.add(timeScaleOrder[scaleIndex - 1]); // Add scale above
+    if (scaleIndex < timeScaleOrder.length - 1) scalesToCalculate.add(timeScaleOrder[scaleIndex + 1]); // Add scale below
     
     interface ScaleMark {
       date: Date;
@@ -890,7 +1314,9 @@ export default function GlobalTimelineMinimap({
     }
 
     // YEAR SCALE
-    for (let year = startYear; year <= endYear; year++) {
+    // For decades view, limit year markings to every 5 years to reduce DOM elements
+    const yearStep = viewMode === 'decade' ? 5 : 1;
+    for (let year = startYear; year <= endYear; year += yearStep) {
       const yearDate = new Date(year, 0, 1);
       if (yearDate >= startDate && yearDate <= endDate) {
         scales.year.major.push({
@@ -938,100 +1364,106 @@ export default function GlobalTimelineMinimap({
       current = addMonths(current, 1);
     }
 
-    // MONTH SCALE
-    const monthMajorSet = new Set<number>();
-    current = new Date(startDate);
-    let monthMajorCount = 0;
-    const maxMonthMajors = 24; // Limit to 2 years of months
-    while (current <= endDate && monthMajorCount < maxMonthMajors) {
-      const monthStart = new Date(getYear(current), getMonth(current), 1);
-      const monthKey = monthStart.getTime();
-      if (monthStart >= startDate && monthStart <= endDate && !monthMajorSet.has(monthKey)) {
-        monthMajorSet.add(monthKey);
-        scales.month.major.push({
-          date: monthStart,
-          position: calculatePosition(monthStart),
-          label: formatDate(monthStart, 'MMM yyyy'),
-        });
-        monthMajorCount++;
+    // MONTH SCALE - only calculate if needed
+    if (scalesToCalculate.has('month')) {
+      const monthMajorSet = new Set<number>();
+      current = new Date(startDate);
+      let monthMajorCount = 0;
+      const maxMonthMajors = 24; // Limit to 2 years of months
+      while (current <= endDate && monthMajorCount < maxMonthMajors) {
+        const monthStart = new Date(getYear(current), getMonth(current), 1);
+        const monthKey = monthStart.getTime();
+        if (monthStart >= startDate && monthStart <= endDate && !monthMajorSet.has(monthKey)) {
+          monthMajorSet.add(monthKey);
+          scales.month.major.push({
+            date: monthStart,
+            position: calculatePosition(monthStart),
+            label: formatDate(monthStart, 'MMM yyyy'),
+          });
+          monthMajorCount++;
+        }
+        current = addMonths(current, 1);
       }
-      current = addMonths(current, 1);
+
+      const monthWeekSet = new Set<number>();
+      current = new Date(startDate);
+      let monthWeekCount = 0;
+      while (current <= endDate && monthWeekCount < 50) { // Limit weeks for month scale
+        const weekStart = getWeekStart(current);
+        const weekKey = weekStart.getTime();
+        if (weekStart >= startDate && weekStart <= endDate && !monthWeekSet.has(weekKey)) {
+          monthWeekSet.add(weekKey);
+          scales.month.minor.push({
+            date: weekStart,
+            position: calculatePosition(weekStart),
+            label: getDate(weekStart) <= 7 ? formatDate(weekStart, 'd') : undefined,
+          });
+          monthWeekCount++;
+        }
+        current = addWeeks(current, 1);
+      }
     }
 
-    const monthWeekSet = new Set<number>();
-    current = new Date(startDate);
-    let monthWeekCount = 0;
-    while (current <= endDate && monthWeekCount < 50) { // Limit weeks for month scale
-      const weekStart = getWeekStart(current);
-      const weekKey = weekStart.getTime();
-      if (weekStart >= startDate && weekStart <= endDate && !monthWeekSet.has(weekKey)) {
-        monthWeekSet.add(weekKey);
-        scales.month.minor.push({
-          date: weekStart,
-          position: calculatePosition(weekStart),
-          label: getDate(weekStart) <= 7 ? formatDate(weekStart, 'd') : undefined,
-        });
-        monthWeekCount++;
+    // WEEK SCALE - only calculate if needed
+    if (scalesToCalculate.has('week')) {
+      const weekStartSet = new Set<number>();
+      current = new Date(startDate);
+      let weekCount = 0;
+      while (current <= endDate && weekCount < 100) { // Limit to 100 weeks
+        const weekStart = getWeekStart(current);
+        const weekKey = weekStart.getTime();
+        if (weekStart >= startDate && weekStart <= endDate && !weekStartSet.has(weekKey)) {
+          weekStartSet.add(weekKey);
+          scales.week.major.push({
+            date: weekStart,
+            position: calculatePosition(weekStart),
+            label: formatDate(weekStart, 'MMM d'),
+          });
+          weekCount++;
+        }
+        current = addWeeks(current, 1);
       }
-      current = addWeeks(current, 1);
+
+      // Limit day marks for week scale - only show every few days
+      const weekDaySet = new Set<number>();
+      current = new Date(startDate);
+      let dayCount = 0;
+      const maxDays = 200; // Limit total day marks
+      while (current <= endDate && dayCount < maxDays) {
+        const dayKey = Math.floor(current.getTime() / (1000 * 60 * 60 * 24));
+        if (!weekDaySet.has(dayKey)) {
+          weekDaySet.add(dayKey);
+          scales.week.minor.push({
+            date: new Date(current),
+            position: calculatePosition(current),
+            label: getDate(current) % 7 === 1 ? formatDate(current, 'd') : undefined,
+          });
+          dayCount++;
+        }
+        current = addDays(current, 1);
+      }
     }
 
-    // WEEK SCALE
-    const weekStartSet = new Set<number>();
-    current = new Date(startDate);
-    let weekCount = 0;
-    while (current <= endDate && weekCount < 100) { // Limit to 100 weeks
-      const weekStart = getWeekStart(current);
-      const weekKey = weekStart.getTime();
-      if (weekStart >= startDate && weekStart <= endDate && !weekStartSet.has(weekKey)) {
-        weekStartSet.add(weekKey);
-        scales.week.major.push({
-          date: weekStart,
-          position: calculatePosition(weekStart),
-          label: formatDate(weekStart, 'MMM d'),
-        });
-        weekCount++;
+    // DAY SCALE - only calculate if needed, limit to reasonable number
+    if (scalesToCalculate.has('day')) {
+      const dayMajorSet = new Set<number>();
+      current = new Date(startDate);
+      let dayMajorCount = 0;
+      const maxDayMajors = 100; // Limit day major marks
+      while (current <= endDate && dayMajorCount < maxDayMajors) {
+        const dayStart = new Date(getYear(current), getMonth(current), getDate(current));
+        const dayKey = dayStart.getTime();
+        if (dayStart >= startDate && dayStart <= endDate && !dayMajorSet.has(dayKey)) {
+          dayMajorSet.add(dayKey);
+          scales.day.major.push({
+            date: dayStart,
+            position: calculatePosition(dayStart),
+            label: formatDate(dayStart, 'MMM d'),
+          });
+          dayMajorCount++;
+        }
+        current = addDays(current, 1);
       }
-      current = addWeeks(current, 1);
-    }
-
-    // Limit day marks for week scale - only show every few days
-    const weekDaySet = new Set<number>();
-    current = new Date(startDate);
-    let dayCount = 0;
-    const maxDays = 200; // Limit total day marks
-    while (current <= endDate && dayCount < maxDays) {
-      const dayKey = Math.floor(current.getTime() / (1000 * 60 * 60 * 24));
-      if (!weekDaySet.has(dayKey)) {
-        weekDaySet.add(dayKey);
-        scales.week.minor.push({
-          date: new Date(current),
-          position: calculatePosition(current),
-          label: getDate(current) % 7 === 1 ? formatDate(current, 'd') : undefined,
-        });
-        dayCount++;
-      }
-      current = addDays(current, 1);
-    }
-
-    // DAY SCALE - limit to reasonable number
-    const dayMajorSet = new Set<number>();
-    current = new Date(startDate);
-    let dayMajorCount = 0;
-    const maxDayMajors = 100; // Limit day major marks
-    while (current <= endDate && dayMajorCount < maxDayMajors) {
-      const dayStart = new Date(getYear(current), getMonth(current), getDate(current));
-      const dayKey = dayStart.getTime();
-      if (dayStart >= startDate && dayStart <= endDate && !dayMajorSet.has(dayKey)) {
-        dayMajorSet.add(dayKey);
-        scales.day.major.push({
-          date: dayStart,
-          position: calculatePosition(dayStart),
-          label: formatDate(dayStart, 'MMM d'),
-        });
-        dayMajorCount++;
-      }
-      current = addDays(current, 1);
     }
 
     // Limit hour marks - only show every 12 hours, max 50
@@ -1055,7 +1487,7 @@ export default function GlobalTimelineMinimap({
     }
 
     return scales;
-  }, [timelineData]);
+  }, [timelineData, viewMode, timeScaleOrder]);
 
 
   // Simple hash function to generate consistent vertical offset from entry date/id
@@ -1223,6 +1655,387 @@ export default function GlobalTimelineMinimap({
     
     return result;
   }, [entries, timelineData]);
+
+  // Calculate viewport bounds in SVG coordinates for connection culling
+  const viewportBounds = useMemo(() => {
+    // Calculate visible viewport in SVG coordinates (0-1000 width, 0-height)
+    const viewportMargin = 100; // pixels margin for pre-rendering
+    const visibleStartPercent = Math.max(0, currentIndicatorMetrics.position - 20); // 20% margin
+    const visibleEndPercent = Math.min(100, currentIndicatorMetrics.position + 20);
+    
+    return {
+      minX: (visibleStartPercent / 100) * 1000 - viewportMargin,
+      maxX: (visibleEndPercent / 100) * 1000 + viewportMargin,
+      minY: -viewportMargin,
+      maxY: minimapDimensions.height + viewportMargin,
+    };
+  }, [currentIndicatorMetrics.position, minimapDimensions.height]);
+
+  // Calculate main focus web node (center of present focus)
+  const focusWebNode = useMemo(() => {
+    // Focus node is at the center indicator position, at the current viewMode's Y position
+    const focusX = centerX;
+    const focusY = scaleYPositions[viewMode];
+    return { x: focusX, y: focusY, scale: viewMode, level: 0, isFocus: true };
+  }, [centerX, scaleYPositions, viewMode]);
+
+  // Calculate all connections from web nodes to entry points with performance optimizations
+  // Includes entry-to-entry connections and connections to main focus web
+  const memoryWebConnections = useMemo(() => {
+    if (entryPositions.length === 0 || webNodes.length === 0) {
+      return [];
+    }
+
+    // Determine LOD level based on entry count
+    // Decades view gets more aggressive LOD due to large time range
+    let lodLevel: 'high' | 'medium' | 'low' | 'minimal' | 'ultraMinimal';
+    const entryCount = entryPositions.length;
+    const isDecadesView = viewMode === 'decade';
+    
+    if (entryCount <= LOD_THRESHOLDS.high) {
+      lodLevel = 'high';
+    } else if (entryCount <= LOD_THRESHOLDS.medium) {
+      lodLevel = 'medium';
+    } else if (entryCount <= LOD_THRESHOLDS.low) {
+      lodLevel = 'low';
+    } else if (entryCount <= LOD_THRESHOLDS.minimal) {
+      lodLevel = 'minimal';
+    } else {
+      lodLevel = 'ultraMinimal';
+    }
+    
+    // Decades view: use more aggressive LOD (one level lower)
+    if (isDecadesView && lodLevel !== 'ultraMinimal') {
+      if (lodLevel === 'high') lodLevel = 'medium';
+      else if (lodLevel === 'medium') lodLevel = 'low';
+      else if (lodLevel === 'low') lodLevel = 'minimal';
+      else if (lodLevel === 'minimal') lodLevel = 'ultraMinimal';
+    }
+
+    // Viewport culling: only process entries within visible range plus margin
+    // Decades view uses smaller margin (10%) since 20% of 110 years = 22 years
+    const viewportMargin = viewMode === 'decade' ? 10 : 20; // percentage margin for pre-rendering
+    const visibleStart = Math.max(0, currentIndicatorMetrics.position - viewportMargin);
+    const visibleEnd = Math.min(100, currentIndicatorMetrics.position + viewportMargin);
+
+    const connections: Array<{
+      connection: ConnectionPath;
+      entry: JournalEntry;
+      webNode?: { x: number; y: number; scale: TimeRange; level: number };
+      targetEntry?: JournalEntry;
+      entryPosition: { x: number; y: number };
+      targetPosition?: { x: number; y: number };
+      lodLevel: string;
+      connectionType: 'web' | 'entry-to-entry' | 'focus';
+    }> = [];
+
+    // Filter entries by viewport for performance
+    // Only process entries that are actually visible in the current viewport
+    const visibleEntries = entryPositions.filter(({ entry, position, verticalOffset }) => {
+      // Check if entry is within visible range
+      if (position < visibleStart || position > visibleEnd) {
+        return false;
+      }
+      
+      // Convert to SVG coordinates to check viewport bounds
+      const entryX = (position / 100) * 1000;
+      const baseYPosition = scaleYPositions[entry.timeRange];
+      const entryY = baseYPosition + verticalOffset;
+      
+      // Only include entries that are actually in the viewport
+      return isPointInViewport(entryX, entryY, viewportBounds, 150);
+    });
+
+    // If too many visible entries, use spatial clustering
+    // Ultra-minimal LOD for decades view with many entries
+    const maxConnectionsPerFrame = lodLevel === 'high' ? Infinity :
+                                   lodLevel === 'medium' ? 200 :
+                                   lodLevel === 'low' ? 100 :
+                                   lodLevel === 'minimal' ? 50 : 25; // ultraMinimal: only 25 connections
+    
+    // Maximum distance for entry-to-entry connections (localized)
+    const maxEntryToEntryDistance = 200; // pixels in SVG coordinates
+
+    visibleEntries.forEach(({ entry, position, verticalOffset }) => {
+      // Skip if we've exceeded connection budget
+      if (connections.length >= maxConnectionsPerFrame) {
+        return;
+      }
+
+      // Convert entry position to SVG coordinates
+      const entryX = (position / 100) * 1000;
+      const baseYPosition = scaleYPositions[entry.timeRange];
+      const entryY = baseYPosition + verticalOffset;
+
+      // Find nearest web nodes with distance calculation
+      // Optimize for decades view: only consider nodes within reasonable distance
+      const maxNodeDistance = viewMode === 'decade' ? 500 : Infinity; // Limit search radius for decades
+      const nodeDistances = webNodes
+        .map(node => {
+          const distance = Math.sqrt(Math.pow(entryX - node.x, 2) + Math.pow(entryY - node.y, 2));
+          return { node, distance };
+        })
+        .filter(n => n.distance <= maxNodeDistance) // Filter before sorting
+        .sort((a, b) => a.distance - b.distance);
+
+      // Connect to nearest nodes, prioritizing same-scale nodes
+      const sameScaleNodes = nodeDistances.filter(n => n.node.scale === entry.timeRange);
+      const otherScaleNodes = nodeDistances.filter(n => n.node.scale !== entry.timeRange);
+
+      // Determine connection strategy based on entry properties
+      const strategyHash = (entry.id || 0) + entry.date.charCodeAt(0);
+      const strategies: ConnectionStrategy[] = ['direct', 'curved', 'hierarchical', 'web', 'spiral', 'organic'];
+      const primaryStrategy = strategies[strategyHash % strategies.length];
+      
+      // Primary connection to nearest same-scale node (always shown)
+      if (sameScaleNodes.length > 0) {
+        const nearestNode = sameScaleNodes[0].node;
+        const levelIndex = timeScaleOrder.indexOf(entry.timeRange);
+        
+        // Entry position is already validated in visibleEntries filter, but double-check
+        // to ensure we're using current positions
+        const connection = buildConnectionPath(
+          nearestNode.x,
+          nearestNode.y,
+          entryX,
+          entryY,
+          primaryStrategy,
+          entry,
+          levelIndex,
+          viewportBounds,
+          lodLevel
+        );
+        
+        // Skip if connection was culled (returned null) or entry is off-screen
+        if (connection && isPointInViewport(entryX, entryY, viewportBounds, 150)) {
+          // Adjust connection detail based on LOD
+          if (lodLevel === 'ultraMinimal') {
+            connection.strokeWidth *= 0.5;
+            connection.opacity *= 0.4;
+          } else if (lodLevel === 'minimal') {
+            connection.strokeWidth *= 0.7;
+            connection.opacity *= 0.6;
+          } else if (lodLevel === 'low') {
+            connection.strokeWidth *= 0.85;
+            connection.opacity *= 0.8;
+          }
+          
+          connections.push({
+            connection,
+            entry,
+            webNode: nearestNode,
+            entryPosition: { x: entryX, y: entryY },
+            lodLevel,
+            connectionType: 'web',
+          });
+        }
+      }
+
+      // Secondary connection to nearest other-scale node (cross-scale connections)
+      // Only show in high/medium LOD or for focused entries
+      const shouldShowSecondary = lodLevel === 'high' || 
+                                   lodLevel === 'medium' ||
+                                   entry.timeRange === viewMode;
+      
+      if (shouldShowSecondary && otherScaleNodes.length > 0 && connections.length < maxConnectionsPerFrame) {
+        const nearestOtherNode = otherScaleNodes[0].node;
+        const levelIndex = timeScaleOrder.indexOf(entry.timeRange);
+        const secondaryStrategy = strategies[(strategyHash + 1) % strategies.length];
+        
+        // Entry position is already validated, but ensure we're using current positions
+        const connection = buildConnectionPath(
+          nearestOtherNode.x,
+          nearestOtherNode.y,
+          entryX,
+          entryY,
+          secondaryStrategy,
+          entry,
+          levelIndex,
+          viewportBounds,
+          lodLevel
+        );
+        
+        // Skip if connection was culled or entry is off-screen
+        if (connection && isPointInViewport(entryX, entryY, viewportBounds, 150)) {
+          // Reduce opacity for cross-scale connections
+          connection.opacity *= 0.5;
+          
+          // Further reduce for medium LOD
+          if (lodLevel === 'medium') {
+            connection.opacity *= 0.7;
+            connection.strokeWidth *= 0.8;
+          }
+          
+          connections.push({
+            connection,
+            entry,
+            webNode: nearestOtherNode,
+            entryPosition: { x: entryX, y: entryY },
+            lodLevel,
+            connectionType: 'web',
+          });
+        }
+      }
+
+      // Tertiary connection for high-density areas (web-like clustering)
+      // Only show in high LOD
+      if (lodLevel === 'high' && nodeDistances.length > 1 && connections.length < maxConnectionsPerFrame) {
+        const tertiaryNode = nodeDistances[1].node;
+        const levelIndex = timeScaleOrder.indexOf(entry.timeRange);
+        const tertiaryStrategy = strategies[(strategyHash + 2) % strategies.length];
+        
+        // Entry position is already validated, but ensure we're using current positions
+        const connection = buildConnectionPath(
+          tertiaryNode.x,
+          tertiaryNode.y,
+          entryX,
+          entryY,
+          tertiaryStrategy,
+          entry,
+          levelIndex,
+          viewportBounds,
+          lodLevel
+        );
+        
+        // Skip if connection was culled or entry is off-screen
+        if (connection && isPointInViewport(entryX, entryY, viewportBounds, 150)) {
+          connection.opacity *= 0.3;
+          connections.push({
+            connection,
+            entry,
+            webNode: tertiaryNode,
+            entryPosition: { x: entryX, y: entryY },
+            lodLevel,
+            connectionType: 'web',
+          });
+        }
+      }
+      
+      // Connection to main focus web (present focus) - always connect to center
+      // Entry position is already validated, but ensure we're using current positions
+      if (connections.length < maxConnectionsPerFrame && isPointInViewport(entryX, entryY, viewportBounds, 150)) {
+        const levelIndex = timeScaleOrder.indexOf(entry.timeRange);
+        const focusStrategy = strategies[(strategyHash + 3) % strategies.length];
+        const connection = buildConnectionPath(
+          focusWebNode.x,
+          focusWebNode.y,
+          entryX,
+          entryY,
+          focusStrategy,
+          entry,
+          levelIndex,
+          viewportBounds,
+          lodLevel
+        );
+        
+        // Skip if connection was culled or entry is off-screen
+        if (connection) {
+          // Focus connections are more prominent
+          connection.opacity *= 0.6;
+          connection.strokeWidth *= 1.1;
+          connections.push({
+            connection,
+            entry,
+            webNode: focusWebNode,
+            entryPosition: { x: entryX, y: entryY },
+            lodLevel,
+            connectionType: 'focus',
+          });
+        }
+      }
+    });
+
+    // Entry-to-entry connections - connect memories to each other
+    // Only for visible entries and within localized distance
+    // Disable for minimal/ultraMinimal LOD and decades view to improve performance
+    if ((lodLevel === 'high' || lodLevel === 'medium') && viewMode !== 'decade') {
+      const maxEntryConnections = lodLevel === 'high' ? 30 : 15; // Limit entry-to-entry connections
+      let entryConnectionCount = 0;
+      
+      for (let i = 0; i < visibleEntries.length && entryConnectionCount < maxEntryConnections && connections.length < maxConnectionsPerFrame; i++) {
+        const sourceEntry = visibleEntries[i];
+        const sourceX = (sourceEntry.position / 100) * 1000;
+        const sourceY = scaleYPositions[sourceEntry.entry.timeRange] + sourceEntry.verticalOffset;
+        
+        // Skip if source entry is not in viewport
+        if (!isPointInViewport(sourceX, sourceY, viewportBounds, 150)) {
+          continue;
+        }
+        
+        // Find nearby entries for connection (within localized distance)
+        const nearbyEntries: Array<{ entry: JournalEntry; position: { x: number; y: number }; distance: number }> = [];
+        
+        for (let j = i + 1; j < visibleEntries.length; j++) {
+          const targetEntry = visibleEntries[j];
+          const targetX = (targetEntry.position / 100) * 1000;
+          const targetY = scaleYPositions[targetEntry.entry.timeRange] + targetEntry.verticalOffset;
+          
+          const distance = Math.sqrt(Math.pow(targetX - sourceX, 2) + Math.pow(targetY - sourceY, 2));
+          
+          // Only connect if within localized distance and both are visible
+          if (distance <= maxEntryToEntryDistance && 
+              isPointInViewport(targetX, targetY, viewportBounds, 150) &&
+              isPointInViewport(sourceX, sourceY, viewportBounds, 150)) {
+            nearbyEntries.push({
+              entry: targetEntry.entry,
+              position: { x: targetX, y: targetY },
+              distance,
+            });
+          }
+        }
+        
+        // Sort by distance and connect to nearest 1-2 entries
+        nearbyEntries.sort((a, b) => a.distance - b.distance);
+        const connectionsToMake = lodLevel === 'high' ? Math.min(2, nearbyEntries.length) : 1;
+        
+        for (let k = 0; k < connectionsToMake && entryConnectionCount < maxEntryConnections && connections.length < maxConnectionsPerFrame; k++) {
+          const target = nearbyEntries[k];
+          const sourceStrategyHash = (sourceEntry.entry.id || 0) + sourceEntry.entry.date.charCodeAt(0);
+          const targetStrategyHash = (target.entry.id || 0) + target.entry.date.charCodeAt(0);
+          const combinedHash = sourceStrategyHash + targetStrategyHash;
+          const strategies: ConnectionStrategy[] = ['direct', 'curved', 'hierarchical', 'web', 'spiral', 'organic'];
+          const entryStrategy = strategies[combinedHash % strategies.length];
+          const levelIndex = Math.max(
+            timeScaleOrder.indexOf(sourceEntry.entry.timeRange),
+            timeScaleOrder.indexOf(target.entry.timeRange)
+          );
+          
+          // Create entry-to-entry connection
+          const connection = buildConnectionPath(
+            sourceX,
+            sourceY,
+            target.position.x,
+            target.position.y,
+            entryStrategy,
+            sourceEntry.entry,
+            levelIndex,
+            viewportBounds,
+            lodLevel
+          );
+          
+          if (connection) {
+            // Entry-to-entry connections are more subtle
+            connection.opacity *= 0.4;
+            connection.strokeWidth *= 0.8;
+            
+            connections.push({
+              connection,
+              entry: sourceEntry.entry,
+              targetEntry: target.entry,
+              entryPosition: { x: sourceX, y: sourceY },
+              targetPosition: target.position,
+              lodLevel,
+              connectionType: 'entry-to-entry',
+            });
+            
+            entryConnectionCount++;
+          }
+        }
+      }
+    }
+
+    return connections;
+  }, [entryPositions, webNodes, scaleYPositions, timeScaleOrder, viewMode, currentIndicatorMetrics.position, viewportBounds, focusWebNode]);
 
   // Handle mouse down for dragging
   const handleMouseDown = (e: React.MouseEvent) => {
@@ -2258,6 +3071,137 @@ export default function GlobalTimelineMinimap({
                     strokeWidth="0.8"
                     opacity={baseOpacity * 0.4}
                     className="infinity-tree-filament"
+                  />
+                </g>
+              );
+            })}
+          </g>
+
+          {/* Adaptive fractal webbing - memory web connections */}
+          <g className="memory-web-connections">
+            {memoryWebConnections.map(({ connection, entry, webNode, targetEntry, connectionType }, idx) => {
+              // Determine color based on connection type
+              let connectionColor: string;
+              if (connectionType === 'entry-to-entry' && targetEntry) {
+                // Blend colors for entry-to-entry connections
+                const sourceColor = calculateEntryColor(entry);
+                const targetColor = calculateEntryColor(targetEntry);
+                // Convert hex to RGB, blend, and convert back
+                const hexToRgb = (hex: string) => {
+                  const r = parseInt(hex.slice(1, 3), 16);
+                  const g = parseInt(hex.slice(3, 5), 16);
+                  const b = parseInt(hex.slice(5, 7), 16);
+                  return { r, g, b };
+                };
+                const rgbToHex = (r: number, g: number, b: number) => {
+                  return `#${Math.round(r).toString(16).padStart(2, '0')}${Math.round(g).toString(16).padStart(2, '0')}${Math.round(b).toString(16).padStart(2, '0')}`;
+                };
+                const sourceRgb = hexToRgb(sourceColor);
+                const targetRgb = hexToRgb(targetColor);
+                connectionColor = rgbToHex(
+                  (sourceRgb.r + targetRgb.r) / 2,
+                  (sourceRgb.g + targetRgb.g) / 2,
+                  (sourceRgb.b + targetRgb.b) / 2
+                );
+              } else if (connectionType === 'focus') {
+                // Focus connections use a vibrant blend with the active color
+                const entryColor = calculateEntryColor(entry);
+                const hexToRgb = (hex: string) => {
+                  const r = parseInt(hex.slice(1, 3), 16);
+                  const g = parseInt(hex.slice(3, 5), 16);
+                  const b = parseInt(hex.slice(5, 7), 16);
+                  return { r, g, b };
+                };
+                const rgbToHex = (r: number, g: number, b: number) => {
+                  return `#${Math.round(r).toString(16).padStart(2, '0')}${Math.round(g).toString(16).padStart(2, '0')}${Math.round(b).toString(16).padStart(2, '0')}`;
+                };
+                const entryRgb = hexToRgb(entryColor);
+                // Blend with active color (blue-ish for focus)
+                const focusRgb = { r: 74, g: 144, b: 226 }; // #4a90e2
+                connectionColor = rgbToHex(
+                  (entryRgb.r * 0.6 + focusRgb.r * 0.4),
+                  (entryRgb.g * 0.6 + focusRgb.g * 0.4),
+                  (entryRgb.b * 0.6 + focusRgb.b * 0.4)
+                );
+              } else {
+                // Web connections use entry color
+                connectionColor = calculateEntryColor(entry);
+              }
+              
+              // Determine connection class based on strategy
+              const connectionClass = `memory-connection memory-connection-${connection.strategy}`;
+              let connectionTypeClass = '';
+              if (connectionType === 'focus') {
+                connectionTypeClass = 'focus-connection';
+              } else if (connectionType === 'entry-to-entry') {
+                connectionTypeClass = 'entry-to-entry';
+              } else if (webNode) {
+                const isSameScale = webNode.scale === entry.timeRange;
+                connectionTypeClass = isSameScale ? 'same-scale' : 'cross-scale';
+              }
+              
+              // Calculate dash array based on strategy
+              let dashArray: string;
+              switch (connection.strategy) {
+                case 'direct':
+                  dashArray = '4 2';
+                  break;
+                case 'curved':
+                  dashArray = '6 3';
+                  break;
+                case 'hierarchical':
+                  dashArray = '8 4';
+                  break;
+                case 'web':
+                  dashArray = '2 4';
+                  break;
+                case 'spiral':
+                  dashArray = '3 3';
+                  break;
+                case 'organic':
+                  dashArray = '5 2';
+                  break;
+                default:
+                  dashArray = '4 2';
+              }
+
+              // Generate unique key based on connection type
+              // Include index to ensure uniqueness even if multiple connections share same properties
+              const connectionKey = connectionType === 'entry-to-entry' && targetEntry
+                ? `connection-${entry.id || idx}-to-${targetEntry.id || idx}-${idx}`
+                : connectionType === 'focus'
+                ? `connection-${entry.id || idx}-focus-${idx}`
+                : `connection-${entry.id || idx}-web-${webNode?.x || 0}-${webNode?.y || 0}-${idx}`;
+
+              return (
+                <g key={connectionKey}>
+                  {/* Connection path with adaptive styling */}
+                  <path
+                    d={connection.path}
+                    stroke={connectionColor}
+                    strokeWidth={connection.strokeWidth}
+                    fill="none"
+                    opacity={connection.opacity}
+                    strokeDasharray={dashArray}
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className={`${connectionClass} ${connectionTypeClass}`}
+                    style={{
+                      filter: `drop-shadow(0 0 ${connection.strokeWidth * 2}px ${connectionColor})`,
+                    }}
+                  />
+                  
+                  {/* Connection glow layer for depth */}
+                  <path
+                    d={connection.path}
+                    stroke={connectionColor}
+                    strokeWidth={connection.strokeWidth * 1.5}
+                    fill="none"
+                    opacity={connection.opacity * 0.2}
+                    strokeDasharray={dashArray}
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className={`${connectionClass}-glow ${connectionTypeClass}`}
                   />
                 </g>
               );

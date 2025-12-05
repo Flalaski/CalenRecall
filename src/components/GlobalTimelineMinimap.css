@@ -376,6 +376,249 @@
   opacity: 0.25;
 }
 
+/* Memory web connections - adaptive fractal webbing */
+.memory-web-connections {
+  pointer-events: none;
+}
+
+.memory-connection {
+  transition: opacity 0.3s ease, stroke-width 0.3s ease;
+  animation: connectionPulse 4s ease-in-out infinite;
+}
+
+.memory-connection-same-scale {
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.memory-connection-cross-scale {
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: 0.6;
+}
+
+.memory-connection-focus-connection {
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  animation: connectionPulse 3s ease-in-out infinite, focusPulse 2s ease-in-out infinite;
+  filter: drop-shadow(0 0 4px currentColor);
+}
+
+.memory-connection-entry-to-entry {
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: 0.5;
+  stroke-dasharray: 3 3;
+  animation: connectionFlow 3s linear infinite, entryToEntryPulse 4s ease-in-out infinite;
+}
+
+/* Connection strategy variants - enhanced for fractal chain lightning */
+.memory-connection-direct {
+  stroke-dasharray: 4 2;
+  animation: connectionFlow 3s linear infinite, lightningFlicker 0.5s ease-in-out infinite;
+  filter: drop-shadow(0 0 2px currentColor);
+}
+
+.memory-connection-curved {
+  stroke-dasharray: 6 3;
+  animation: connectionFlow 4s linear infinite, cosmicFlow 6s ease-in-out infinite;
+  filter: drop-shadow(0 0 3px currentColor);
+}
+
+.memory-connection-hierarchical {
+  stroke-dasharray: 8 4;
+  animation: connectionFlow 5s linear infinite, lightningBurst 1.2s ease-in-out infinite;
+  filter: drop-shadow(0 0 4px currentColor);
+}
+
+.memory-connection-web {
+  stroke-dasharray: 2 4;
+  animation: connectionFlow 2.5s linear infinite, fractalPulse 3s ease-in-out infinite;
+  filter: drop-shadow(0 0 2px currentColor);
+}
+
+.memory-connection-spiral {
+  stroke-dasharray: 3 3;
+  animation: connectionFlow 3.5s linear infinite, spiralGlow 4s ease-in-out infinite;
+  filter: drop-shadow(0 0 3px currentColor);
+}
+
+.memory-connection-organic {
+  stroke-dasharray: 5 2;
+  animation: connectionFlow 4.5s linear infinite, organicFlow 5s ease-in-out infinite;
+  filter: drop-shadow(0 0 3px currentColor);
+}
+
+/* Connection glow layers */
+.memory-connection-glow {
+  filter: blur(2px);
+  opacity: 0.3;
+}
+
+.memory-connection-same-scale .memory-connection-glow {
+  filter: blur(3px);
+  opacity: 0.4;
+}
+
+/* Connection animations */
+@keyframes connectionPulse {
+  0%, 100% {
+    opacity: inherit;
+  }
+  50% {
+    opacity: calc(inherit * 1.3);
+  }
+}
+
+@keyframes connectionFlow {
+  0% {
+    stroke-dashoffset: 0;
+  }
+  100% {
+    stroke-dashoffset: -20;
+  }
+}
+
+/* Enhanced connection visibility on hover */
+.entry-indicator-wrapper:hover ~ .memory-web-connections .memory-connection,
+.memory-web-connections:hover .memory-connection {
+  opacity: calc(inherit * 1.5);
+  stroke-width: calc(inherit * 1.2);
+}
+
+/* Active connection highlighting */
+.memory-connection.active {
+  stroke-width: calc(inherit * 1.5);
+  opacity: calc(inherit * 1.4);
+  animation: connectionActive 1.5s ease-in-out infinite;
+}
+
+@keyframes connectionActive {
+  0%, 100% {
+    stroke-dashoffset: 0;
+    opacity: inherit;
+  }
+  50% {
+    stroke-dashoffset: -15;
+    opacity: calc(inherit * 1.6);
+  }
+}
+
+/* Fractal chain lightning animations */
+@keyframes lightningFlicker {
+  0%, 100% {
+    opacity: inherit;
+    filter: drop-shadow(0 0 2px currentColor);
+  }
+  25% {
+    opacity: calc(inherit * 1.4);
+    filter: drop-shadow(0 0 6px currentColor);
+  }
+  50% {
+    opacity: calc(inherit * 0.8);
+    filter: drop-shadow(0 0 3px currentColor);
+  }
+  75% {
+    opacity: calc(inherit * 1.2);
+    filter: drop-shadow(0 0 5px currentColor);
+  }
+}
+
+@keyframes lightningBurst {
+  0%, 100% {
+    stroke-width: inherit;
+    opacity: inherit;
+  }
+  50% {
+    stroke-width: calc(inherit * 1.3);
+    opacity: calc(inherit * 1.5);
+  }
+}
+
+@keyframes cosmicFlow {
+  0%, 100% {
+    opacity: inherit;
+    filter: drop-shadow(0 0 3px currentColor) blur(0px);
+  }
+  50% {
+    opacity: calc(inherit * 1.3);
+    filter: drop-shadow(0 0 8px currentColor) blur(0.5px);
+  }
+}
+
+@keyframes fractalPulse {
+  0%, 100% {
+    opacity: inherit;
+    stroke-width: inherit;
+  }
+  33% {
+    opacity: calc(inherit * 1.2);
+    stroke-width: calc(inherit * 1.1);
+  }
+  66% {
+    opacity: calc(inherit * 0.9);
+    stroke-width: calc(inherit * 0.95);
+  }
+}
+
+@keyframes spiralGlow {
+  0%, 100% {
+    opacity: inherit;
+    filter: drop-shadow(0 0 3px currentColor);
+  }
+  50% {
+    opacity: calc(inherit * 1.4);
+    filter: drop-shadow(0 0 10px currentColor) drop-shadow(0 0 20px currentColor);
+  }
+}
+
+@keyframes organicFlow {
+  0%, 100% {
+    opacity: inherit;
+    filter: drop-shadow(0 0 3px currentColor);
+  }
+  25% {
+    opacity: calc(inherit * 1.1);
+    filter: drop-shadow(0 0 5px currentColor);
+  }
+  50% {
+    opacity: calc(inherit * 1.3);
+    filter: drop-shadow(0 0 7px currentColor);
+  }
+  75% {
+    opacity: calc(inherit * 1.1);
+  }
+}
+
+@keyframes focusPulse {
+  0%, 100% {
+    opacity: inherit;
+    stroke-width: inherit;
+    filter: drop-shadow(0 0 4px currentColor);
+  }
+  50% {
+    opacity: calc(inherit * 1.3);
+    stroke-width: calc(inherit * 1.2);
+    filter: drop-shadow(0 0 8px currentColor);
+  }
+}
+
+@keyframes entryToEntryPulse {
+  0%, 100% {
+    opacity: inherit;
+  }
+  25% {
+    opacity: calc(inherit * 1.2);
+  }
+  50% {
+    opacity: calc(inherit * 0.8);
+  }
+  75% {
+    opacity: calc(inherit * 1.1);
+    filter: drop-shadow(0 0 5px currentColor);
+  }
+}
+
 @keyframes infinityBranchIdle {
   0%, 100% {
     stroke-dashoffset: 0;
