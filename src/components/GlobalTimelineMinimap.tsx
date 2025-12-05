@@ -5,6 +5,7 @@ import { addDays, addWeeks, addMonths, addYears, getYear, getMonth, getDate } fr
 import { playMechanicalClick, playMicroBlip, getAudioContext, createSliderNoise, SliderNoise } from '../utils/audioUtils';
 import { calculateEntryColor } from '../utils/entryColorUtils';
 import { useCalendar } from '../contexts/CalendarContext';
+import { useEntries } from '../contexts/EntriesContext';
 import { getCalendarTierNames } from '../utils/calendarTierNames';
 import './GlobalTimelineMinimap.css';
 
@@ -149,8 +150,8 @@ export default function GlobalTimelineMinimap({
   minimapSize = 'medium',
 }: GlobalTimelineMinimapProps) {
   const { formatDate, calendar } = useCalendar();
+  const { entries } = useEntries();
   const tierNames = getCalendarTierNames(calendar);
-  const [entries, setEntries] = useState<JournalEntry[]>([]);
   const [timelineRangeKey, setTimelineRangeKey] = useState(0); // Track timeline range changes to trigger entry reloading
   const [isDragging, setIsDragging] = useState(false);
   const [mechanicalClick, setMechanicalClick] = useState<{ scale: TimeRange; direction: 'up' | 'down' } | null>(null);
@@ -175,53 +176,21 @@ export default function GlobalTimelineMinimap({
   const lastBlipDateRef = useRef<Date | null>(null); // Track last date that triggered a micro blip
   const currentDragTargetDateRef = useRef<Date | null>(null); // Track the target date we're moving toward
   const sliderNoiseRef = useRef<SliderNoise | null>(null); // Track continuous slider noise for vertical drag feedback
-  // Load entries for the timeline range
-  // Use the fixed timeline range, not recalculated based on selectedDate
+  // SUPREME OPTIMIZATION: Entries are now preloaded globally via EntriesContext
+  // No need to load entries here - they're already available in memory!
+  // Just listen for entry updates to refresh the view
   useEffect(() => {
-    const loadEntries = async () => {
-      try {
-        // Use the fixed timeline range (same as what's displayed)
-        const range = timelineRangeRef.current;
-        if (!range) {
-          return; // Wait for range to be initialized
-        }
-        
-        const { startDate, endDate } = range;
-        
-        // Use the electron API to get entries for the date range
-        if (window.electronAPI) {
-          const startDateStr = formatDateUtils(startDate);
-          const endDateStr = formatDateUtils(endDate);
-          const loadedEntries = await window.electronAPI.getEntries(startDateStr, endDateStr);
-          console.log(`[TimelineMinimap] Loaded ${loadedEntries.length} entries from ${startDateStr} to ${endDateStr}`);
-          // Log entries for selected date for debugging
-          const selectedStr = formatDateUtils(selectedDate);
-          const selectedEntries = loadedEntries.filter(e => e.date === selectedStr);
-          if (selectedEntries.length > 0) {
-            console.log(`[TimelineMinimap] Found ${selectedEntries.length} entries for ${selectedStr}:`, selectedEntries.map(e => ({ id: e.id, title: e.title, timeRange: e.timeRange })));
-          }
-          setEntries(loadedEntries);
-        }
-      } catch (error) {
-        console.error('Error loading entries:', error);
-        setEntries([]);
-      }
-    };
-    
-    loadEntries();
-    
-    // Reload when entries are saved
     const handleEntrySaved = () => {
-      loadEntries();
+      // Entries are automatically updated in context, just trigger a re-render
+      // by updating timelineRangeKey to force recalculation
+      setTimelineRangeKey(prev => prev + 1);
     };
     window.addEventListener('journalEntrySaved', handleEntrySaved);
     
     return () => {
       window.removeEventListener('journalEntrySaved', handleEntrySaved);
     };
-    // Reload entries when viewMode changes, when timeline range expands, or when entries are saved
-    // timelineRangeKey increments when the range expands, triggering reload for new date ranges
-  }, [viewMode, timelineRangeKey]);
+  }, []);
 
   // Calculate the time range to display based on view mode
   // The timeline range should only change when viewMode changes, NOT when selectedDate changes
@@ -1711,6 +1680,75 @@ export default function GlobalTimelineMinimap({
     return heights;
   }, [viewMode, minimapDimensions.scaleFactor]);
 
+  // SUPREME OPTIMIZATION: Pre-index entries by year for O(1) lookups
+  // This memoized index is only recalculated when entries change
+  const entriesByYear = useMemo(() => {
+    const index = new Map<number, JournalEntry[]>();
+    for (const entry of entries) {
+      // Quick year extraction without full date parsing
+      const yearMatch = entry.date.match(/^(-?\d+)/);
+      if (!yearMatch) continue;
+      const year = parseInt(yearMatch[1], 10);
+      if (isNaN(year)) continue;
+      
+      if (!index.has(year)) {
+        index.set(year, []);
+      }
+      index.get(year)!.push(entry);
+    }
+    return index;
+  }, [entries]);
+
+  // SUPREME OPTIMIZATION: Cache parsed dates, canonical dates, crystal sides, and colors
+  // This avoids recalculating expensive operations for every entry on every render
+  const entryMetadataCache = useMemo(() => {
+    const dateCache = new Map<string, { raw: Date; canonical: Map<TimeRange, Date> }>();
+    const crystalSidesCache = new Map<number, number>(); // entry.id -> sides
+    const entryColorCache = new Map<number, string>(); // entry.id -> color
+    
+    // Pre-cache all metadata for all entries (only when entries change)
+    for (const entry of entries) {
+      // Cache dates
+      if (!dateCache.has(entry.date)) {
+        const dateParts = entry.date.split('-');
+        if (dateParts.length >= 3) {
+          const year = parseInt(dateParts[0], 10);
+          const month = parseInt(dateParts[1], 10) - 1;
+          const day = parseInt(dateParts[2], 10);
+          if (!isNaN(year) && !isNaN(month) && !isNaN(day)) {
+            const rawDate = new Date(year, month, day);
+            const canonicalMap = new Map<TimeRange, Date>();
+            
+            // Pre-calculate canonical dates for all timeRanges
+            const timeRanges: TimeRange[] = ['day', 'week', 'month', 'year', 'decade'];
+            for (const tr of timeRanges) {
+              canonicalMap.set(tr, getCanonicalDate(rawDate, tr));
+            }
+            
+            dateCache.set(entry.date, { raw: rawDate, canonical: canonicalMap });
+          }
+        }
+      }
+      
+      // Cache crystal sides (expensive calculation)
+      if (entry.id && !crystalSidesCache.has(entry.id)) {
+        crystalSidesCache.set(entry.id, calculateCrystalSides(entry));
+      }
+      
+      // Cache entry colors (moderate calculation)
+      if (entry.id && !entryColorCache.has(entry.id)) {
+        entryColorCache.set(entry.id, calculateEntryColor(entry));
+      }
+    }
+    
+    return { dateCache, crystalSidesCache, entryColorCache };
+  }, [entries]);
+  
+  // Extract caches for easier access
+  const dateCache = entryMetadataCache.dateCache;
+  const crystalSidesCache = entryMetadataCache.crystalSidesCache;
+  const entryColorCache = entryMetadataCache.entryColorCache;
+
   // Calculate entry positions on the timeline with vertical variance and clustering
   const entryPositions = useMemo(() => {
     if (!timelineData.startDate || !timelineData.endDate || entries.length === 0) {
@@ -1733,32 +1771,29 @@ export default function GlobalTimelineMinimap({
     // OPTIMIZATION: Pre-calculate timeline boundaries for quick range checks
     const timelineStartTime = timelineData.startDate.getTime();
     const timelineEndTime = timelineData.endDate.getTime();
+    const timelineStartYear = timelineData.startDate.getFullYear();
+    const timelineEndYear = timelineData.endDate.getFullYear();
     
-    // OPTIMIZATION: Filter entries early - only process entries that could be in the timeline range
-    // For decade view, we can quickly check if an entry's year falls within the decade range
-    // This avoids expensive date parsing and canonical date calculations for entries outside the range
+    // SUPREME OPTIMIZATION: Use year-based index to only process relevant entries
+    // For decade view (110 years), this reduces from checking all entries to only checking ~11 year buckets
     const filteredEntries: JournalEntry[] = [];
     
-    for (const entry of entries) {
-      // Quick pre-check: parse just the year to see if entry could be in range
-      const dateParts = entry.date.split('-');
-      if (dateParts.length < 3) continue; // Skip invalid dates
+    // Only iterate over years that could be in range
+    for (let year = timelineStartYear - 1; year <= timelineEndYear + 1; year++) {
+      const yearEntries = entriesByYear.get(year);
+      if (!yearEntries) continue;
       
-      const year = parseInt(dateParts[0], 10);
-      if (isNaN(year)) continue;
+      // Quick year-based range check before expensive date operations
+      const yearStart = new Date(year, 0, 1).getTime();
+      const yearEnd = new Date(year, 11, 31, 23, 59, 59, 999).getTime();
       
-      // Quick year-based range check (works for all timeRanges, but especially efficient for decade view)
-      // Create a rough date range for this entry's year
-      const entryYearStart = new Date(year, 0, 1).getTime();
-      const entryYearEnd = new Date(year, 11, 31, 23, 59, 59, 999).getTime();
-      
-      // Check if this entry's year overlaps with the timeline range
-      // If the entry's year is completely outside the timeline, skip it
-      if (entryYearEnd < timelineStartTime || entryYearStart > timelineEndTime) {
-        continue; // Skip entries outside the timeline range
+      // If year is completely outside timeline, skip all entries in this year
+      if (yearEnd < timelineStartTime || yearStart > timelineEndTime) {
+        continue;
       }
       
-      filteredEntries.push(entry);
+      // Year overlaps with timeline, add all entries from this year
+      filteredEntries.push(...yearEntries);
     }
     
     // If no entries are in range, return early
@@ -1766,25 +1801,23 @@ export default function GlobalTimelineMinimap({
       return [];
     }
     
-    // Group entries by date and timeRange to create clusters
+    // SUPREME OPTIMIZATION: Group entries by date and timeRange using cached dates
     const clusterGroups = new Map<string, Array<{ entry: JournalEntry; position: number; color: string }>>();
     
-    filteredEntries.forEach(entry => {
-      // Parse date string (YYYY-MM-DD) as local date to avoid timezone issues
-      // new Date("2025-12-04") interprets as UTC, but we need local time
-      const dateParts = entry.date.split('-');
-      const year = parseInt(dateParts[0], 10);
-      const month = parseInt(dateParts[1], 10) - 1; // Month is 0-indexed
-      const day = parseInt(dateParts[2], 10);
-      const rawEntryDate = new Date(year, month, day);
+    for (const entry of filteredEntries) {
+      // Use cached canonical date instead of parsing and calculating
+      const cached = dateCache.get(entry.date);
+      if (!cached) continue; // Skip if date couldn't be parsed
       
-      // Use canonical date for the entry's timeRange to match how timeline segments are positioned
-      const entryDate = getCanonicalDate(rawEntryDate, entry.timeRange);
+      // Get pre-calculated canonical date for this entry's timeRange
+      const entryDate = cached.canonical.get(entry.timeRange);
+      if (!entryDate) continue;
+      
       const entryTime = entryDate.getTime() - timelineStartTime;
       
       // Final range check: ensure entry is actually within timeline after canonical date calculation
       if (entryTime < 0 || entryTime > totalTime) {
-        return; // Skip entries outside the timeline after canonical date calculation
+        continue; // Skip entries outside the timeline after canonical date calculation
       }
       
       const position = (entryTime / totalTime) * 100;
@@ -1796,21 +1829,38 @@ export default function GlobalTimelineMinimap({
       if (!clusterGroups.has(clusterKey)) {
         clusterGroups.set(clusterKey, []);
       }
+      // Use cached color instead of recalculating
+      const cachedColor = entry.id ? entryColorCache.get(entry.id) : calculateEntryColor(entry);
       clusterGroups.get(clusterKey)!.push({
         entry,
         position: clampedPosition,
-        color: calculateEntryColor(entry),
+        color: cachedColor || calculateEntryColor(entry),
       });
-    });
+    }
+    
+    // SUPREME OPTIMIZATION: Viewport-based filtering - only process entries near viewport
+    // For large time ranges (especially decade view), this dramatically reduces processing
+    // Calculate viewport range based on current indicator position
+    const viewportMargin = viewMode === 'decade' ? 15 : 25; // Smaller margin for decade view
+    const visibleStartPercent = Math.max(0, currentIndicatorMetrics.position - viewportMargin);
+    const visibleEndPercent = Math.min(100, currentIndicatorMetrics.position + viewportMargin);
+    
+    // Filter cluster groups to only those in or near viewport BEFORE expensive calculations
+    const visibleClusterGroups = new Map<string, Array<{ entry: JournalEntry; position: number; color: string }>>();
+    for (const [key, group] of clusterGroups.entries()) {
+      // Check if any entry in this cluster is in the visible range
+      const hasVisibleEntry = group.some(item => 
+        item.position >= visibleStartPercent && item.position <= visibleEndPercent
+      );
+      
+      if (hasVisibleEntry) {
+        visibleClusterGroups.set(key, group);
+      }
+    }
     
     // Debug: Log cluster information (only if we have entries to process)
-    if (clusterGroups.size > 0) {
-      console.log(`[TimelineMinimap] Processing ${filteredEntries.length} entries (filtered from ${entries.length} total) into ${clusterGroups.size} clusters`);
-      clusterGroups.forEach((group, key) => {
-        if (group.length > 1) {
-          console.log(`[TimelineMinimap] Cluster ${key}: ${group.length} entries`);
-        }
-      });
+    if (visibleClusterGroups.size > 0) {
+      console.log(`[TimelineMinimap] Processing ${filteredEntries.length} entries (filtered from ${entries.length} total) into ${visibleClusterGroups.size} visible clusters (${clusterGroups.size} total)`);
     }
     
     // Calculate positions for clusters and individual entries
@@ -1850,7 +1900,8 @@ export default function GlobalTimelineMinimap({
       return true; // Position is available
     };
     
-    clusterGroups.forEach((group) => {
+    // Only process visible cluster groups to save massive computation
+    visibleClusterGroups.forEach((group) => {
       // Get the timeRange for this group (all entries in a cluster have the same timeRange)
       const groupTimeRange = group[0].entry.timeRange;
       const sectionHeight = sectionHeights[groupTimeRange];
@@ -1883,7 +1934,9 @@ export default function GlobalTimelineMinimap({
         
         // If still colliding after max attempts, use the last calculated offset anyway
         // (better to have slight overlap than to hide the entry)
-        const sides = calculateCrystalSides(entry.entry);
+        // Use cached crystal sides instead of recalculating
+        const cachedSides = entry.entry.id ? crystalSidesCache.get(entry.entry.id) : null;
+        const sides = cachedSides ?? calculateCrystalSides(entry.entry);
         const polygonClipPath = generatePolygonClipPath(sides);
         result.push({ ...entry, verticalOffset, polygonClipPath, sides });
       } else {
@@ -1972,7 +2025,9 @@ export default function GlobalTimelineMinimap({
             const clusterAngle = hexPos.x !== 0 || hexPos.y !== 0 
               ? Math.atan2(hexPos.y, hexPos.x)
               : 0;
-            const sides = calculateCrystalSides(entry.entry);
+            // Use cached crystal sides instead of recalculating
+            const cachedSides = entry.entry.id ? crystalSidesCache.get(entry.entry.id) : null;
+            const sides = cachedSides ?? calculateCrystalSides(entry.entry);
             const polygonClipPath = generatePolygonClipPath(sides);
             
             result.push({ 
@@ -2024,7 +2079,9 @@ export default function GlobalTimelineMinimap({
             const clusterAngle = hexPos.x !== 0 || hexPos.y !== 0 
               ? Math.atan2(hexPos.y, hexPos.x)
               : 0;
-            const sides = calculateCrystalSides(entry.entry);
+            // Use cached crystal sides instead of recalculating
+            const cachedSides = entry.entry.id ? crystalSidesCache.get(entry.entry.id) : null;
+            const sides = cachedSides ?? calculateCrystalSides(entry.entry);
             const polygonClipPath = generatePolygonClipPath(sides);
             
             result.push({ 
@@ -2050,7 +2107,7 @@ export default function GlobalTimelineMinimap({
     });
     
     return result;
-  }, [entries, timelineData, sectionHeights]);
+  }, [entries, timelineData, sectionHeights, entriesByYear, dateCache, entryColorCache, crystalSidesCache, currentIndicatorMetrics.position, viewMode]);
 
   // Calculate viewport bounds in SVG coordinates for connection culling
   const viewportBounds = useMemo(() => {
@@ -3677,8 +3734,9 @@ export default function GlobalTimelineMinimap({
               let connectionColor: string;
               if (connectionType === 'entry-to-entry' && targetEntry) {
                 // Blend colors for entry-to-entry connections
-                const sourceColor = calculateEntryColor(entry);
-                const targetColor = calculateEntryColor(targetEntry);
+                // Use cached colors instead of recalculating
+                const sourceColor = entry.id ? (entryColorCache.get(entry.id) || calculateEntryColor(entry)) : calculateEntryColor(entry);
+                const targetColor = targetEntry.id ? (entryColorCache.get(targetEntry.id) || calculateEntryColor(targetEntry)) : calculateEntryColor(targetEntry);
                 // Convert hex to RGB, blend, and convert back
                 const hexToRgb = (hex: string) => {
                   const r = parseInt(hex.slice(1, 3), 16);
@@ -3698,7 +3756,8 @@ export default function GlobalTimelineMinimap({
                 );
               } else if (connectionType === 'focus') {
                 // Focus connections use a vibrant blend with the active color
-                const entryColor = calculateEntryColor(entry);
+                // Use cached color instead of recalculating
+                const entryColor = entry.id ? (entryColorCache.get(entry.id) || calculateEntryColor(entry)) : calculateEntryColor(entry);
                 const hexToRgb = (hex: string) => {
                   const r = parseInt(hex.slice(1, 3), 16);
                   const g = parseInt(hex.slice(3, 5), 16);
@@ -3717,8 +3776,8 @@ export default function GlobalTimelineMinimap({
                   (entryRgb.b * 0.6 + focusRgb.b * 0.4)
                 );
               } else {
-                // Web connections use entry color
-                connectionColor = calculateEntryColor(entry);
+                // Web connections use entry color - use cached color instead of recalculating
+                connectionColor = entry.id ? (entryColorCache.get(entry.id) || calculateEntryColor(entry)) : calculateEntryColor(entry);
               }
               
               // Determine connection class based on strategy

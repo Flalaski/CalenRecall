@@ -6,13 +6,16 @@ import NavigationBar from './components/NavigationBar';
 import GlobalTimelineMinimap from './components/GlobalTimelineMinimap';
 import EntryEditModal from './components/EntryEditModal';
 import SearchView from './components/SearchView';
+import LoadingScreen from './components/LoadingScreen';
 import { TimeRange, JournalEntry, Preferences } from './types';
 import { getEntryForDate } from './services/journalService';
 import { playNewEntrySound } from './utils/audioUtils';
 import { formatDateToISO, parseISODate } from './utils/dateUtils';
+import { useEntries } from './contexts/EntriesContext';
 import './App.css';
 
 function App() {
+  const { entries, setEntries, addEntry, updateEntry, removeEntry, isLoading, setIsLoading } = useEntries();
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [viewMode, setViewMode] = useState<TimeRange>('month');
   const [selectedEntry, setSelectedEntry] = useState<JournalEntry | null>(null);
@@ -22,10 +25,49 @@ function App() {
   const [preferencesLoaded, setPreferencesLoaded] = useState(false);
   const [editingEntry, setEditingEntry] = useState<JournalEntry | null>(null);
   const [showSearch, setShowSearch] = useState(false);
+  const [loadingProgress, setLoadingProgress] = useState(0);
+  const [loadingMessage, setLoadingMessage] = useState('Initializing...');
   
   // Track if initial load has completed - after this, default view mode should NEVER be applied
   const initialLoadCompleteRef = useRef(false);
   const hasUserInteractedRef = useRef(false);
+
+  // SUPREME OPTIMIZATION: Preload all entries at startup
+  useEffect(() => {
+    if (initialLoadCompleteRef.current) {
+      return;
+    }
+
+    const preloadAllEntries = async () => {
+      try {
+        setLoadingMessage('Loading all journal entries...');
+        setLoadingProgress(10);
+        
+        if (window.electronAPI) {
+          // Load all entries at once
+          const allEntries = await window.electronAPI.getAllEntries();
+          setLoadingProgress(80);
+          setLoadingMessage('Indexing entries...');
+          
+          // Small delay to show progress
+          await new Promise(resolve => setTimeout(resolve, 100));
+          
+          setEntries(allEntries);
+          setLoadingProgress(100);
+          setLoadingMessage('Ready!');
+          
+          // Small delay before hiding loading screen
+          await new Promise(resolve => setTimeout(resolve, 300));
+          setIsLoading(false);
+        }
+      } catch (error) {
+        console.error('Error preloading entries:', error);
+        setIsLoading(false);
+      }
+    };
+
+    preloadAllEntries();
+  }, [setEntries, setIsLoading]);
 
   // Load preferences on startup - ONLY ONCE, on initial mount
   useEffect(() => {
@@ -267,10 +309,22 @@ function App() {
     setIsNewEntry(false);
   };
 
-  const handleEntrySaved = () => {
+  const handleEntrySaved = async () => {
     // Reload the entry after saving
     setIsEditing(false);
     setIsNewEntry(false);
+    
+    // SUPREME OPTIMIZATION: Reload all entries to keep context in sync
+    // This ensures the preloaded entries are always up-to-date
+    if (window.electronAPI) {
+      try {
+        const allEntries = await window.electronAPI.getAllEntries();
+        setEntries(allEntries);
+      } catch (error) {
+        console.error('Error reloading entries after save:', error);
+      }
+    }
+    
     loadCurrentEntry();
   };
 
@@ -288,8 +342,9 @@ function App() {
     setEditingEntry(null);
   };
 
-  if (!preferencesLoaded) {
-    return <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>Loading...</div>;
+  // Show loading screen while entries are being preloaded or preferences are loading
+  if (isLoading || !preferencesLoaded) {
+    return <LoadingScreen progress={loadingProgress} message={loadingMessage} />;
   }
 
   return (

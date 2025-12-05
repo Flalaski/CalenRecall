@@ -94,6 +94,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
   
   getEntriesByRange: (range: TimeRange, value: number): Promise<JournalEntry[]> =>
     ipcRenderer.invoke('get-entries-by-range', range, value),
+  
+  getAllEntries: (): Promise<JournalEntry[]> =>
+    ipcRenderer.invoke('get-all-entries'),
 
   // Export operations
   exportEntries: (format: ExportFormat): Promise<{ success: boolean; canceled?: boolean; error?: string; path?: string }> =>

@@ -36,6 +36,10 @@ export function setupIpcHandlers() {
     return getEntries(startDate, endDate);
   });
 
+  ipcMain.handle('get-all-entries', async () => {
+    return getAllEntries();
+  });
+
   ipcMain.handle('get-entry', async (_event, date: string, timeRange: TimeRange) => {
     return getEntry(date, timeRange);
   });

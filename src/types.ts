@@ -98,6 +98,7 @@ declare global {
       deleteEntryByDateRange: (date: string, timeRange: TimeRange) => Promise<void>;
       searchEntries: (query: string) => Promise<JournalEntry[]>;
       getEntriesByRange: (range: TimeRange, value: number) => Promise<JournalEntry[]>;
+      getAllEntries: () => Promise<JournalEntry[]>;
       exportEntries: (
         format: ExportFormat
       ) => Promise<{ success: boolean; canceled?: boolean; error?: string; path?: string }>;
