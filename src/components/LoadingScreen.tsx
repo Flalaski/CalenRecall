@@ -10,57 +10,98 @@ interface LoadingScreenProps {
   message?: string;
 }
 
-// Generate organic tree-web branches like mammary veins for infinity symbol
-// Each branch represents a possibility/potential in time
-// Returns branches with positions for entry ornaments
-function generateInfinityBranches() {
-  const branches: Array<{ 
-    path: string; 
-    delay: number; 
-    duration: number; 
-    thickness: number;
-    points: Array<{ x: number; y: number; t: number }>; // Points along branch for ornaments
-  }> = [];
+// Generate 3D positioned branch segments for true 3D structure
+// Each segment is a 3D line element positioned in space
+interface BranchSegment3D {
+  startX: number;
+  startY: number;
+  startZ: number;
+  endX: number;
+  endY: number;
+  endZ: number;
+  thickness: number;
+  color: string;
+  delay: number;
+  duration: number;
+  points: Array<{ x: number; y: number; z: number }>; // 3D points for ornaments
+}
+
+function generateInfinityBranches3D(): Array<BranchSegment3D> {
+  const segments: Array<BranchSegment3D> = [];
   
-  // Helper to create organic branching path (like veins) and collect points for ornaments
-  const createVeinBranch = (
+  // Helper to create 3D branch segments (like veins)
+  const createVeinBranch3D = (
     startX: number, 
-    startY: number, 
+    startY: number,
+    startZ: number,
     angle: number, 
     length: number, 
     depth: number,
     maxDepth: number = 3,
-    points: Array<{ x: number; y: number; t: number }> = []
-  ): { path: string; points: Array<{ x: number; y: number; t: number }> } => {
-    if (depth > maxDepth) return { path: '', points };
+    baseColor: string,
+    delay: number
+  ): { segments: BranchSegment3D[]; points: Array<{ x: number; y: number; z: number }> } => {
+    if (depth > maxDepth) return { segments: [], points: [] };
     
     const endX = startX + Math.cos(angle) * length;
     const endY = startY + Math.sin(angle) * length;
+    // Vary Z depth based on branch depth for 3D structure
+    const endZ = startZ + (Math.random() - 0.5) * 20 * (depth + 1);
     
-    // Main branch
-    let path = `M ${startX} ${startY} L ${endX} ${endY}`;
+    const points: Array<{ x: number; y: number; z: number }> = [];
     
     // Add points along main branch for ornaments (every 20% of length)
     for (let t = 0.2; t < 1; t += 0.2) {
       const px = startX + (endX - startX) * t;
       const py = startY + (endY - startY) * t;
-      points.push({ x: px, y: py, t: depth + t });
+      const pz = startZ + (endZ - startZ) * t;
+      points.push({ x: px, y: py, z: pz });
     }
+    
+    // Create main branch segment
+    const segment: BranchSegment3D = {
+      startX,
+      startY,
+      startZ,
+      endX,
+      endY,
+      endZ,
+      thickness: 2 - depth * 0.3,
+      color: baseColor,
+      delay: delay + depth * 0.1,
+      duration: 2.5 + Math.random() * 1.5,
+      points,
+    };
+    
+    const allSegments = [segment];
+    const allPoints = [...points];
     
     // Create 2-3 sub-branches (like vein bifurcations)
     const numBranches = depth === 0 ? 3 : 2;
     for (let i = 0; i < numBranches; i++) {
       const branchAngle = angle + (i - 1) * 0.6 + (Math.random() - 0.5) * 0.4;
       const branchLength = length * (0.5 + Math.random() * 0.3);
-      const branchStartT = 0.3 + Math.random() * 0.4; // Start branching partway along
+      const branchStartT = 0.3 + Math.random() * 0.4;
       const branchStartX = startX + (endX - startX) * branchStartT;
       const branchStartY = startY + (endY - startY) * branchStartT;
+      const branchStartZ = startZ + (endZ - startZ) * branchStartT;
       
-      const subBranch = createVeinBranch(branchStartX, branchStartY, branchAngle, branchLength, depth + 1, maxDepth, points);
-      path += subBranch.path;
+      const subBranch = createVeinBranch3D(
+        branchStartX, 
+        branchStartY, 
+        branchStartZ,
+        branchAngle, 
+        branchLength, 
+        depth + 1, 
+        maxDepth,
+        baseColor,
+        delay + i * 0.05
+      );
+      allSegments.push(...subBranch.segments);
+      allPoints.push(...subBranch.points);
     }
     
-    return { path, points };
+    return { segments: allSegments, points: allPoints };
   };
   
   // Left half branches (past/potential past) - emanating from left loop
@@ -68,18 +109,15 @@ function generateInfinityBranches() {
     const baseAngle = (i / 16) * Math.PI * 2;
     const startX = 200;
     const startY = 200;
+    const startZ = (Math.random() - 0.5) * 30; // Random Z depth
     const length = 25 + Math.random() * 35;
+    const baseColor = `hsl(200, 70%, 60%)`;
     
-    const branchPoints: Array<{ x: number; y: number; t: number }> = [];
-    const { path, points } = createVeinBranch(startX, startY, baseAngle, length, 0, 3, branchPoints);
+    const { segments: branchSegments } = createVeinBranch3D(
+      startX, startY, startZ, baseAngle, length, 0, 3, baseColor, i * 0.08
+    );
     
-    branches.push({
-      path,
-      delay: i * 0.08,
-      duration: 2.5 + Math.random() * 1.5,
-      thickness: 1.5 + Math.random() * 0.5,
-      points: points,
-    });
+    segments.push(...branchSegments);
   }
   
   // Right half branches (future/potential future) - emanating from right loop
@@ -87,30 +125,27 @@ function generateInfinityBranches() {
     const baseAngle = (i / 16) * Math.PI * 2;
     const startX = 300;
     const startY = 200;
+    const startZ = (Math.random() - 0.5) * 30; // Random Z depth
     const length = 25 + Math.random() * 35;
+    const baseColor = `hsl(300, 70%, 60%)`;
     
-    const branchPoints: Array<{ x: number; y: number; t: number }> = [];
-    const { path, points } = createVeinBranch(startX, startY, baseAngle, length, 0, 3, branchPoints);
+    const { segments: branchSegments } = createVeinBranch3D(
+      startX, startY, startZ, baseAngle, length, 0, 3, baseColor, i * 0.08 + 0.6
+    );
     
-    branches.push({
-      path,
-      delay: i * 0.08 + 0.6, // Offset from left half for polarity shift
-      duration: 2.5 + Math.random() * 1.5,
-      thickness: 1.5 + Math.random() * 0.5,
-      points: points,
-    });
+    segments.push(...branchSegments);
   }
   
-  return branches;
+  return segments;
 }
 
-// Map entries to branch positions based on their timeline position
+// Map entries to 3D branch positions based on their timeline position
 // Past entries go on left branches, future entries on right branches
-function mapEntriesToBranches(
+function mapEntriesToBranches3D(
   entries: JournalEntry[],
-  branches: Array<{ points: Array<{ x: number; y: number; t: number }> }>
-): Array<{ entry: JournalEntry; x: number; y: number; branchIndex: number }> {
-  if (entries.length === 0 || branches.length === 0) return [];
+  branchSegments: Array<BranchSegment3D>
+): Array<{ entry: JournalEntry; x: number; y: number; z: number; segmentIndex: number }> {
+  if (entries.length === 0 || branchSegments.length === 0) return [];
   
   const now = new Date();
   const nowTime = now.getTime();
@@ -132,44 +167,49 @@ function mapEntriesToBranches(
     return entryTime > nowTime;
   });
   
-  // Collect branch points - left branches (0-15) for past, right branches (16-31) for future
-  const leftBranchPoints: Array<{ x: number; y: number; branchIndex: number; t: number }> = [];
-  const rightBranchPoints: Array<{ x: number; y: number; branchIndex: number; t: number }> = [];
+  // Collect all 3D branch points - separate left and right segments
+  const leftSegmentPoints: Array<{ x: number; y: number; z: number; segmentIndex: number }> = [];
+  const rightSegmentPoints: Array<{ x: number; y: number; z: number; segmentIndex: number }> = [];
   
-  branches.forEach((branch, branchIdx) => {
-    branch.points.forEach(point => {
-      if (branchIdx < 16) {
-        leftBranchPoints.push({ ...point, branchIndex: branchIdx });
+  // Find midpoint to separate left and right
+  const midX = 250;
+  
+  branchSegments.forEach((segment, segIdx) => {
+    segment.points.forEach(point => {
+      if (point.x < midX) {
+        leftSegmentPoints.push({ ...point, segmentIndex: segIdx });
       } else {
-        rightBranchPoints.push({ ...point, branchIndex: branchIdx });
+        rightSegmentPoints.push({ ...point, segmentIndex: segIdx });
       }
     });
   });
   
-  // Map past entries to left branches
-  const entryOrnaments: Array<{ entry: JournalEntry; x: number; y: number; branchIndex: number }> = [];
+  // Map past entries to left branch points
+  const entryOrnaments: Array<{ entry: JournalEntry; x: number; y: number; z: number; segmentIndex: number }> = [];
   
   pastEntries.forEach((entry, entryIdx) => {
-    if (entryIdx < leftBranchPoints.length) {
-      const point = leftBranchPoints[entryIdx % leftBranchPoints.length];
+    if (entryIdx < leftSegmentPoints.length) {
+      const point = leftSegmentPoints[entryIdx % leftSegmentPoints.length];
       entryOrnaments.push({
         entry,
         x: point.x,
         y: point.y,
-        branchIndex: point.branchIndex,
+        z: point.z,
+        segmentIndex: point.segmentIndex,
       });
     }
   });
   
-  // Map future entries to right branches
+  // Map future entries to right branch points
   futureEntries.forEach((entry, entryIdx) => {
-    if (entryIdx < rightBranchPoints.length) {
-      const point = rightBranchPoints[entryIdx % rightBranchPoints.length];
+    if (entryIdx < rightSegmentPoints.length) {
+      const point = rightSegmentPoints[entryIdx % rightSegmentPoints.length];
       entryOrnaments.push({
         entry,
         x: point.x,
         y: point.y,
-        branchIndex: point.branchIndex,
+        z: point.z,
+        segmentIndex: point.segmentIndex,
       });
     }
   });
@@ -239,13 +279,13 @@ export default function LoadingScreen({ progress, message = 'Loading your journa
   const [stars] = useState(() => generateStars(200));
   const [nebulaPattern, setNebulaPattern] = useState<string>('');
 
-  // Generate branches with entry positions
-  const branches = useMemo(() => generateInfinityBranches(), []);
+  // Generate 3D branch segments
+  const branchSegments3D = useMemo(() => generateInfinityBranches3D(), []);
   
-  // Map entries to branch positions as ornaments
+  // Map entries to 3D branch positions as ornaments
   const entryOrnaments = useMemo(() => {
-    return mapEntriesToBranches(entries, branches);
-  }, [entries, branches]);
+    return mapEntriesToBranches3D(entries, branchSegments3D);
+  }, [entries, branchSegments3D]);
   
   // Calculate how many entries to show based on progress
   // Use a smoother curve so entries appear more gradually
@@ -282,19 +322,60 @@ export default function LoadingScreen({ progress, message = 'Loading your journa
     return () => clearInterval(interval);
   }, []);
 
-  // Infinity symbol path (∞) - proper mathematical infinity curve
-  const infinityPath = `
-    M 150 200
-    C 150 150, 180 150, 200 175
-    C 220 200, 230 200, 250 200
-    C 270 200, 280 200, 300 175
-    C 320 150, 350 150, 350 200
-    C 350 250, 320 250, 300 225
-    C 280 200, 270 200, 250 200
-    C 230 200, 220 200, 200 225
-    C 180 250, 150 250, 150 200
-    Z
-  `;
+  // Generate 3D infinity symbol segments
+  const infinitySegments3D = useMemo(() => {
+    const segments: Array<{
+      x1: number; y1: number; z1: number;
+      x2: number; y2: number; z2: number;
+      z: number;
+    }> = [];
+    
+    // Sample the infinity curve using proper parametric equation
+    const sampleInfinityCurve = (t: number): { x: number; y: number } => {
+      // Parametric infinity curve: x = a * sin(t), y = a * sin(t) * cos(t) / (1 + sin^2(t))
+      const a = 50;
+      const centerX = 250;
+      const centerY = 200;
+      const angle = t * Math.PI * 2;
+      
+      const sinT = Math.sin(angle);
+      const cosT = Math.cos(angle);
+      const sin2T = sinT * sinT;
+      
+      const x = a * sinT;
+      const y = (a * sinT * cosT) / (1 + sin2T);
+      
+      return {
+        x: centerX + x,
+        y: centerY + y,
+      };
+    };
+    
+    // Create segments with varying Z depth for true 3D structure
+    const numSegments = 120;
+    for (let i = 0; i < numSegments; i++) {
+      const t1 = i / numSegments;
+      const t2 = (i + 1) / numSegments;
+      const p1 = sampleInfinityCurve(t1);
+      const p2 = sampleInfinityCurve(t2);
+      
+      // Vary Z depth along the curve - creates 3D depth
+      const z1 = Math.sin(t1 * Math.PI * 4) * 25;
+      const z2 = Math.sin(t2 * Math.PI * 4) * 25;
+      
+      segments.push({
+        x1: p1.x,
+        y1: p1.y,
+        z1: z1,
+        x2: p2.x,
+        y2: p2.y,
+        z2: z2,
+        z: (z1 + z2) / 2,
+      });
+    }
+    
+    return segments;
+  }, []);
 
   // Calculate polarity colors (shifts between two poles)
   const leftColor = `hsl(${200 + Math.sin(polarityPhase) * 60}, 70%, ${50 + Math.sin(polarityPhase) * 20}%)`;
@@ -329,182 +410,92 @@ export default function LoadingScreen({ progress, message = 'Loading your journa
       <div className="loading-content">
         <div className="loading-logo">
           <div className="infinity-3d-container">
-            <svg 
-              className="infinity-time-mesh infinity-3d-layer infinity-layer-front" 
-              viewBox="0 0 500 400" 
-              width="500" 
-              height="400"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-            <defs>
-              <linearGradient id="infinityGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                <stop offset="0%" stopColor={leftColor} />
-                <stop offset="50%" stopColor="rgba(255, 255, 255, 0.3)" />
-                <stop offset="100%" stopColor={rightColor} />
-              </linearGradient>
-              <filter id="glow">
-                <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
-                <feMerge>
-                  <feMergeNode in="coloredBlur"/>
-                  <feMergeNode in="SourceGraphic"/>
-                </feMerge>
-              </filter>
-            </defs>
+            {/* Unified 3D infinity structure - all elements positioned in 3D space */}
             
-            {/* Infinity symbol core */}
-            <path
-              className="infinity-core"
-              d={infinityPath}
-              fill="none"
-              stroke="url(#infinityGradient)"
-              strokeWidth="3"
-              filter="url(#glow)"
-            />
-            
-            {/* Left half tree-web branches (past/potential) */}
-            <g className="infinity-branches-left">
-              {branches.slice(0, 16).map((branch, idx) => (
-                <path
-                  key={`left-${idx}`}
-                  className="time-branch time-branch-left"
-                  d={branch.path}
-                  fill="none"
-                  stroke={leftColor}
-                  strokeWidth={branch.thickness}
-                  opacity="0.7"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
+            {/* Infinity symbol core - 3D line segments */}
+            {infinitySegments3D.map((seg, idx) => {
+              const isLeft = seg.x1 < 250;
+              const color = isLeft ? leftColor : rightColor;
+              const dx = seg.x2 - seg.x1;
+              const dy = seg.y2 - seg.y1;
+              const length = Math.sqrt(dx * dx + dy * dy);
+              const angle = Math.atan2(dy, dx) * (180 / Math.PI);
+              const avgZ = (seg.z1 + seg.z2) / 2;
+              
+              return (
+                <div
+                  key={`infinity-seg-${idx}`}
+                  className="infinity-segment-3d"
                   style={{
-                    animationDelay: `${branch.delay}s`,
-                    animationDuration: `${branch.duration}s`,
+                    left: `${seg.x1}px`,
+                    top: `${seg.y1}px`,
+                    width: `${length}px`,
+                    transform: `translateZ(${avgZ}px) rotateZ(${angle}deg)`,
+                    background: `linear-gradient(to right, ${color}, ${isLeft ? rightColor : leftColor})`,
+                    opacity: 0.8 - Math.abs(avgZ) / 100,
                   }}
                 />
-              ))}
-            </g>
+              );
+            })}
             
-            {/* Right half tree-web branches (future/potential) */}
-            <g className="infinity-branches-right">
-              {branches.slice(16, 32).map((branch, idx) => (
-                <path
-                  key={`right-${idx}`}
-                  className="time-branch time-branch-right"
-                  d={branch.path}
-                  fill="none"
-                  stroke={rightColor}
-                  strokeWidth={branch.thickness}
-                  opacity="0.7"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
+            {/* Branch segments - 3D positioned */}
+            {branchSegments3D.map((segment, idx) => {
+              const isLeft = segment.startX < 250;
+              const color = isLeft ? leftColor : rightColor;
+              const dx = segment.endX - segment.startX;
+              const dy = segment.endY - segment.startY;
+              const length = Math.sqrt(dx * dx + dy * dy);
+              const angle = Math.atan2(dy, dx) * (180 / Math.PI);
+              const avgZ = (segment.startZ + segment.endZ) / 2;
+              
+              return (
+                <div
+                  key={`branch-seg-${idx}`}
+                  className="branch-segment-3d"
                   style={{
-                    animationDelay: `${branch.delay}s`,
-                    animationDuration: `${branch.duration}s`,
+                    left: `${segment.startX}px`,
+                    top: `${segment.startY}px`,
+                    width: `${length}px`,
+                    height: `${segment.thickness}px`,
+                    transform: `translateZ(${avgZ}px) rotateZ(${angle}deg)`,
+                    background: color,
+                    opacity: 0.7 - Math.abs(avgZ) / 150,
+                    animationDelay: `${segment.delay}s`,
+                    animationDuration: `${segment.duration}s`,
                   }}
                 />
-              ))}
-            </g>
+              );
+            })}
             
-            {/* Entry ornaments - colored pixels on branches */}
-            <g className="entry-ornaments">
-              {visibleEntries.map(({ entry, x, y, branchIndex }, idx) => {
-                const entryColor = calculateEntryColor(entry);
-                // Stagger appearance based on index for smoother progression
-                const delay = Math.min(idx * 0.01, 2); // Cap delay at 2s
-                return (
-                  <circle
-                    key={`ornament-${entry.id || entry.date}-${branchIndex}-${idx}`}
-                    className="entry-ornament"
-                    cx={x}
-                    cy={y}
-                    r="3"
-                    fill={entryColor}
-                    opacity="1"
-                    style={{
-                      animation: `ornamentAppear 0.6s ease-out ${delay}s both`,
-                    }}
-                  />
-                );
-              })}
-            </g>
+            {/* Entry ornaments - 3D positioned */}
+            {visibleEntries.map(({ entry, x, y, z }, idx) => {
+              const entryColor = calculateEntryColor(entry);
+              const delay = Math.min(idx * 0.01, 2);
+              
+              return (
+                <div
+                  key={`ornament-${entry.id || entry.date}-${idx}`}
+                  className="entry-ornament-3d"
+                  style={{
+                    left: `${x}px`,
+                    top: `${y}px`,
+                    transform: `translateZ(${z}px)`,
+                    background: entryColor,
+                    animation: `ornamentAppear 0.6s ease-out ${delay}s both`,
+                  }}
+                />
+              );
+            })}
             
-          </svg>
-          
-          {/* Middle layer for depth */}
-          <svg 
-            className="infinity-time-mesh infinity-3d-layer infinity-layer-middle" 
-            viewBox="0 0 500 400" 
-            width="500" 
-            height="400"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <defs>
-              <linearGradient id="infinityGradientMiddle" x1="0%" y1="0%" x2="100%" y2="0%">
-                <stop offset="0%" stopColor={leftColor} stopOpacity="0.6" />
-                <stop offset="50%" stopColor="rgba(255, 255, 255, 0.2)" />
-                <stop offset="100%" stopColor={rightColor} stopOpacity="0.6" />
-              </linearGradient>
-              <filter id="glowMiddle">
-                <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
-                <feMerge>
-                  <feMergeNode in="coloredBlur"/>
-                  <feMergeNode in="SourceGraphic"/>
-                </feMerge>
-              </filter>
-            </defs>
-            
-            <path
-              className="infinity-core"
-              d={infinityPath}
-              fill="none"
-              stroke="url(#infinityGradientMiddle)"
-              strokeWidth="2.5"
-              filter="url(#glowMiddle)"
-              opacity="0.7"
-            />
-          </svg>
-          
-          {/* Back layer for depth */}
-          <svg 
-            className="infinity-time-mesh infinity-3d-layer infinity-layer-back" 
-            viewBox="0 0 500 400" 
-            width="500" 
-            height="400"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <defs>
-              <linearGradient id="infinityGradientBack" x1="0%" y1="0%" x2="100%" y2="0%">
-                <stop offset="0%" stopColor={leftColor} stopOpacity="0.4" />
-                <stop offset="50%" stopColor="rgba(255, 255, 255, 0.15)" />
-                <stop offset="100%" stopColor={rightColor} stopOpacity="0.4" />
-              </linearGradient>
-              <filter id="glowBack">
-                <feGaussianBlur stdDeviation="1.5" result="coloredBlur"/>
-                <feMerge>
-                  <feMergeNode in="coloredBlur"/>
-                  <feMergeNode in="SourceGraphic"/>
-                </feMerge>
-              </filter>
-            </defs>
-            
-            <path
-              className="infinity-core"
-              d={infinityPath}
-              fill="none"
-              stroke="url(#infinityGradientBack)"
-              strokeWidth="2"
-              filter="url(#glowBack)"
-              opacity="0.5"
-            />
-          </svg>
-          
-          {/* Unified singularity point - exists in all layers at same 3D position */}
-          <div className="singularity-unified">
-            <div className="singularity-core"></div>
-            <div className="singularity-rings">
-              <div className="singularity-ring ring-1"></div>
-              <div className="singularity-ring ring-2"></div>
-              <div className="singularity-ring ring-3"></div>
+            {/* Unified singularity point - centered in 3D space */}
+            <div className="singularity-unified">
+              <div className="singularity-core"></div>
+              <div className="singularity-rings">
+                <div className="singularity-ring ring-1"></div>
+                <div className="singularity-ring ring-2"></div>
+                <div className="singularity-ring ring-3"></div>
+              </div>
             </div>
-          </div>
           </div>
         </div>
         <h1 className="loading-title">CalenRecall</h1>

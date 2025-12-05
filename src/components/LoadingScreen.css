@@ -139,6 +139,59 @@
   transform-origin: center center;
 }
 
+/* 3D Infinity symbol segments */
+.infinity-segment-3d {
+  position: absolute;
+  height: 3px;
+  transform-origin: left center;
+  transform-style: preserve-3d;
+  box-shadow: 0 0 4px currentColor;
+  border-radius: 2px;
+}
+
+/* 3D Branch segments */
+.branch-segment-3d {
+  position: absolute;
+  transform-origin: left center;
+  transform-style: preserve-3d;
+  box-shadow: 0 0 3px currentColor;
+  border-radius: 1px;
+  animation: branchFlow3D 3s linear infinite, branchPulse3D 2.5s ease-in-out infinite;
+}
+
+@keyframes branchFlow3D {
+  0% {
+    opacity: 0.5;
+  }
+  50% {
+    opacity: 0.9;
+  }
+  100% {
+    opacity: 0.5;
+  }
+}
+
+@keyframes branchPulse3D {
+  0%, 100% {
+    opacity: 0.7;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/* 3D Entry ornaments */
+.entry-ornament-3d {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  transform-style: preserve-3d;
+  box-shadow: 0 0 2px currentColor;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+
 .infinity-3d-layer {
   position: absolute;
   top: 0;
