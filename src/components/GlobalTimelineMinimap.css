@@ -9,22 +9,23 @@
 
 .radial-dial {
   position: fixed;
-  transform: translate(-50%, -50%);
+  transform: translate3d(-50%, -50%, 0);
   width: 200px;
   height: 200px;
   pointer-events: none;
   z-index: 1000;
   animation: radialDialAppear 0.2s ease-out;
+  will-change: transform, opacity;
 }
 
 @keyframes radialDialAppear {
   0% {
     opacity: 0;
-    transform: translate(-50%, -50%) scale(0.5);
+    transform: translate3d(-50%, -50%, 0) scale(0.5);
   }
   100% {
     opacity: 1;
-    transform: translate(-50%, -50%) scale(1);
+    transform: translate3d(-50%, -50%, 0) scale(1);
   }
 }
 
@@ -51,6 +52,7 @@
   gap: 8px;
   opacity: 0.7;
   transition: opacity 0.2s ease;
+  will-change: opacity;
 }
 
 .radial-dial-direction:hover {
@@ -85,8 +87,8 @@
   font-size: 2rem;
   font-weight: 700;
   color: #4a90e2;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-  filter: drop-shadow(0 0 8px rgba(74, 144, 226, 0.6));
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2), 0 0 8px rgba(74, 144, 226, 0.6);
+  /* Replaced filter: drop-shadow with text-shadow for better performance */
 }
 
 .radial-label {
@@ -127,6 +129,8 @@
   position: relative;
   margin: 0 auto 10px;
   animation: gearRotate 0.3s ease-out;
+  will-change: transform;
+  transform: translateZ(0);
 }
 
 .gear-tooth {
@@ -184,70 +188,71 @@
 @keyframes mechanicalClick {
   0% {
     opacity: 0;
-    transform: translate(-50%, -50%) scale(0.5);
+    transform: translate3d(-50%, -50%, 0) scale(0.5);
   }
   50% {
     opacity: 1;
-    transform: translate(-50%, -50%) scale(1.1);
+    transform: translate3d(-50%, -50%, 0) scale(1.1);
   }
   100% {
     opacity: 0;
-    transform: translate(-50%, -50%) scale(1);
+    transform: translate3d(-50%, -50%, 0) scale(1);
   }
 }
 
 @keyframes mechanicalClickUp {
   0% {
     opacity: 0;
-    transform: translate(-50%, -50%) scale(0.5) translateY(20px);
+    transform: translate3d(-50%, calc(-50% + 20px), 0) scale(0.5);
   }
   50% {
     opacity: 1;
-    transform: translate(-50%, -50%) scale(1.1) translateY(-5px);
+    transform: translate3d(-50%, calc(-50% - 5px), 0) scale(1.1);
   }
   100% {
     opacity: 0;
-    transform: translate(-50%, -50%) scale(1) translateY(-10px);
+    transform: translate3d(-50%, calc(-50% - 10px), 0) scale(1);
   }
 }
 
 @keyframes mechanicalClickDown {
   0% {
     opacity: 0;
-    transform: translate(-50%, -50%) scale(0.5) translateY(-20px);
+    transform: translate3d(-50%, calc(-50% - 20px), 0) scale(0.5);
   }
   50% {
     opacity: 1;
-    transform: translate(-50%, -50%) scale(1.1) translateY(5px);
+    transform: translate3d(-50%, calc(-50% + 5px), 0) scale(1.1);
   }
   100% {
     opacity: 0;
-    transform: translate(-50%, -50%) scale(1) translateY(10px);
+    transform: translate3d(-50%, calc(-50% + 10px), 0) scale(1);
   }
 }
 
 @keyframes gearRotate {
   0% {
-    transform: rotate(0deg);
+    transform: translateZ(0) rotate(0deg);
   }
   100% {
-    transform: rotate(180deg);
+    transform: translateZ(0) rotate(180deg);
   }
 }
 
 .minimap-container.mechanical-click-active {
   animation: containerShake 0.2s ease-out;
+  will-change: transform;
 }
 
 @keyframes containerShake {
   0%, 100% {
-    transform: translateX(0);
+    transform: translate3d(0, 0, 0);
   }
   25% {
-    transform: translateX(-2px);
+    transform: translate3d(-2px, 0, 0);
   }
   75% {
-    transform: translateX(2px);
+    transform: translate3d(2px, 0, 0);
   }
 }
 
@@ -310,15 +315,15 @@
 @keyframes lockIndicator {
   0% {
     opacity: 0;
-    transform: translate(-50%, -50%) scale(0.5);
+    transform: translate3d(-50%, -50%, 0) scale(0.5);
   }
   50% {
     opacity: 0.5;
-    transform: translate(-50%, -50%) scale(1.2);
+    transform: translate3d(-50%, -50%, 0) scale(1.2);
   }
   100% {
     opacity: 0.3;
-    transform: translate(-50%, -50%) scale(1);
+    transform: translate3d(-50%, -50%, 0) scale(1);
   }
 }
 
@@ -338,6 +343,7 @@
 .timeline-path {
   filter: drop-shadow(0 0 4px rgba(74, 144, 226, 0.6));
   animation: pathGlow 3s ease-in-out infinite;
+  will-change: opacity, filter;
 }
 
 .timeline-path-glow {
@@ -348,6 +354,7 @@
 /* Infinity tree web centered on the current indicator */
 .infinity-tree-trunk {
   filter: drop-shadow(0 0 6px rgba(74, 144, 226, 0.7));
+  will-change: filter;
 }
 
 .infinity-tree-branch {
@@ -356,6 +363,7 @@
   stroke-dasharray: 6 5;
   filter: drop-shadow(0 0 5px rgba(74, 144, 226, 0.7));
   animation: infinityBranchIdle 4s ease-in-out infinite;
+  will-change: stroke-dashoffset, opacity, filter;
 }
 
 .infinity-tree-branch.secondary {
@@ -384,6 +392,7 @@
 .memory-connection {
   transition: opacity 0.3s ease, stroke-width 0.3s ease;
   animation: connectionPulse 4s ease-in-out infinite;
+  will-change: opacity, stroke-width;
 }
 
 .memory-connection-same-scale {
@@ -402,6 +411,7 @@
   stroke-linejoin: round;
   animation: connectionPulse 3s ease-in-out infinite, focusPulse 2s ease-in-out infinite;
   filter: drop-shadow(0 0 4px currentColor);
+  will-change: opacity, stroke-width, filter;
 }
 
 .memory-connection-entry-to-entry {
@@ -417,36 +427,42 @@
   stroke-dasharray: 4 2;
   animation: connectionFlow 3s linear infinite, lightningFlicker 0.5s ease-in-out infinite;
   filter: drop-shadow(0 0 2px currentColor);
+  will-change: stroke-dashoffset, opacity, filter;
 }
 
 .memory-connection-curved {
   stroke-dasharray: 6 3;
   animation: connectionFlow 4s linear infinite, cosmicFlow 6s ease-in-out infinite;
   filter: drop-shadow(0 0 3px currentColor);
+  will-change: stroke-dashoffset, opacity, filter;
 }
 
 .memory-connection-hierarchical {
   stroke-dasharray: 8 4;
   animation: connectionFlow 5s linear infinite, lightningBurst 1.2s ease-in-out infinite;
   filter: drop-shadow(0 0 4px currentColor);
+  will-change: stroke-dashoffset, stroke-width, opacity, filter;
 }
 
 .memory-connection-web {
   stroke-dasharray: 2 4;
   animation: connectionFlow 2.5s linear infinite, fractalPulse 3s ease-in-out infinite;
   filter: drop-shadow(0 0 2px currentColor);
+  will-change: stroke-dashoffset, stroke-width, opacity, filter;
 }
 
 .memory-connection-spiral {
   stroke-dasharray: 3 3;
   animation: connectionFlow 3.5s linear infinite, spiralGlow 4s ease-in-out infinite;
   filter: drop-shadow(0 0 3px currentColor);
+  will-change: stroke-dashoffset, opacity, filter;
 }
 
 .memory-connection-organic {
   stroke-dasharray: 5 2;
   animation: connectionFlow 4.5s linear infinite, organicFlow 5s ease-in-out infinite;
   filter: drop-shadow(0 0 3px currentColor);
+  will-change: stroke-dashoffset, opacity, filter;
 }
 
 /* Connection glow layers */
@@ -538,11 +554,11 @@
 @keyframes cosmicFlow {
   0%, 100% {
     opacity: inherit;
-    filter: drop-shadow(0 0 3px currentColor) blur(0px);
+    filter: drop-shadow(0 0 3px currentColor);
   }
   50% {
     opacity: calc(inherit * 1.3);
-    filter: drop-shadow(0 0 8px currentColor) blur(0.5px);
+    filter: drop-shadow(0 0 8px currentColor);
   }
 }
 
@@ -682,15 +698,16 @@
 .timeline-segment {
   position: absolute;
   top: 50%;
-  transform: translate(-50%, -50%);
+  transform: translate3d(-50%, -50%, 0);
   pointer-events: all;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: transform 0.3s ease, z-index 0.3s ease;
   z-index: 2;
+  will-change: transform;
 }
 
 .timeline-segment:hover {
-  transform: translate(-50%, -50%) scale(1.2);
+  transform: translate3d(-50%, -50%, 0) scale(1.2);
   z-index: 3;
 }
 
@@ -701,7 +718,8 @@
   background: #999;
   border: 2px solid #fff;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
-  transition: all 0.3s ease;
+  transition: transform 0.3s ease, opacity 0.3s ease, box-shadow 0.3s ease;
+  will-change: transform, opacity;
 }
 
 .timeline-segment.near-current .segment-indicator {
@@ -723,11 +741,11 @@
 
 @keyframes pulse {
   0%, 100% {
-    transform: scale(1);
+    transform: translateZ(0) scale(1);
     opacity: 1;
   }
   50% {
-    transform: scale(1.1);
+    transform: translateZ(0) scale(1.1);
     opacity: 0.9;
   }
 }
@@ -761,7 +779,7 @@
 .current-period-indicator {
   position: absolute;
   top: 50%;
-  transform: translate(-50%, -50%);
+  transform: translate3d(-50%, -50%, 0);
   width: 6px;
   height: 180px;
   background: linear-gradient(to bottom, 
@@ -779,6 +797,7 @@
   animation: indicatorGlow 2s ease-in-out infinite;
   border-radius: 2px;
   overflow: visible;
+  will-change: opacity, box-shadow;
 }
 
 .micro-indicator {
@@ -793,6 +812,7 @@
   transition: opacity 0.3s ease, box-shadow 0.3s ease;
   box-shadow: inset 0 0 4px rgba(255, 255, 255, 0.2);
   box-sizing: border-box;
+  will-change: opacity;
 }
 
 .micro-indicator:hover {
@@ -878,13 +898,14 @@
 
 .entry-indicator-wrapper {
   position: absolute;
-  transform: translate(-50%, -50%);
+  transform: translate3d(-50%, -50%, 0);
   width: 16px;
   height: 16px;
   cursor: pointer;
   pointer-events: all;
   z-index: 4;
   transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1), z-index 0.5s ease;
+  will-change: transform;
 }
 
 /* Scale up crystals in focused time section */
@@ -902,7 +923,7 @@
 }
 
 .entry-indicator-wrapper:hover:not(.in-cluster) {
-  transform: translate(-50%, -50%) scale(2);
+  transform: translate3d(-50%, -50%, 0) scale(2);
   z-index: 5;
 }
 
@@ -992,10 +1013,10 @@
 
 @keyframes clusterGemPulse {
   0%, 100% {
-    transform: rotate(45deg) scale(1);
+    transform: translateZ(0) rotate(45deg) scale(1);
   }
   50% {
-    transform: rotate(45deg) scale(1.15);
+    transform: translateZ(0) rotate(45deg) scale(1.15);
   }
 }
 
@@ -1003,16 +1024,14 @@
   position: relative;
   width: 100%;
   height: 100%;
-  transform: rotate(45deg);
-  transition: all 0.3s ease;
-  /* Enhanced glow with multiple layers for physical crystal appearance - VIBRANT saturation */
+  transform: translateZ(0) rotate(45deg);
+  transition: transform 0.3s ease, filter 0.3s ease;
+  /* Optimized: Reduced drop-shadow layers, using box-shadow for outer glow instead */
   filter: brightness(1.2) saturate(2.5) 
-    drop-shadow(0 0 4px var(--gem-color))
     drop-shadow(0 0 8px var(--gem-color))
-    drop-shadow(0 0 12px var(--gem-color))
-    drop-shadow(0 0 20px var(--gem-color))
-    drop-shadow(0 0 30px var(--gem-color));
+    drop-shadow(0 0 20px var(--gem-color));
   animation: gemGlow 3s ease-in-out infinite;
+  will-change: transform, filter, opacity;
   /* Create faceted gem shape - randomized polygon based on entry properties */
   clip-path: var(--polygon-clip, polygon(
     30% 0%, 
@@ -1040,15 +1059,12 @@
       rgba(255, 255, 255, 0.2) 100%
     );
   background-blend-mode: overlay, normal;
-  /* Multiple shadow layers for 3D depth and gradient fade glow border */
+  /* Optimized: Reduced shadow layers while maintaining visual quality */
   box-shadow: 
-    /* Gradient fade glow border - outer layers with color */
-    0 0 6px var(--gem-color),
+    /* Gradient fade glow border - optimized outer layers */
     0 0 12px var(--gem-color),
-    0 0 18px var(--gem-color),
     0 0 24px var(--gem-color),
-    0 0 32px var(--gem-color),
-    0 0 40px var(--gem-color),
+    0 0 36px var(--gem-color),
     /* Inner lighting - subtle top highlight */
     inset 0 -6px 15px rgba(255, 255, 255, 0.2),
     inset 0 0 10px rgba(255, 255, 255, 0.15),
@@ -1068,8 +1084,9 @@
   left: 50%;
   width: 100%;
   height: 100%;
-  transform: translate(-50%, -50%) rotate(-45deg);
+  transform: translate3d(-50%, -50%, 0) rotate(-45deg);
   pointer-events: none;
+  will-change: transform, opacity;
   /* Create soft starburst using radial gradient with multiple rays */
   background: 
     /* Outer soft rays */
@@ -1113,8 +1130,9 @@
   left: 50%;
   width: 80%;
   height: 80%;
-  transform: translate(-50%, -50%) rotate(-45deg);
+  transform: translate3d(-50%, -50%, 0) rotate(-45deg);
   pointer-events: none;
+  will-change: transform, opacity;
   /* Secondary starburst layer with color tint */
   background: 
     repeating-conic-gradient(
@@ -1148,21 +1166,15 @@
 
 .entry-indicator-wrapper:hover .entry-indicator {
   filter: brightness(1.6) saturate(3) 
-    drop-shadow(0 0 6px var(--gem-color))
     drop-shadow(0 0 12px var(--gem-color))
-    drop-shadow(0 0 20px var(--gem-color))
     drop-shadow(0 0 30px var(--gem-color))
-    drop-shadow(0 0 45px var(--gem-color))
-    drop-shadow(0 0 60px var(--gem-color));
+    drop-shadow(0 0 50px var(--gem-color));
   box-shadow: 
-    /* Enhanced outer glow on hover */
-    0 0 12px var(--gem-color),
+    /* Enhanced outer glow on hover - optimized */
     0 0 24px var(--gem-color),
-    0 0 36px var(--gem-color),
     0 0 48px var(--gem-color),
-    0 0 60px var(--gem-color),
     0 0 72px var(--gem-color),
-    0 0 90px var(--gem-color),
+    0 0 96px var(--gem-color),
     /* Enhanced inner lighting */
     inset 0 -10px 25px rgba(255, 255, 255, 0.6),
     inset 0 0 20px rgba(255, 255, 255, 0.4),
@@ -1178,24 +1190,24 @@
 @keyframes starburstPulse {
   0%, 100% {
     opacity: 0.5;
-    transform: translate(-50%, -50%) rotate(-45deg) scale(1);
+    transform: translate3d(-50%, -50%, 0) rotate(-45deg) scale(1);
   }
   50% {
     opacity: 0.7;
-    transform: translate(-50%, -50%) rotate(-45deg) scale(1.1);
+    transform: translate3d(-50%, -50%, 0) rotate(-45deg) scale(1.1);
   }
 }
 
 @keyframes starburstRotate {
   0% {
-    transform: translate(-50%, -50%) rotate(-45deg);
+    transform: translate3d(-50%, -50%, 0) rotate(-45deg);
     opacity: 0.2;
   }
   50% {
     opacity: 0.4;
   }
   100% {
-    transform: translate(-50%, -50%) rotate(315deg);
+    transform: translate3d(-50%, -50%, 0) rotate(315deg);
     opacity: 0.2;
   }
 }
@@ -1203,20 +1215,16 @@
 @keyframes gemGlow {
   0%, 100% {
     filter: brightness(1.2) saturate(2.5) 
-      drop-shadow(0 0 4px var(--gem-color))
       drop-shadow(0 0 8px var(--gem-color))
-      drop-shadow(0 0 12px var(--gem-color))
-      drop-shadow(0 0 20px var(--gem-color))
-      drop-shadow(0 0 30px var(--gem-color));
+      drop-shadow(0 0 20px var(--gem-color));
+    opacity: 1;
   }
   50% {
     filter: brightness(1.4) saturate(2.8) 
-      drop-shadow(0 0 6px var(--gem-color))
       drop-shadow(0 0 12px var(--gem-color))
-      drop-shadow(0 0 20px var(--gem-color))
       drop-shadow(0 0 30px var(--gem-color))
-      drop-shadow(0 0 40px var(--gem-color))
-      drop-shadow(0 0 50px var(--gem-color));
+      drop-shadow(0 0 45px var(--gem-color));
+    opacity: 1.05;
   }
 }
 
@@ -1604,28 +1612,28 @@
 @keyframes edgeLabelFadeInLeft {
   0% {
     opacity: 0;
-    transform: translateY(-50%) translateX(-20px);
+    transform: translate3d(-20px, -50%, 0);
   }
   50% {
     opacity: 0.8;
   }
   100% {
     opacity: 1;
-    transform: translateY(-50%) translateX(0);
+    transform: translate3d(0, -50%, 0);
   }
 }
 
 @keyframes edgeLabelFadeInRight {
   0% {
     opacity: 0;
-    transform: translateY(-50%) translateX(20px);
+    transform: translate3d(20px, -50%, 0);
   }
   50% {
     opacity: 0.8;
   }
   100% {
     opacity: 1;
-    transform: translateY(-50%) translateX(0);
+    transform: translate3d(0, -50%, 0);
   }
 }
 

@@ -188,7 +188,8 @@
   position: relative;
   overflow: hidden;
   overflow-x: hidden;
-  transition: all 0.2s;
+  transition: background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+  will-change: background-color, border-color;
 }
 
 .timeline-cell.day-cell {
@@ -324,17 +325,18 @@
   align-items: center;
   justify-content: space-between;
   gap: 0.25rem;
-  transition: all 0.15s;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
   border-left: 3px solid;
   width: 100%;
   min-width: 0; /* Allow flex items to shrink below their content size */
   box-sizing: border-box;
   overflow-wrap: break-word;
   word-wrap: break-word;
+  will-change: transform;
 }
 
 .entry-badge:hover {
-  transform: translateX(2px);
+  transform: translate3d(2px, 0, 0);
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
 }
 
@@ -415,16 +417,17 @@
   border-radius: 4px;
   padding: 0.5rem;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
   border-left: 4px solid;
   overflow-wrap: break-word;
   word-wrap: break-word;
   overflow-x: hidden;
+  will-change: transform;
 }
 
 .entry-card:hover {
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
-  transform: translateY(-1px);
+  transform: translate3d(0, -1px, 0);
 }
 
 .entry-card.entry-decade {
@@ -529,13 +532,14 @@
   border-radius: 6px;
   padding: 1rem;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
   border-left: 5px solid;
+  will-change: transform;
 }
 
 .entry-card-full:hover {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  transform: translateX(4px);
+  transform: translate3d(4px, 0, 0);
 }
 
 .entry-card-full.entry-decade {

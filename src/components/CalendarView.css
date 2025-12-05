@@ -40,13 +40,14 @@
 .calendar-cell {
   background: white;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: transform 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
   position: relative;
   min-height: 60px;
   display: flex;
   align-items: center;
   justify-content: center;
   overflow-x: hidden;
+  will-change: transform;
 }
 
 .calendar-cell.day-cell {
@@ -75,7 +76,7 @@
 
 .calendar-cell:hover {
   background: #f0f0f0;
-  transform: scale(1.02);
+  transform: translateZ(0) scale(1.02);
   z-index: 1;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
