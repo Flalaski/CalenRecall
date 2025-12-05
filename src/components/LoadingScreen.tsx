@@ -104,14 +104,14 @@ function generateInfinityBranches3D(): Array<BranchSegment3D> {
     return { segments: allSegments, points: allPoints };
   };
   
-  // Left half branches (past/potential past) - emanating from left loop
+  // Left half branches (past/potential past) - emanating from left loop - BLUE
   for (let i = 0; i < 16; i++) {
     const baseAngle = (i / 16) * Math.PI * 2;
     const startX = 200;
     const startY = 200;
     const startZ = (Math.random() - 0.5) * 30; // Random Z depth
     const length = 25 + Math.random() * 35;
-    const baseColor = `hsl(200, 70%, 60%)`;
+    const baseColor = `hsl(200, 70%, 60%)`; // Blue for past
     
     const { segments: branchSegments } = createVeinBranch3D(
       startX, startY, startZ, baseAngle, length, 0, 3, baseColor, i * 0.08
@@ -120,14 +120,14 @@ function generateInfinityBranches3D(): Array<BranchSegment3D> {
     segments.push(...branchSegments);
   }
   
-  // Right half branches (future/potential future) - emanating from right loop
+  // Right half branches (future/potential future) - emanating from right loop - RED
   for (let i = 0; i < 16; i++) {
     const baseAngle = (i / 16) * Math.PI * 2;
     const startX = 300;
     const startY = 200;
     const startZ = (Math.random() - 0.5) * 30; // Random Z depth
     const length = 25 + Math.random() * 35;
-    const baseColor = `hsl(300, 70%, 60%)`;
+    const baseColor = `hsl(0, 70%, 60%)`; // Red for future
     
     const { segments: branchSegments } = createVeinBranch3D(
       startX, startY, startZ, baseAngle, length, 0, 3, baseColor, i * 0.08 + 0.6
@@ -378,8 +378,9 @@ export default function LoadingScreen({ progress, message = 'Loading your journa
   }, []);
 
   // Calculate polarity colors (shifts between two poles)
-  const leftColor = `hsl(${200 + Math.sin(polarityPhase) * 60}, 70%, ${50 + Math.sin(polarityPhase) * 20}%)`;
-  const rightColor = `hsl(${300 + Math.cos(polarityPhase) * 60}, 70%, ${50 + Math.cos(polarityPhase) * 20}%)`;
+  // Blue for past (left), Red for future (right)
+  const leftColor = `hsl(${200 + Math.sin(polarityPhase) * 40}, 70%, ${50 + Math.sin(polarityPhase) * 20}%)`; // Blue (past)
+  const rightColor = `hsl(${0 + Math.cos(polarityPhase) * 20}, 70%, ${50 + Math.cos(polarityPhase) * 20}%)`; // Red (future)
 
   return (
     <div className="loading-screen">
@@ -481,6 +482,9 @@ export default function LoadingScreen({ progress, message = 'Loading your journa
                     top: `${y}px`,
                     transform: `translateZ(${z}px)`,
                     background: entryColor,
+                    width: '8px',
+                    height: '8px',
+                    boxShadow: `0 0 4px ${entryColor}, 0 0 8px ${entryColor}`,
                     animation: `ornamentAppear 0.6s ease-out ${delay}s both`,
                   }}
                 />

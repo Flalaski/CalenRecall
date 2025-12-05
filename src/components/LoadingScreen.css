@@ -183,13 +183,13 @@
 /* 3D Entry ornaments */
 .entry-ornament-3d {
   position: absolute;
-  width: 4px;
-  height: 4px;
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
   transform-style: preserve-3d;
-  box-shadow: 0 0 2px currentColor;
   image-rendering: pixelated;
   image-rendering: crisp-edges;
+  z-index: 10;
 }
 
 .infinity-3d-layer {
