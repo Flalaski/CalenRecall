@@ -103,6 +103,62 @@ Simply double-click the batch file or run it from the command line. The batch fi
 
 All builds are created in the `release` directory, and the folder will automatically open in Windows Explorer when the build completes. The applications are self-contained and don't require any additional dependencies.
 
+### Version Management
+
+CalenRecall uses [Semantic Versioning](https://semver.org/) (MAJOR.MINOR.PATCH):
+
+- **MAJOR** version for incompatible API changes
+- **MINOR** version for new functionality in a backwards compatible manner
+- **PATCH** version for backwards compatible bug fixes
+
+#### Bumping Versions
+
+**Option 1: Using npm scripts (recommended)**
+```bash
+npm run version:patch   # 1.0.0 -> 1.0.1 (bug fixes)
+npm run version:minor   # 1.0.0 -> 1.1.0 (new features)
+npm run version:major   # 1.0.0 -> 2.0.0 (breaking changes)
+npm run version:show    # Display current version
+```
+
+**Option 2: Using the helper script**
+```bash
+node scripts/bump-version.js patch   # 1.0.0 -> 1.0.1
+node scripts/bump-version.js minor   # 1.0.0 -> 1.1.0
+node scripts/bump-version.js major   # 1.0.0 -> 2.0.0
+node scripts/bump-version.js         # Show current version
+```
+
+#### Release Workflow
+
+When creating a new release:
+
+1. **Bump the version:**
+   ```bash
+   npm run version:patch  # or minor/major as appropriate
+   ```
+
+2. **Update CHANGELOG.md** with the changes for the new version
+
+3. **Commit the changes:**
+   ```bash
+   git add package.json CHANGELOG.md
+   git commit -m "Bump version to X.Y.Z"
+   ```
+
+4. **Create a git tag:**
+   ```bash
+   git tag -a vX.Y.Z -m "Version X.Y.Z"
+   git push origin main --tags
+   ```
+
+5. **Build the release:**
+   ```bash
+   npm run dist:win:pack  # or use build-all.bat
+   ```
+
+The version in `package.json` is automatically used by electron-builder for the build artifacts.
+
 ### Project Structure
 
 ```

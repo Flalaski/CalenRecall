@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Preferences, ExportFormat } from '../types';
 import { playResetSound, playExportSound } from '../utils/audioUtils';
+import HotkeyDiagram from './HotkeyDiagram';
 import './Preferences.css';
 
 export default function PreferencesComponent() {
@@ -128,6 +129,8 @@ export default function PreferencesComponent() {
       </div>
 
       <div className="preferences-content">
+        <HotkeyDiagram />
+        
         <div className="preferences-section">
           <h2>General</h2>
           <div className="preference-item">
@@ -321,7 +324,7 @@ export default function PreferencesComponent() {
               type="number"
               min="800"
               max="3840"
-              value={preferences.windowWidth || 1200}
+              value={preferences.windowWidth || 2400}
               onChange={(e) => updatePreference('windowWidth', parseInt(e.target.value))}
             />
             <small>Window width in pixels (800-3840)</small>

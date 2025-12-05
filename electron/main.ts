@@ -14,7 +14,7 @@ function createWindow() {
   const prefs = getAllPreferences();
   
   mainWindow = new BrowserWindow({
-    width: prefs.windowWidth || 1200,
+    width: prefs.windowWidth || 2400,
     height: prefs.windowHeight || 800,
     x: prefs.windowX,
     y: prefs.windowY,

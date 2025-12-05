@@ -657,7 +657,7 @@ export interface Preferences {
 
 const DEFAULT_PREFERENCES: Preferences = {
   defaultViewMode: 'month',
-  windowWidth: 1200,
+  windowWidth: 2400,
   windowHeight: 800,
   dateFormat: 'yyyy-MM-dd',
   weekStartsOn: 1, // Monday

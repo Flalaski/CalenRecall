@@ -26,7 +26,11 @@
     "dist:win:installer": "npm run build && npm run clean:release && electron-builder --win nsis --x64 && npm run open:release",
     "dist:win:portable": "npm run build && npm run clean:release && electron-builder --win portable --x64 && npm run open:release",
     "open:release": "node scripts/open-release.js",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "version:patch": "npm version patch --no-git-tag-version",
+    "version:minor": "npm version minor --no-git-tag-version",
+    "version:major": "npm version major --no-git-tag-version",
+    "version:show": "node -p \"require('./package.json').version\""
   },
   "dependencies": {
     "better-sqlite3": "^12.5.0",
