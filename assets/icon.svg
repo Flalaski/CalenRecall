@@ -1,46 +1,265 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
   <defs>
+    <!-- Background gradient -->
     <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#4A90E2;stop-opacity:1" />
-      <stop offset="100%" style="stop-color:#357ABD;stop-opacity:1" />
+      <stop offset="0%" style="stop-color:#1a1a2e;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#16213e;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#0f3460;stop-opacity:1" />
     </linearGradient>
+    
+    <!-- Crystal gem gradients - RGB variants -->
+    <linearGradient id="crystalGradBlue" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#6BB3F0;stop-opacity:1" />
+      <stop offset="30%" style="stop-color:#4A90E2;stop-opacity:1" />
+      <stop offset="60%" style="stop-color:#357ABD;stop-opacity:0.9" />
+      <stop offset="100%" style="stop-color:#2E5C8A;stop-opacity:1" />
+    </linearGradient>
+    
+    <linearGradient id="crystalGradRed" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#FF6B9D;stop-opacity:1" />
+      <stop offset="30%" style="stop-color:#E84A7A;stop-opacity:1" />
+      <stop offset="60%" style="stop-color:#D4356B;stop-opacity:0.9" />
+      <stop offset="100%" style="stop-color:#C02E5A;stop-opacity:1" />
+    </linearGradient>
+    
+    <linearGradient id="crystalGradGreen" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#6BFF9D;stop-opacity:1" />
+      <stop offset="30%" style="stop-color:#4AE87A;stop-opacity:1" />
+      <stop offset="60%" style="stop-color:#35D46B;stop-opacity:0.9" />
+      <stop offset="100%" style="stop-color:#2EC05A;stop-opacity:1" />
+    </linearGradient>
+    
+    <linearGradient id="crystalGradPurple" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#B86BFF;stop-opacity:1" />
+      <stop offset="30%" style="stop-color:#9D4AE8;stop-opacity:1" />
+      <stop offset="60%" style="stop-color:#8A35D4;stop-opacity:0.9" />
+      <stop offset="100%" style="stop-color:#7A2EC0;stop-opacity:1" />
+    </linearGradient>
+    
+    <linearGradient id="crystalGradOrange" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#FFB86B;stop-opacity:1" />
+      <stop offset="30%" style="stop-color:#E89D4A;stop-opacity:1" />
+      <stop offset="60%" style="stop-color:#D48A35;stop-opacity:0.9" />
+      <stop offset="100%" style="stop-color:#C07A2E;stop-opacity:1" />
+    </linearGradient>
+    
+    <linearGradient id="crystalGradCyan" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#6BFFFF;stop-opacity:1" />
+      <stop offset="30%" style="stop-color:#4AE8E8;stop-opacity:1" />
+      <stop offset="60%" style="stop-color:#35D4D4;stop-opacity:0.9" />
+      <stop offset="100%" style="stop-color:#2EC0C0;stop-opacity:1" />
+    </linearGradient>
+    
+    <!-- Crystal gem highlight -->
+    <linearGradient id="crystalHighlight" x1="20%" y1="20%" x2="80%" y2="80%">
+      <stop offset="0%" style="stop-color:#FFFFFF;stop-opacity:0.8" />
+      <stop offset="50%" style="stop-color:#B8E6FF;stop-opacity:0.4" />
+      <stop offset="100%" style="stop-color:#6BB3F0;stop-opacity:0.2" />
+    </linearGradient>
+    
+    <!-- Journal gradient -->
     <linearGradient id="journalGrad" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" style="stop-color:#E8A87C;stop-opacity:1" />
       <stop offset="100%" style="stop-color:#D4945F;stop-opacity:1" />
     </linearGradient>
+    
+    <!-- Time web glow -->
+    <radialGradient id="webGlow" cx="50%" cy="50%">
+      <stop offset="0%" style="stop-color:#F5D76E;stop-opacity:0.6" />
+      <stop offset="50%" style="stop-color:#E8C55A;stop-opacity:0.3" />
+      <stop offset="100%" style="stop-color:#F5D76E;stop-opacity:0" />
+    </radialGradient>
+    
+    <!-- Glow filter for crystals -->
+    <filter id="crystalGlow">
+      <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    
+    <!-- Enhanced glow for main crystal -->
+    <filter id="crystalGlowStrong">
+      <feGaussianBlur stdDeviation="4" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
   </defs>
   
   <!-- Background -->
   <rect width="256" height="256" rx="56" fill="url(#bgGrad)"/>
   
+  <!-- Spider web time structure - clear white lines -->
+  <g opacity="0.9">
+    <!-- Main radial web lines (like spider web) -->
+    <line x1="128" y1="128" x2="50" y2="50" stroke="white" stroke-width="1.5" opacity="0.7"/>
+    <line x1="128" y1="128" x2="206" y2="50" stroke="white" stroke-width="1.5" opacity="0.7"/>
+    <line x1="128" y1="128" x2="50" y2="206" stroke="white" stroke-width="1.5" opacity="0.7"/>
+    <line x1="128" y1="128" x2="206" y2="206" stroke="white" stroke-width="1.5" opacity="0.7"/>
+    <line x1="128" y1="128" x2="128" y2="30" stroke="white" stroke-width="1.5" opacity="0.7"/>
+    <line x1="128" y1="128" x2="128" y2="226" stroke="white" stroke-width="1.5" opacity="0.7"/>
+    <line x1="128" y1="128" x2="30" y2="128" stroke="white" stroke-width="1.5" opacity="0.7"/>
+    <line x1="128" y1="128" x2="226" y2="128" stroke="white" stroke-width="1.5" opacity="0.7"/>
+    
+    <!-- Concentric web circles (spider web pattern) -->
+    <circle cx="128" cy="128" r="40" stroke="white" stroke-width="1" fill="none" opacity="0.6"/>
+    <circle cx="128" cy="128" r="70" stroke="white" stroke-width="1" fill="none" opacity="0.5"/>
+    <circle cx="128" cy="128" r="100" stroke="white" stroke-width="1" fill="none" opacity="0.4"/>
+    
+    <!-- Additional web connections -->
+    <line x1="80" y1="80" x2="176" y2="176" stroke="white" stroke-width="1" opacity="0.4"/>
+    <line x1="176" y1="80" x2="80" y2="176" stroke="white" stroke-width="1" opacity="0.4"/>
+    <line x1="100" y1="60" x2="156" y2="196" stroke="white" stroke-width="1" opacity="0.4"/>
+    <line x1="156" y1="60" x2="100" y2="196" stroke="white" stroke-width="1" opacity="0.4"/>
+    
+    <!-- Curved web connections -->
+    <path d="M 90 90 Q 128 100, 166 90" stroke="white" stroke-width="1" fill="none" opacity="0.4"/>
+    <path d="M 90 166 Q 128 156, 166 166" stroke="white" stroke-width="1" fill="none" opacity="0.4"/>
+    <path d="M 90 90 Q 100 128, 90 166" stroke="white" stroke-width="1" fill="none" opacity="0.4"/>
+    <path d="M 166 90 Q 156 128, 166 166" stroke="white" stroke-width="1" fill="none" opacity="0.4"/>
+  </g>
+  
   <!-- Calendar grid (simplified, top-left) -->
-  <g transform="translate(40, 40)">
+  <g transform="translate(30, 30)" opacity="0.9">
     <!-- Calendar header -->
-    <rect x="0" y="0" width="100" height="18" fill="#2E5C8A" rx="3"/>
-    <text x="50" y="13" font-family="Arial, sans-serif" font-size="10" font-weight="bold" fill="white" text-anchor="middle">DEC</text>
+    <rect x="0" y="0" width="90" height="16" fill="#2E5C8A" rx="2"/>
+    <text x="45" y="11" font-family="Arial, sans-serif" font-size="9" font-weight="bold" fill="white" text-anchor="middle">DEC</text>
     
     <!-- Calendar grid - 3x3 cells -->
-    <rect x="0" y="18" width="30" height="30" fill="#6BB3F0" stroke="#2E5C8A" stroke-width="1.5" rx="2"/>
-    <rect x="35" y="18" width="30" height="30" fill="#6BB3F0" stroke="#2E5C8A" stroke-width="1.5" rx="2"/>
-    <rect x="70" y="18" width="30" height="30" fill="#6BB3F0" stroke="#2E5C8A" stroke-width="1.5" rx="2"/>
+    <rect x="0" y="16" width="28" height="28" fill="#6BB3F0" stroke="#2E5C8A" stroke-width="1.2" rx="2" opacity="0.7"/>
+    <rect x="31" y="16" width="28" height="28" fill="#6BB3F0" stroke="#2E5C8A" stroke-width="1.2" rx="2" opacity="0.7"/>
+    <rect x="62" y="16" width="28" height="28" fill="#6BB3F0" stroke="#2E5C8A" stroke-width="1.2" rx="2" opacity="0.7"/>
     
-    <rect x="0" y="53" width="30" height="30" fill="#6BB3F0" stroke="#2E5C8A" stroke-width="1.5" rx="2"/>
-    <rect x="35" y="53" width="30" height="30" fill="#6BB3F0" stroke="#2E5C8A" stroke-width="1.5" rx="2"/>
-    <rect x="70" y="53" width="30" height="30" fill="#6BB3F0" stroke="#2E5C8A" stroke-width="1.5" rx="2"/>
+    <rect x="0" y="47" width="28" height="28" fill="#6BB3F0" stroke="#2E5C8A" stroke-width="1.2" rx="2" opacity="0.7"/>
+    <rect x="31" y="47" width="28" height="28" fill="#6BB3F0" stroke="#2E5C8A" stroke-width="1.2" rx="2" opacity="0.7"/>
+    <rect x="62" y="47" width="28" height="28" fill="#6BB3F0" stroke="#2E5C8A" stroke-width="1.2" rx="2" opacity="0.7"/>
     
-    <rect x="0" y="88" width="30" height="30" fill="#6BB3F0" stroke="#2E5C8A" stroke-width="1.5" rx="2"/>
-    <rect x="35" y="88" width="30" height="30" fill="#6BB3F0" stroke="#2E5C8A" stroke-width="1.5" rx="2"/>
-    <rect x="70" y="88" width="30" height="30" fill="#6BB3F0" stroke="#2E5C8A" stroke-width="1.5" rx="2"/>
+    <rect x="0" y="78" width="28" height="28" fill="#6BB3F0" stroke="#2E5C8A" stroke-width="1.2" rx="2" opacity="0.7"/>
+    <rect x="31" y="78" width="28" height="28" fill="#6BB3F0" stroke="#2E5C8A" stroke-width="1.2" rx="2" opacity="0.7"/>
+    <rect x="62" y="78" width="28" height="28" fill="#6BB3F0" stroke="#2E5C8A" stroke-width="1.2" rx="2" opacity="0.7"/>
+  </g>
+  
+  <!-- Central crystal gem (Blue) - represents memory/entry -->
+  <g transform="translate(128, 128)">
+    <!-- Outer glow -->
+    <circle cx="0" cy="0" r="28" fill="url(#webGlow)" opacity="0.4"/>
     
-    <!-- Highlighted day with memory marker -->
-    <circle cx="50" cy="63" r="8" fill="#F5D76E" opacity="0.95"/>
-    <circle cx="50" cy="63" r="5" fill="#FFE082"/>
-    <!-- Small dot inside -->
-    <circle cx="50" cy="63" r="2" fill="#E8C55A"/>
+    <!-- Main crystal gem - 8-sided faceted polygon -->
+    <polygon 
+      points="-20,-15 -10,-25 10,-25 20,-15 20,5 10,15 -10,15 -20,5"
+      fill="url(#crystalGradBlue)"
+      stroke="#B8E6FF"
+      stroke-width="1.5"
+      filter="url(#crystalGlowStrong)"
+      opacity="0.95"
+    />
+    
+    <!-- Crystal facets/highlights -->
+    <polygon 
+      points="-15,-10 -5,-20 5,-20 15,-10 15,0 5,10 -5,10 -15,0"
+      fill="url(#crystalHighlight)"
+      opacity="0.6"
+    />
+    
+    <!-- Inner sparkle -->
+    <circle cx="0" cy="-5" r="3" fill="#FFFFFF" opacity="0.9"/>
+    <circle cx="0" cy="-5" r="1.5" fill="#B8E6FF" opacity="0.7"/>
+    
+    <!-- Facet lines for 3D effect -->
+    <line x1="-10" y1="-20" x2="0" y2="-10" stroke="#B8E6FF" stroke-width="0.8" opacity="0.5"/>
+    <line x1="10" y1="-20" x2="0" y2="-10" stroke="#B8E6FF" stroke-width="0.8" opacity="0.5"/>
+    <line x1="0" y1="-10" x2="0" y2="10" stroke="#B8E6FF" stroke-width="0.8" opacity="0.5"/>
+  </g>
+  
+  <!-- Smaller crystal gems with RGB color variants -->
+  <g opacity="0.85">
+    <!-- Top-left crystal - Red -->
+    <g transform="translate(70, 70)">
+      <circle cx="0" cy="0" r="12" fill="#FF6B9D" opacity="0.3"/>
+      <polygon points="-8,-6 -4,-10 4,-10 8,-6 8,2 4,6 -4,6 -8,2" fill="url(#crystalGradRed)" stroke="#FFB8D9" stroke-width="1" filter="url(#crystalGlow)" opacity="0.9"/>
+      <circle cx="0" cy="-2" r="2" fill="#FFFFFF" opacity="0.8"/>
+    </g>
+    
+    <!-- Top-right crystal - Green -->
+    <g transform="translate(186, 70)">
+      <circle cx="0" cy="0" r="12" fill="#6BFF9D" opacity="0.3"/>
+      <polygon points="-8,-6 -4,-10 4,-10 8,-6 8,2 4,6 -4,6 -8,2" fill="url(#crystalGradGreen)" stroke="#B8FFD9" stroke-width="1" filter="url(#crystalGlow)" opacity="0.9"/>
+      <circle cx="0" cy="-2" r="2" fill="#FFFFFF" opacity="0.8"/>
+    </g>
+    
+    <!-- Bottom-left crystal - Purple -->
+    <g transform="translate(70, 186)">
+      <circle cx="0" cy="0" r="12" fill="#B86BFF" opacity="0.3"/>
+      <polygon points="-8,-6 -4,-10 4,-10 8,-6 8,2 4,6 -4,6 -8,2" fill="url(#crystalGradPurple)" stroke="#D9B8FF" stroke-width="1" filter="url(#crystalGlow)" opacity="0.9"/>
+      <circle cx="0" cy="-2" r="2" fill="#FFFFFF" opacity="0.8"/>
+    </g>
+    
+    <!-- Bottom-right crystal - Orange -->
+    <g transform="translate(186, 186)">
+      <circle cx="0" cy="0" r="12" fill="#FFB86B" opacity="0.3"/>
+      <polygon points="-8,-6 -4,-10 4,-10 8,-6 8,2 4,6 -4,6 -8,2" fill="url(#crystalGradOrange)" stroke="#FFD9B8" stroke-width="1" filter="url(#crystalGlow)" opacity="0.9"/>
+      <circle cx="0" cy="-2" r="2" fill="#FFFFFF" opacity="0.8"/>
+    </g>
+    
+    <!-- Additional crystals for more RGB variety -->
+    <!-- Top crystal - Cyan -->
+    <g transform="translate(128, 50)">
+      <circle cx="0" cy="0" r="10" fill="#6BFFFF" opacity="0.3"/>
+      <polygon points="-7,-5 -3.5,-8.5 3.5,-8.5 7,-5 7,1.5 3.5,5 -3.5,5 -7,1.5" fill="url(#crystalGradCyan)" stroke="#B8FFFF" stroke-width="0.8" filter="url(#crystalGlow)" opacity="0.85"/>
+      <circle cx="0" cy="-1.5" r="1.5" fill="#FFFFFF" opacity="0.75"/>
+    </g>
+    
+    <!-- Right crystal - Magenta/Pink -->
+    <g transform="translate(206, 128)">
+      <circle cx="0" cy="0" r="10" fill="#FF6BFF" opacity="0.3"/>
+      <polygon points="-7,-5 -3.5,-8.5 3.5,-8.5 7,-5 7,1.5 3.5,5 -3.5,5 -7,1.5" fill="url(#crystalGradRed)" stroke="#FFB8FF" stroke-width="0.8" filter="url(#crystalGlow)" opacity="0.85"/>
+      <circle cx="0" cy="-1.5" r="1.5" fill="#FFFFFF" opacity="0.75"/>
+    </g>
+    
+    <!-- Bottom crystal - Yellow -->
+    <g transform="translate(128, 206)">
+      <circle cx="0" cy="0" r="10" fill="#FFFF6B" opacity="0.3"/>
+      <linearGradient id="crystalGradYellow" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" style="stop-color:#FFFF6B;stop-opacity:1" />
+        <stop offset="30%" style="stop-color:#E8E84A;stop-opacity:1" />
+        <stop offset="60%" style="stop-color:#D4D435;stop-opacity:0.9" />
+        <stop offset="100%" style="stop-color:#C0C02E;stop-opacity:1" />
+      </linearGradient>
+      <polygon points="-7,-5 -3.5,-8.5 3.5,-8.5 7,-5 7,1.5 3.5,5 -3.5,5 -7,1.5" fill="url(#crystalGradYellow)" stroke="#FFFFB8" stroke-width="0.8" filter="url(#crystalGlow)" opacity="0.85"/>
+      <circle cx="0" cy="-1.5" r="1.5" fill="#FFFFFF" opacity="0.75"/>
+    </g>
+    
+    <!-- Left crystal - Teal -->
+    <g transform="translate(50, 128)">
+      <circle cx="0" cy="0" r="10" fill="#6BFFE8" opacity="0.3"/>
+      <linearGradient id="crystalGradTeal" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" style="stop-color:#6BFFE8;stop-opacity:1" />
+        <stop offset="30%" style="stop-color:#4AE8C0;stop-opacity:1" />
+        <stop offset="60%" style="stop-color:#35D4A8;stop-opacity:0.9" />
+        <stop offset="100%" style="stop-color:#2EC090;stop-opacity:1" />
+      </linearGradient>
+      <polygon points="-7,-5 -3.5,-8.5 3.5,-8.5 7,-5 7,1.5 3.5,5 -3.5,5 -7,1.5" fill="url(#crystalGradTeal)" stroke="#B8FFE8" stroke-width="0.8" filter="url(#crystalGlow)" opacity="0.85"/>
+      <circle cx="0" cy="-1.5" r="1.5" fill="#FFFFFF" opacity="0.75"/>
+    </g>
+  </g>
+  
+  <!-- Web connections from main crystal to smaller crystals (white lines) -->
+  <g opacity="0.6">
+    <line x1="128" y1="128" x2="70" y2="70" stroke="white" stroke-width="1.2" stroke-dasharray="2 2"/>
+    <line x1="128" y1="128" x2="186" y2="70" stroke="white" stroke-width="1.2" stroke-dasharray="2 2"/>
+    <line x1="128" y1="128" x2="70" y2="186" stroke="white" stroke-width="1.2" stroke-dasharray="2 2"/>
+    <line x1="128" y1="128" x2="186" y2="186" stroke="white" stroke-width="1.2" stroke-dasharray="2 2"/>
+    <line x1="128" y1="128" x2="128" y2="50" stroke="white" stroke-width="1.2" stroke-dasharray="2 2"/>
+    <line x1="128" y1="128" x2="206" y2="128" stroke="white" stroke-width="1.2" stroke-dasharray="2 2"/>
+    <line x1="128" y1="128" x2="128" y2="206" stroke="white" stroke-width="1.2" stroke-dasharray="2 2"/>
+    <line x1="128" y1="128" x2="50" y2="128" stroke="white" stroke-width="1.2" stroke-dasharray="2 2"/>
   </g>
   
   <!-- Journal/notebook (bottom-right, overlapping) -->
-  <g transform="translate(120, 130)">
+  <g transform="translate(140, 150)" opacity="0.85">
     <!-- Journal cover -->
     <rect x="0" y="0" width="96" height="86" fill="url(#journalGrad)" rx="4" stroke="#B87A4F" stroke-width="2.5"/>
     <rect x="5" y="5" width="86" height="76" fill="#F5E6D3" rx="2"/>
@@ -60,14 +279,15 @@
     <line x1="18" y1="47" x2="85" y2="47" stroke="#D4C4B0" stroke-width="1.2"/>
     <line x1="18" y1="55" x2="85" y2="55" stroke="#D4C4B0" stroke-width="1.2"/>
     
-    <!-- Memory/recall symbol (small sparkle) -->
+    <!-- Small crystal sparkle on journal -->
     <g transform="translate(60, 35)">
-      <path d="M 0 -6 L 1.5 -1.5 L 6 0 L 1.5 1.5 L 0 6 L -1.5 1.5 L -6 0 L -1.5 -1.5 Z" fill="#E8A87C" opacity="0.9"/>
-      <circle cx="0" cy="0" r="2" fill="#F5D76E"/>
+      <circle cx="0" cy="0" r="4" fill="url(#webGlow)" opacity="0.4"/>
+      <polygon points="-3,-2 -1.5,-3 1.5,-3 3,-2 3,1 1.5,2 -1.5,2 -3,1" fill="#6BB3F0" stroke="#B8E6FF" stroke-width="0.8" opacity="0.8"/>
+      <circle cx="0" cy="-1" r="1" fill="#FFFFFF" opacity="0.9"/>
     </g>
   </g>
   
-  <!-- Connecting arrow (suggesting recall from calendar to journal) -->
-  <path d="M 115 110 Q 125 120, 135 130" stroke="#F5D76E" stroke-width="4" fill="none" stroke-linecap="round" opacity="0.8"/>
-  <polygon points="132,128 140,130 132,132" fill="#F5D76E" opacity="0.8"/>
+  <!-- Connecting element (timeline/arrow suggesting recall from calendar to crystal to journal) -->
+  <path d="M 100 100 Q 110 110, 120 120 Q 130 130, 140 140" stroke="white" stroke-width="2.5" fill="none" stroke-linecap="round" opacity="0.7"/>
+  <polygon points="138,138 145,140 138,142" fill="white" opacity="0.7"/>
 </svg>
