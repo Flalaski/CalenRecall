@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Preferences, ExportFormat } from '../types';
 import { playResetSound, playExportSound } from '../utils/audioUtils';
 import HotkeyDiagram from './HotkeyDiagram';
+import packageJson from '../../package.json';
 import './Preferences.css';
 
 export default function PreferencesComponent() {
@@ -114,9 +115,16 @@ export default function PreferencesComponent() {
   }
 
   return (
-    <div className="preferences-container">
+      <div className="preferences-container">
       <div className="preferences-header">
-        <h1>Preferences</h1>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <img 
+            src="/icon.png" 
+            alt="CalenRecall" 
+            style={{ width: '32px', height: '32px' }}
+          />
+          <h1>Preferences</h1>
+        </div>
         <div className="preferences-actions">
           <span className="auto-save-indicator">Auto-saved</span>
           <button
@@ -343,6 +351,33 @@ export default function PreferencesComponent() {
             <small>Window height in pixels (600-2160)</small>
           </div>
           <small className="preference-note">Note: Window position and size are saved automatically when you move or resize the window.</small>
+        </div>
+
+        <div className="preferences-section">
+          <h2>About</h2>
+          <div className="preference-item about-section">
+            <div style={{ display: 'flex', alignItems: 'center', gap: '20px', marginBottom: '16px' }}>
+              <img 
+                src="/icon.png" 
+                alt="CalenRecall" 
+                style={{ width: '64px', height: '64px', borderRadius: '8px' }}
+              />
+              <div>
+                <h3 style={{ margin: '0 0 8px 0', fontSize: '20px', fontWeight: '600' }}>CalenRecall</h3>
+                <p style={{ margin: '0', color: '#666', fontSize: '14px' }}>
+                  A calendar journal for recalling memories across decades, years, months, weeks, and days
+                </p>
+              </div>
+            </div>
+            <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: '1px solid #e0e0e0' }}>
+              <p style={{ margin: '0 0 8px 0', fontSize: '14px', color: '#666' }}>
+                <strong>Version:</strong> {packageJson.version || 'Unknown'}
+              </p>
+              <p style={{ margin: '0', fontSize: '12px', color: '#999' }}>
+                All your journaling history is stored locally on your device.
+              </p>
+            </div>
+          </div>
         </div>
       </div>
     </div>

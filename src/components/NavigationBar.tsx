@@ -113,6 +113,12 @@ export default function NavigationBar({
   return (
     <div className="navigation-bar">
       <div className="nav-controls">
+        <img 
+          src="/icon.png" 
+          alt="CalenRecall" 
+          className="app-icon"
+          style={{ width: '32px', height: '32px', marginRight: '0.5rem' }}
+        />
         <button className="nav-button" onClick={() => navigate('prev')}>
           ←
         </button>

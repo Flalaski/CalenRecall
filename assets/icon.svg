@@ -1,0 +1,73 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#4A90E2;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#357ABD;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="journalGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#E8A87C;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#D4945F;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="256" height="256" rx="56" fill="url(#bgGrad)"/>
+  
+  <!-- Calendar grid (simplified, top-left) -->
+  <g transform="translate(40, 40)">
+    <!-- Calendar header -->
+    <rect x="0" y="0" width="100" height="18" fill="#2E5C8A" rx="3"/>
+    <text x="50" y="13" font-family="Arial, sans-serif" font-size="10" font-weight="bold" fill="white" text-anchor="middle">DEC</text>
+    
+    <!-- Calendar grid - 3x3 cells -->
+    <rect x="0" y="18" width="30" height="30" fill="#6BB3F0" stroke="#2E5C8A" stroke-width="1.5" rx="2"/>
+    <rect x="35" y="18" width="30" height="30" fill="#6BB3F0" stroke="#2E5C8A" stroke-width="1.5" rx="2"/>
+    <rect x="70" y="18" width="30" height="30" fill="#6BB3F0" stroke="#2E5C8A" stroke-width="1.5" rx="2"/>
+    
+    <rect x="0" y="53" width="30" height="30" fill="#6BB3F0" stroke="#2E5C8A" stroke-width="1.5" rx="2"/>
+    <rect x="35" y="53" width="30" height="30" fill="#6BB3F0" stroke="#2E5C8A" stroke-width="1.5" rx="2"/>
+    <rect x="70" y="53" width="30" height="30" fill="#6BB3F0" stroke="#2E5C8A" stroke-width="1.5" rx="2"/>
+    
+    <rect x="0" y="88" width="30" height="30" fill="#6BB3F0" stroke="#2E5C8A" stroke-width="1.5" rx="2"/>
+    <rect x="35" y="88" width="30" height="30" fill="#6BB3F0" stroke="#2E5C8A" stroke-width="1.5" rx="2"/>
+    <rect x="70" y="88" width="30" height="30" fill="#6BB3F0" stroke="#2E5C8A" stroke-width="1.5" rx="2"/>
+    
+    <!-- Highlighted day with memory marker -->
+    <circle cx="50" cy="63" r="8" fill="#F5D76E" opacity="0.95"/>
+    <circle cx="50" cy="63" r="5" fill="#FFE082"/>
+    <!-- Small dot inside -->
+    <circle cx="50" cy="63" r="2" fill="#E8C55A"/>
+  </g>
+  
+  <!-- Journal/notebook (bottom-right, overlapping) -->
+  <g transform="translate(120, 130)">
+    <!-- Journal cover -->
+    <rect x="0" y="0" width="96" height="86" fill="url(#journalGrad)" rx="4" stroke="#B87A4F" stroke-width="2.5"/>
+    <rect x="5" y="5" width="86" height="76" fill="#F5E6D3" rx="2"/>
+    
+    <!-- Spiral binding (left side) -->
+    <circle cx="10" cy="18" r="3.5" fill="#E8C55A"/>
+    <circle cx="10" cy="30" r="3.5" fill="#E8C55A"/>
+    <circle cx="10" cy="42" r="3.5" fill="#E8C55A"/>
+    <circle cx="10" cy="54" r="3.5" fill="#E8C55A"/>
+    <circle cx="10" cy="66" r="3.5" fill="#E8C55A"/>
+    
+    <!-- Journal lines (writing) -->
+    <line x1="18" y1="15" x2="85" y2="15" stroke="#D4C4B0" stroke-width="1.2"/>
+    <line x1="18" y1="23" x2="85" y2="23" stroke="#D4C4B0" stroke-width="1.2"/>
+    <line x1="18" y1="31" x2="85" y2="31" stroke="#D4C4B0" stroke-width="1.2"/>
+    <line x1="18" y1="39" x2="85" y2="39" stroke="#D4C4B0" stroke-width="1.2"/>
+    <line x1="18" y1="47" x2="85" y2="47" stroke="#D4C4B0" stroke-width="1.2"/>
+    <line x1="18" y1="55" x2="85" y2="55" stroke="#D4C4B0" stroke-width="1.2"/>
+    
+    <!-- Memory/recall symbol (small sparkle) -->
+    <g transform="translate(60, 35)">
+      <path d="M 0 -6 L 1.5 -1.5 L 6 0 L 1.5 1.5 L 0 6 L -1.5 1.5 L -6 0 L -1.5 -1.5 Z" fill="#E8A87C" opacity="0.9"/>
+      <circle cx="0" cy="0" r="2" fill="#F5D76E"/>
+    </g>
+  </g>
+  
+  <!-- Connecting arrow (suggesting recall from calendar to journal) -->
+  <path d="M 115 110 Q 125 120, 135 130" stroke="#F5D76E" stroke-width="4" fill="none" stroke-linecap="round" opacity="0.8"/>
+  <polygon points="132,128 140,130 132,132" fill="#F5D76E" opacity="0.8"/>
+</svg>

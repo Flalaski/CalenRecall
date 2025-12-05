@@ -28,7 +28,8 @@
     "dist:win:portable": "npm run version:auto && npm run build && npm run clean:release && electron-builder --win portable --x64 && npm run open:release",
     "open:release": "node scripts/open-release.js",
     "preview": "vite preview",
-    "version:show": "node -p \"require('./package.json').version\""
+    "version:show": "node -p \"require('./package.json').version\"",
+    "generate:icon": "node scripts/generate-icon.js"
   },
   "dependencies": {
     "better-sqlite3": "^12.5.0",
@@ -47,6 +48,7 @@
     "concurrently": "^8.2.2",
     "electron": "^39.2.5",
     "electron-builder": "^24.9.1",
+    "sharp": "^0.34.5",
     "typescript": "^5.3.3",
     "vite": "^7.2.6",
     "wait-on": "^7.2.0"
@@ -57,6 +59,7 @@
     "directories": {
       "output": "release"
     },
+    "icon": "assets/icon.png",
     "files": [
       "dist/**/*",
       "dist-electron/**/*",

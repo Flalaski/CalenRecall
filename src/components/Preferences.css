@@ -262,3 +262,15 @@
   background: #c62828;
 }
 
+.about-section {
+  padding: 20px;
+  background: #fafafa;
+  border-radius: 8px;
+  border: 1px solid #e0e0e0;
+}
+
+[data-theme="dark"] .about-section {
+  background: #2a2a2a;
+  border-color: #444;
+}
+
