@@ -10,6 +10,27 @@ interface LoadingScreenProps {
   message?: string;
 }
 
+// Constants for loading screen configuration
+const LOADING_SCREEN_CONSTANTS = {
+  LEFT_LOOP_CENTER: { x: 200, y: 200 },
+  RIGHT_LOOP_CENTER: { x: 300, y: 200 },
+  MIDPOINT_X: 250,
+  INFINITY_AMPLITUDE: 50,
+  INFINITY_SEGMENTS: 120,
+  BRANCHES_PER_SIDE: 16,
+  STAR_COUNT: 200,
+  NEBULA_DIMENSIONS: { width: 800, height: 600 },
+  PROGRESS_THRESHOLDS: { slow: 20, fast: 80 },
+  PROGRESS_PERCENTAGES: { slow: 0.05, fast: 0.80, finish: 0.15 },
+  ORNAMENT_SIZE: 8,
+  MAX_ANIMATION_DELAY: 2,
+  OPACITY_DIVISORS: { infinity: 100, branch: 150 },
+  ANIMATION_INTERVAL_MS: 16, // ~60fps
+  POLARITY_PHASE_INCREMENT: 0.01,
+  CAMERA_ZOOM: 11.0, // Higher = more zoomed in (1.0 = normal, 2.0 = 2x zoom, 0.5 = zoomed out)
+  CAMERA_DISTANCE: 0, // translateZ offset for camera position (negative = closer, positive = farther)
+} as const;
+
 // Generate 3D positioned branch segments for true 3D structure
 // Each segment is a 3D line element positioned in space
 interface BranchSegment3D {
@@ -105,10 +126,10 @@ function generateInfinityBranches3D(): Array<BranchSegment3D> {
   };
   
   // Left half branches (past/potential past) - emanating from left loop - BLUE
-  for (let i = 0; i < 16; i++) {
-    const baseAngle = (i / 16) * Math.PI * 2;
-    const startX = 200;
-    const startY = 200;
+  for (let i = 0; i < LOADING_SCREEN_CONSTANTS.BRANCHES_PER_SIDE; i++) {
+    const baseAngle = (i / LOADING_SCREEN_CONSTANTS.BRANCHES_PER_SIDE) * Math.PI * 2;
+    const startX = LOADING_SCREEN_CONSTANTS.LEFT_LOOP_CENTER.x;
+    const startY = LOADING_SCREEN_CONSTANTS.LEFT_LOOP_CENTER.y;
     const startZ = (Math.random() - 0.5) * 30; // Random Z depth
     const length = 25 + Math.random() * 35;
     const baseColor = `hsl(200, 70%, 60%)`; // Blue for past
@@ -119,12 +140,12 @@ function generateInfinityBranches3D(): Array<BranchSegment3D> {
     
     segments.push(...branchSegments);
   }
-  
+
   // Right half branches (future/potential future) - emanating from right loop - RED
-  for (let i = 0; i < 16; i++) {
-    const baseAngle = (i / 16) * Math.PI * 2;
-    const startX = 300;
-    const startY = 200;
+  for (let i = 0; i < LOADING_SCREEN_CONSTANTS.BRANCHES_PER_SIDE; i++) {
+    const baseAngle = (i / LOADING_SCREEN_CONSTANTS.BRANCHES_PER_SIDE) * Math.PI * 2;
+    const startX = LOADING_SCREEN_CONSTANTS.RIGHT_LOOP_CENTER.x;
+    const startY = LOADING_SCREEN_CONSTANTS.RIGHT_LOOP_CENTER.y;
     const startZ = (Math.random() - 0.5) * 30; // Random Z depth
     const length = 25 + Math.random() * 35;
     const baseColor = `hsl(0, 70%, 60%)`; // Red for future
@@ -150,21 +171,45 @@ function mapEntriesToBranches3D(
   const now = new Date();
   const nowTime = now.getTime();
   
-  // Sort entries by date for timeline ordering
-  const sortedEntries = [...entries].sort((a, b) => {
-    const dateA = parseISODate(a.date).getTime();
-    const dateB = parseISODate(b.date).getTime();
-    return dateA - dateB;
-  });
+  // Sort entries by date for timeline ordering with error handling
+  const sortedEntries = [...entries]
+    .filter(entry => {
+      // Validate entry has required fields
+      if (!entry.date) {
+        console.warn('Entry missing date field:', entry);
+        return false;
+      }
+      return true;
+    })
+    .sort((a, b) => {
+      try {
+        const dateA = parseISODate(a.date).getTime();
+        const dateB = parseISODate(b.date).getTime();
+        return dateA - dateB;
+      } catch (error) {
+        console.warn('Error sorting entries by date:', error);
+        return 0; // Keep original order if parsing fails
+      }
+    });
   
-  // Separate past and future entries
+  // Separate past and future entries with error handling
   const pastEntries = sortedEntries.filter(entry => {
-    const entryTime = parseISODate(entry.date).getTime();
-    return entryTime <= nowTime;
+    try {
+      const entryTime = parseISODate(entry.date).getTime();
+      return entryTime <= nowTime;
+    } catch (error) {
+      console.warn('Error parsing entry date:', entry.date, error);
+      return false; // Skip invalid entries
+    }
   });
   const futureEntries = sortedEntries.filter(entry => {
-    const entryTime = parseISODate(entry.date).getTime();
-    return entryTime > nowTime;
+    try {
+      const entryTime = parseISODate(entry.date).getTime();
+      return entryTime > nowTime;
+    } catch (error) {
+      console.warn('Error parsing entry date:', entry.date, error);
+      return false; // Skip invalid entries
+    }
   });
   
   // Collect all 3D branch points - separate left and right segments
@@ -172,7 +217,7 @@ function mapEntriesToBranches3D(
   const rightSegmentPoints: Array<{ x: number; y: number; z: number; segmentIndex: number }> = [];
   
   // Find midpoint to separate left and right
-  const midX = 250;
+  const midX = LOADING_SCREEN_CONSTANTS.MIDPOINT_X;
   
   branchSegments.forEach((segment, segIdx) => {
     segment.points.forEach(point => {
@@ -184,11 +229,16 @@ function mapEntriesToBranches3D(
     });
   });
   
+  // Guard against empty point arrays to prevent issues
+  if (leftSegmentPoints.length === 0 && rightSegmentPoints.length === 0) {
+    return [];
+  }
+  
   // Map past entries to left branch points
   const entryOrnaments: Array<{ entry: JournalEntry; x: number; y: number; z: number; segmentIndex: number }> = [];
   
-  pastEntries.forEach((entry, entryIdx) => {
-    if (entryIdx < leftSegmentPoints.length) {
+  if (leftSegmentPoints.length > 0) {
+    pastEntries.forEach((entry, entryIdx) => {
       const point = leftSegmentPoints[entryIdx % leftSegmentPoints.length];
       entryOrnaments.push({
         entry,
@@ -197,12 +247,12 @@ function mapEntriesToBranches3D(
         z: point.z,
         segmentIndex: point.segmentIndex,
       });
-    }
-  });
+    });
+  }
   
   // Map future entries to right branch points
-  futureEntries.forEach((entry, entryIdx) => {
-    if (entryIdx < rightSegmentPoints.length) {
+  if (rightSegmentPoints.length > 0) {
+    futureEntries.forEach((entry, entryIdx) => {
       const point = rightSegmentPoints[entryIdx % rightSegmentPoints.length];
       entryOrnaments.push({
         entry,
@@ -211,8 +261,8 @@ function mapEntriesToBranches3D(
         z: point.z,
         segmentIndex: point.segmentIndex,
       });
-    }
-  });
+    });
+  }
   
   return entryOrnaments;
 }
@@ -231,52 +281,61 @@ function generateStars(count: number): Array<{ x: number; y: number; brightness:
   return stars;
 }
 
-// Generate dithered nebula noise pattern
+// Generate dithered nebula noise pattern with error handling
 function generateNebulaPattern(width: number, height: number): string {
-  const canvas = document.createElement('canvas');
-  canvas.width = width;
-  canvas.height = height;
-  const ctx = canvas.getContext('2d');
-  if (!ctx) return '';
-  
-  // Create image data for pixel manipulation
-  const imageData = ctx.createImageData(width, height);
-  const data = imageData.data;
-  
-  // Generate noise-based nebula with dithering
-  for (let y = 0; y < height; y++) {
-    for (let x = 0; x < width; x++) {
-      const index = (y * width + x) * 4;
-      
-      // Multiple noise octaves for nebula structure
-      const noise1 = Math.sin(x * 0.01 + y * 0.01) * 0.5 + 0.5;
-      const noise2 = Math.sin(x * 0.03 + y * 0.02) * 0.5 + 0.5;
-      const noise3 = Math.sin(x * 0.05 - y * 0.03) * 0.5 + 0.5;
-      const combined = (noise1 * 0.5 + noise2 * 0.3 + noise3 * 0.2);
-      
-      // Dithering - convert to limited color palette (MS-DOS style)
-      const dithered = Math.floor(combined * 16) / 16; // 16 levels
-      
-      // Deep space colors - dark purples, blues, blacks
-      const r = Math.floor(dithered * 30 + Math.random() * 5); // 0-35
-      const g = Math.floor(dithered * 20 + Math.random() * 5); // 0-25
-      const b = Math.floor(dithered * 40 + Math.random() * 10); // 0-50
-      
-      data[index] = r;     // R
-      data[index + 1] = g; // G
-      data[index + 2] = b; // B
-      data[index + 3] = 255; // A
+  try {
+    const canvas = document.createElement('canvas');
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) {
+      console.warn('Failed to get canvas context for nebula pattern');
+      return '';
     }
+    
+    // Create image data for pixel manipulation
+    const imageData = ctx.createImageData(width, height);
+    const data = imageData.data;
+    
+    // Generate noise-based nebula with dithering
+    for (let y = 0; y < height; y++) {
+      for (let x = 0; x < width; x++) {
+        const index = (y * width + x) * 4;
+        
+        // Multiple noise octaves for nebula structure
+        const noise1 = Math.sin(x * 0.01 + y * 0.01) * 0.5 + 0.5;
+        const noise2 = Math.sin(x * 0.03 + y * 0.02) * 0.5 + 0.5;
+        const noise3 = Math.sin(x * 0.05 - y * 0.03) * 0.5 + 0.5;
+        const combined = (noise1 * 0.5 + noise2 * 0.3 + noise3 * 0.2);
+        
+        // Dithering - convert to limited color palette (MS-DOS style)
+        const dithered = Math.floor(combined * 16) / 16; // 16 levels
+        
+        // Deep space colors - dark purples, blues, blacks
+        const r = Math.floor(dithered * 30 + Math.random() * 5); // 0-35
+        const g = Math.floor(dithered * 20 + Math.random() * 5); // 0-25
+        const b = Math.floor(dithered * 40 + Math.random() * 10); // 0-50
+        
+        data[index] = r;     // R
+        data[index + 1] = g; // G
+        data[index + 2] = b; // B
+        data[index + 3] = 255; // A
+      }
+    }
+    
+    ctx.putImageData(imageData, 0, 0);
+    return canvas.toDataURL();
+  } catch (error) {
+    console.error('Error generating nebula pattern:', error);
+    return '';
   }
-  
-  ctx.putImageData(imageData, 0, 0);
-  return canvas.toDataURL();
 }
+
 
 export default function LoadingScreen({ progress, message = 'Loading your journal...' }: LoadingScreenProps) {
   const { entries } = useEntries();
   const [polarityPhase, setPolarityPhase] = useState(0);
-  const [stars] = useState(() => generateStars(200));
+  const [stars] = useState(() => generateStars(LOADING_SCREEN_CONSTANTS.STAR_COUNT));
   const [nebulaPattern, setNebulaPattern] = useState<string>('');
 
   // Generate 3D branch segments
@@ -296,15 +355,18 @@ export default function LoadingScreen({ progress, message = 'Loading your journa
     // Use easing function for gradual appearance
     // Progress 0-100 maps to entries 0-total
     let easedProgress: number;
-    if (progress < 20) {
+    const { slow: slowThreshold, fast: fastThreshold } = LOADING_SCREEN_CONSTANTS.PROGRESS_THRESHOLDS;
+    const { slow: slowPercent, fast: fastPercent, finish: finishPercent } = LOADING_SCREEN_CONSTANTS.PROGRESS_PERCENTAGES;
+    
+    if (progress < slowThreshold) {
       // First 20% of progress shows 5% of entries (slow start)
-      easedProgress = (progress / 20) * 0.05;
-    } else if (progress < 80) {
+      easedProgress = (progress / slowThreshold) * slowPercent;
+    } else if (progress < fastThreshold) {
       // Next 60% of progress shows 80% of entries (main loading)
-      easedProgress = 0.05 + ((progress - 20) / 60) * 0.80;
+      easedProgress = slowPercent + ((progress - slowThreshold) / (fastThreshold - slowThreshold)) * fastPercent;
     } else {
       // Final 20% of progress shows remaining 15% of entries (completion)
-      easedProgress = 0.85 + ((progress - 80) / 20) * 0.15;
+      easedProgress = (slowPercent + fastPercent) + ((progress - fastThreshold) / (100 - fastThreshold)) * finishPercent;
     }
     
     const count = Math.floor(easedProgress * entryOrnaments.length);
@@ -313,12 +375,15 @@ export default function LoadingScreen({ progress, message = 'Loading your journa
 
   useEffect(() => {
     // Generate nebula pattern once
-    const pattern = generateNebulaPattern(800, 600);
+    const pattern = generateNebulaPattern(
+      LOADING_SCREEN_CONSTANTS.NEBULA_DIMENSIONS.width,
+      LOADING_SCREEN_CONSTANTS.NEBULA_DIMENSIONS.height
+    );
     setNebulaPattern(pattern);
     
     const interval = setInterval(() => {
-      setPolarityPhase(prev => (prev + 0.01) % (Math.PI * 2));
-    }, 16); // ~60fps
+      setPolarityPhase(prev => (prev + LOADING_SCREEN_CONSTANTS.POLARITY_PHASE_INCREMENT) % (Math.PI * 2));
+    }, LOADING_SCREEN_CONSTANTS.ANIMATION_INTERVAL_MS);
     return () => clearInterval(interval);
   }, []);
 
@@ -333,9 +398,9 @@ export default function LoadingScreen({ progress, message = 'Loading your journa
     // Sample the infinity curve using proper parametric equation
     const sampleInfinityCurve = (t: number): { x: number; y: number } => {
       // Parametric infinity curve: x = a * sin(t), y = a * sin(t) * cos(t) / (1 + sin^2(t))
-      const a = 50;
-      const centerX = 250;
-      const centerY = 200;
+      const a = LOADING_SCREEN_CONSTANTS.INFINITY_AMPLITUDE;
+      const centerX = LOADING_SCREEN_CONSTANTS.MIDPOINT_X;
+      const centerY = LOADING_SCREEN_CONSTANTS.LEFT_LOOP_CENTER.y;
       const angle = t * Math.PI * 2;
       
       const sinT = Math.sin(angle);
@@ -352,7 +417,7 @@ export default function LoadingScreen({ progress, message = 'Loading your journa
     };
     
     // Create segments with varying Z depth for true 3D structure
-    const numSegments = 120;
+    const numSegments = LOADING_SCREEN_CONSTANTS.INFINITY_SEGMENTS;
     for (let i = 0; i < numSegments; i++) {
       const t1 = i / numSegments;
       const t2 = (i + 1) / numSegments;
@@ -410,12 +475,19 @@ export default function LoadingScreen({ progress, message = 'Loading your journa
       </div>
       <div className="loading-content">
         <div className="loading-logo">
-          <div className="infinity-3d-container">
+          <div 
+            className="camera-wrapper"
+            style={{
+              transform: `translateZ(${LOADING_SCREEN_CONSTANTS.CAMERA_DISTANCE}px) scale(${LOADING_SCREEN_CONSTANTS.CAMERA_ZOOM})`,
+              transformStyle: 'preserve-3d',
+            }}
+          >
+            <div className="infinity-3d-container">
             {/* Unified 3D infinity structure - all elements positioned in 3D space */}
             
             {/* Infinity symbol core - 3D line segments */}
             {infinitySegments3D.map((seg, idx) => {
-              const isLeft = seg.x1 < 250;
+              const isLeft = seg.x1 < LOADING_SCREEN_CONSTANTS.MIDPOINT_X;
               const color = isLeft ? leftColor : rightColor;
               const dx = seg.x2 - seg.x1;
               const dy = seg.y2 - seg.y1;
@@ -433,7 +505,7 @@ export default function LoadingScreen({ progress, message = 'Loading your journa
                     width: `${length}px`,
                     transform: `translateZ(${avgZ}px) rotateZ(${angle}deg)`,
                     background: `linear-gradient(to right, ${color}, ${isLeft ? rightColor : leftColor})`,
-                    opacity: 0.8 - Math.abs(avgZ) / 100,
+                    opacity: 0.8 - Math.abs(avgZ) / LOADING_SCREEN_CONSTANTS.OPACITY_DIVISORS.infinity,
                   }}
                 />
               );
@@ -441,7 +513,7 @@ export default function LoadingScreen({ progress, message = 'Loading your journa
             
             {/* Branch segments - 3D positioned */}
             {branchSegments3D.map((segment, idx) => {
-              const isLeft = segment.startX < 250;
+              const isLeft = segment.startX < LOADING_SCREEN_CONSTANTS.MIDPOINT_X;
               const color = isLeft ? leftColor : rightColor;
               const dx = segment.endX - segment.startX;
               const dy = segment.endY - segment.startY;
@@ -460,7 +532,7 @@ export default function LoadingScreen({ progress, message = 'Loading your journa
                     height: `${segment.thickness}px`,
                     transform: `translateZ(${avgZ}px) rotateZ(${angle}deg)`,
                     background: color,
-                    opacity: 0.7 - Math.abs(avgZ) / 150,
+                    opacity: 0.7 - Math.abs(avgZ) / LOADING_SCREEN_CONSTANTS.OPACITY_DIVISORS.branch,
                     animationDelay: `${segment.delay}s`,
                     animationDuration: `${segment.duration}s`,
                   }}
@@ -471,7 +543,7 @@ export default function LoadingScreen({ progress, message = 'Loading your journa
             {/* Entry ornaments - 3D positioned */}
             {visibleEntries.map(({ entry, x, y, z }, idx) => {
               const entryColor = calculateEntryColor(entry);
-              const delay = Math.min(idx * 0.01, 2);
+              const delay = Math.min(idx * 0.01, LOADING_SCREEN_CONSTANTS.MAX_ANIMATION_DELAY);
               
               return (
                 <div
@@ -482,8 +554,8 @@ export default function LoadingScreen({ progress, message = 'Loading your journa
                     top: `${y}px`,
                     transform: `translateZ(${z}px)`,
                     background: entryColor,
-                    width: '8px',
-                    height: '8px',
+                    width: `${LOADING_SCREEN_CONSTANTS.ORNAMENT_SIZE}px`,
+                    height: `${LOADING_SCREEN_CONSTANTS.ORNAMENT_SIZE}px`,
                     boxShadow: `0 0 4px ${entryColor}, 0 0 8px ${entryColor}`,
                     animation: `ornamentAppear 0.6s ease-out ${delay}s both`,
                   }}
@@ -500,6 +572,7 @@ export default function LoadingScreen({ progress, message = 'Loading your journa
                 <div className="singularity-ring ring-3"></div>
               </div>
             </div>
+          </div>
           </div>
         </div>
         <h1 className="loading-title">CalenRecall</h1>
