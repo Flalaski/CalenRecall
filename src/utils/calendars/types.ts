@@ -124,11 +124,11 @@ export const CALENDAR_INFO: Record<CalendarSystem, CalendarInfo> = {
     name: 'Chinese',
     nativeName: '农历',
     type: 'lunisolar',
-    months: 12, // Can have 13 in leap years
+    months: 12, // Can have 13 in leap years (with intercalary month 闰月)
     daysInYear: { min: 353, max: 385 },
     eraStart: 1,
-    eraName: 'CE',
-    leapYearRule: 'Based on solar terms and lunar months'
+    eraName: 'CE', // Note: Chinese calendar uses continuous year numbering, not era-based dating
+    leapYearRule: 'Intercalary months added when a lunar month contains no solar term (节气). Approximately every 2-3 years.'
   },
   ethiopian: {
     name: 'Ethiopian',
