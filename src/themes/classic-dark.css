@@ -2048,3 +2048,49 @@
   text-shadow: none;
 }
 
+/* Entry badges and cards - preserve time range colors, adapt backgrounds/text */
+[data-theme="classic-dark"] .entry-decade {
+  background: rgba(156, 39, 176, 0.2);
+  color: #e0a0ff;
+}
+
+[data-theme="classic-dark"] .entry-year {
+  background: rgba(2, 119, 189, 0.2);
+  color: #80c8ff;
+}
+
+[data-theme="classic-dark"] .entry-month {
+  background: rgba(239, 108, 0, 0.2);
+  color: #ffb366;
+}
+
+[data-theme="classic-dark"] .entry-week {
+  background: rgba(46, 125, 50, 0.2);
+  color: #81c784;
+}
+
+[data-theme="classic-dark"] .entry-day {
+  background: rgba(194, 24, 91, 0.2);
+  color: #f48fb1;
+}
+
+[data-theme="classic-dark"] .entry-card {
+  background: #1e1e1e;
+  border-color: #404040;
+}
+
+[data-theme="classic-dark"] .entry-card-full {
+  background: #1e1e1e;
+  border-color: #404040;
+}
+
+[data-theme="classic-dark"] .card-title,
+[data-theme="classic-dark"] .card-title-full,
+[data-theme="classic-dark"] .badge-title {
+  color: #e0e0e0;
+}
+
+[data-theme="classic-dark"] .entry-item-title {
+  color: #e0e0e0;
+}
+

@@ -1839,3 +1839,49 @@
   text-shadow: none;
 }
 
+/* Entry badges and cards - preserve time range colors, adapt backgrounds/text */
+[data-theme="modern-minimal-oled"] .entry-decade {
+  background: rgba(156, 39, 176, 0.15);
+  color: #e0a0ff;
+}
+
+[data-theme="modern-minimal-oled"] .entry-year {
+  background: rgba(2, 119, 189, 0.15);
+  color: #80c8ff;
+}
+
+[data-theme="modern-minimal-oled"] .entry-month {
+  background: rgba(239, 108, 0, 0.15);
+  color: #ffb366;
+}
+
+[data-theme="modern-minimal-oled"] .entry-week {
+  background: rgba(46, 125, 50, 0.15);
+  color: #81c784;
+}
+
+[data-theme="modern-minimal-oled"] .entry-day {
+  background: rgba(194, 24, 91, 0.15);
+  color: #f48fb1;
+}
+
+[data-theme="modern-minimal-oled"] .entry-card {
+  background: #0a0a0a;
+  border-color: #1a1a1a;
+}
+
+[data-theme="modern-minimal-oled"] .entry-card-full {
+  background: #0a0a0a;
+  border-color: #1a1a1a;
+}
+
+[data-theme="modern-minimal-oled"] .card-title,
+[data-theme="modern-minimal-oled"] .card-title-full,
+[data-theme="modern-minimal-oled"] .badge-title {
+  color: #e0e0e0;
+}
+
+[data-theme="modern-minimal-oled"] .entry-item-title {
+  color: #e0e0e0;
+}
+

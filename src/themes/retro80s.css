@@ -1890,3 +1890,56 @@
   text-shadow: 0 0 10px #00ffff;
 }
 
+/* Entry badges and cards - preserve time range colors, adapt backgrounds/text */
+[data-theme="retro80s"] .entry-decade {
+  background: rgba(156, 39, 176, 0.25);
+  color: #ff00ff;
+  text-shadow: 0 0 5px #ff00ff;
+}
+
+[data-theme="retro80s"] .entry-year {
+  background: rgba(2, 119, 189, 0.25);
+  color: #00ffff;
+  text-shadow: 0 0 5px #00ffff;
+}
+
+[data-theme="retro80s"] .entry-month {
+  background: rgba(239, 108, 0, 0.25);
+  color: #ffaa00;
+  text-shadow: 0 0 5px #ffaa00;
+}
+
+[data-theme="retro80s"] .entry-week {
+  background: rgba(46, 125, 50, 0.25);
+  color: #00ff00;
+  text-shadow: 0 0 5px #00ff00;
+}
+
+[data-theme="retro80s"] .entry-day {
+  background: rgba(194, 24, 91, 0.25);
+  color: #ff00aa;
+  text-shadow: 0 0 5px #ff00aa;
+}
+
+[data-theme="retro80s"] .entry-card {
+  background: #1a0033;
+  border-color: #6600cc;
+}
+
+[data-theme="retro80s"] .entry-card-full {
+  background: #1a0033;
+  border-color: #6600cc;
+}
+
+[data-theme="retro80s"] .card-title,
+[data-theme="retro80s"] .card-title-full,
+[data-theme="retro80s"] .badge-title {
+  color: #00ffff;
+  text-shadow: 0 0 5px #00ffff;
+}
+
+[data-theme="retro80s"] .entry-item-title {
+  color: #00ffff;
+  text-shadow: 0 0 5px #00ffff;
+}
+

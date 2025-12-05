@@ -1709,3 +1709,49 @@
   color: #ffe0b2;
 }
 
+/* Entry badges and cards - preserve time range colors, adapt backgrounds/text */
+[data-theme="sunset"] .entry-decade {
+  background: rgba(156, 39, 176, 0.25);
+  color: #e1bee7;
+}
+
+[data-theme="sunset"] .entry-year {
+  background: rgba(2, 119, 189, 0.25);
+  color: #90caf9;
+}
+
+[data-theme="sunset"] .entry-month {
+  background: rgba(239, 108, 0, 0.3);
+  color: #ffb74d;
+}
+
+[data-theme="sunset"] .entry-week {
+  background: rgba(46, 125, 50, 0.25);
+  color: #a5d6a7;
+}
+
+[data-theme="sunset"] .entry-day {
+  background: rgba(194, 24, 91, 0.25);
+  color: #f48fb1;
+}
+
+[data-theme="sunset"] .entry-card {
+  background: #3e2723;
+  border-color: #5d4037;
+}
+
+[data-theme="sunset"] .entry-card-full {
+  background: #3e2723;
+  border-color: #5d4037;
+}
+
+[data-theme="sunset"] .card-title,
+[data-theme="sunset"] .card-title-full,
+[data-theme="sunset"] .badge-title {
+  color: #ffe0b2;
+}
+
+[data-theme="sunset"] .entry-item-title {
+  color: #ffe0b2;
+}
+

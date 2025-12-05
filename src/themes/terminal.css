@@ -1999,3 +1999,58 @@
   text-shadow: 0 0 5px #00ff00;
 }
 
+/* Entry badges and cards - preserve time range colors, adapt backgrounds/text */
+[data-theme="terminal"] .entry-decade {
+  background: rgba(156, 39, 176, 0.2);
+  color: #ff00ff;
+  text-shadow: 0 0 3px #ff00ff;
+}
+
+[data-theme="terminal"] .entry-year {
+  background: rgba(2, 119, 189, 0.2);
+  color: #00ffff;
+  text-shadow: 0 0 3px #00ffff;
+}
+
+[data-theme="terminal"] .entry-month {
+  background: rgba(239, 108, 0, 0.2);
+  color: #ffaa00;
+  text-shadow: 0 0 3px #ffaa00;
+}
+
+[data-theme="terminal"] .entry-week {
+  background: rgba(46, 125, 50, 0.2);
+  color: #00ff00;
+  text-shadow: 0 0 3px #00ff00;
+}
+
+[data-theme="terminal"] .entry-day {
+  background: rgba(194, 24, 91, 0.2);
+  color: #ff00aa;
+  text-shadow: 0 0 3px #ff00aa;
+}
+
+[data-theme="terminal"] .entry-card {
+  background: #000000;
+  border-color: #00ff00;
+}
+
+[data-theme="terminal"] .entry-card-full {
+  background: #000000;
+  border-color: #00ff00;
+}
+
+[data-theme="terminal"] .card-title,
+[data-theme="terminal"] .card-title-full,
+[data-theme="terminal"] .badge-title {
+  color: #00ff00;
+  font-family: 'Courier New', monospace;
+  text-shadow: 0 0 3px #00ff00;
+}
+
+[data-theme="terminal"] .entry-item-title {
+  color: #00ff00;
+  font-family: 'Courier New', monospace;
+  text-shadow: 0 0 3px #00ff00;
+}
+

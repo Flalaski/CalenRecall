@@ -1896,3 +1896,63 @@
   text-shadow: 1px 1px 0px #000000;
 }
 
+/* Entry badges and cards - preserve time range colors, adapt backgrounds/text */
+[data-theme="high-contrast"] .entry-decade {
+  background: rgba(156, 39, 176, 0.3);
+  color: #ffffff;
+  font-weight: bold;
+  border: 2px solid #9c27b0;
+}
+
+[data-theme="high-contrast"] .entry-year {
+  background: rgba(2, 119, 189, 0.3);
+  color: #ffffff;
+  font-weight: bold;
+  border: 2px solid #0277bd;
+}
+
+[data-theme="high-contrast"] .entry-month {
+  background: rgba(239, 108, 0, 0.3);
+  color: #ffffff;
+  font-weight: bold;
+  border: 2px solid #ef6c00;
+}
+
+[data-theme="high-contrast"] .entry-week {
+  background: rgba(46, 125, 50, 0.3);
+  color: #ffffff;
+  font-weight: bold;
+  border: 2px solid #2e7d32;
+}
+
+[data-theme="high-contrast"] .entry-day {
+  background: rgba(194, 24, 91, 0.3);
+  color: #ffffff;
+  font-weight: bold;
+  border: 2px solid #c2185b;
+}
+
+[data-theme="high-contrast"] .entry-card {
+  background: #000000;
+  border: 3px solid #ffffff;
+}
+
+[data-theme="high-contrast"] .entry-card-full {
+  background: #000000;
+  border: 3px solid #ffffff;
+}
+
+[data-theme="high-contrast"] .card-title,
+[data-theme="high-contrast"] .card-title-full,
+[data-theme="high-contrast"] .badge-title {
+  color: #ffffff;
+  font-weight: bold;
+  text-shadow: 1px 1px 0px #000000;
+}
+
+[data-theme="high-contrast"] .entry-item-title {
+  color: #ffffff;
+  font-weight: bold;
+  text-shadow: 1px 1px 0px #000000;
+}
+
