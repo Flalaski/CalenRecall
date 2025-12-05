@@ -2,7 +2,7 @@ import { useMemo, useState, useEffect, useRef } from 'react';
 import { TimeRange, JournalEntry } from '../types';
 import { formatDate, getWeekStart, getWeekEnd, getMonthStart, getMonthEnd, getYearEnd, getDecadeEnd, getZodiacColor, getZodiacColorForDecade, getCanonicalDate, parseISODate } from '../utils/dateUtils';
 import { addDays, addWeeks, addMonths, addYears, getYear, getMonth, getDate } from 'date-fns';
-import { playMechanicalClick, playMicroBlip, getAudioContext } from '../utils/audioUtils';
+import { playMechanicalClick, playMicroBlip, getAudioContext, createSliderNoise, SliderNoise } from '../utils/audioUtils';
 import { calculateEntryColor } from '../utils/entryColorUtils';
 import './GlobalTimelineMinimap.css';
 
@@ -170,6 +170,7 @@ export default function GlobalTimelineMinimap({
   const deadZoneRef = useRef<number>(0); // Dead zone threshold after scale change
   const lastBlipDateRef = useRef<Date | null>(null); // Track last date that triggered a micro blip
   const currentDragTargetDateRef = useRef<Date | null>(null); // Track the target date we're moving toward
+  const sliderNoiseRef = useRef<SliderNoise | null>(null); // Track continuous slider noise for vertical drag feedback
   // Load entries for the timeline range
   // Use the fixed timeline range, not recalculated based on selectedDate
   useEffect(() => {
@@ -2292,6 +2293,10 @@ export default function GlobalTimelineMinimap({
       });
     }
     
+    // Start continuous slider noise for vertical drag feedback
+    // This provides audio feedback indicating distance from center to threshold
+    sliderNoiseRef.current = createSliderNoise();
+    
     // Timeline range is already locked via timelineRangeRef - no need to lock again
     
     // Show radial dial at mouse position
@@ -2557,6 +2562,13 @@ export default function GlobalTimelineMinimap({
       // Accumulate vertical movement for mechanical feel
       verticalMovementAccumulatorRef.current += verticalDelta;
       
+      // Update slider noise based on distance from center to threshold
+      // This provides real-time audio feedback indicating proximity to level change threshold
+      if (sliderNoiseRef.current) {
+        const distanceFromCenter = Math.abs(verticalMovementAccumulatorRef.current);
+        sliderNoiseRef.current.update(distanceFromCenter, verticalThreshold);
+      }
+      
       // Check if we're in the dead zone (must move back toward center after scale change)
       const inDeadZone = Math.abs(verticalMovementAccumulatorRef.current - lastScaleChangeAccumulatorRef.current) < deadZoneSize;
       
@@ -2603,6 +2615,11 @@ export default function GlobalTimelineMinimap({
           // Play mechanical click sound
           playMechanicalClick('up');
           
+          // Trigger portamento drop in slider noise (momentary volume dip, then return)
+          if (sliderNoiseRef.current) {
+            sliderNoiseRef.current.portamentoDrop();
+          }
+          
           // Trigger visual feedback
           setMechanicalClick({ scale: newViewMode, direction: 'up' });
           setTimeout(() => setMechanicalClick(null), 300);
@@ -2632,6 +2649,11 @@ export default function GlobalTimelineMinimap({
           
           // Play mechanical click sound
           playMechanicalClick('down');
+          
+          // Trigger portamento drop in slider noise (momentary volume dip, then return)
+          if (sliderNoiseRef.current) {
+            sliderNoiseRef.current.portamentoDrop();
+          }
           
           // Trigger visual feedback
           setMechanicalClick({ scale: newViewMode, direction: 'down' });
@@ -2824,6 +2846,13 @@ export default function GlobalTimelineMinimap({
       deadZoneRef.current = 0;
       lastBlipDateRef.current = null; // Reset blip tracking when dragging ends
       currentDragTargetDateRef.current = null; // Reset drag target tracking
+      
+      // Stop slider noise when dragging ends
+      if (sliderNoiseRef.current) {
+        sliderNoiseRef.current.stop();
+        sliderNoiseRef.current = null;
+      }
+      
       // Timeline range remains locked - it only updates when viewMode changes
     };
 

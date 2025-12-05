@@ -601,3 +601,174 @@ export function playEntrySelectionSound(): void {
   }
 }
 
+// Slider noise interface for continuous mixing board-like sound
+export interface SliderNoise {
+  stop: () => void;
+  update: (distanceFromCenter: number, threshold: number) => void;
+  portamentoDrop: () => void; // Momentary volume drop with smooth return (for level shifts)
+}
+
+// Generate continuous soft noise simulating a mixing board slider
+// Volume and frequency fade based on distance from center to threshold
+export function createSliderNoise(): SliderNoise | null {
+  const audioContext = getAudioContext();
+  if (!audioContext) return null;
+  
+  // Check if context is in a valid state
+  if (audioContext.state === 'closed') {
+    return null;
+  }
+  
+  try {
+    const now = audioContext.currentTime;
+    
+    // Create a buffer source with white noise
+    const bufferSize = audioContext.sampleRate * 0.1; // 100ms buffer
+    const buffer = audioContext.createBuffer(1, bufferSize, audioContext.sampleRate);
+    const data = buffer.getChannelData(0);
+    
+    // Generate white noise
+    for (let i = 0; i < bufferSize; i++) {
+      data[i] = Math.random() * 2 - 1; // Random values between -1 and 1
+    }
+    
+    // Create buffer source (looping)
+    const bufferSource = audioContext.createBufferSource();
+    bufferSource.buffer = buffer;
+    bufferSource.loop = true;
+    
+    // Create gain node for volume control
+    const gainNode = audioContext.createGain();
+    gainNode.gain.setValueAtTime(0, now);
+    
+    // Create low-pass filter to soften the noise (mixing board slider sound)
+    const filter = audioContext.createBiquadFilter();
+    filter.type = 'lowpass';
+    filter.frequency.setValueAtTime(2000, now); // Start with moderate filtering
+    filter.Q.setValueAtTime(1, now);
+    
+    // Connect: bufferSource -> filter -> gain -> destination
+    bufferSource.connect(filter);
+    filter.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+    
+    // Start playing
+    bufferSource.start(now);
+    
+    // Track current target volume for portamento return
+    let currentTargetVolume = 0;
+    let portamentoActive = false;
+    let portamentoReturnCallback: (() => void) | null = null;
+    
+    // Return interface for controlling the slider noise
+    return {
+      stop: () => {
+        try {
+          const stopTime = audioContext.currentTime;
+          portamentoActive = false;
+          portamentoReturnCallback = null;
+          // Fade out smoothly
+          gainNode.gain.cancelScheduledValues(stopTime);
+          gainNode.gain.setValueAtTime(gainNode.gain.value, stopTime);
+          gainNode.gain.linearRampToValueAtTime(0, stopTime + 0.1);
+          
+          // Stop the source after fade out
+          setTimeout(() => {
+            try {
+              bufferSource.stop();
+            } catch (error) {
+              // Source may already be stopped
+              console.debug('Slider noise stop error:', error);
+            }
+          }, 150);
+        } catch (error) {
+          console.debug('Slider noise stop error:', error);
+        }
+      },
+      update: (distanceFromCenter: number, threshold: number) => {
+        try {
+          const updateTime = audioContext.currentTime;
+          
+          // Calculate normalized distance (0 = center, 1 = at threshold)
+          const normalizedDistance = Math.min(Math.abs(distanceFromCenter) / threshold, 1);
+          
+          // Volume fades in as you approach threshold
+          // Quietest at center (0), loudest at threshold (1)
+          // Use a smooth curve for natural fade
+          const volumeCurve = Math.pow(normalizedDistance, 0.7); // Slight curve for smoother fade
+          const minVolume = 0.01; // Very quiet at center
+          const maxVolume = 0.15; // Soft but audible near threshold
+          const targetVolume = minVolume + (maxVolume - minVolume) * volumeCurve;
+          
+          // Store target volume for portamento return
+          currentTargetVolume = targetVolume;
+          
+          // If portamento is active, update the return target but don't interrupt the portamento
+          // Otherwise, update volume smoothly
+          if (!portamentoActive) {
+            gainNode.gain.cancelScheduledValues(updateTime);
+            gainNode.gain.setValueAtTime(gainNode.gain.value, updateTime);
+            gainNode.gain.linearRampToValueAtTime(targetVolume, updateTime + 0.05);
+          } else {
+            // Update the callback to return to current position after portamento
+            portamentoReturnCallback = () => {
+              const callbackTime = audioContext.currentTime;
+              gainNode.gain.cancelScheduledValues(callbackTime);
+              gainNode.gain.setValueAtTime(gainNode.gain.value, callbackTime);
+              gainNode.gain.linearRampToValueAtTime(targetVolume, callbackTime + 0.05);
+            };
+          }
+          
+          // Filter frequency also changes - brighter as you approach threshold
+          const minFreq = 1500; // Softer at center
+          const maxFreq = 3000; // Brighter near threshold
+          const targetFreq = minFreq + (maxFreq - minFreq) * normalizedDistance;
+          
+          filter.frequency.cancelScheduledValues(updateTime);
+          filter.frequency.setValueAtTime(filter.frequency.value, updateTime);
+          filter.frequency.linearRampToValueAtTime(targetFreq, updateTime + 0.05);
+        } catch (error) {
+          console.debug('Slider noise update error:', error);
+        }
+      },
+      portamentoDrop: () => {
+        try {
+          const dropTime = audioContext.currentTime;
+          portamentoActive = true;
+          
+          // Get current volume
+          const currentVolume = gainNode.gain.value;
+          
+          // Drop volume to 30% of current (momentary dip)
+          const dropVolume = currentVolume * 0.3;
+          
+          // Quick drop (50ms)
+          gainNode.gain.cancelScheduledValues(dropTime);
+          gainNode.gain.setValueAtTime(currentVolume, dropTime);
+          gainNode.gain.linearRampToValueAtTime(dropVolume, dropTime + 0.05);
+          
+          // Then smoothly return to target volume (portamento - 200ms smooth return)
+          const returnTime = dropTime + 0.05;
+          gainNode.gain.linearRampToValueAtTime(currentTargetVolume, returnTime + 0.2);
+          
+          // After portamento completes, update to current mouse position if callback exists
+          setTimeout(() => {
+            portamentoActive = false;
+            if (portamentoReturnCallback) {
+              portamentoReturnCallback();
+              portamentoReturnCallback = null;
+            }
+          }, 250);
+        } catch (error) {
+          console.debug('Slider noise portamento drop error:', error);
+          portamentoActive = false;
+          portamentoReturnCallback = null;
+        }
+      }
+    };
+  } catch (error) {
+    console.debug('Slider noise creation error:', error);
+    return null;
+  }
+}
+
