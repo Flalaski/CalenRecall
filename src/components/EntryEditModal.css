@@ -9,7 +9,7 @@
   justify-content: center;
   align-items: center;
   z-index: 1000;
-  backdrop-filter: blur(2px);
+  /* Optimized: Removed backdrop-filter blur for better performance */
 }
 
 .entry-edit-modal {

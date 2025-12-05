@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, Fragment, useMemo } from 'react';
 import { JournalEntry, TimeRange } from '../types';
 import { formatDate, getWeekStart, getWeekEnd, getMonthStart, getYearStart, getDecadeStart, parseISODate } from '../utils/dateUtils';
-import { playEditSound, playNewEntrySound, playAddSound } from '../utils/audioUtils';
+import { playEditSound, playNewEntrySound } from '../utils/audioUtils';
 import { useCalendar } from '../contexts/CalendarContext';
 import { getTimeRangeLabelInCalendar } from '../utils/calendars/timeRangeConverter';
 import { saveJournalEntry, deleteJournalEntry } from '../services/journalService';
@@ -15,7 +15,6 @@ interface EntryViewerProps {
   onNewEntry: () => void;
   onEntrySelect: (entry: JournalEntry) => void;
   onEditEntry?: (entry: JournalEntry) => void;
-  onEntryDuplicated?: () => void;
 }
 
 export default function EntryViewer({
@@ -26,7 +25,6 @@ export default function EntryViewer({
   onNewEntry,
   onEntrySelect,
   onEditEntry,
-  onEntryDuplicated,
 }: EntryViewerProps) {
   const { calendar } = useCalendar();
   const [periodEntries, setPeriodEntries] = useState<JournalEntry[]>([]);
@@ -400,39 +398,6 @@ export default function EntryViewer({
     onEntrySelect(periodEntry);
   };
 
-  const handleDuplicate = async () => {
-    if (!entry) return;
-
-    playAddSound();
-    
-    try {
-      // Create a new entry with the same content but without ID
-      const duplicatedEntry: JournalEntry = {
-        date: entry.date,
-        timeRange: entry.timeRange,
-        title: `${entry.title} (Copy)`,
-        content: entry.content,
-        tags: entry.tags ? [...entry.tags] : [],
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      };
-
-      await saveJournalEntry(duplicatedEntry);
-      
-      // Trigger refresh
-      window.dispatchEvent(new CustomEvent('journalEntrySaved'));
-      
-      if (onEntryDuplicated) {
-        onEntryDuplicated();
-      }
-    } catch (error) {
-      if (process.env.NODE_ENV === 'development') {
-        console.error('Error duplicating entry:', error);
-      }
-      alert('Failed to duplicate entry. Please try again.');
-    }
-  };
-
   // If a specific entry is selected, show it
   if (entry) {
     return (
@@ -446,9 +411,6 @@ export default function EntryViewer({
                 onEdit();
               }}>
                 Edit
-              </button>
-              <button className="duplicate-button" onClick={handleDuplicate} title="Duplicate this entry">
-                Duplicate
               </button>
               <button className="new-entry-button-header" onClick={() => {
                 playNewEntrySound();

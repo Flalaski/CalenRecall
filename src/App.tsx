@@ -426,7 +426,6 @@ function App() {
               onNewEntry={handleNewEntry}
               onEntrySelect={handleEntrySelect}
               onEditEntry={handleEditEntry}
-              onEntryDuplicated={loadCurrentEntry}
             />
           )}
         </div>

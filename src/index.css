@@ -303,7 +303,10 @@ body::before,
   mix-blend-mode: multiply;
   opacity: 0.2;
   z-index: 0;
-  filter: blur(0.5px) saturate(1.5) contrast(1.2);
+  /* Optimized: Removed blur filter - use saturate and contrast only */
+  filter: saturate(1.5) contrast(1.2);
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
 }
 
 /* Dark theme - enhanced glow in shadows with deeper saturation */
@@ -311,7 +314,10 @@ body::before,
 [data-theme="dark"] .minimap-container::after {
   mix-blend-mode: color-burn;
   opacity: 0.3;
-  filter: blur(1px) saturate(1.8) contrast(1.4) brightness(0.85);
+  /* Optimized: Removed blur filter - use saturate, contrast, and brightness only */
+  filter: saturate(1.8) contrast(1.4) brightness(0.85);
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
 }
 
 body {

@@ -177,19 +177,22 @@
   color: #4a90e2;
   text-transform: uppercase;
   letter-spacing: 0.15em;
+  /* Optimized: Simplified text-shadow for better performance */
   text-shadow: 
-    1.5px 1.5px 0px rgba(0, 0, 0, 0.15),
-    3px 3px 0px rgba(0, 0, 0, 0.1),
-    4px 4px 6px rgba(0, 0, 0, 0.08),
-    0 0 1px rgba(0, 0, 0, 0.1);
+    1.5px 1.5px 0px rgba(0, 0, 0, 0.2),
+    3px 3px 3px rgba(0, 0, 0, 0.1);
   background: rgba(255, 255, 255, 0.9);
   padding: 4px 12px;
   border-radius: 4px;
   border: 2px solid #4a90e2;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
   font-family: 'Bebas Neue', 'Impact', 'Arial Black', 'Franklin Gothic Heavy', 'Arial Narrow', sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  /* Optimized: Use nearest neighbor rendering */
+  -webkit-font-smoothing: none;
+  -moz-osx-font-smoothing: unset;
+  text-rendering: optimizeSpeed;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
 }
 
 @keyframes mechanicalClick {
@@ -348,34 +351,39 @@
 }
 
 .timeline-path {
-  filter: drop-shadow(0 0 4px rgba(74, 144, 226, 0.6));
+  /* Optimized: Replaced drop-shadow with box-shadow for better performance */
+  box-shadow: 0 0 4px rgba(74, 144, 226, 0.6);
   animation: pathGlow 3s ease-in-out infinite;
-  will-change: opacity, filter;
+  will-change: opacity, box-shadow;
 }
 
 .timeline-path-glow {
-  filter: blur(3px);
-  opacity: 0.5;
+  /* Optimized: Removed blur filter - use opacity and simpler styling instead */
+  opacity: 0.4;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
 }
 
 /* Infinity tree web centered on the current indicator */
 .infinity-tree-trunk {
-  filter: drop-shadow(0 0 6px rgba(74, 144, 226, 0.7));
-  will-change: filter;
+  /* Optimized: Replaced drop-shadow with simpler styling */
+  opacity: 0.9;
+  will-change: opacity;
 }
 
 .infinity-tree-branch {
   stroke-linecap: round;
   stroke-linejoin: bevel;
   stroke-dasharray: 6 5;
-  filter: drop-shadow(0 0 5px rgba(74, 144, 226, 0.7));
+  /* Optimized: Replaced drop-shadow with opacity for better performance */
+  opacity: 0.85;
   animation: infinityBranchIdle 4s ease-in-out infinite;
-  will-change: stroke-dashoffset, opacity, filter;
+  will-change: stroke-dashoffset, opacity;
 }
 
 .infinity-tree-branch.secondary {
   stroke-dasharray: 3 7;
-  filter: drop-shadow(0 0 4px rgba(144, 202, 249, 0.7));
+  opacity: 0.8;
 }
 
 .infinity-tree-branch.active {
@@ -417,8 +425,9 @@
   stroke-linecap: round;
   stroke-linejoin: round;
   animation: connectionPulse 3s ease-in-out infinite, focusPulse 2s ease-in-out infinite;
-  filter: drop-shadow(0 0 4px currentColor);
-  will-change: opacity, stroke-width, filter;
+  /* Optimized: Removed drop-shadow filter - use opacity and stroke-width instead */
+  opacity: 1;
+  will-change: opacity, stroke-width;
 }
 
 .memory-connection-entry-to-entry {
@@ -433,54 +442,58 @@
 .memory-connection-direct {
   stroke-dasharray: 4 2;
   animation: connectionFlow 3s linear infinite, lightningFlicker 0.5s ease-in-out infinite;
-  filter: drop-shadow(0 0 2px currentColor);
-  will-change: stroke-dashoffset, opacity, filter;
+  /* Optimized: Removed drop-shadow filter */
+  will-change: stroke-dashoffset, opacity;
 }
 
 .memory-connection-curved {
   stroke-dasharray: 6 3;
   animation: connectionFlow 4s linear infinite, cosmicFlow 6s ease-in-out infinite;
-  filter: drop-shadow(0 0 3px currentColor);
-  will-change: stroke-dashoffset, opacity, filter;
+  /* Optimized: Removed drop-shadow filter */
+  will-change: stroke-dashoffset, opacity;
 }
 
 .memory-connection-hierarchical {
   stroke-dasharray: 8 4;
   animation: connectionFlow 5s linear infinite, lightningBurst 1.2s ease-in-out infinite;
-  filter: drop-shadow(0 0 4px currentColor);
-  will-change: stroke-dashoffset, stroke-width, opacity, filter;
+  /* Optimized: Removed drop-shadow filter */
+  will-change: stroke-dashoffset, stroke-width, opacity;
 }
 
 .memory-connection-web {
   stroke-dasharray: 2 4;
   animation: connectionFlow 2.5s linear infinite, fractalPulse 3s ease-in-out infinite;
-  filter: drop-shadow(0 0 2px currentColor);
-  will-change: stroke-dashoffset, stroke-width, opacity, filter;
+  /* Optimized: Removed drop-shadow filter */
+  will-change: stroke-dashoffset, stroke-width, opacity;
 }
 
 .memory-connection-spiral {
   stroke-dasharray: 3 3;
   animation: connectionFlow 3.5s linear infinite, spiralGlow 4s ease-in-out infinite;
-  filter: drop-shadow(0 0 3px currentColor);
-  will-change: stroke-dashoffset, opacity, filter;
+  /* Optimized: Removed drop-shadow filter */
+  will-change: stroke-dashoffset, opacity;
 }
 
 .memory-connection-organic {
   stroke-dasharray: 5 2;
   animation: connectionFlow 4.5s linear infinite, organicFlow 5s ease-in-out infinite;
-  filter: drop-shadow(0 0 3px currentColor);
-  will-change: stroke-dashoffset, opacity, filter;
+  /* Optimized: Removed drop-shadow filter */
+  will-change: stroke-dashoffset, opacity;
 }
 
 /* Connection glow layers */
 .memory-connection-glow {
-  filter: blur(2px);
-  opacity: 0.3;
+  /* Optimized: Removed blur filter - use opacity and simpler styling instead */
+  opacity: 0.25;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
 }
 
 .memory-connection-same-scale .memory-connection-glow {
-  filter: blur(3px);
-  opacity: 0.4;
+  /* Optimized: Removed blur filter - use opacity and simpler styling instead */
+  opacity: 0.35;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
 }
 
 /* Connection animations */
@@ -531,19 +544,15 @@
 @keyframes lightningFlicker {
   0%, 100% {
     opacity: inherit;
-    filter: drop-shadow(0 0 2px currentColor);
   }
   25% {
     opacity: calc(inherit * 1.4);
-    filter: drop-shadow(0 0 6px currentColor);
   }
   50% {
     opacity: calc(inherit * 0.8);
-    filter: drop-shadow(0 0 3px currentColor);
   }
   75% {
     opacity: calc(inherit * 1.2);
-    filter: drop-shadow(0 0 5px currentColor);
   }
 }
 
@@ -561,11 +570,9 @@
 @keyframes cosmicFlow {
   0%, 100% {
     opacity: inherit;
-    filter: drop-shadow(0 0 3px currentColor);
   }
   50% {
     opacity: calc(inherit * 1.3);
-    filter: drop-shadow(0 0 8px currentColor);
   }
 }
 
@@ -587,26 +594,21 @@
 @keyframes spiralGlow {
   0%, 100% {
     opacity: inherit;
-    filter: drop-shadow(0 0 3px currentColor);
   }
   50% {
     opacity: calc(inherit * 1.4);
-    filter: drop-shadow(0 0 10px currentColor) drop-shadow(0 0 20px currentColor);
   }
 }
 
 @keyframes organicFlow {
   0%, 100% {
     opacity: inherit;
-    filter: drop-shadow(0 0 3px currentColor);
   }
   25% {
     opacity: calc(inherit * 1.1);
-    filter: drop-shadow(0 0 5px currentColor);
   }
   50% {
     opacity: calc(inherit * 1.3);
-    filter: drop-shadow(0 0 7px currentColor);
   }
   75% {
     opacity: calc(inherit * 1.1);
@@ -617,12 +619,10 @@
   0%, 100% {
     opacity: inherit;
     stroke-width: inherit;
-    filter: drop-shadow(0 0 4px currentColor);
   }
   50% {
     opacity: calc(inherit * 1.3);
     stroke-width: calc(inherit * 1.2);
-    filter: drop-shadow(0 0 8px currentColor);
   }
 }
 
@@ -638,7 +638,6 @@
   }
   75% {
     opacity: calc(inherit * 1.1);
-    filter: drop-shadow(0 0 5px currentColor);
   }
 }
 
@@ -668,28 +667,25 @@
   0% {
     stroke-dashoffset: 0;
     opacity: 0.9;
-    filter: drop-shadow(0 0 10px rgba(144, 202, 249, 1));
   }
   50% {
     stroke-dashoffset: -26;
     opacity: 1;
-    filter: drop-shadow(0 0 22px rgba(144, 202, 249, 1));
   }
   100% {
     stroke-dashoffset: -8;
     opacity: 0.85;
-    filter: drop-shadow(0 0 12px rgba(74, 144, 226, 0.9));
   }
 }
 
 @keyframes pathGlow {
   0%, 100% {
     opacity: 0.7;
-    filter: drop-shadow(0 0 4px rgba(74, 144, 226, 0.6));
+    box-shadow: 0 0 4px rgba(74, 144, 226, 0.6);
   }
   50% {
     opacity: 1;
-    filter: drop-shadow(0 0 8px rgba(74, 144, 226, 0.9));
+    box-shadow: 0 0 8px rgba(74, 144, 226, 0.9);
   }
 }
 
@@ -774,12 +770,16 @@
   font-family: 'Bebas Neue', 'Impact', 'Arial Black', 'Franklin Gothic Heavy', 'Arial Narrow', sans-serif;
   letter-spacing: 0.1em;
   text-transform: uppercase;
+  /* Optimized: Simplified text-shadow for better performance */
   text-shadow: 
     1px 1px 0px rgba(0, 0, 0, 0.2),
-    2px 2px 0px rgba(0, 0, 0, 0.15),
-    3px 3px 4px rgba(0, 0, 0, 0.1);
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+    2px 2px 2px rgba(0, 0, 0, 0.1);
+  /* Optimized: Use nearest neighbor rendering */
+  -webkit-font-smoothing: none;
+  -moz-osx-font-smoothing: unset;
+  text-rendering: optimizeSpeed;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
 }
 
 .segment-label::after {
@@ -930,13 +930,15 @@
 }
 
 .entry-indicator-wrapper.focused-section .entry-indicator {
-  filter: brightness(1.2) saturate(4) 
-    drop-shadow(0 0 6px var(--gem-color))
-    drop-shadow(0 0 12px var(--gem-color))
-    drop-shadow(0 0 20px var(--gem-color))
-    drop-shadow(0 0 30px var(--gem-color))
-    drop-shadow(0 0 45px var(--gem-color))
-    drop-shadow(0 0 60px color-mix(in srgb, var(--gem-color) 50%, transparent));
+  /* Optimized: Removed expensive drop-shadow filters - use box-shadow instead */
+  filter: brightness(1.2) saturate(4);
+  box-shadow: 
+    0 0 6px var(--gem-color),
+    0 0 12px var(--gem-color),
+    0 0 20px var(--gem-color),
+    0 0 30px var(--gem-color),
+    0 0 45px var(--gem-color),
+    0 0 60px color-mix(in srgb, var(--gem-color) 50%, transparent);
 }
 
 .entry-indicator-wrapper:hover:not(.in-cluster) {
@@ -981,18 +983,15 @@
 
 /* Enhanced glow for cluster gems - make them even more visible with vibrant saturation */
 .entry-indicator-wrapper.in-cluster .entry-indicator {
-  filter: brightness(1.2) saturate(4) 
-    drop-shadow(0 0 5px var(--gem-color))
-    drop-shadow(0 0 10px var(--gem-color))
-    drop-shadow(0 0 15px var(--gem-color))
-    drop-shadow(0 0 25px var(--gem-color))
-    drop-shadow(0 0 35px var(--gem-color))
-    drop-shadow(0 0 45px var(--gem-color))
-    drop-shadow(0 0 60px color-mix(in srgb, var(--gem-color) 50%, transparent));
+  /* Optimized: Removed expensive drop-shadow filters - use box-shadow instead */
+  filter: brightness(1.2) saturate(4);
   box-shadow: 
     /* Enhanced outer glow for cluster gems - all using gem color */
+    0 0 5px var(--gem-color),
     0 0 10px var(--gem-color),
+    0 0 15px var(--gem-color),
     0 0 20px var(--gem-color),
+    0 0 25px var(--gem-color),
     0 0 30px var(--gem-color),
     0 0 40px var(--gem-color),
     0 0 50px var(--gem-color),
@@ -1011,16 +1010,17 @@
 }
 
 .entry-indicator-wrapper.in-cluster:hover .entry-indicator {
-  filter: brightness(1.4) saturate(4.5) 
-    drop-shadow(0 0 16px var(--gem-color)) 
-    drop-shadow(0 0 32px var(--gem-color)) 
-    drop-shadow(0 0 48px var(--gem-color)) 
-    drop-shadow(0 0 64px var(--gem-color))
-    drop-shadow(0 0 80px color-mix(in srgb, var(--gem-color) 40%, transparent));
+  /* Optimized: Removed expensive drop-shadow filters - use box-shadow instead */
+  filter: brightness(1.4) saturate(4.5);
   box-shadow: 
+    0 0 16px var(--gem-color),
     0 0 22px var(--gem-color),
+    0 0 32px var(--gem-color),
     0 0 44px var(--gem-color),
+    0 0 48px var(--gem-color),
+    0 0 64px var(--gem-color),
     0 0 66px var(--gem-color),
+    0 0 80px color-mix(in srgb, var(--gem-color) 40%, transparent),
     0 0 88px var(--gem-color),
     0 0 110px var(--gem-color),
     0 0 130px color-mix(in srgb, var(--gem-color) 30%, transparent),
@@ -1051,14 +1051,15 @@
   width: 100%;
   height: 100%;
   transform: translateZ(0) rotate(45deg);
-  transition: transform 0.3s ease, filter 0.3s ease;
-  /* Increased saturation and ensure glows use gem color */
-  filter: brightness(1.1) saturate(3.5) 
-    drop-shadow(0 0 8px var(--gem-color))
-    drop-shadow(0 0 20px var(--gem-color))
-    drop-shadow(0 0 35px var(--gem-color));
+  transition: transform 0.3s ease, opacity 0.3s ease;
+  /* Optimized: Removed expensive drop-shadow filters - use box-shadow instead */
+  filter: brightness(1.1) saturate(3.5);
+  box-shadow: 
+    0 0 8px var(--gem-color),
+    0 0 20px var(--gem-color),
+    0 0 35px var(--gem-color);
   animation: gemGlow 3s ease-in-out infinite;
-  will-change: transform, filter, opacity;
+  will-change: transform, opacity, box-shadow;
   /* Create faceted gem shape - randomized polygon based on entry properties */
   clip-path: var(--polygon-clip, polygon(
     30% 0%, 
@@ -1145,9 +1146,11 @@
     0% 30%
   ));
   animation: starburstPulse 3s ease-in-out infinite;
-  filter: blur(1px);
+  /* Optimized: Removed blur filter - use opacity and image-rendering instead */
   opacity: 0.7;
   mix-blend-mode: screen;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
 }
 
 /* Additional starburst layer for depth */
@@ -1187,19 +1190,19 @@
     0% 30%
   ));
   animation: starburstRotate 4s linear infinite;
-  filter: blur(0.8px);
+  /* Optimized: Removed blur filter - use opacity and image-rendering instead */
   opacity: 0.3;
   mix-blend-mode: screen;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
 }
 
 .entry-indicator-wrapper:hover .entry-indicator {
-  filter: brightness(1.3) saturate(4) 
-    drop-shadow(0 0 12px var(--gem-color))
-    drop-shadow(0 0 30px var(--gem-color))
-    drop-shadow(0 0 50px var(--gem-color))
-    drop-shadow(0 0 70px var(--gem-color));
+  /* Optimized: Removed expensive drop-shadow filters - use box-shadow instead */
+  filter: brightness(1.3) saturate(4);
   box-shadow: 
     /* Enhanced outer glow on hover - all using gem color */
+    0 0 12px var(--gem-color),
     0 0 24px var(--gem-color),
     0 0 48px var(--gem-color),
     0 0 72px var(--gem-color),
@@ -1244,18 +1247,20 @@
 
 @keyframes gemGlow {
   0%, 100% {
-    filter: brightness(1.1) saturate(3.5) 
-      drop-shadow(0 0 8px var(--gem-color))
-      drop-shadow(0 0 20px var(--gem-color))
-      drop-shadow(0 0 35px var(--gem-color));
+    filter: brightness(1.1) saturate(3.5);
+    box-shadow: 
+      0 0 8px var(--gem-color),
+      0 0 20px var(--gem-color),
+      0 0 35px var(--gem-color);
     opacity: 1;
   }
   50% {
-    filter: brightness(1.2) saturate(4) 
-      drop-shadow(0 0 12px var(--gem-color))
-      drop-shadow(0 0 30px var(--gem-color))
-      drop-shadow(0 0 45px var(--gem-color))
-      drop-shadow(0 0 60px color-mix(in srgb, var(--gem-color) 50%, transparent));
+    filter: brightness(1.2) saturate(4);
+    box-shadow: 
+      0 0 12px var(--gem-color),
+      0 0 30px var(--gem-color),
+      0 0 45px var(--gem-color),
+      0 0 60px color-mix(in srgb, var(--gem-color) 50%, transparent);
     opacity: 1.05;
   }
 }
@@ -1286,13 +1291,16 @@
   font-family: 'Bebas Neue', 'Impact', 'Arial Black', 'Franklin Gothic Heavy', 'Arial Narrow', sans-serif;
   letter-spacing: 0.1em;
   text-transform: uppercase;
+  /* Optimized: Simplified text-shadow for better performance */
   text-shadow: 
-    1px 1px 0px rgba(0, 0, 0, 0.15),
-    2px 2px 0px rgba(0, 0, 0, 0.1),
-    3px 3px 4px rgba(0, 0, 0, 0.08);
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-rendering: optimizeLegibility;
+    1px 1px 0px rgba(0, 0, 0, 0.2),
+    2px 2px 2px rgba(0, 0, 0, 0.1);
+  /* Optimized: Use nearest neighbor rendering */
+  -webkit-font-smoothing: none;
+  -moz-osx-font-smoothing: unset;
+  text-rendering: optimizeSpeed;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
   /* Smooth transitions for magnification effect */
   transition: font-size 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease, color 0.3s ease;
   will-change: transform, opacity;
