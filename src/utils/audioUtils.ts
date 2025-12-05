@@ -606,6 +606,7 @@ export interface SliderNoise {
   stop: () => void;
   update: (distanceFromCenter: number, threshold: number) => void;
   portamentoDrop: () => void; // Momentary volume drop with smooth return (for level shifts)
+  setLimitState: (isAtLimit: boolean) => void; // Pitch down and dampen when at limit (null wall effect)
 }
 
 // Generate continuous soft noise simulating a mixing board slider
@@ -659,6 +660,7 @@ export function createSliderNoise(): SliderNoise | null {
     let currentTargetVolume = 0;
     let portamentoActive = false;
     let portamentoReturnCallback: (() => void) | null = null;
+    let isAtLimit = false;
     
     // Return interface for controlling the slider noise
     return {
@@ -697,7 +699,7 @@ export function createSliderNoise(): SliderNoise | null {
           // Use a smooth curve for natural fade
           const volumeCurve = Math.pow(normalizedDistance, 0.7); // Slight curve for smoother fade
           const minVolume = 0.01; // Very quiet at center
-          const maxVolume = 0.15; // Soft but audible near threshold
+          const maxVolume = 0.05; // Soft but audible near threshold
           const targetVolume = minVolume + (maxVolume - minVolume) * volumeCurve;
           
           // Store target volume for portamento return
@@ -720,8 +722,25 @@ export function createSliderNoise(): SliderNoise | null {
           }
           
           // Filter frequency also changes - brighter as you approach threshold
-          const minFreq = 1500; // Softer at center
-          const maxFreq = 3000; // Brighter near threshold
+          // But if at limit, pitch down significantly (dampened null wall effect)
+          let minFreq = 1500; // Softer at center
+          let maxFreq = 3000; // Brighter near threshold
+          
+          if (isAtLimit) {
+            // At limit: pitch down to create dampened null wall sound
+            minFreq = 400; // Much lower pitch
+            maxFreq = 800; // Still low even at threshold
+            // Also reduce volume further when at limit
+            const limitVolumeReduction = 0.6; // Reduce volume by 60% at limit
+            const adjustedTargetVolume = targetVolume * limitVolumeReduction;
+            currentTargetVolume = adjustedTargetVolume;
+            if (!portamentoActive) {
+              gainNode.gain.cancelScheduledValues(updateTime);
+              gainNode.gain.setValueAtTime(gainNode.gain.value, updateTime);
+              gainNode.gain.linearRampToValueAtTime(adjustedTargetVolume, updateTime + 0.05);
+            }
+          }
+          
           const targetFreq = minFreq + (maxFreq - minFreq) * normalizedDistance;
           
           filter.frequency.cancelScheduledValues(updateTime);
@@ -763,6 +782,46 @@ export function createSliderNoise(): SliderNoise | null {
           console.debug('Slider noise portamento drop error:', error);
           portamentoActive = false;
           portamentoReturnCallback = null;
+        }
+      },
+      setLimitState: (atLimit: boolean) => {
+        try {
+          const limitTime = audioContext.currentTime;
+          const wasAtLimit = isAtLimit;
+          isAtLimit = atLimit;
+          
+          if (atLimit && !wasAtLimit) {
+            // When hitting limit, pitch down smoothly (portamento pitch down)
+            // Create dampened null wall effect
+            const currentFreq = filter.frequency.value;
+            const limitFreq = 400; // Low pitch for null wall
+            
+            filter.frequency.cancelScheduledValues(limitTime);
+            filter.frequency.setValueAtTime(currentFreq, limitTime);
+            filter.frequency.exponentialRampToValueAtTime(limitFreq, limitTime + 0.3); // Smooth pitch down over 300ms
+            
+            // Also reduce volume to create dampened effect
+            const currentVolume = gainNode.gain.value;
+            const dampenedVolume = currentVolume * 0.5; // Reduce to 50% for dampened effect
+            
+            if (!portamentoActive) {
+              gainNode.gain.cancelScheduledValues(limitTime);
+              gainNode.gain.setValueAtTime(gainNode.gain.value, limitTime);
+              gainNode.gain.linearRampToValueAtTime(dampenedVolume, limitTime + 0.3);
+            }
+          } else if (!atLimit && wasAtLimit) {
+            // When leaving limit, smoothly restore to normal frequency
+            // The next update() call will set the correct frequency, but we smooth the transition
+            const currentFreq = filter.frequency.value;
+            // Restore to a mid-range frequency as starting point
+            const restoreFreq = 2000; // Mid-range frequency
+            
+            filter.frequency.cancelScheduledValues(limitTime);
+            filter.frequency.setValueAtTime(currentFreq, limitTime);
+            filter.frequency.exponentialRampToValueAtTime(restoreFreq, limitTime + 0.2); // Smooth pitch up over 200ms
+          }
+        } catch (error) {
+          console.debug('Slider noise limit state error:', error);
         }
       }
     };

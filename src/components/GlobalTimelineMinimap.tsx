@@ -2562,11 +2562,32 @@ export default function GlobalTimelineMinimap({
       // Accumulate vertical movement for mechanical feel
       verticalMovementAccumulatorRef.current += verticalDelta;
       
+      // Check if we're at a limit (can't zoom in/out further) and trying to move beyond it
+      const scaleOrder: TimeRange[] = ['decade', 'year', 'month', 'week', 'day'];
+      const currentIndex = scaleOrder.indexOf(currentViewMode);
+      const absAccumulator = Math.abs(verticalMovementAccumulatorRef.current);
+      
+      // At top limit: moving up (negative) and at finest scale (day), past threshold
+      const isAtTopLimit = verticalMovementAccumulatorRef.current < 0 && 
+                           currentIndex >= scaleOrder.length - 1 && 
+                           absAccumulator > verticalThreshold;
+      
+      // At bottom limit: moving down (positive) and at coarsest scale (decade), past threshold
+      const isAtBottomLimit = verticalMovementAccumulatorRef.current > 0 && 
+                              currentIndex <= 0 && 
+                              absAccumulator > verticalThreshold;
+      
+      const isAtLimit = isAtTopLimit || isAtBottomLimit;
+      
       // Update slider noise based on distance from center to threshold
       // This provides real-time audio feedback indicating proximity to level change threshold
       if (sliderNoiseRef.current) {
-        const distanceFromCenter = Math.abs(verticalMovementAccumulatorRef.current);
+        const distanceFromCenter = absAccumulator;
         sliderNoiseRef.current.update(distanceFromCenter, verticalThreshold);
+        
+        // Set limit state for dampened null wall effect when at limits
+        // This creates a pitch-down portamento effect with dampened volume
+        sliderNoiseRef.current.setLimitState(isAtLimit);
       }
       
       // Check if we're in the dead zone (must move back toward center after scale change)
@@ -2599,9 +2620,8 @@ export default function GlobalTimelineMinimap({
       }
       
       // Handle vertical movement for scale changes with lock-in mechanism and dead zone
+      // Note: scaleOrder is already defined above for limit detection
       if (!scaleChangeLockRef.current && !inDeadZone && Math.abs(verticalMovementAccumulatorRef.current) > verticalThreshold) {
-        const scaleOrder: TimeRange[] = ['decade', 'year', 'month', 'week', 'day'];
-        const currentIndex = scaleOrder.indexOf(currentViewMode);
         
         // Check if we've moved enough in the new direction (past the dead zone)
         const movementFromLastChange = verticalMovementAccumulatorRef.current - lastScaleChangeAccumulatorRef.current;
