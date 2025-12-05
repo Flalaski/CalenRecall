@@ -11,6 +11,7 @@ import { TimeRange, JournalEntry, Preferences } from './types';
 import { getEntryForDate } from './services/journalService';
 import { playNewEntrySound } from './utils/audioUtils';
 import { formatDateToISO, parseISODate } from './utils/dateUtils';
+import { applyTheme, initializeTheme } from './utils/themes';
 import { useEntries } from './contexts/EntriesContext';
 import './App.css';
 
@@ -139,19 +140,11 @@ function App() {
           }
           
           // Apply theme
-          const theme = prefs.theme || 'light';
-          document.documentElement.setAttribute('data-theme', theme);
+          const theme = (prefs.theme || 'light') as any;
+          applyTheme(theme);
           
-          // Handle auto theme
-          if (theme === 'auto') {
-            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-            document.documentElement.setAttribute('data-theme', prefersDark ? 'dark' : 'light');
-            
-            // Listen for system theme changes
-            window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
-              document.documentElement.setAttribute('data-theme', e.matches ? 'dark' : 'light');
-            });
-          }
+          // Initialize theme with system preference listener for 'auto' theme
+          initializeTheme(theme);
           
           // Apply font size
           if (prefs.fontSize) {
@@ -176,14 +169,8 @@ function App() {
           setPreferences(prefs);
           // NEVER reset viewMode - user's current view should always be preserved
           // Default view mode is ONLY applied on the very first load, never after
-          const theme = prefs.theme || 'light';
-          document.documentElement.setAttribute('data-theme', theme);
-          
-          // Handle auto theme
-          if (theme === 'auto') {
-            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-            document.documentElement.setAttribute('data-theme', prefersDark ? 'dark' : 'light');
-          }
+          const theme = (prefs.theme || 'light') as any;
+          applyTheme(theme);
           if (prefs.fontSize) {
             document.documentElement.setAttribute('data-font-size', prefs.fontSize);
           }

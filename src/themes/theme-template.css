@@ -1,0 +1,313 @@
+/**
+ * Theme Template
+ * 
+ * Copy this file to create your own custom theme.
+ * Replace "your-theme-name" with your theme identifier.
+ * 
+ * IMPORTANT: You must style ALL component classes listed below
+ * to ensure your theme works correctly across the entire application.
+ */
+
+/* ============================================
+   YOUR THEME NAME
+   Description of your theme
+   ============================================ */
+
+/* Base Styles */
+[data-theme="your-theme-name"] {
+  /* Set base font family if needed */
+  /* font-family: 'Your Font', sans-serif; */
+}
+
+[data-theme="your-theme-name"] body {
+  background: #your-background-color;
+  color: #your-text-color;
+}
+
+[data-theme="your-theme-name"] .app {
+  background: #your-app-background;
+}
+
+[data-theme="your-theme-name"] .app-content {
+  background: #your-content-background;
+}
+
+/* Navigation Bar */
+[data-theme="your-theme-name"] .navigation-bar {
+  background: #your-nav-background;
+  border-bottom: 1px solid #your-border-color;
+}
+
+[data-theme="your-theme-name"] .nav-button,
+[data-theme="your-theme-name"] .view-mode-button {
+  background: #your-button-background;
+  border: 1px solid #your-border-color;
+  color: #your-button-text-color;
+}
+
+[data-theme="your-theme-name"] .nav-button:hover,
+[data-theme="your-theme-name"] .view-mode-button:hover {
+  background: #your-button-hover-background;
+}
+
+[data-theme="your-theme-name"] .date-label {
+  color: #your-date-label-color;
+}
+
+/* Calendar View */
+[data-theme="your-theme-name"] .calendar-grid {
+  background: #your-calendar-grid-background;
+}
+
+[data-theme="your-theme-name"] .calendar-cell {
+  background: #your-cell-background;
+  border: 1px solid #your-border-color;
+  color: #your-cell-text-color;
+}
+
+[data-theme="your-theme-name"] .calendar-cell:hover {
+  background: #your-cell-hover-background;
+}
+
+[data-theme="your-theme-name"] .calendar-cell.today {
+  background: #your-today-background;
+  border: 2px solid #your-today-border-color;
+  color: #your-today-text-color;
+}
+
+[data-theme="your-theme-name"] .calendar-cell.selected {
+  background: #your-selected-background;
+  border-color: #your-selected-border-color;
+}
+
+/* Timeline View */
+[data-theme="your-theme-name"] .timeline-grid {
+  background: #your-timeline-background;
+}
+
+[data-theme="your-theme-name"] .timeline-cell {
+  background: #your-timeline-cell-background;
+  border: 1px solid #your-border-color;
+  color: #your-text-color;
+}
+
+[data-theme="your-theme-name"] .timeline-cell:hover {
+  background: #your-timeline-cell-hover-background;
+}
+
+[data-theme="your-theme-name"] .timeline-cell.today {
+  background: #your-today-background;
+  border-color: #your-today-border-color;
+}
+
+[data-theme="your-theme-name"] .weekday-header {
+  background: #your-header-background;
+  border-bottom: 1px solid #your-border-color;
+  color: #your-header-text-color;
+}
+
+/* Entry Cards and Lists */
+[data-theme="your-theme-name"] .week-entry-group {
+  background: #your-entry-group-background;
+  border: 1px solid #your-border-color;
+}
+
+[data-theme="your-theme-name"] .week-entry-item {
+  background: #your-entry-item-background;
+  border: 1px solid #your-border-color;
+  color: #your-text-color;
+}
+
+[data-theme="your-theme-name"] .week-entry-item:hover {
+  background: #your-entry-item-hover-background;
+}
+
+[data-theme="your-theme-name"] .journal-entry-item {
+  background: #your-journal-item-background;
+  border: 1px solid #your-border-color;
+}
+
+[data-theme="your-theme-name"] .journal-entry-item:hover {
+  background: #your-journal-item-hover-background;
+}
+
+[data-theme="your-theme-name"] .journal-entry-item.selected {
+  background: #your-selected-background;
+  border-color: #your-selected-border-color;
+}
+
+/* Editor and Viewer */
+[data-theme="your-theme-name"] .journal-editor,
+[data-theme="your-theme-name"] .entry-viewer {
+  background: #your-editor-background;
+}
+
+[data-theme="your-theme-name"] .editor-header,
+[data-theme="your-theme-name"] .viewer-header {
+  background: #your-header-background;
+  border-bottom: 1px solid #your-border-color;
+}
+
+[data-theme="your-theme-name"] .title-input,
+[data-theme="your-theme-name"] .content-input,
+[data-theme="your-theme-name"] .tag-input {
+  background: #your-input-background;
+  border: 1px solid #your-border-color;
+  color: #your-input-text-color;
+}
+
+[data-theme="your-theme-name"] .title-input:focus,
+[data-theme="your-theme-name"] .content-input:focus,
+[data-theme="your-theme-name"] .tag-input:focus {
+  border-color: #your-focus-border-color;
+  outline: none;
+}
+
+/* Buttons */
+[data-theme="your-theme-name"] .edit-button,
+[data-theme="your-theme-name"] .save-button,
+[data-theme="your-theme-name"] .cancel-button,
+[data-theme="your-theme-name"] .delete-button,
+[data-theme="your-theme-name"] .new-entry-button {
+  background: #your-button-background;
+  border: 1px solid #your-border-color;
+  color: #your-button-text-color;
+}
+
+[data-theme="your-theme-name"] .save-button {
+  background: #your-primary-button-background;
+  color: #your-primary-button-text-color;
+}
+
+[data-theme="your-theme-name"] .delete-button {
+  background: #your-danger-button-background;
+  color: #your-danger-button-text-color;
+}
+
+[data-theme="your-theme-name"] .edit-button:hover,
+[data-theme="your-theme-name"] .save-button:hover,
+[data-theme="your-theme-name"] .new-entry-button:hover {
+  background: #your-button-hover-background;
+}
+
+/* Modals */
+[data-theme="your-theme-name"] .entry-edit-modal-overlay {
+  background-color: rgba(0, 0, 0, 0.5);
+}
+
+[data-theme="your-theme-name"] .entry-edit-modal {
+  background: #your-modal-background;
+  border: 1px solid #your-border-color;
+}
+
+[data-theme="your-theme-name"] .modal-header {
+  background: #your-modal-header-background;
+  border-bottom: 1px solid #your-border-color;
+}
+
+[data-theme="your-theme-name"] .modal-content {
+  background: #your-modal-content-background;
+}
+
+[data-theme="your-theme-name"] .modal-footer {
+  background: #your-modal-footer-background;
+  border-top: 1px solid #your-border-color;
+}
+
+/* Search View */
+[data-theme="your-theme-name"] .search-view {
+  background: #your-search-background;
+}
+
+[data-theme="your-theme-name"] .search-header {
+  background: #your-search-header-background;
+  border-bottom: 1px solid #your-border-color;
+}
+
+[data-theme="your-theme-name"] .search-input {
+  background: #your-input-background;
+  border: 1px solid #your-border-color;
+  color: #your-input-text-color;
+}
+
+[data-theme="your-theme-name"] .search-result-item {
+  background: #your-result-item-background;
+  border: 1px solid #your-border-color;
+}
+
+[data-theme="your-theme-name"] .search-result-item:hover {
+  background: #your-result-item-hover-background;
+}
+
+/* Preferences */
+[data-theme="your-theme-name"] .preferences-container {
+  background: #your-preferences-background;
+  color: #your-text-color;
+}
+
+[data-theme="your-theme-name"] .preferences-header {
+  background: #your-preferences-header-background;
+  border-bottom: 1px solid #your-border-color;
+}
+
+[data-theme="your-theme-name"] .preferences-section {
+  background: #your-preferences-section-background;
+  border: 1px solid #your-border-color;
+}
+
+[data-theme="your-theme-name"] .preference-item input,
+[data-theme="your-theme-name"] .preference-item select {
+  background: #your-input-background;
+  border: 1px solid #your-border-color;
+  color: #your-input-text-color;
+}
+
+[data-theme="your-theme-name"] .preference-item input:focus,
+[data-theme="your-theme-name"] .preference-item select:focus {
+  border-color: #your-focus-border-color;
+}
+
+/* Tags */
+[data-theme="your-theme-name"] .tag,
+[data-theme="your-theme-name"] .viewer-tag,
+[data-theme="your-theme-name"] .modal-tag {
+  background: #your-tag-background;
+  color: #your-tag-text-color;
+  border: 1px solid #your-tag-border-color;
+}
+
+/* Journal List */
+[data-theme="your-theme-name"] .journal-list {
+  background: #your-journal-list-background;
+  border-right: 1px solid #your-border-color;
+}
+
+[data-theme="your-theme-name"] .journal-list-header {
+  background: #your-journal-list-header-background;
+  border-bottom: 1px solid #your-border-color;
+}
+
+/* Loading and Empty States */
+[data-theme="your-theme-name"] .calendar-loading,
+[data-theme="your-theme-name"] .timeline-loading,
+[data-theme="your-theme-name"] .journal-list-loading {
+  color: #your-loading-text-color;
+}
+
+[data-theme="your-theme-name"] .viewer-empty,
+[data-theme="your-theme-name"] .journal-list-empty {
+  color: #your-empty-text-color;
+}
+
+/* Additional Components - Add styling for:
+   - Calendar info panel
+   - Filter tags
+   - Bulk edit controls
+   - Time range badges
+   - Linked entries
+   - About page
+   - Loading screen
+   - Global timeline minimap
+   - All other UI elements
+*/
+

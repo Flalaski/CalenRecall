@@ -1,0 +1,1711 @@
+/**
+ * Ocean Theme
+ * Cool blue ocean theme
+ */
+
+[data-theme="ocean"] body {
+  background: #001f3f;
+  color: #e0f2f7;
+}
+
+[data-theme="ocean"] .app {
+  background: #001f3f;
+}
+
+[data-theme="ocean"] .navigation-bar {
+  background: #003d6b;
+  border-bottom: 2px solid #005a9e;
+}
+
+[data-theme="ocean"] .nav-button {
+  background: #003d6b;
+  border: 1px solid #005a9e;
+  color: #b3e5fc;
+}
+
+[data-theme="ocean"] .nav-button:hover {
+  background: #004d7b;
+  border-color: #006aae;
+}
+
+[data-theme="ocean"] .timeline-cell {
+  background: #003355;
+  border: 1px solid #005a9e;
+  color: #b3e5fc;
+}
+
+[data-theme="ocean"] .timeline-cell:hover {
+  background: #004365;
+}
+
+[data-theme="ocean"] .timeline-cell.today {
+  background: #0277bd;
+  color: #ffffff;
+  border: 2px solid #039be5;
+}
+
+[data-theme="ocean"] .week-entry-group {
+  background: #003355;
+  border: 1px solid #005a9e;
+}
+
+[data-theme="ocean"] {
+  font-family: 'Segoe UI', 'Arial', sans-serif;
+  font-size: 14px;
+}
+
+[data-theme="ocean"] .app-content {
+  background: #001f3f;
+  gap: 2px;
+}
+
+[data-theme="ocean"] .timeline-section {
+  background: #001f3f;
+}
+
+[data-theme="ocean"] .editor-section {
+  background: #001f3f;
+  border-left: 2px solid #005a9e;
+}
+
+/* Navigation Bar - Additional */
+[data-theme="ocean"] .navigation-bar-top-row {
+  background: #003d6b;
+  border-bottom: 2px solid #005a9e;
+}
+
+[data-theme="ocean"] .nav-controls {
+  background: transparent;
+}
+
+[data-theme="ocean"] .today-button {
+  background: #003d6b;
+  border: 1px solid #005a9e;
+  color: #b3e5fc;
+}
+
+[data-theme="ocean"] .today-button:hover {
+  background: #004d7b;
+  border-color: #006aae;
+}
+
+[data-theme="ocean"] .view-mode-selector {
+  background: transparent;
+}
+
+[data-theme="ocean"] .view-mode-button {
+  background: #003d6b;
+  border: 1px solid #005a9e;
+  color: #b3e5fc;
+}
+
+[data-theme="ocean"] .view-mode-button:hover {
+  background: #004d7b;
+  border-color: #006aae;
+}
+
+[data-theme="ocean"] .view-mode-button.active {
+  background: #0277bd;
+  color: #ffffff;
+  border-color: #039be5;
+}
+
+[data-theme="ocean"] .date-label {
+  color: #b3e5fc;
+}
+
+[data-theme="ocean"] .calendar-selector {
+  background: #003d6b;
+}
+
+[data-theme="ocean"] .calendar-select {
+  background: #003355;
+  border: 1px solid #005a9e;
+  color: #b3e5fc;
+}
+
+[data-theme="ocean"] .calendar-select:focus {
+  border-color: #039be5;
+  outline: 2px solid #039be5;
+}
+
+[data-theme="ocean"] .calendar-info-panel {
+  background: #003355;
+  border: 1px solid #005a9e;
+  color: #b3e5fc;
+}
+
+[data-theme="ocean"] .calendar-definition-toggle {
+  background: #003d6b;
+  border: 1px solid #005a9e;
+  color: #b3e5fc;
+}
+
+[data-theme="ocean"] .calendar-definition-toggle:hover {
+  background: #004d7b;
+  border-color: #006aae;
+}
+
+[data-theme="ocean"] .calendar-definition-drawer {
+  background: #003355;
+  border: 1px solid #005a9e;
+  color: #b3e5fc;
+}
+
+/* Calendar View */
+[data-theme="ocean"] .calendar-loading {
+  background: #001f3f;
+  color: #b3e5fc;
+}
+
+[data-theme="ocean"] .calendar-grid {
+  background: #001f3f;
+  border: 2px solid #005a9e;
+}
+
+[data-theme="ocean"] .calendar-cell {
+  background: #003355;
+  border: 1px solid #005a9e;
+  color: #b3e5fc;
+}
+
+[data-theme="ocean"] .calendar-cell:hover {
+  background: #004365;
+  border-color: #006aae;
+}
+
+[data-theme="ocean"] .calendar-cell.empty-cell {
+  background: #001f3f;
+  border: 1px solid #003355;
+  cursor: default;
+}
+
+[data-theme="ocean"] .calendar-cell.today {
+  background: #0277bd;
+  color: #ffffff;
+  border: 2px solid #039be5;
+}
+
+[data-theme="ocean"] .calendar-cell.selected {
+  background: #0277bd;
+  color: #ffffff;
+  border: 2px solid #039be5;
+}
+
+[data-theme="ocean"] .calendar-cell.has-entry {
+  background: #003355;
+  border: 2px solid #039be5;
+}
+
+[data-theme="ocean"] .calendar-cell.has-entry.today {
+  background: #0277bd;
+  color: #ffffff;
+}
+
+[data-theme="ocean"] .cell-content {
+  color: inherit;
+}
+
+[data-theme="ocean"] .cell-label {
+  color: inherit;
+}
+
+[data-theme="ocean"] .entry-indicator {
+  background: #039be5;
+  border: 1px solid #0277bd;
+}
+
+[data-theme="ocean"] .weekday-header {
+  background: #003d6b;
+  border-bottom: 2px solid #005a9e;
+  color: #b3e5fc;
+}
+
+[data-theme="ocean"] .weekday-cell {
+  background: #003d6b;
+  border: 1px solid #005a9e;
+  color: #b3e5fc;
+}
+
+[data-theme="ocean"] .day-number {
+  color: inherit;
+}
+
+[data-theme="ocean"] .day-name {
+  color: inherit;
+}
+
+[data-theme="ocean"] .day-month {
+  color: inherit;
+}
+
+/* Timeline View - Additional */
+[data-theme="ocean"] .timeline-loading {
+  background: #001f3f;
+  color: #b3e5fc;
+}
+
+[data-theme="ocean"] .timeline-month-view,
+[data-theme="ocean"] .timeline-week-view {
+  background: #001f3f;
+}
+
+[data-theme="ocean"] .month-view-content {
+  background: #001f3f;
+}
+
+[data-theme="ocean"] .month-calendar-section {
+  background: #001f3f;
+}
+
+[data-theme="ocean"] .month-week-entries-section {
+  background: #001f3f;
+  border-left: 2px solid #005a9e;
+}
+
+[data-theme="ocean"] .timeline-grid {
+  background: #001f3f;
+  border: 2px solid #005a9e;
+}
+
+[data-theme="ocean"] .week-entries-header {
+  background: #003d6b;
+  border-bottom: 2px solid #005a9e;
+  color: #b3e5fc;
+}
+
+[data-theme="ocean"] .week-entries-list {
+  background: #001f3f;
+}
+
+[data-theme="ocean"] .week-entry-group-header {
+  background: #003355;
+  border-bottom: 1px solid #005a9e;
+}
+
+[data-theme="ocean"] .week-label {
+  color: #b3e5fc;
+}
+
+[data-theme="ocean"] .week-entry-count {
+  background: #0277bd;
+  color: #ffffff;
+  border: 1px solid #039be5;
+}
+
+[data-theme="ocean"] .week-entry-items {
+  background: transparent;
+}
+
+[data-theme="ocean"] .week-entry-item {
+  background: #003355;
+  border: 1px solid #005a9e;
+  color: #b3e5fc;
+}
+
+[data-theme="ocean"] .week-entry-item:hover {
+  background: #004365;
+  border-color: #006aae;
+}
+
+[data-theme="ocean"] .week-entry-title {
+  color: inherit;
+}
+
+[data-theme="ocean"] .week-entry-empty {
+  color: #5a7c9e;
+  font-style: italic;
+}
+
+/* Entry Viewer - Additional */
+[data-theme="ocean"] .entry-viewer {
+  background: #001f3f;
+  color: #b3e5fc;
+}
+
+[data-theme="ocean"] .viewer-header {
+  background: #003d6b;
+  border-bottom: 2px solid #005a9e;
+}
+
+[data-theme="ocean"] .header-top {
+  background: transparent;
+}
+
+[data-theme="ocean"] .viewer-header h3,
+[data-theme="ocean"] .editor-header h3 {
+  color: #b3e5fc;
+}
+
+[data-theme="ocean"] .header-actions {
+  background: transparent;
+}
+
+[data-theme="ocean"] .edit-button,
+[data-theme="ocean"] .duplicate-button {
+  background: #003d6b;
+  border: 1px solid #005a9e;
+  color: #b3e5fc;
+}
+
+[data-theme="ocean"] .edit-button:hover,
+[data-theme="ocean"] .duplicate-button:hover {
+  background: #004d7b;
+  border-color: #006aae;
+}
+
+[data-theme="ocean"] .new-entry-button-header {
+  background: #0277bd;
+  border: 1px solid #039be5;
+  color: #ffffff;
+}
+
+[data-theme="ocean"] .new-entry-button-header:hover {
+  background: #039be5;
+  border-color: #03a9f4;
+}
+
+[data-theme="ocean"] .time-range-badge-viewer {
+  background: #003355;
+  border: 1px solid #005a9e;
+  color: #b3e5fc;
+}
+
+[data-theme="ocean"] .entry-date-display {
+  color: #b3e5fc;
+}
+
+[data-theme="ocean"] .viewer-content {
+  background: #003355;
+  color: #b3e5fc;
+}
+
+[data-theme="ocean"] .viewer-title {
+  color: #b3e5fc;
+  border-bottom: 2px solid #005a9e;
+}
+
+[data-theme="ocean"] .viewer-text {
+  color: #b3e5fc;
+}
+
+[data-theme="ocean"] .viewer-tags {
+  background: transparent;
+  border-top: 1px solid #005a9e;
+}
+
+[data-theme="ocean"] .viewer-tag {
+  background: #003d6b;
+  border: 1px solid #005a9e;
+  color: #b3e5fc;
+}
+
+[data-theme="ocean"] .viewer-linked-entries {
+  background: transparent;
+  border-top: 1px solid #005a9e;
+}
+
+[data-theme="ocean"] .viewer-linked-entries h4 {
+  color: #b3e5fc;
+}
+
+[data-theme="ocean"] .linked-entries-list {
+  background: transparent;
+}
+
+[data-theme="ocean"] .linked-entry-item {
+  background: #003355;
+  border: 1px solid #005a9e;
+  color: #b3e5fc;
+}
+
+[data-theme="ocean"] .linked-entry-item:hover {
+  background: #004365;
+  border-color: #006aae;
+}
+
+[data-theme="ocean"] .linked-entry-title {
+  color: inherit;
+}
+
+[data-theme="ocean"] .linked-entry-meta {
+  color: inherit;
+}
+
+[data-theme="ocean"] .linked-entry-date {
+  color: inherit;
+}
+
+[data-theme="ocean"] .linked-entry-time-range {
+  background: #003355;
+  border: 1px solid #005a9e;
+  color: #b3e5fc;
+}
+
+[data-theme="ocean"] .viewer-empty {
+  background: #001f3f;
+  color: #5a7c9e;
+  font-style: italic;
+}
+
+[data-theme="ocean"] .viewer-loading {
+  background: #001f3f;
+  color: #b3e5fc;
+}
+
+[data-theme="ocean"] .period-entries-controls {
+  background: #003d6b;
+  border-bottom: 2px solid #005a9e;
+}
+
+[data-theme="ocean"] .period-entries-filter,
+[data-theme="ocean"] .period-entries-sort {
+  background: transparent;
+}
+
+[data-theme="ocean"] .period-entries-filter label,
+[data-theme="ocean"] .period-entries-sort label {
+  color: #b3e5fc;
+}
+
+[data-theme="ocean"] .period-entries-tags {
+  background: transparent;
+}
+
+[data-theme="ocean"] .period-entry-filter-tag {
+  background: #003355;
+  border: 1px solid #005a9e;
+  color: #b3e5fc;
+}
+
+[data-theme="ocean"] .period-entry-filter-tag:hover {
+  background: #004365;
+  border-color: #006aae;
+}
+
+[data-theme="ocean"] .period-entry-filter-tag.active {
+  background: #0277bd;
+  color: #ffffff;
+  border-color: #039be5;
+}
+
+[data-theme="ocean"] .period-entry-clear-filters {
+  background: #003d6b;
+  border: 1px solid #005a9e;
+  color: #b3e5fc;
+}
+
+[data-theme="ocean"] .period-entry-clear-filters:hover {
+  background: #004d7b;
+  border-color: #006aae;
+}
+
+[data-theme="ocean"] .period-entries-sort select {
+  background: #003355;
+  border: 1px solid #005a9e;
+  color: #b3e5fc;
+}
+
+[data-theme="ocean"] .period-entries-sort select:focus {
+  border-color: #039be5;
+  outline: 2px solid #039be5;
+}
+
+[data-theme="ocean"] .period-entries-list {
+  background: transparent;
+}
+
+[data-theme="ocean"] .period-entry-item {
+  background: #003355;
+  border: 1px solid #005a9e;
+  color: #b3e5fc;
+}
+
+[data-theme="ocean"] .period-entry-item:hover {
+  background: #004365;
+  border-color: #006aae;
+}
+
+[data-theme="ocean"] .period-entry-header {
+  background: transparent;
+}
+
+[data-theme="ocean"] .period-entry-title-row {
+  background: transparent;
+}
+
+[data-theme="ocean"] .period-entry-title {
+  color: inherit;
+}
+
+[data-theme="ocean"] .period-entry-actions {
+  background: transparent;
+}
+
+[data-theme="ocean"] .period-entry-edit-button {
+  background: #003d6b;
+  border: 1px solid #005a9e;
+  color: #b3e5fc;
+}
+
+[data-theme="ocean"] .period-entry-edit-button:hover {
+  background: #004d7b;
+  border-color: #006aae;
+}
+
+[data-theme="ocean"] .period-entry-badge {
+  background: #0277bd;
+  color: #ffffff;
+  border: 1px solid #039be5;
+}
+
+[data-theme="ocean"] .period-entry-meta {
+  background: transparent;
+}
+
+[data-theme="ocean"] .period-entry-date {
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-color: #039be5;
+}
+
+[data-theme="ocean"] .period-entry-content {
+  color: inherit;
+}
+
+[data-theme="ocean"] .period-entry-content-wrapper {
+  background: transparent;
+}
+
+[data-theme="ocean"] .period-entry-tags {
+  background: transparent;
+  border-top: 1px solid #005a9e;
+}
+
+[data-theme="ocean"] .period-entry-tag {
+  background: #003d6b;
+  border: 1px solid #005a9e;
+  color: #b3e5fc;
+}
+
+/* Journal Editor - Additional */
+[data-theme="ocean"] .journal-editor-inline {
+  background: #001f3f;
+}
+
+[data-theme="ocean"] .journal-editor {
+  background: #001f3f;
+  color: #b3e5fc;
+}
+
+[data-theme="ocean"] .editor-loading {
+  background: #001f3f;
+  color: #b3e5fc;
+}
+
+[data-theme="ocean"] .editor-header {
+  background: #003d6b;
+  border-bottom: 2px solid #005a9e;
+}
+
+[data-theme="ocean"] .editor-content {
+  background: #003355;
+  color: #b3e5fc;
+}
+
+[data-theme="ocean"] .view-mode-message {
+  background: #001f3f;
+  color: #5a7c9e;
+  font-style: italic;
+}
+
+[data-theme="ocean"] .title-input {
+  background: #003355;
+  border: 1px solid #005a9e;
+  color: #b3e5fc;
+}
+
+[data-theme="ocean"] .title-input:focus {
+  border-color: #039be5;
+  outline: 2px solid #039be5;
+}
+
+[data-theme="ocean"] .content-input {
+  background: #003355;
+  border: 1px solid #005a9e;
+  color: #b3e5fc;
+}
+
+[data-theme="ocean"] .content-input:focus {
+  border-color: #039be5;
+  outline: 2px solid #039be5;
+}
+
+[data-theme="ocean"] .tags-section {
+  background: transparent;
+}
+
+[data-theme="ocean"] .tags-input-container {
+  background: transparent;
+}
+
+[data-theme="ocean"] .tag-input {
+  background: #003355;
+  border: 1px solid #005a9e;
+  color: #b3e5fc;
+}
+
+[data-theme="ocean"] .tag-input:focus {
+  border-color: #039be5;
+  outline: 2px solid #039be5;
+}
+
+[data-theme="ocean"] .add-tag-button {
+  background: #0277bd;
+  border: 1px solid #039be5;
+  color: #ffffff;
+}
+
+[data-theme="ocean"] .add-tag-button:hover {
+  background: #039be5;
+  border-color: #03a9f4;
+}
+
+[data-theme="ocean"] .tags-list {
+  background: transparent;
+}
+
+[data-theme="ocean"] .tag {
+  background: #003d6b;
+  border: 1px solid #005a9e;
+  color: #b3e5fc;
+}
+
+[data-theme="ocean"] .tag-remove {
+  background: transparent;
+  border: none;
+  color: #b3e5fc;
+}
+
+[data-theme="ocean"] .tag-remove:hover {
+  background: #004d7b;
+  color: #b3e5fc;
+}
+
+[data-theme="ocean"] .editor-footer {
+  background: #003d6b;
+  border-top: 2px solid #005a9e;
+}
+
+[data-theme="ocean"] .footer-actions {
+  background: transparent;
+}
+
+[data-theme="ocean"] .cancel-button {
+  background: #003d6b;
+  border: 1px solid #005a9e;
+  color: #b3e5fc;
+}
+
+[data-theme="ocean"] .cancel-button:hover {
+  background: #004d7b;
+  border-color: #006aae;
+}
+
+[data-theme="ocean"] .delete-button {
+  background: #6b003d;
+  border: 1px solid #9e005a;
+  color: #fcb3e5;
+}
+
+[data-theme="ocean"] .delete-button:hover {
+  background: #7b004d;
+  border-color: #ae006a;
+}
+
+[data-theme="ocean"] .save-button {
+  background: #0277bd;
+  border: 1px solid #039be5;
+  color: #ffffff;
+}
+
+[data-theme="ocean"] .save-button:hover:not(:disabled) {
+  background: #039be5;
+  border-color: #03a9f4;
+}
+
+[data-theme="ocean"] .save-button:disabled {
+  background: #003355;
+  color: #5a7c9e;
+  border: 1px solid #005a9e;
+  cursor: not-allowed;
+}
+
+[data-theme="ocean"] .confirm-dialog-overlay {
+  background: rgba(0, 31, 63, 0.9);
+}
+
+[data-theme="ocean"] .confirm-dialog {
+  background: #003355;
+  border: 2px solid #005a9e;
+  color: #b3e5fc;
+}
+
+[data-theme="ocean"] .confirm-dialog-buttons {
+  background: transparent;
+}
+
+/* Journal List - Additional */
+[data-theme="ocean"] .journal-list {
+  background: #001f3f;
+  border-right: 2px solid #005a9e;
+}
+
+[data-theme="ocean"] .journal-list-loading {
+  background: #001f3f;
+  color: #b3e5fc;
+}
+
+[data-theme="ocean"] .journal-list-header {
+  background: #003d6b;
+  border-bottom: 2px solid #005a9e;
+}
+
+[data-theme="ocean"] .journal-list-header h3 {
+  color: #b3e5fc;
+}
+
+[data-theme="ocean"] .journal-list-header-actions {
+  background: transparent;
+}
+
+[data-theme="ocean"] .new-entry-button {
+  background: #0277bd;
+  border: 1px solid #039be5;
+  color: #ffffff;
+}
+
+[data-theme="ocean"] .new-entry-button:hover {
+  background: #039be5;
+  border-color: #03a9f4;
+}
+
+[data-theme="ocean"] .bulk-edit-toggle-button {
+  background: #003d6b;
+  border: 1px solid #005a9e;
+  color: #b3e5fc;
+}
+
+[data-theme="ocean"] .bulk-edit-toggle-button:hover {
+  background: #004d7b;
+  border-color: #006aae;
+}
+
+[data-theme="ocean"] .bulk-edit-toggle-button.active {
+  background: #ff9800;
+  color: #001f3f;
+  border-color: #ffb74d;
+}
+
+[data-theme="ocean"] .journal-list-content {
+  background: #001f3f;
+}
+
+[data-theme="ocean"] .journal-list-controls {
+  background: #003d6b;
+  border-bottom: 2px solid #005a9e;
+}
+
+[data-theme="ocean"] .journal-list-filter,
+[data-theme="ocean"] .journal-list-sort {
+  background: transparent;
+}
+
+[data-theme="ocean"] .journal-list-filter label,
+[data-theme="ocean"] .journal-list-sort label {
+  color: #b3e5fc;
+}
+
+[data-theme="ocean"] .journal-list-tags {
+  background: transparent;
+}
+
+[data-theme="ocean"] .journal-entry-filter-tag {
+  background: #003355;
+  border: 1px solid #005a9e;
+  color: #b3e5fc;
+}
+
+[data-theme="ocean"] .journal-entry-filter-tag:hover {
+  background: #004365;
+  border-color: #006aae;
+}
+
+[data-theme="ocean"] .journal-entry-filter-tag.active {
+  background: #0277bd;
+  color: #ffffff;
+  border-color: #039be5;
+}
+
+[data-theme="ocean"] .journal-entry-clear-filters {
+  background: #003d6b;
+  border: 1px solid #005a9e;
+  color: #b3e5fc;
+}
+
+[data-theme="ocean"] .journal-entry-clear-filters:hover {
+  background: #004d7b;
+  border-color: #006aae;
+}
+
+[data-theme="ocean"] .journal-list-sort select {
+  background: #003355;
+  border: 1px solid #005a9e;
+  color: #b3e5fc;
+}
+
+[data-theme="ocean"] .journal-list-sort select:focus {
+  border-color: #039be5;
+  outline: 2px solid #039be5;
+}
+
+[data-theme="ocean"] .journal-list-empty {
+  background: #001f3f;
+  color: #5a7c9e;
+  font-style: italic;
+}
+
+[data-theme="ocean"] .journal-entries {
+  background: transparent;
+}
+
+[data-theme="ocean"] .journal-entry-item {
+  background: #003355;
+  border: 1px solid #005a9e;
+  color: #b3e5fc;
+}
+
+[data-theme="ocean"] .journal-entry-item:hover {
+  background: #004365;
+  border-color: #006aae;
+}
+
+[data-theme="ocean"] .journal-entry-item.selected {
+  background: #0277bd;
+  color: #ffffff;
+  border-color: #039be5;
+}
+
+[data-theme="ocean"] .journal-entry-item.bulk-edit-mode {
+  background: #003355;
+}
+
+[data-theme="ocean"] .journal-entry-item.bulk-selected {
+  background: #ff9800;
+  color: #001f3f;
+  border-color: #ffb74d;
+}
+
+[data-theme="ocean"] .entry-item-header {
+  background: transparent;
+}
+
+[data-theme="ocean"] .entry-item-title {
+  color: inherit;
+}
+
+[data-theme="ocean"] .entry-item-meta {
+  background: transparent;
+}
+
+[data-theme="ocean"] .entry-time-range {
+  background: #003355;
+  border: 1px solid #005a9e;
+  color: #b3e5fc;
+}
+
+[data-theme="ocean"] .entry-date {
+  color: inherit;
+}
+
+[data-theme="ocean"] .entry-item-preview {
+  color: inherit;
+}
+
+[data-theme="ocean"] .entry-item-tags {
+  background: transparent;
+}
+
+[data-theme="ocean"] .entry-tag {
+  background: #003d6b;
+  border: 1px solid #005a9e;
+  color: #b3e5fc;
+}
+
+[data-theme="ocean"] .entry-item-content {
+  background: transparent;
+}
+
+[data-theme="ocean"] .entry-checkbox-wrapper {
+  background: transparent;
+}
+
+[data-theme="ocean"] .entry-checkbox-wrapper input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  border: 1px solid #005a9e;
+  background: #003355;
+  accent-color: #0277bd;
+}
+
+[data-theme="ocean"] .bulk-edit-actions {
+  background: #ff9800;
+  border-bottom: 2px solid #ffb74d;
+}
+
+[data-theme="ocean"] .bulk-edit-selected-count {
+  color: #001f3f;
+}
+
+[data-theme="ocean"] .bulk-delete-button {
+  background: #6b003d;
+  border: 1px solid #9e005a;
+  color: #fcb3e5;
+}
+
+[data-theme="ocean"] .bulk-delete-button:hover {
+  background: #7b004d;
+  border-color: #ae006a;
+}
+
+[data-theme="ocean"] .bulk-edit-select-all {
+  background: #003d6b;
+  border-bottom: 2px solid #005a9e;
+}
+
+[data-theme="ocean"] .bulk-edit-checkbox-label {
+  color: #b3e5fc;
+}
+
+/* Entry Edit Modal */
+[data-theme="ocean"] .entry-edit-modal-overlay {
+  background: rgba(0, 31, 63, 0.9);
+}
+
+[data-theme="ocean"] .entry-edit-modal {
+  background: #003355;
+  border: 2px solid #005a9e;
+  color: #b3e5fc;
+}
+
+[data-theme="ocean"] .modal-header {
+  background: #003d6b;
+  border-bottom: 2px solid #005a9e;
+}
+
+[data-theme="ocean"] .modal-header-top {
+  background: transparent;
+}
+
+[data-theme="ocean"] .modal-header-top h3 {
+  color: #b3e5fc;
+}
+
+[data-theme="ocean"] .modal-close-button {
+  background: #003d6b;
+  border: 1px solid #005a9e;
+  color: #b3e5fc;
+}
+
+[data-theme="ocean"] .modal-close-button:hover {
+  background: #004d7b;
+  border-color: #006aae;
+}
+
+[data-theme="ocean"] .modal-entry-meta {
+  background: transparent;
+}
+
+[data-theme="ocean"] .modal-entry-meta small {
+  color: #5a7c9e;
+}
+
+[data-theme="ocean"] .modal-content {
+  background: #003355;
+  color: #b3e5fc;
+}
+
+[data-theme="ocean"] .modal-title-input {
+  background: #003355;
+  border: 1px solid #005a9e;
+  color: #b3e5fc;
+}
+
+[data-theme="ocean"] .modal-title-input:focus {
+  border-color: #039be5;
+  outline: 2px solid #039be5;
+}
+
+[data-theme="ocean"] .modal-content-input {
+  background: #003355;
+  border: 1px solid #005a9e;
+  color: #b3e5fc;
+}
+
+[data-theme="ocean"] .modal-content-input:focus {
+  border-color: #039be5;
+  outline: 2px solid #039be5;
+}
+
+[data-theme="ocean"] .modal-tags-section {
+  background: transparent;
+}
+
+[data-theme="ocean"] .modal-tags-input-container {
+  background: transparent;
+}
+
+[data-theme="ocean"] .modal-tag-input {
+  background: #003355;
+  border: 1px solid #005a9e;
+  color: #b3e5fc;
+}
+
+[data-theme="ocean"] .modal-tag-input:focus {
+  border-color: #039be5;
+  outline: 2px solid #039be5;
+}
+
+[data-theme="ocean"] .modal-add-tag-button {
+  background: #0277bd;
+  border: 1px solid #039be5;
+  color: #ffffff;
+}
+
+[data-theme="ocean"] .modal-add-tag-button:hover {
+  background: #039be5;
+  border-color: #03a9f4;
+}
+
+[data-theme="ocean"] .modal-tags-list {
+  background: transparent;
+}
+
+[data-theme="ocean"] .modal-tag {
+  background: #003d6b;
+  border: 1px solid #005a9e;
+  color: #b3e5fc;
+}
+
+[data-theme="ocean"] .modal-tag-remove {
+  background: transparent;
+  border: none;
+  color: #b3e5fc;
+}
+
+[data-theme="ocean"] .modal-tag-remove:hover {
+  background: #004d7b;
+  color: #b3e5fc;
+}
+
+[data-theme="ocean"] .modal-footer {
+  background: #003d6b;
+  border-top: 2px solid #005a9e;
+}
+
+[data-theme="ocean"] .modal-duplicate-button {
+  background: #003d6b;
+  border: 1px solid #005a9e;
+  color: #b3e5fc;
+}
+
+[data-theme="ocean"] .modal-duplicate-button:hover {
+  background: #004d7b;
+  border-color: #006aae;
+}
+
+[data-theme="ocean"] .modal-delete-button {
+  background: #6b003d;
+  border: 1px solid #9e005a;
+  color: #fcb3e5;
+}
+
+[data-theme="ocean"] .modal-delete-button:hover {
+  background: #7b004d;
+  border-color: #ae006a;
+}
+
+[data-theme="ocean"] .modal-footer-actions {
+  background: transparent;
+}
+
+[data-theme="ocean"] .modal-cancel-button {
+  background: #003d6b;
+  border: 1px solid #005a9e;
+  color: #b3e5fc;
+}
+
+[data-theme="ocean"] .modal-cancel-button:hover {
+  background: #004d7b;
+  border-color: #006aae;
+}
+
+[data-theme="ocean"] .modal-save-button {
+  background: #0277bd;
+  border: 1px solid #039be5;
+  color: #ffffff;
+}
+
+[data-theme="ocean"] .modal-save-button:hover:not(:disabled) {
+  background: #039be5;
+  border-color: #03a9f4;
+}
+
+[data-theme="ocean"] .modal-save-button:disabled {
+  background: #003355;
+  color: #5a7c9e;
+  border: 1px solid #005a9e;
+  cursor: not-allowed;
+}
+
+/* Search View */
+[data-theme="ocean"] .search-view {
+  background: #001f3f;
+  color: #b3e5fc;
+}
+
+[data-theme="ocean"] .search-header {
+  background: #003d6b;
+  border-bottom: 2px solid #005a9e;
+}
+
+[data-theme="ocean"] .search-input-container {
+  background: transparent;
+}
+
+[data-theme="ocean"] .search-input {
+  background: #003355;
+  border: 1px solid #005a9e;
+  color: #b3e5fc;
+}
+
+[data-theme="ocean"] .search-input:focus {
+  border-color: #039be5;
+  outline: 2px solid #039be5;
+}
+
+[data-theme="ocean"] .search-filters-toggle {
+  background: #003d6b;
+  border: 1px solid #005a9e;
+  color: #b3e5fc;
+}
+
+[data-theme="ocean"] .search-filters-toggle:hover {
+  background: #004d7b;
+  border-color: #006aae;
+}
+
+[data-theme="ocean"] .search-close-button {
+  background: #003d6b;
+  border: 1px solid #005a9e;
+  color: #b3e5fc;
+}
+
+[data-theme="ocean"] .search-close-button:hover {
+  background: #004d7b;
+  border-color: #006aae;
+}
+
+[data-theme="ocean"] .search-filters {
+  background: #003d6b;
+  border-bottom: 2px solid #005a9e;
+}
+
+[data-theme="ocean"] .filter-group {
+  background: transparent;
+}
+
+[data-theme="ocean"] .filter-group label {
+  color: #b3e5fc;
+}
+
+[data-theme="ocean"] .filter-tags {
+  background: transparent;
+}
+
+[data-theme="ocean"] .filter-tag {
+  background: #003355;
+  border: 1px solid #005a9e;
+  color: #b3e5fc;
+}
+
+[data-theme="ocean"] .filter-tag:hover {
+  background: #004365;
+  border-color: #006aae;
+}
+
+[data-theme="ocean"] .filter-tag.active {
+  background: #0277bd;
+  color: #ffffff;
+  border-color: #039be5;
+}
+
+[data-theme="ocean"] .filter-empty {
+  color: #5a7c9e;
+  font-style: italic;
+}
+
+[data-theme="ocean"] .filter-time-ranges {
+  background: transparent;
+}
+
+[data-theme="ocean"] .filter-time-range {
+  background: #003355;
+  border: 1px solid #005a9e;
+  color: #b3e5fc;
+}
+
+[data-theme="ocean"] .filter-time-range:hover {
+  background: #004365;
+  border-color: #006aae;
+}
+
+[data-theme="ocean"] .filter-time-range.active {
+  background: #0277bd;
+  color: #ffffff;
+  border-color: #039be5;
+}
+
+[data-theme="ocean"] .filter-date-range {
+  background: transparent;
+}
+
+[data-theme="ocean"] .filter-date-range input {
+  background: #003355;
+  border: 1px solid #005a9e;
+  color: #b3e5fc;
+}
+
+[data-theme="ocean"] .filter-date-range input:focus {
+  border-color: #039be5;
+  outline: 2px solid #039be5;
+}
+
+[data-theme="ocean"] .filter-sort {
+  background: transparent;
+}
+
+[data-theme="ocean"] .filter-sort select {
+  background: #003355;
+  border: 1px solid #005a9e;
+  color: #b3e5fc;
+}
+
+[data-theme="ocean"] .filter-sort select:focus {
+  border-color: #039be5;
+  outline: 2px solid #039be5;
+}
+
+[data-theme="ocean"] .clear-filters-button {
+  background: #003d6b;
+  border: 1px solid #005a9e;
+  color: #b3e5fc;
+}
+
+[data-theme="ocean"] .clear-filters-button:hover {
+  background: #004d7b;
+  border-color: #006aae;
+}
+
+[data-theme="ocean"] .search-results {
+  background: #001f3f;
+  color: #b3e5fc;
+}
+
+[data-theme="ocean"] .search-loading,
+[data-theme="ocean"] .search-empty {
+  background: #001f3f;
+  color: #5a7c9e;
+  font-style: italic;
+}
+
+[data-theme="ocean"] .search-results-count {
+  color: #b3e5fc;
+}
+
+[data-theme="ocean"] .search-results-list {
+  background: transparent;
+}
+
+[data-theme="ocean"] .search-result-item {
+  background: #003355;
+  border: 1px solid #005a9e;
+  color: #b3e5fc;
+}
+
+[data-theme="ocean"] .search-result-item:hover {
+  background: #004365;
+  border-color: #006aae;
+}
+
+[data-theme="ocean"] .result-item-header {
+  background: transparent;
+}
+
+[data-theme="ocean"] .result-item-title {
+  color: inherit;
+}
+
+[data-theme="ocean"] .result-item-meta {
+  background: transparent;
+}
+
+[data-theme="ocean"] .result-time-range-badge {
+  background: #0277bd;
+  color: #ffffff;
+  border: 1px solid #039be5;
+}
+
+[data-theme="ocean"] .result-date {
+  color: inherit;
+}
+
+[data-theme="ocean"] .result-item-content {
+  color: inherit;
+}
+
+[data-theme="ocean"] .result-item-tags {
+  background: transparent;
+}
+
+[data-theme="ocean"] .result-tag {
+  background: #003d6b;
+  border: 1px solid #005a9e;
+  color: #b3e5fc;
+}
+
+/* Preferences */
+[data-theme="ocean"] .preferences-container {
+  background: #001f3f;
+  color: #b3e5fc;
+}
+
+[data-theme="ocean"] .preferences-loading {
+  background: #001f3f;
+  color: #b3e5fc;
+}
+
+[data-theme="ocean"] .preferences-header {
+  background: #003d6b;
+  border-bottom: 2px solid #005a9e;
+}
+
+[data-theme="ocean"] .preferences-header h1 {
+  color: #b3e5fc;
+}
+
+[data-theme="ocean"] .preferences-actions {
+  background: transparent;
+}
+
+[data-theme="ocean"] .preferences-button {
+  background: #003d6b;
+  border: 1px solid #005a9e;
+  color: #b3e5fc;
+}
+
+[data-theme="ocean"] .preferences-button:hover {
+  background: #004d7b;
+  border-color: #006aae;
+}
+
+[data-theme="ocean"] .preferences-content {
+  background: #001f3f;
+}
+
+[data-theme="ocean"] .preferences-section {
+  background: #003355;
+  border: 2px solid #005a9e;
+}
+
+[data-theme="ocean"] .preferences-section h2 {
+  color: #b3e5fc;
+  border-bottom: 2px solid #005a9e;
+}
+
+[data-theme="ocean"] .preference-item {
+  background: transparent;
+}
+
+[data-theme="ocean"] .preference-item label {
+  color: #b3e5fc;
+}
+
+[data-theme="ocean"] .preference-item input[type="text"],
+[data-theme="ocean"] .preference-item input[type="number"],
+[data-theme="ocean"] .preference-item select {
+  background: #003355;
+  border: 1px solid #005a9e;
+  color: #b3e5fc;
+}
+
+[data-theme="ocean"] .preference-item input[type="text"]:focus,
+[data-theme="ocean"] .preference-item input[type="number"]:focus,
+[data-theme="ocean"] .preference-item select:focus {
+  border-color: #039be5;
+  outline: 2px solid #039be5;
+}
+
+[data-theme="ocean"] .preference-item input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  border: 1px solid #005a9e;
+  background: #003355;
+  accent-color: #0277bd;
+}
+
+[data-theme="ocean"] .preference-item small {
+  color: #5a7c9e;
+}
+
+[data-theme="ocean"] .preference-note {
+  background: #004365;
+  border-left: 3px solid #039be5;
+  color: #b3e5fc;
+}
+
+[data-theme="ocean"] .auto-save-indicator {
+  color: #039be5;
+}
+
+[data-theme="ocean"] .export-toolbar {
+  background: transparent;
+}
+
+[data-theme="ocean"] .export-controls {
+  background: transparent;
+}
+
+[data-theme="ocean"] .export-controls select {
+  background: #003355;
+  border: 1px solid #005a9e;
+  color: #b3e5fc;
+}
+
+[data-theme="ocean"] .export-controls select:focus {
+  border-color: #039be5;
+  outline: 2px solid #039be5;
+}
+
+[data-theme="ocean"] .about-section {
+  background: #003355;
+  border: 1px solid #005a9e;
+  color: #b3e5fc;
+}
+
+[data-theme="ocean"] .about-section a {
+  color: #039be5;
+  text-decoration: underline;
+}
+
+[data-theme="ocean"] .about-section a:hover {
+  color: #03a9f4;
+}
+
+/* About Page */
+[data-theme="ocean"] .about-container {
+  background: #001f3f;
+  color: #b3e5fc;
+}
+
+[data-theme="ocean"] .about-content {
+  background: #003355;
+  border: 2px solid #005a9e;
+  color: #b3e5fc;
+}
+
+[data-theme="ocean"] .about-header {
+  background: transparent;
+  border-bottom: 2px solid #005a9e;
+}
+
+[data-theme="ocean"] .about-icon {
+  border: 2px solid #005a9e;
+}
+
+[data-theme="ocean"] .about-title-section h1 {
+  color: #b3e5fc;
+}
+
+[data-theme="ocean"] .about-description {
+  color: #b3e5fc;
+}
+
+[data-theme="ocean"] .about-section {
+  background: transparent;
+  border-top: 1px solid #005a9e;
+}
+
+[data-theme="ocean"] .about-version {
+  color: #b3e5fc;
+}
+
+[data-theme="ocean"] .about-note {
+  color: #5a7c9e;
+}
+
+[data-theme="ocean"] .about-credits h2 {
+  color: #b3e5fc;
+}
+
+[data-theme="ocean"] .about-credits p {
+  color: #b3e5fc;
+}
+
+[data-theme="ocean"] .about-link {
+  color: #039be5;
+  text-decoration: underline;
+}
+
+[data-theme="ocean"] .about-link:hover {
+  color: #03a9f4;
+}
+
+[data-theme="ocean"] .about-credits-detailed {
+  background: transparent;
+}
+
+[data-theme="ocean"] .about-credits-detailed h2 {
+  color: #b3e5fc;
+}
+
+[data-theme="ocean"] .credits-category {
+  background: transparent;
+}
+
+[data-theme="ocean"] .credits-category h3 {
+  color: #039be5;
+}
+
+[data-theme="ocean"] .credits-category ul {
+  background: transparent;
+}
+
+[data-theme="ocean"] .credits-category li {
+  color: #b3e5fc;
+}
+
+[data-theme="ocean"] .credits-category li strong {
+  color: #b3e5fc;
+}
+
+[data-theme="ocean"] .credits-category li em {
+  color: #5a7c9e;
+}
+
+[data-theme="ocean"] .credits-category p {
+  color: #b3e5fc;
+}
+
+[data-theme="ocean"] .credits-note {
+  color: #5a7c9e;
+  font-style: italic;
+}
+
+/* Loading Screen */
+[data-theme="ocean"] .loading-screen {
+  background: #001f3f;
+  color: #b3e5fc;
+}
+
+[data-theme="ocean"] .space-background {
+  background: #000a1f;
+}
+
+[data-theme="ocean"] .loading-content {
+  background: transparent;
+  color: #b3e5fc;
+}
+
+[data-theme="ocean"] .loading-title {
+  color: #b3e5fc;
+}
+
+[data-theme="ocean"] .loading-message {
+  color: #b3e5fc;
+}
+
+[data-theme="ocean"] .loading-progress {
+  background: transparent;
+}
+
+[data-theme="ocean"] .loading-progress-bar {
+  background: #003355;
+  border: 2px solid #005a9e;
+}
+
+[data-theme="ocean"] .loading-progress-fill {
+  background: #0277bd;
+  border: 1px solid #039be5;
+}
+
+[data-theme="ocean"] .loading-progress-text {
+  color: #b3e5fc;
+}
+
+/* Global Timeline Minimap */
+[data-theme="ocean"] .global-timeline-minimap {
+  background: #003d6b;
+  border-bottom: 2px solid #005a9e;
+}
+
+[data-theme="ocean"] .minimap-container {
+  background: #001f3f;
+  border: 2px solid #005a9e;
+}
+
+[data-theme="ocean"] .radial-dial-center {
+  background: #0277bd;
+  border: 2px solid #039be5;
+}
+
+[data-theme="ocean"] .radial-arrow {
+  color: #0277bd;
+}
+
+[data-theme="ocean"] .radial-label {
+  background: #003355;
+  border: 1px solid #005a9e;
+  color: #b3e5fc;
+}
+
+[data-theme="ocean"] .timeline-path {
+  stroke: #0277bd;
+  stroke-width: 2px;
+}
+
+[data-theme="ocean"] .segment-indicator {
+  background: #005a9e;
+  border: 1px solid #039be5;
+}
+
+[data-theme="ocean"] .timeline-segment.current .segment-indicator {
+  background: #0277bd;
+  border: 2px solid #039be5;
+}
+
+[data-theme="ocean"] .segment-label {
+  background: #0277bd;
+  color: #ffffff;
+  border: 1px solid #039be5;
+}
+
+[data-theme="ocean"] .entry-indicator {
+  background: #039be5;
+  border: 1px solid #0277bd;
+}
+
+[data-theme="ocean"] .scale-label {
+  color: #b3e5fc;
+}
+

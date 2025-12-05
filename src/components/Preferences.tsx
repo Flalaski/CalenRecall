@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Preferences, ExportFormat } from '../types';
 import { playResetSound, playExportSound } from '../utils/audioUtils';
 import { CALENDAR_INFO } from '../utils/calendars/types';
+import { AVAILABLE_THEMES, applyTheme, initializeTheme } from '../utils/themes';
 import HotkeyDiagram from './HotkeyDiagram';
 import packageJson from '../../package.json';
 import './Preferences.css';
@@ -20,21 +21,30 @@ export default function PreferencesComponent() {
     loadPreferences();
     
     // Apply theme on load
-    const applyTheme = async () => {
+    const setupTheme = async () => {
       if (window.electronAPI) {
         const prefs = await window.electronAPI.getAllPreferences();
-        const theme = prefs.theme || 'light';
-        document.documentElement.setAttribute('data-theme', theme);
-        if (theme === 'auto') {
-          const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-          document.documentElement.setAttribute('data-theme', prefersDark ? 'dark' : 'light');
-        }
+        const theme = (prefs.theme || 'light') as any;
+        applyTheme(theme);
+        
+        // Initialize theme with system preference listener for 'auto' theme
+        const cleanup = initializeTheme(theme);
+        
         if (prefs.fontSize) {
           document.documentElement.setAttribute('data-font-size', prefs.fontSize);
         }
+        
+        return cleanup;
       }
+      return () => {};
     };
-    applyTheme();
+    
+    let cleanup: (() => void) | undefined;
+    setupTheme().then(fn => cleanup = fn);
+    
+    return () => {
+      if (cleanup) cleanup();
+    };
   }, []);
 
   const loadPreferences = async () => {
@@ -77,12 +87,8 @@ export default function PreferencesComponent() {
       window.electronAPI.setPreference(key, value).then(() => {
         // Apply theme and font size immediately if changed
         if (key === 'theme') {
-          const theme = value as string || 'light';
-          document.documentElement.setAttribute('data-theme', theme);
-          if (theme === 'auto') {
-            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-            document.documentElement.setAttribute('data-theme', prefersDark ? 'dark' : 'light');
-          }
+          const theme = (value as any) || 'light';
+          applyTheme(theme);
         }
         if (key === 'fontSize') {
           document.documentElement.setAttribute('data-font-size', value as string);
@@ -209,6 +215,40 @@ export default function PreferencesComponent() {
         <HotkeyDiagram />
         
         <div className="preferences-section">
+          <h2>Appearance</h2>
+          <div className="preference-item">
+            <label htmlFor="theme">Theme</label>
+            <select
+              id="theme"
+              value={preferences.theme || 'light'}
+              onChange={(e) => updatePreference('theme', e.target.value as Preferences['theme'])}
+            >
+              {AVAILABLE_THEMES.map(theme => (
+                <option key={theme.name} value={theme.name}>
+                  {theme.displayName}
+                </option>
+              ))}
+            </select>
+            <small>
+              {AVAILABLE_THEMES.find(t => t.name === (preferences.theme || 'light'))?.description || ''}
+            </small>
+          </div>
+
+          <div className="preference-item">
+            <label htmlFor="fontSize">Font Size</label>
+            <select
+              id="fontSize"
+              value={preferences.fontSize || 'medium'}
+              onChange={(e) => updatePreference('fontSize', e.target.value as Preferences['fontSize'])}
+            >
+              <option value="small">Small</option>
+              <option value="medium">Medium</option>
+              <option value="large">Large</option>
+            </select>
+          </div>
+        </div>
+
+        <div className="preferences-section">
           <h2>General</h2>
           <div className="preference-item">
             <label>
@@ -285,35 +325,6 @@ export default function PreferencesComponent() {
               <option value="4">Thursday</option>
               <option value="5">Friday</option>
               <option value="6">Saturday</option>
-            </select>
-          </div>
-        </div>
-
-        <div className="preferences-section">
-          <h2>Appearance</h2>
-          <div className="preference-item">
-            <label htmlFor="theme">Theme</label>
-            <select
-              id="theme"
-              value={preferences.theme || 'light'}
-              onChange={(e) => updatePreference('theme', e.target.value as Preferences['theme'])}
-            >
-              <option value="light">Light</option>
-              <option value="dark">Dark</option>
-              <option value="auto">Auto (System)</option>
-            </select>
-          </div>
-
-          <div className="preference-item">
-            <label htmlFor="fontSize">Font Size</label>
-            <select
-              id="fontSize"
-              value={preferences.fontSize || 'medium'}
-              onChange={(e) => updatePreference('fontSize', e.target.value as Preferences['fontSize'])}
-            >
-              <option value="small">Small</option>
-              <option value="medium">Medium</option>
-              <option value="large">Large</option>
             </select>
           </div>
         </div>

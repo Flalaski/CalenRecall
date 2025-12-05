@@ -1,0 +1,1892 @@
+/**
+ * Retro 80s Theme
+ * Vibrant 1980s retro theme
+ */
+
+[data-theme="retro80s"] body {
+  background: #000000;
+  color: #00ffff;
+}
+
+[data-theme="retro80s"] .app {
+  background: #000000;
+}
+
+[data-theme="retro80s"] .navigation-bar {
+  background: linear-gradient(135deg, #ff00ff, #00ffff);
+  border-bottom: 3px solid #ffff00;
+}
+
+[data-theme="retro80s"] .nav-button {
+  background: #ff00ff;
+  border: 2px solid #ffff00;
+  color: #ffffff;
+  text-shadow: 0 0 10px #00ffff, 0 0 20px #00ffff;
+}
+
+[data-theme="retro80s"] .nav-button:hover {
+  background: #00ffff;
+  border-color: #ff00ff;
+  box-shadow: 0 0 15px #00ffff;
+}
+
+[data-theme="retro80s"] .timeline-cell {
+  background: #1a0033;
+  border: 2px solid #ff00ff;
+  color: #00ffff;
+}
+
+[data-theme="retro80s"] .timeline-cell:hover {
+  background: #330066;
+  box-shadow: 0 0 10px #ff00ff, inset 0 0 10px #00ffff;
+}
+
+[data-theme="retro80s"] .timeline-cell.today {
+  background: linear-gradient(135deg, #ff00ff, #00ffff);
+  color: #ffffff;
+  border: 3px solid #ffff00;
+  box-shadow: 0 0 20px #ffff00;
+}
+
+[data-theme="retro80s"] .week-entry-group {
+  background: #1a0033;
+  border: 2px solid #ff00ff;
+}
+
+[data-theme="retro80s"] {
+  font-family: 'Courier New', 'Arial Black', sans-serif;
+  font-size: 14px;
+}
+
+[data-theme="retro80s"] .app-content {
+  background: #000000;
+  gap: 2px;
+}
+
+[data-theme="retro80s"] .timeline-section {
+  background: #000000;
+}
+
+[data-theme="retro80s"] .editor-section {
+  background: #000000;
+  border-left: 3px solid #ff00ff;
+}
+
+/* Navigation Bar - Additional */
+[data-theme="retro80s"] .navigation-bar-top-row {
+  background: linear-gradient(135deg, #ff00ff, #00ffff);
+  border-bottom: 3px solid #ffff00;
+}
+
+[data-theme="retro80s"] .nav-controls {
+  background: transparent;
+}
+
+[data-theme="retro80s"] .today-button {
+  background: #ff00ff;
+  border: 2px solid #ffff00;
+  color: #ffffff;
+  text-shadow: 0 0 10px #00ffff, 0 0 20px #00ffff;
+}
+
+[data-theme="retro80s"] .today-button:hover {
+  background: #00ffff;
+  border-color: #ff00ff;
+  box-shadow: 0 0 15px #00ffff;
+}
+
+[data-theme="retro80s"] .view-mode-selector {
+  background: transparent;
+}
+
+[data-theme="retro80s"] .view-mode-button {
+  background: #ff00ff;
+  border: 2px solid #ffff00;
+  color: #ffffff;
+  text-shadow: 0 0 10px #00ffff, 0 0 20px #00ffff;
+}
+
+[data-theme="retro80s"] .view-mode-button:hover {
+  background: #00ffff;
+  border-color: #ff00ff;
+  box-shadow: 0 0 15px #00ffff;
+}
+
+[data-theme="retro80s"] .view-mode-button.active {
+  background: linear-gradient(135deg, #ff00ff, #00ffff);
+  border: 3px solid #ffff00;
+  box-shadow: 0 0 20px #ffff00;
+}
+
+[data-theme="retro80s"] .date-label {
+  color: #ffffff;
+  text-shadow: 0 0 10px #00ffff, 0 0 20px #00ffff;
+}
+
+[data-theme="retro80s"] .calendar-selector {
+  background: transparent;
+}
+
+[data-theme="retro80s"] .calendar-select {
+  background: #1a0033;
+  border: 2px solid #ff00ff;
+  color: #00ffff;
+  text-shadow: 0 0 5px #00ffff;
+}
+
+[data-theme="retro80s"] .calendar-select:focus {
+  box-shadow: 0 0 15px #ff00ff, inset 0 0 10px #00ffff;
+  outline: 2px solid #ffff00;
+}
+
+[data-theme="retro80s"] .calendar-info-panel {
+  background: #1a0033;
+  border: 2px solid #ff00ff;
+  color: #00ffff;
+  text-shadow: 0 0 5px #00ffff;
+}
+
+[data-theme="retro80s"] .calendar-definition-toggle {
+  background: #ff00ff;
+  border: 2px solid #ffff00;
+  color: #ffffff;
+  text-shadow: 0 0 10px #00ffff;
+}
+
+[data-theme="retro80s"] .calendar-definition-toggle:hover {
+  background: #00ffff;
+  border-color: #ff00ff;
+  box-shadow: 0 0 15px #00ffff;
+}
+
+[data-theme="retro80s"] .calendar-definition-drawer {
+  background: #1a0033;
+  border: 2px solid #ff00ff;
+  color: #00ffff;
+  text-shadow: 0 0 5px #00ffff;
+}
+
+/* Calendar View */
+[data-theme="retro80s"] .calendar-loading {
+  background: #000000;
+  color: #00ffff;
+  text-shadow: 0 0 10px #00ffff;
+}
+
+[data-theme="retro80s"] .calendar-grid {
+  background: #000000;
+  border: 3px solid #ff00ff;
+}
+
+[data-theme="retro80s"] .calendar-cell {
+  background: #1a0033;
+  border: 2px solid #ff00ff;
+  color: #00ffff;
+  text-shadow: 0 0 5px #00ffff;
+}
+
+[data-theme="retro80s"] .calendar-cell:hover {
+  background: #330066;
+  box-shadow: 0 0 10px #ff00ff, inset 0 0 10px #00ffff;
+}
+
+[data-theme="retro80s"] .calendar-cell.empty-cell {
+  background: #000000;
+  border: 1px solid #330033;
+  cursor: default;
+}
+
+[data-theme="retro80s"] .calendar-cell.today {
+  background: linear-gradient(135deg, #ff00ff, #00ffff);
+  color: #ffffff;
+  border: 3px solid #ffff00;
+  box-shadow: 0 0 20px #ffff00;
+}
+
+[data-theme="retro80s"] .calendar-cell.selected {
+  background: linear-gradient(135deg, #ff00ff, #00ffff);
+  color: #ffffff;
+  border: 3px solid #ffff00;
+  box-shadow: 0 0 20px #ffff00;
+}
+
+[data-theme="retro80s"] .calendar-cell.has-entry {
+  background: #1a0033;
+  border: 3px solid #ffff00;
+  box-shadow: 0 0 10px #ffff00;
+}
+
+[data-theme="retro80s"] .calendar-cell.has-entry.today {
+  background: linear-gradient(135deg, #ff00ff, #00ffff);
+  box-shadow: 0 0 20px #ffff00;
+}
+
+[data-theme="retro80s"] .cell-content {
+  color: inherit;
+}
+
+[data-theme="retro80s"] .cell-label {
+  color: inherit;
+  text-shadow: 0 0 5px #00ffff;
+}
+
+[data-theme="retro80s"] .entry-indicator {
+  background: #ffff00;
+  box-shadow: 0 0 10px #ffff00;
+  border-radius: 0;
+}
+
+[data-theme="retro80s"] .weekday-header {
+  background: linear-gradient(135deg, #ff00ff, #00ffff);
+  border-bottom: 3px solid #ffff00;
+  color: #ffffff;
+  text-shadow: 0 0 10px #00ffff;
+}
+
+[data-theme="retro80s"] .weekday-cell {
+  background: linear-gradient(135deg, #ff00ff, #00ffff);
+  border: 2px solid #ffff00;
+  color: #ffffff;
+  text-shadow: 0 0 5px #00ffff;
+}
+
+[data-theme="retro80s"] .day-number {
+  color: inherit;
+  text-shadow: 0 0 5px #00ffff;
+}
+
+[data-theme="retro80s"] .day-name {
+  color: inherit;
+  text-shadow: 0 0 5px #00ffff;
+}
+
+[data-theme="retro80s"] .day-month {
+  color: inherit;
+  text-shadow: 0 0 5px #00ffff;
+}
+
+/* Timeline View - Additional */
+[data-theme="retro80s"] .timeline-loading {
+  background: #000000;
+  color: #00ffff;
+  text-shadow: 0 0 10px #00ffff;
+}
+
+[data-theme="retro80s"] .timeline-month-view,
+[data-theme="retro80s"] .timeline-week-view {
+  background: #000000;
+}
+
+[data-theme="retro80s"] .month-view-content {
+  background: #000000;
+}
+
+[data-theme="retro80s"] .month-calendar-section {
+  background: #000000;
+}
+
+[data-theme="retro80s"] .month-week-entries-section {
+  background: #000000;
+  border-left: 3px solid #ff00ff;
+}
+
+[data-theme="retro80s"] .timeline-grid {
+  background: #000000;
+  border: 3px solid #ff00ff;
+}
+
+[data-theme="retro80s"] .week-entries-header {
+  background: linear-gradient(135deg, #ff00ff, #00ffff);
+  border-bottom: 3px solid #ffff00;
+  color: #ffffff;
+  text-shadow: 0 0 10px #00ffff;
+}
+
+[data-theme="retro80s"] .week-entries-list {
+  background: #000000;
+}
+
+[data-theme="retro80s"] .week-entry-group-header {
+  background: #1a0033;
+  border-bottom: 2px solid #ff00ff;
+}
+
+[data-theme="retro80s"] .week-label {
+  color: #00ffff;
+  text-shadow: 0 0 10px #00ffff;
+}
+
+[data-theme="retro80s"] .week-entry-count {
+  background: linear-gradient(135deg, #ff00ff, #00ffff);
+  color: #ffffff;
+  border: 2px solid #ffff00;
+  text-shadow: 0 0 10px #00ffff;
+  box-shadow: 0 0 15px #ffff00;
+}
+
+[data-theme="retro80s"] .week-entry-items {
+  background: transparent;
+}
+
+[data-theme="retro80s"] .week-entry-item {
+  background: #1a0033;
+  border: 2px solid #ff00ff;
+  color: #00ffff;
+  text-shadow: 0 0 5px #00ffff;
+}
+
+[data-theme="retro80s"] .week-entry-item:hover {
+  background: #330066;
+  box-shadow: 0 0 10px #ff00ff, inset 0 0 10px #00ffff;
+}
+
+[data-theme="retro80s"] .week-entry-title {
+  color: inherit;
+  text-shadow: 0 0 5px #00ffff;
+}
+
+[data-theme="retro80s"] .week-entry-empty {
+  color: #660066;
+  font-style: italic;
+}
+
+/* Entry Viewer - Additional */
+[data-theme="retro80s"] .entry-viewer {
+  background: #000000;
+  color: #00ffff;
+}
+
+[data-theme="retro80s"] .viewer-header {
+  background: linear-gradient(135deg, #ff00ff, #00ffff);
+  border-bottom: 3px solid #ffff00;
+}
+
+[data-theme="retro80s"] .header-top {
+  background: transparent;
+}
+
+[data-theme="retro80s"] .viewer-header h3,
+[data-theme="retro80s"] .editor-header h3 {
+  color: #ffffff;
+  text-shadow: 0 0 10px #00ffff;
+}
+
+[data-theme="retro80s"] .header-actions {
+  background: transparent;
+}
+
+[data-theme="retro80s"] .edit-button,
+[data-theme="retro80s"] .duplicate-button {
+  background: #ff00ff;
+  border: 2px solid #ffff00;
+  color: #ffffff;
+  text-shadow: 0 0 10px #00ffff;
+}
+
+[data-theme="retro80s"] .edit-button:hover,
+[data-theme="retro80s"] .duplicate-button:hover {
+  background: #00ffff;
+  border-color: #ff00ff;
+  box-shadow: 0 0 15px #00ffff;
+}
+
+[data-theme="retro80s"] .new-entry-button-header {
+  background: linear-gradient(135deg, #ff00ff, #00ffff);
+  border: 3px solid #ffff00;
+  color: #ffffff;
+  text-shadow: 0 0 10px #00ffff;
+  box-shadow: 0 0 20px #ffff00;
+}
+
+[data-theme="retro80s"] .new-entry-button-header:hover {
+  box-shadow: 0 0 30px #ffff00;
+}
+
+[data-theme="retro80s"] .time-range-badge-viewer {
+  background: #1a0033;
+  border: 2px solid #ff00ff;
+  color: #00ffff;
+  text-shadow: 0 0 5px #00ffff;
+}
+
+[data-theme="retro80s"] .entry-date-display {
+  color: #00ffff;
+  text-shadow: 0 0 10px #00ffff;
+}
+
+[data-theme="retro80s"] .viewer-content {
+  background: #1a0033;
+  color: #00ffff;
+  text-shadow: 0 0 3px #00ffff;
+}
+
+[data-theme="retro80s"] .viewer-title {
+  color: #00ffff;
+  text-shadow: 0 0 10px #00ffff;
+  border-bottom: 2px solid #ff00ff;
+}
+
+[data-theme="retro80s"] .viewer-text {
+  color: #00ffff;
+  text-shadow: 0 0 3px #00ffff;
+}
+
+[data-theme="retro80s"] .viewer-tags {
+  background: transparent;
+  border-top: 2px solid #ff00ff;
+}
+
+[data-theme="retro80s"] .viewer-tag {
+  background: #ff00ff;
+  border: 2px solid #ffff00;
+  color: #ffffff;
+  text-shadow: 0 0 5px #00ffff;
+}
+
+[data-theme="retro80s"] .viewer-linked-entries {
+  background: transparent;
+  border-top: 2px solid #ff00ff;
+}
+
+[data-theme="retro80s"] .viewer-linked-entries h4 {
+  color: #00ffff;
+  text-shadow: 0 0 10px #00ffff;
+}
+
+[data-theme="retro80s"] .linked-entries-list {
+  background: transparent;
+}
+
+[data-theme="retro80s"] .linked-entry-item {
+  background: #1a0033;
+  border: 2px solid #ff00ff;
+  color: #00ffff;
+  text-shadow: 0 0 5px #00ffff;
+}
+
+[data-theme="retro80s"] .linked-entry-item:hover {
+  background: #330066;
+  box-shadow: 0 0 10px #ff00ff, inset 0 0 10px #00ffff;
+}
+
+[data-theme="retro80s"] .linked-entry-title {
+  color: inherit;
+  text-shadow: 0 0 5px #00ffff;
+}
+
+[data-theme="retro80s"] .linked-entry-meta {
+  color: inherit;
+}
+
+[data-theme="retro80s"] .linked-entry-date {
+  color: inherit;
+}
+
+[data-theme="retro80s"] .linked-entry-time-range {
+  background: #1a0033;
+  border: 2px solid #ff00ff;
+  color: #00ffff;
+  text-shadow: 0 0 5px #00ffff;
+}
+
+[data-theme="retro80s"] .viewer-empty {
+  background: #000000;
+  color: #660066;
+  font-style: italic;
+}
+
+[data-theme="retro80s"] .viewer-loading {
+  background: #000000;
+  color: #00ffff;
+  text-shadow: 0 0 10px #00ffff;
+}
+
+[data-theme="retro80s"] .period-entries-controls {
+  background: linear-gradient(135deg, #ff00ff, #00ffff);
+  border-bottom: 3px solid #ffff00;
+}
+
+[data-theme="retro80s"] .period-entries-filter,
+[data-theme="retro80s"] .period-entries-sort {
+  background: transparent;
+}
+
+[data-theme="retro80s"] .period-entries-filter label,
+[data-theme="retro80s"] .period-entries-sort label {
+  color: #ffffff;
+  text-shadow: 0 0 10px #00ffff;
+}
+
+[data-theme="retro80s"] .period-entries-tags {
+  background: transparent;
+}
+
+[data-theme="retro80s"] .period-entry-filter-tag {
+  background: #1a0033;
+  border: 2px solid #ff00ff;
+  color: #00ffff;
+  text-shadow: 0 0 5px #00ffff;
+}
+
+[data-theme="retro80s"] .period-entry-filter-tag:hover {
+  background: #330066;
+  box-shadow: 0 0 10px #ff00ff, inset 0 0 10px #00ffff;
+}
+
+[data-theme="retro80s"] .period-entry-filter-tag.active {
+  background: linear-gradient(135deg, #ff00ff, #00ffff);
+  color: #ffffff;
+  border: 3px solid #ffff00;
+  box-shadow: 0 0 15px #ffff00;
+}
+
+[data-theme="retro80s"] .period-entry-clear-filters {
+  background: #ff00ff;
+  border: 2px solid #ffff00;
+  color: #ffffff;
+  text-shadow: 0 0 10px #00ffff;
+}
+
+[data-theme="retro80s"] .period-entry-clear-filters:hover {
+  background: #00ffff;
+  border-color: #ff00ff;
+  box-shadow: 0 0 15px #00ffff;
+}
+
+[data-theme="retro80s"] .period-entries-sort select {
+  background: #1a0033;
+  border: 2px solid #ff00ff;
+  color: #00ffff;
+  text-shadow: 0 0 5px #00ffff;
+}
+
+[data-theme="retro80s"] .period-entries-sort select:focus {
+  box-shadow: 0 0 15px #ff00ff, inset 0 0 10px #00ffff;
+  outline: 2px solid #ffff00;
+}
+
+[data-theme="retro80s"] .period-entries-list {
+  background: transparent;
+}
+
+[data-theme="retro80s"] .period-entry-item {
+  background: #1a0033;
+  border: 2px solid #ff00ff;
+  color: #00ffff;
+  text-shadow: 0 0 5px #00ffff;
+}
+
+[data-theme="retro80s"] .period-entry-item:hover {
+  background: #330066;
+  box-shadow: 0 0 10px #ff00ff, inset 0 0 10px #00ffff;
+}
+
+[data-theme="retro80s"] .period-entry-header {
+  background: transparent;
+}
+
+[data-theme="retro80s"] .period-entry-title-row {
+  background: transparent;
+}
+
+[data-theme="retro80s"] .period-entry-title {
+  color: inherit;
+  text-shadow: 0 0 10px #00ffff;
+}
+
+[data-theme="retro80s"] .period-entry-actions {
+  background: transparent;
+}
+
+[data-theme="retro80s"] .period-entry-edit-button {
+  background: #ff00ff;
+  border: 2px solid #ffff00;
+  color: #ffffff;
+  text-shadow: 0 0 5px #00ffff;
+}
+
+[data-theme="retro80s"] .period-entry-edit-button:hover {
+  background: #00ffff;
+  border-color: #ff00ff;
+  box-shadow: 0 0 15px #00ffff;
+}
+
+[data-theme="retro80s"] .period-entry-badge {
+  background: linear-gradient(135deg, #ff00ff, #00ffff);
+  color: #ffffff;
+  border: 2px solid #ffff00;
+  text-shadow: 0 0 10px #00ffff;
+  box-shadow: 0 0 15px #ffff00;
+}
+
+[data-theme="retro80s"] .period-entry-meta {
+  background: transparent;
+}
+
+[data-theme="retro80s"] .period-entry-date {
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-color: #ffff00;
+}
+
+[data-theme="retro80s"] .period-entry-content {
+  color: inherit;
+  text-shadow: 0 0 3px #00ffff;
+}
+
+[data-theme="retro80s"] .period-entry-content-wrapper {
+  background: transparent;
+}
+
+[data-theme="retro80s"] .period-entry-tags {
+  background: transparent;
+  border-top: 2px solid #ff00ff;
+}
+
+[data-theme="retro80s"] .period-entry-tag {
+  background: #ff00ff;
+  border: 2px solid #ffff00;
+  color: #ffffff;
+  text-shadow: 0 0 5px #00ffff;
+}
+
+/* Journal Editor - Additional */
+[data-theme="retro80s"] .journal-editor-inline {
+  background: #000000;
+}
+
+[data-theme="retro80s"] .journal-editor {
+  background: #000000;
+  color: #00ffff;
+}
+
+[data-theme="retro80s"] .editor-loading {
+  background: #000000;
+  color: #00ffff;
+  text-shadow: 0 0 10px #00ffff;
+}
+
+[data-theme="retro80s"] .editor-header {
+  background: linear-gradient(135deg, #ff00ff, #00ffff);
+  border-bottom: 3px solid #ffff00;
+}
+
+[data-theme="retro80s"] .editor-content {
+  background: #1a0033;
+  color: #00ffff;
+  text-shadow: 0 0 3px #00ffff;
+}
+
+[data-theme="retro80s"] .view-mode-message {
+  background: #000000;
+  color: #660066;
+  font-style: italic;
+}
+
+[data-theme="retro80s"] .title-input {
+  background: #1a0033;
+  border: 2px solid #ff00ff;
+  color: #00ffff;
+  text-shadow: 0 0 3px #00ffff;
+}
+
+[data-theme="retro80s"] .title-input:focus {
+  box-shadow: 0 0 15px #ff00ff, inset 0 0 10px #00ffff;
+  outline: 2px solid #ffff00;
+}
+
+[data-theme="retro80s"] .content-input {
+  background: #1a0033;
+  border: 2px solid #ff00ff;
+  color: #00ffff;
+  text-shadow: 0 0 3px #00ffff;
+}
+
+[data-theme="retro80s"] .content-input:focus {
+  box-shadow: 0 0 15px #ff00ff, inset 0 0 10px #00ffff;
+  outline: 2px solid #ffff00;
+}
+
+[data-theme="retro80s"] .tags-section {
+  background: transparent;
+}
+
+[data-theme="retro80s"] .tags-input-container {
+  background: transparent;
+}
+
+[data-theme="retro80s"] .tag-input {
+  background: #1a0033;
+  border: 2px solid #ff00ff;
+  color: #00ffff;
+  text-shadow: 0 0 3px #00ffff;
+}
+
+[data-theme="retro80s"] .tag-input:focus {
+  box-shadow: 0 0 15px #ff00ff, inset 0 0 10px #00ffff;
+  outline: 2px solid #ffff00;
+}
+
+[data-theme="retro80s"] .add-tag-button {
+  background: #ff00ff;
+  border: 2px solid #ffff00;
+  color: #ffffff;
+  text-shadow: 0 0 10px #00ffff;
+}
+
+[data-theme="retro80s"] .add-tag-button:hover {
+  background: #00ffff;
+  border-color: #ff00ff;
+  box-shadow: 0 0 15px #00ffff;
+}
+
+[data-theme="retro80s"] .tags-list {
+  background: transparent;
+}
+
+[data-theme="retro80s"] .tag {
+  background: #ff00ff;
+  border: 2px solid #ffff00;
+  color: #ffffff;
+  text-shadow: 0 0 5px #00ffff;
+}
+
+[data-theme="retro80s"] .tag-remove {
+  background: transparent;
+  border: none;
+  color: #ffffff;
+}
+
+[data-theme="retro80s"] .tag-remove:hover {
+  background: #00ffff;
+  color: #000000;
+  box-shadow: 0 0 10px #00ffff;
+}
+
+[data-theme="retro80s"] .editor-footer {
+  background: linear-gradient(135deg, #ff00ff, #00ffff);
+  border-top: 3px solid #ffff00;
+}
+
+[data-theme="retro80s"] .footer-actions {
+  background: transparent;
+}
+
+[data-theme="retro80s"] .cancel-button {
+  background: #ff00ff;
+  border: 2px solid #ffff00;
+  color: #ffffff;
+  text-shadow: 0 0 10px #00ffff;
+}
+
+[data-theme="retro80s"] .cancel-button:hover {
+  background: #00ffff;
+  border-color: #ff00ff;
+  box-shadow: 0 0 15px #00ffff;
+}
+
+[data-theme="retro80s"] .delete-button {
+  background: #ff0000;
+  border: 2px solid #ffff00;
+  color: #ffffff;
+  text-shadow: 0 0 10px #ff0000;
+}
+
+[data-theme="retro80s"] .delete-button:hover {
+  background: #ff3333;
+  box-shadow: 0 0 15px #ff0000;
+}
+
+[data-theme="retro80s"] .save-button {
+  background: linear-gradient(135deg, #ff00ff, #00ffff);
+  border: 3px solid #ffff00;
+  color: #ffffff;
+  text-shadow: 0 0 10px #00ffff;
+  box-shadow: 0 0 20px #ffff00;
+}
+
+[data-theme="retro80s"] .save-button:hover:not(:disabled) {
+  box-shadow: 0 0 30px #ffff00;
+}
+
+[data-theme="retro80s"] .save-button:disabled {
+  background: #1a0033;
+  color: #660066;
+  border: 2px solid #330033;
+  cursor: not-allowed;
+  text-shadow: none;
+}
+
+[data-theme="retro80s"] .confirm-dialog-overlay {
+  background: rgba(0, 0, 0, 0.95);
+}
+
+[data-theme="retro80s"] .confirm-dialog {
+  background: #1a0033;
+  border: 3px solid #ff00ff;
+  color: #00ffff;
+  text-shadow: 0 0 10px #00ffff;
+  box-shadow: 0 0 30px #ff00ff;
+}
+
+[data-theme="retro80s"] .confirm-dialog-buttons {
+  background: transparent;
+}
+
+/* Journal List - Additional */
+[data-theme="retro80s"] .journal-list {
+  background: #000000;
+  border-right: 3px solid #ff00ff;
+}
+
+[data-theme="retro80s"] .journal-list-loading {
+  background: #000000;
+  color: #00ffff;
+  text-shadow: 0 0 10px #00ffff;
+}
+
+[data-theme="retro80s"] .journal-list-header {
+  background: linear-gradient(135deg, #ff00ff, #00ffff);
+  border-bottom: 3px solid #ffff00;
+}
+
+[data-theme="retro80s"] .journal-list-header h3 {
+  color: #ffffff;
+  text-shadow: 0 0 10px #00ffff;
+}
+
+[data-theme="retro80s"] .journal-list-header-actions {
+  background: transparent;
+}
+
+[data-theme="retro80s"] .new-entry-button {
+  background: linear-gradient(135deg, #ff00ff, #00ffff);
+  border: 3px solid #ffff00;
+  color: #ffffff;
+  text-shadow: 0 0 10px #00ffff;
+  box-shadow: 0 0 20px #ffff00;
+}
+
+[data-theme="retro80s"] .new-entry-button:hover {
+  box-shadow: 0 0 30px #ffff00;
+}
+
+[data-theme="retro80s"] .bulk-edit-toggle-button {
+  background: #ff00ff;
+  border: 2px solid #ffff00;
+  color: #ffffff;
+  text-shadow: 0 0 10px #00ffff;
+}
+
+[data-theme="retro80s"] .bulk-edit-toggle-button:hover {
+  background: #00ffff;
+  border-color: #ff00ff;
+  box-shadow: 0 0 15px #00ffff;
+}
+
+[data-theme="retro80s"] .bulk-edit-toggle-button.active {
+  background: linear-gradient(135deg, #ff00ff, #00ffff);
+  border: 3px solid #ffff00;
+  box-shadow: 0 0 20px #ffff00;
+}
+
+[data-theme="retro80s"] .journal-list-content {
+  background: #000000;
+}
+
+[data-theme="retro80s"] .journal-list-controls {
+  background: linear-gradient(135deg, #ff00ff, #00ffff);
+  border-bottom: 3px solid #ffff00;
+}
+
+[data-theme="retro80s"] .journal-list-filter,
+[data-theme="retro80s"] .journal-list-sort {
+  background: transparent;
+}
+
+[data-theme="retro80s"] .journal-list-filter label,
+[data-theme="retro80s"] .journal-list-sort label {
+  color: #ffffff;
+  text-shadow: 0 0 10px #00ffff;
+}
+
+[data-theme="retro80s"] .journal-list-tags {
+  background: transparent;
+}
+
+[data-theme="retro80s"] .journal-entry-filter-tag {
+  background: #1a0033;
+  border: 2px solid #ff00ff;
+  color: #00ffff;
+  text-shadow: 0 0 5px #00ffff;
+}
+
+[data-theme="retro80s"] .journal-entry-filter-tag:hover {
+  background: #330066;
+  box-shadow: 0 0 10px #ff00ff, inset 0 0 10px #00ffff;
+}
+
+[data-theme="retro80s"] .journal-entry-filter-tag.active {
+  background: linear-gradient(135deg, #ff00ff, #00ffff);
+  color: #ffffff;
+  border: 3px solid #ffff00;
+  box-shadow: 0 0 15px #ffff00;
+}
+
+[data-theme="retro80s"] .journal-entry-clear-filters {
+  background: #ff00ff;
+  border: 2px solid #ffff00;
+  color: #ffffff;
+  text-shadow: 0 0 10px #00ffff;
+}
+
+[data-theme="retro80s"] .journal-entry-clear-filters:hover {
+  background: #00ffff;
+  border-color: #ff00ff;
+  box-shadow: 0 0 15px #00ffff;
+}
+
+[data-theme="retro80s"] .journal-list-sort select {
+  background: #1a0033;
+  border: 2px solid #ff00ff;
+  color: #00ffff;
+  text-shadow: 0 0 5px #00ffff;
+}
+
+[data-theme="retro80s"] .journal-list-sort select:focus {
+  box-shadow: 0 0 15px #ff00ff, inset 0 0 10px #00ffff;
+  outline: 2px solid #ffff00;
+}
+
+[data-theme="retro80s"] .journal-list-empty {
+  background: #000000;
+  color: #660066;
+  font-style: italic;
+}
+
+[data-theme="retro80s"] .journal-entries {
+  background: transparent;
+}
+
+[data-theme="retro80s"] .journal-entry-item {
+  background: #1a0033;
+  border: 2px solid #ff00ff;
+  color: #00ffff;
+  text-shadow: 0 0 5px #00ffff;
+}
+
+[data-theme="retro80s"] .journal-entry-item:hover {
+  background: #330066;
+  box-shadow: 0 0 10px #ff00ff, inset 0 0 10px #00ffff;
+}
+
+[data-theme="retro80s"] .journal-entry-item.selected {
+  background: linear-gradient(135deg, #ff00ff, #00ffff);
+  color: #ffffff;
+  border: 3px solid #ffff00;
+  box-shadow: 0 0 20px #ffff00;
+}
+
+[data-theme="retro80s"] .journal-entry-item.bulk-edit-mode {
+  background: #1a0033;
+}
+
+[data-theme="retro80s"] .journal-entry-item.bulk-selected {
+  background: linear-gradient(135deg, #ffff00, #ff00ff);
+  color: #000000;
+  border: 3px solid #00ffff;
+  box-shadow: 0 0 20px #ffff00;
+}
+
+[data-theme="retro80s"] .entry-item-header {
+  background: transparent;
+}
+
+[data-theme="retro80s"] .entry-item-title {
+  color: inherit;
+  text-shadow: 0 0 10px #00ffff;
+}
+
+[data-theme="retro80s"] .entry-item-meta {
+  background: transparent;
+}
+
+[data-theme="retro80s"] .entry-time-range {
+  background: #1a0033;
+  border: 2px solid #ff00ff;
+  color: #00ffff;
+  text-shadow: 0 0 5px #00ffff;
+}
+
+[data-theme="retro80s"] .entry-date {
+  color: inherit;
+}
+
+[data-theme="retro80s"] .entry-item-preview {
+  color: inherit;
+  text-shadow: 0 0 3px #00ffff;
+}
+
+[data-theme="retro80s"] .entry-item-tags {
+  background: transparent;
+}
+
+[data-theme="retro80s"] .entry-tag {
+  background: #ff00ff;
+  border: 2px solid #ffff00;
+  color: #ffffff;
+  text-shadow: 0 0 5px #00ffff;
+}
+
+[data-theme="retro80s"] .entry-item-content {
+  background: transparent;
+}
+
+[data-theme="retro80s"] .entry-checkbox-wrapper {
+  background: transparent;
+}
+
+[data-theme="retro80s"] .entry-checkbox-wrapper input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  border: 2px solid #ff00ff;
+  background: #1a0033;
+  accent-color: #ffff00;
+}
+
+[data-theme="retro80s"] .bulk-edit-actions {
+  background: linear-gradient(135deg, #ffff00, #ff00ff);
+  border-bottom: 3px solid #00ffff;
+  box-shadow: 0 0 20px #ffff00;
+}
+
+[data-theme="retro80s"] .bulk-edit-selected-count {
+  color: #000000;
+  text-shadow: 0 0 5px #00ffff;
+}
+
+[data-theme="retro80s"] .bulk-delete-button {
+  background: #ff0000;
+  border: 2px solid #ffff00;
+  color: #ffffff;
+  text-shadow: 0 0 10px #ff0000;
+}
+
+[data-theme="retro80s"] .bulk-delete-button:hover {
+  background: #ff3333;
+  box-shadow: 0 0 15px #ff0000;
+}
+
+[data-theme="retro80s"] .bulk-edit-select-all {
+  background: linear-gradient(135deg, #ff00ff, #00ffff);
+  border-bottom: 3px solid #ffff00;
+}
+
+[data-theme="retro80s"] .bulk-edit-checkbox-label {
+  color: #ffffff;
+  text-shadow: 0 0 5px #00ffff;
+}
+
+/* Entry Edit Modal */
+[data-theme="retro80s"] .entry-edit-modal-overlay {
+  background: rgba(0, 0, 0, 0.95);
+}
+
+[data-theme="retro80s"] .entry-edit-modal {
+  background: #1a0033;
+  border: 3px solid #ff00ff;
+  color: #00ffff;
+  box-shadow: 0 0 30px #ff00ff;
+}
+
+[data-theme="retro80s"] .modal-header {
+  background: linear-gradient(135deg, #ff00ff, #00ffff);
+  border-bottom: 3px solid #ffff00;
+}
+
+[data-theme="retro80s"] .modal-header-top {
+  background: transparent;
+}
+
+[data-theme="retro80s"] .modal-header-top h3 {
+  color: #ffffff;
+  text-shadow: 0 0 10px #00ffff;
+}
+
+[data-theme="retro80s"] .modal-close-button {
+  background: #ff00ff;
+  border: 2px solid #ffff00;
+  color: #ffffff;
+  text-shadow: 0 0 10px #00ffff;
+}
+
+[data-theme="retro80s"] .modal-close-button:hover {
+  background: #00ffff;
+  border-color: #ff00ff;
+  box-shadow: 0 0 15px #00ffff;
+}
+
+[data-theme="retro80s"] .modal-entry-meta {
+  background: transparent;
+}
+
+[data-theme="retro80s"] .modal-entry-meta small {
+  color: #660066;
+}
+
+[data-theme="retro80s"] .modal-content {
+  background: #1a0033;
+  color: #00ffff;
+  text-shadow: 0 0 3px #00ffff;
+}
+
+[data-theme="retro80s"] .modal-title-input {
+  background: #1a0033;
+  border: 2px solid #ff00ff;
+  color: #00ffff;
+  text-shadow: 0 0 3px #00ffff;
+}
+
+[data-theme="retro80s"] .modal-title-input:focus {
+  box-shadow: 0 0 15px #ff00ff, inset 0 0 10px #00ffff;
+  outline: 2px solid #ffff00;
+}
+
+[data-theme="retro80s"] .modal-content-input {
+  background: #1a0033;
+  border: 2px solid #ff00ff;
+  color: #00ffff;
+  text-shadow: 0 0 3px #00ffff;
+}
+
+[data-theme="retro80s"] .modal-content-input:focus {
+  box-shadow: 0 0 15px #ff00ff, inset 0 0 10px #00ffff;
+  outline: 2px solid #ffff00;
+}
+
+[data-theme="retro80s"] .modal-tags-section {
+  background: transparent;
+}
+
+[data-theme="retro80s"] .modal-tags-input-container {
+  background: transparent;
+}
+
+[data-theme="retro80s"] .modal-tag-input {
+  background: #1a0033;
+  border: 2px solid #ff00ff;
+  color: #00ffff;
+  text-shadow: 0 0 3px #00ffff;
+}
+
+[data-theme="retro80s"] .modal-tag-input:focus {
+  box-shadow: 0 0 15px #ff00ff, inset 0 0 10px #00ffff;
+  outline: 2px solid #ffff00;
+}
+
+[data-theme="retro80s"] .modal-add-tag-button {
+  background: #ff00ff;
+  border: 2px solid #ffff00;
+  color: #ffffff;
+  text-shadow: 0 0 10px #00ffff;
+}
+
+[data-theme="retro80s"] .modal-add-tag-button:hover {
+  background: #00ffff;
+  border-color: #ff00ff;
+  box-shadow: 0 0 15px #00ffff;
+}
+
+[data-theme="retro80s"] .modal-tags-list {
+  background: transparent;
+}
+
+[data-theme="retro80s"] .modal-tag {
+  background: #ff00ff;
+  border: 2px solid #ffff00;
+  color: #ffffff;
+  text-shadow: 0 0 5px #00ffff;
+}
+
+[data-theme="retro80s"] .modal-tag-remove {
+  background: transparent;
+  border: none;
+  color: #ffffff;
+}
+
+[data-theme="retro80s"] .modal-tag-remove:hover {
+  background: #00ffff;
+  color: #000000;
+  box-shadow: 0 0 10px #00ffff;
+}
+
+[data-theme="retro80s"] .modal-footer {
+  background: linear-gradient(135deg, #ff00ff, #00ffff);
+  border-top: 3px solid #ffff00;
+}
+
+[data-theme="retro80s"] .modal-duplicate-button {
+  background: #ff00ff;
+  border: 2px solid #ffff00;
+  color: #ffffff;
+  text-shadow: 0 0 10px #00ffff;
+}
+
+[data-theme="retro80s"] .modal-duplicate-button:hover {
+  background: #00ffff;
+  border-color: #ff00ff;
+  box-shadow: 0 0 15px #00ffff;
+}
+
+[data-theme="retro80s"] .modal-delete-button {
+  background: #ff0000;
+  border: 2px solid #ffff00;
+  color: #ffffff;
+  text-shadow: 0 0 10px #ff0000;
+}
+
+[data-theme="retro80s"] .modal-delete-button:hover {
+  background: #ff3333;
+  box-shadow: 0 0 15px #ff0000;
+}
+
+[data-theme="retro80s"] .modal-footer-actions {
+  background: transparent;
+}
+
+[data-theme="retro80s"] .modal-cancel-button {
+  background: #ff00ff;
+  border: 2px solid #ffff00;
+  color: #ffffff;
+  text-shadow: 0 0 10px #00ffff;
+}
+
+[data-theme="retro80s"] .modal-cancel-button:hover {
+  background: #00ffff;
+  border-color: #ff00ff;
+  box-shadow: 0 0 15px #00ffff;
+}
+
+[data-theme="retro80s"] .modal-save-button {
+  background: linear-gradient(135deg, #ff00ff, #00ffff);
+  border: 3px solid #ffff00;
+  color: #ffffff;
+  text-shadow: 0 0 10px #00ffff;
+  box-shadow: 0 0 20px #ffff00;
+}
+
+[data-theme="retro80s"] .modal-save-button:hover:not(:disabled) {
+  box-shadow: 0 0 30px #ffff00;
+}
+
+[data-theme="retro80s"] .modal-save-button:disabled {
+  background: #1a0033;
+  color: #660066;
+  border: 2px solid #330033;
+  cursor: not-allowed;
+  text-shadow: none;
+}
+
+/* Search View */
+[data-theme="retro80s"] .search-view {
+  background: #000000;
+  color: #00ffff;
+}
+
+[data-theme="retro80s"] .search-header {
+  background: linear-gradient(135deg, #ff00ff, #00ffff);
+  border-bottom: 3px solid #ffff00;
+}
+
+[data-theme="retro80s"] .search-input-container {
+  background: transparent;
+}
+
+[data-theme="retro80s"] .search-input {
+  background: #1a0033;
+  border: 2px solid #ff00ff;
+  color: #00ffff;
+  text-shadow: 0 0 3px #00ffff;
+}
+
+[data-theme="retro80s"] .search-input:focus {
+  box-shadow: 0 0 15px #ff00ff, inset 0 0 10px #00ffff;
+  outline: 2px solid #ffff00;
+}
+
+[data-theme="retro80s"] .search-filters-toggle {
+  background: #ff00ff;
+  border: 2px solid #ffff00;
+  color: #ffffff;
+  text-shadow: 0 0 10px #00ffff;
+}
+
+[data-theme="retro80s"] .search-filters-toggle:hover {
+  background: #00ffff;
+  border-color: #ff00ff;
+  box-shadow: 0 0 15px #00ffff;
+}
+
+[data-theme="retro80s"] .search-close-button {
+  background: #ff00ff;
+  border: 2px solid #ffff00;
+  color: #ffffff;
+  text-shadow: 0 0 10px #00ffff;
+}
+
+[data-theme="retro80s"] .search-close-button:hover {
+  background: #00ffff;
+  border-color: #ff00ff;
+  box-shadow: 0 0 15px #00ffff;
+}
+
+[data-theme="retro80s"] .search-filters {
+  background: linear-gradient(135deg, #ff00ff, #00ffff);
+  border-bottom: 3px solid #ffff00;
+}
+
+[data-theme="retro80s"] .filter-group {
+  background: transparent;
+}
+
+[data-theme="retro80s"] .filter-group label {
+  color: #ffffff;
+  text-shadow: 0 0 10px #00ffff;
+}
+
+[data-theme="retro80s"] .filter-tags {
+  background: transparent;
+}
+
+[data-theme="retro80s"] .filter-tag {
+  background: #1a0033;
+  border: 2px solid #ff00ff;
+  color: #00ffff;
+  text-shadow: 0 0 5px #00ffff;
+}
+
+[data-theme="retro80s"] .filter-tag:hover {
+  background: #330066;
+  box-shadow: 0 0 10px #ff00ff, inset 0 0 10px #00ffff;
+}
+
+[data-theme="retro80s"] .filter-tag.active {
+  background: linear-gradient(135deg, #ff00ff, #00ffff);
+  color: #ffffff;
+  border: 3px solid #ffff00;
+  box-shadow: 0 0 15px #ffff00;
+}
+
+[data-theme="retro80s"] .filter-empty {
+  color: #660066;
+  font-style: italic;
+}
+
+[data-theme="retro80s"] .filter-time-ranges {
+  background: transparent;
+}
+
+[data-theme="retro80s"] .filter-time-range {
+  background: #1a0033;
+  border: 2px solid #ff00ff;
+  color: #00ffff;
+  text-shadow: 0 0 5px #00ffff;
+}
+
+[data-theme="retro80s"] .filter-time-range:hover {
+  background: #330066;
+  box-shadow: 0 0 10px #ff00ff, inset 0 0 10px #00ffff;
+}
+
+[data-theme="retro80s"] .filter-time-range.active {
+  background: linear-gradient(135deg, #ff00ff, #00ffff);
+  color: #ffffff;
+  border: 3px solid #ffff00;
+  box-shadow: 0 0 15px #ffff00;
+}
+
+[data-theme="retro80s"] .filter-date-range {
+  background: transparent;
+}
+
+[data-theme="retro80s"] .filter-date-range input {
+  background: #1a0033;
+  border: 2px solid #ff00ff;
+  color: #00ffff;
+  text-shadow: 0 0 3px #00ffff;
+}
+
+[data-theme="retro80s"] .filter-date-range input:focus {
+  box-shadow: 0 0 15px #ff00ff, inset 0 0 10px #00ffff;
+  outline: 2px solid #ffff00;
+}
+
+[data-theme="retro80s"] .filter-sort {
+  background: transparent;
+}
+
+[data-theme="retro80s"] .filter-sort select {
+  background: #1a0033;
+  border: 2px solid #ff00ff;
+  color: #00ffff;
+  text-shadow: 0 0 5px #00ffff;
+}
+
+[data-theme="retro80s"] .filter-sort select:focus {
+  box-shadow: 0 0 15px #ff00ff, inset 0 0 10px #00ffff;
+  outline: 2px solid #ffff00;
+}
+
+[data-theme="retro80s"] .clear-filters-button {
+  background: #ff00ff;
+  border: 2px solid #ffff00;
+  color: #ffffff;
+  text-shadow: 0 0 10px #00ffff;
+}
+
+[data-theme="retro80s"] .clear-filters-button:hover {
+  background: #00ffff;
+  border-color: #ff00ff;
+  box-shadow: 0 0 15px #00ffff;
+}
+
+[data-theme="retro80s"] .search-results {
+  background: #000000;
+  color: #00ffff;
+}
+
+[data-theme="retro80s"] .search-loading,
+[data-theme="retro80s"] .search-empty {
+  background: #000000;
+  color: #660066;
+  font-style: italic;
+}
+
+[data-theme="retro80s"] .search-results-count {
+  color: #00ffff;
+  text-shadow: 0 0 10px #00ffff;
+}
+
+[data-theme="retro80s"] .search-results-list {
+  background: transparent;
+}
+
+[data-theme="retro80s"] .search-result-item {
+  background: #1a0033;
+  border: 2px solid #ff00ff;
+  color: #00ffff;
+  text-shadow: 0 0 5px #00ffff;
+}
+
+[data-theme="retro80s"] .search-result-item:hover {
+  background: #330066;
+  box-shadow: 0 0 10px #ff00ff, inset 0 0 10px #00ffff;
+}
+
+[data-theme="retro80s"] .result-item-header {
+  background: transparent;
+}
+
+[data-theme="retro80s"] .result-item-title {
+  color: inherit;
+  text-shadow: 0 0 10px #00ffff;
+}
+
+[data-theme="retro80s"] .result-item-meta {
+  background: transparent;
+}
+
+[data-theme="retro80s"] .result-time-range-badge {
+  background: linear-gradient(135deg, #ff00ff, #00ffff);
+  color: #ffffff;
+  border: 2px solid #ffff00;
+  text-shadow: 0 0 10px #00ffff;
+  box-shadow: 0 0 15px #ffff00;
+}
+
+[data-theme="retro80s"] .result-date {
+  color: inherit;
+}
+
+[data-theme="retro80s"] .result-item-content {
+  color: inherit;
+  text-shadow: 0 0 3px #00ffff;
+}
+
+[data-theme="retro80s"] .result-item-tags {
+  background: transparent;
+}
+
+[data-theme="retro80s"] .result-tag {
+  background: #ff00ff;
+  border: 2px solid #ffff00;
+  color: #ffffff;
+  text-shadow: 0 0 5px #00ffff;
+}
+
+/* Preferences */
+[data-theme="retro80s"] .preferences-container {
+  background: #000000;
+  color: #00ffff;
+}
+
+[data-theme="retro80s"] .preferences-loading {
+  background: #000000;
+  color: #00ffff;
+  text-shadow: 0 0 10px #00ffff;
+}
+
+[data-theme="retro80s"] .preferences-header {
+  background: linear-gradient(135deg, #ff00ff, #00ffff);
+  border-bottom: 3px solid #ffff00;
+}
+
+[data-theme="retro80s"] .preferences-header h1 {
+  color: #ffffff;
+  text-shadow: 0 0 10px #00ffff;
+}
+
+[data-theme="retro80s"] .preferences-actions {
+  background: transparent;
+}
+
+[data-theme="retro80s"] .preferences-button {
+  background: #ff00ff;
+  border: 2px solid #ffff00;
+  color: #ffffff;
+  text-shadow: 0 0 10px #00ffff;
+}
+
+[data-theme="retro80s"] .preferences-button:hover {
+  background: #00ffff;
+  border-color: #ff00ff;
+  box-shadow: 0 0 15px #00ffff;
+}
+
+[data-theme="retro80s"] .preferences-content {
+  background: #000000;
+}
+
+[data-theme="retro80s"] .preferences-section {
+  background: #1a0033;
+  border: 3px solid #ff00ff;
+}
+
+[data-theme="retro80s"] .preferences-section h2 {
+  color: #00ffff;
+  text-shadow: 0 0 10px #00ffff;
+  border-bottom: 3px solid #ff00ff;
+}
+
+[data-theme="retro80s"] .preference-item {
+  background: transparent;
+}
+
+[data-theme="retro80s"] .preference-item label {
+  color: #00ffff;
+  text-shadow: 0 0 5px #00ffff;
+}
+
+[data-theme="retro80s"] .preference-item input[type="text"],
+[data-theme="retro80s"] .preference-item input[type="number"],
+[data-theme="retro80s"] .preference-item select {
+  background: #1a0033;
+  border: 2px solid #ff00ff;
+  color: #00ffff;
+  text-shadow: 0 0 3px #00ffff;
+}
+
+[data-theme="retro80s"] .preference-item input[type="text"]:focus,
+[data-theme="retro80s"] .preference-item input[type="number"]:focus,
+[data-theme="retro80s"] .preference-item select:focus {
+  box-shadow: 0 0 15px #ff00ff, inset 0 0 10px #00ffff;
+  outline: 2px solid #ffff00;
+}
+
+[data-theme="retro80s"] .preference-item input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  border: 2px solid #ff00ff;
+  background: #1a0033;
+  accent-color: #ffff00;
+}
+
+[data-theme="retro80s"] .preference-item small {
+  color: #660066;
+}
+
+[data-theme="retro80s"] .preference-note {
+  background: #330066;
+  border-left: 3px solid #ffff00;
+  color: #00ffff;
+  text-shadow: 0 0 5px #00ffff;
+}
+
+[data-theme="retro80s"] .auto-save-indicator {
+  color: #00ffff;
+  text-shadow: 0 0 10px #00ffff;
+}
+
+[data-theme="retro80s"] .export-toolbar {
+  background: transparent;
+}
+
+[data-theme="retro80s"] .export-controls {
+  background: transparent;
+}
+
+[data-theme="retro80s"] .export-controls select {
+  background: #1a0033;
+  border: 2px solid #ff00ff;
+  color: #00ffff;
+  text-shadow: 0 0 5px #00ffff;
+}
+
+[data-theme="retro80s"] .export-controls select:focus {
+  box-shadow: 0 0 15px #ff00ff, inset 0 0 10px #00ffff;
+  outline: 2px solid #ffff00;
+}
+
+[data-theme="retro80s"] .about-section {
+  background: #1a0033;
+  border: 2px solid #ff00ff;
+  color: #00ffff;
+}
+
+[data-theme="retro80s"] .about-section a {
+  color: #ffff00;
+  text-decoration: underline;
+  text-shadow: 0 0 10px #ffff00;
+}
+
+[data-theme="retro80s"] .about-section a:hover {
+  color: #00ffff;
+  text-shadow: 0 0 15px #00ffff;
+}
+
+/* About Page */
+[data-theme="retro80s"] .about-container {
+  background: #000000;
+  color: #00ffff;
+}
+
+[data-theme="retro80s"] .about-content {
+  background: #1a0033;
+  border: 3px solid #ff00ff;
+  color: #00ffff;
+  box-shadow: 0 0 30px #ff00ff;
+}
+
+[data-theme="retro80s"] .about-header {
+  background: transparent;
+  border-bottom: 3px solid #ff00ff;
+}
+
+[data-theme="retro80s"] .about-icon {
+  border: 3px solid #ff00ff;
+}
+
+[data-theme="retro80s"] .about-title-section h1 {
+  color: #00ffff;
+  text-shadow: 0 0 10px #00ffff;
+}
+
+[data-theme="retro80s"] .about-description {
+  color: #00ffff;
+  text-shadow: 0 0 5px #00ffff;
+}
+
+[data-theme="retro80s"] .about-section {
+  background: transparent;
+  border-top: 2px solid #ff00ff;
+}
+
+[data-theme="retro80s"] .about-version {
+  color: #00ffff;
+  text-shadow: 0 0 5px #00ffff;
+}
+
+[data-theme="retro80s"] .about-note {
+  color: #660066;
+}
+
+[data-theme="retro80s"] .about-credits h2 {
+  color: #00ffff;
+  text-shadow: 0 0 10px #00ffff;
+}
+
+[data-theme="retro80s"] .about-credits p {
+  color: #00ffff;
+  text-shadow: 0 0 5px #00ffff;
+}
+
+[data-theme="retro80s"] .about-link {
+  color: #ffff00;
+  text-decoration: underline;
+  text-shadow: 0 0 10px #ffff00;
+}
+
+[data-theme="retro80s"] .about-link:hover {
+  color: #00ffff;
+  text-shadow: 0 0 15px #00ffff;
+}
+
+[data-theme="retro80s"] .about-credits-detailed {
+  background: transparent;
+}
+
+[data-theme="retro80s"] .about-credits-detailed h2 {
+  color: #00ffff;
+  text-shadow: 0 0 10px #00ffff;
+}
+
+[data-theme="retro80s"] .credits-category {
+  background: transparent;
+}
+
+[data-theme="retro80s"] .credits-category h3 {
+  color: #ffff00;
+  text-shadow: 0 0 10px #ffff00;
+}
+
+[data-theme="retro80s"] .credits-category ul {
+  background: transparent;
+}
+
+[data-theme="retro80s"] .credits-category li {
+  color: #00ffff;
+  text-shadow: 0 0 5px #00ffff;
+}
+
+[data-theme="retro80s"] .credits-category li strong {
+  color: #00ffff;
+  text-shadow: 0 0 10px #00ffff;
+}
+
+[data-theme="retro80s"] .credits-category li em {
+  color: #660066;
+  font-style: italic;
+}
+
+[data-theme="retro80s"] .credits-category p {
+  color: #00ffff;
+  text-shadow: 0 0 5px #00ffff;
+}
+
+[data-theme="retro80s"] .credits-note {
+  color: #660066;
+  font-style: italic;
+}
+
+/* Loading Screen */
+[data-theme="retro80s"] .loading-screen {
+  background: #000000;
+  color: #00ffff;
+}
+
+[data-theme="retro80s"] .space-background {
+  background: #000000;
+}
+
+[data-theme="retro80s"] .loading-content {
+  background: transparent;
+  color: #00ffff;
+}
+
+[data-theme="retro80s"] .loading-title {
+  color: #00ffff;
+  text-shadow: 0 0 20px #00ffff, 0 0 40px #00ffff;
+}
+
+[data-theme="retro80s"] .loading-message {
+  color: #00ffff;
+  text-shadow: 0 0 10px #00ffff;
+}
+
+[data-theme="retro80s"] .loading-progress {
+  background: transparent;
+}
+
+[data-theme="retro80s"] .loading-progress-bar {
+  background: #1a0033;
+  border: 3px solid #ff00ff;
+  box-shadow: 0 0 20px #ff00ff;
+}
+
+[data-theme="retro80s"] .loading-progress-fill {
+  background: linear-gradient(135deg, #ff00ff, #00ffff);
+  box-shadow: 0 0 20px #ffff00;
+}
+
+[data-theme="retro80s"] .loading-progress-text {
+  color: #00ffff;
+  text-shadow: 0 0 10px #00ffff;
+}
+
+/* Global Timeline Minimap */
+[data-theme="retro80s"] .global-timeline-minimap {
+  background: linear-gradient(135deg, #ff00ff, #00ffff);
+  border-bottom: 3px solid #ffff00;
+}
+
+[data-theme="retro80s"] .minimap-container {
+  background: #000000;
+  border: 3px solid #ff00ff;
+}
+
+[data-theme="retro80s"] .radial-dial-center {
+  background: linear-gradient(135deg, #ff00ff, #00ffff);
+  border: 3px solid #ffff00;
+  box-shadow: 0 0 30px #ffff00;
+}
+
+[data-theme="retro80s"] .radial-arrow {
+  color: #ffff00;
+  text-shadow: 0 0 20px #ffff00;
+}
+
+[data-theme="retro80s"] .radial-label {
+  background: #1a0033;
+  border: 2px solid #ff00ff;
+  color: #00ffff;
+  text-shadow: 0 0 10px #00ffff;
+  box-shadow: 0 0 15px #ff00ff;
+}
+
+[data-theme="retro80s"] .timeline-path {
+  stroke: #ffff00;
+  stroke-width: 3px;
+  filter: drop-shadow(0 0 10px #ffff00);
+}
+
+[data-theme="retro80s"] .segment-indicator {
+  background: #ff00ff;
+  border: 2px solid #ffff00;
+  box-shadow: 0 0 15px #ff00ff;
+}
+
+[data-theme="retro80s"] .timeline-segment.current .segment-indicator {
+  background: linear-gradient(135deg, #ff00ff, #00ffff);
+  border: 3px solid #ffff00;
+  box-shadow: 0 0 30px #ffff00;
+}
+
+[data-theme="retro80s"] .segment-label {
+  background: linear-gradient(135deg, #ff00ff, #00ffff);
+  color: #ffffff;
+  border: 2px solid #ffff00;
+  text-shadow: 0 0 10px #00ffff;
+  box-shadow: 0 0 20px #ffff00;
+}
+
+[data-theme="retro80s"] .entry-indicator {
+  background: #ffff00;
+  border: 2px solid #ff00ff;
+  box-shadow: 0 0 15px #ffff00;
+}
+
+[data-theme="retro80s"] .scale-label {
+  color: #00ffff;
+  text-shadow: 0 0 10px #00ffff;
+}
+

@@ -1,0 +1,2050 @@
+/**
+ * Classic Light Theme
+ * Classic Windows 95 aesthetic with beveled borders
+ */
+
+[data-theme="classic-light"] {
+  font-family: 'MS Sans Serif', 'MS Sans Serif 8pt', sans-serif;
+  font-size: 11px;
+}
+
+[data-theme="classic-light"] body {
+  background: #c0c0c0;
+  color: #000000;
+}
+
+[data-theme="classic-light"] .app {
+  background: #c0c0c0;
+}
+
+[data-theme="classic-light"] .app-content {
+  background: #c0c0c0;
+  gap: 2px;
+}
+
+[data-theme="classic-light"] .timeline-section {
+  background: #c0c0c0;
+}
+
+[data-theme="classic-light"] .editor-section {
+  background: #c0c0c0;
+  border-left: 2px solid #808080;
+}
+
+/* Navigation Bar */
+[data-theme="classic-light"] .navigation-bar {
+  background: #c0c0c0;
+  border-bottom: 2px outset #c0c0c0;
+  box-shadow: none;
+}
+
+[data-theme="classic-light"] .nav-button,
+[data-theme="classic-light"] .view-mode-button {
+  background: #c0c0c0;
+  border: 2px outset #c0c0c0;
+  border-radius: 0;
+  padding: 2px 8px;
+  font-family: 'MS Sans Serif', sans-serif;
+  font-size: 11px;
+  text-shadow: none;
+  -webkit-font-smoothing: none;
+  -moz-osx-font-smoothing: unset;
+}
+
+[data-theme="classic-light"] .nav-button:hover,
+[data-theme="classic-light"] .view-mode-button:hover {
+  background: #c0c0c0;
+  border: 2px inset #c0c0c0;
+}
+
+[data-theme="classic-light"] .nav-button:active,
+[data-theme="classic-light"] .view-mode-button:active {
+  border: 2px inset #c0c0c0;
+  background: #c0c0c0;
+}
+
+[data-theme="classic-light"] .date-label {
+  font-family: 'MS Sans Serif', sans-serif;
+  text-shadow: none;
+  color: #000000;
+}
+
+/* Timeline */
+[data-theme="classic-light"] .timeline-grid {
+  background: #c0c0c0;
+  border: 2px inset #c0c0c0;
+}
+
+[data-theme="classic-light"] .timeline-cell {
+  background: #ffffff;
+  border: 1px solid #808080;
+  border-radius: 0;
+}
+
+[data-theme="classic-light"] .timeline-cell:hover {
+  background: #e0e0e0;
+  border: 1px solid #000000;
+}
+
+[data-theme="classic-light"] .timeline-cell.today {
+  background: #000080;
+  color: #ffffff;
+  border: 2px solid #000000;
+}
+
+[data-theme="classic-light"] .weekday-header {
+  background: #c0c0c0;
+  border-bottom: 2px inset #c0c0c0;
+  color: #000000;
+  font-family: 'MS Sans Serif', sans-serif;
+  text-shadow: none;
+}
+
+/* Entry Cards */
+[data-theme="classic-light"] .week-entry-group {
+  background: #ffffff;
+  border: 2px inset #c0c0c0;
+  border-radius: 0;
+}
+
+[data-theme="classic-light"] .week-entry-item {
+  background: #c0c0c0;
+  border: 2px inset #c0c0c0;
+  border-radius: 0;
+  border-left: 2px inset #c0c0c0;
+}
+
+[data-theme="classic-light"] .week-entry-item:hover {
+  background: #e0e0e0;
+}
+
+/* Editor */
+[data-theme="classic-light"] .journal-editor,
+[data-theme="classic-light"] .entry-viewer {
+  background: #c0c0c0;
+}
+
+[data-theme="classic-light"] .editor-header,
+[data-theme="classic-light"] .viewer-header {
+  background: #c0c0c0;
+  border-bottom: 2px inset #c0c0c0;
+}
+
+[data-theme="classic-light"] .editor-form input,
+[data-theme="classic-light"] .editor-form textarea {
+  background: #ffffff;
+  border: 2px inset #c0c0c0;
+  border-radius: 0;
+  color: #000000;
+  font-family: 'MS Sans Serif', sans-serif;
+  font-size: 11px;
+}
+
+[data-theme="classic-light"] .edit-button,
+[data-theme="classic-light"] .save-button,
+[data-theme="classic-light"] .cancel-button {
+  background: #c0c0c0;
+  border: 2px outset #c0c0c0;
+  border-radius: 0;
+  font-family: 'MS Sans Serif', sans-serif;
+  font-size: 11px;
+  text-shadow: none;
+}
+
+[data-theme="classic-light"] .edit-button:hover,
+[data-theme="classic-light"] .save-button:hover {
+  border: 2px inset #c0c0c0;
+}
+
+[data-theme="classic-light"] .new-entry-button {
+  background: #c0c0c0;
+  border: 2px outset #c0c0c0;
+  border-radius: 0;
+  font-family: 'MS Sans Serif', sans-serif;
+  text-shadow: none;
+}
+
+/* Navigation Bar - Additional */
+[data-theme="classic-light"] .navigation-bar-top-row {
+  background: #c0c0c0;
+  border-bottom: 1px solid #808080;
+}
+
+[data-theme="classic-light"] .nav-controls {
+  background: transparent;
+}
+
+[data-theme="classic-light"] .today-button {
+  background: #c0c0c0;
+  border: 2px outset #c0c0c0;
+  border-radius: 0;
+  font-family: 'MS Sans Serif', sans-serif;
+  font-size: 11px;
+  text-shadow: none;
+}
+
+[data-theme="classic-light"] .today-button:hover {
+  border: 2px inset #c0c0c0;
+}
+
+[data-theme="classic-light"] .view-mode-selector {
+  background: transparent;
+}
+
+[data-theme="classic-light"] .view-mode-button.active {
+  background: #000080;
+  color: #ffffff;
+  border: 2px inset #000080;
+}
+
+[data-theme="classic-light"] .calendar-selector {
+  background: #c0c0c0;
+}
+
+[data-theme="classic-light"] .calendar-select {
+  background: #ffffff;
+  border: 2px inset #c0c0c0;
+  border-radius: 0;
+  font-family: 'MS Sans Serif', sans-serif;
+  font-size: 11px;
+  color: #000000;
+}
+
+[data-theme="classic-light"] .calendar-info-panel {
+  background: #ffffff;
+  border: 2px inset #c0c0c0;
+  border-radius: 0;
+}
+
+[data-theme="classic-light"] .calendar-definition-toggle {
+  background: #c0c0c0;
+  border: 2px outset #c0c0c0;
+  border-radius: 0;
+  font-family: 'MS Sans Serif', sans-serif;
+  font-size: 11px;
+}
+
+[data-theme="classic-light"] .calendar-definition-toggle:hover {
+  border: 2px inset #c0c0c0;
+}
+
+[data-theme="classic-light"] .calendar-definition-drawer {
+  background: #ffffff;
+  border: 2px inset #c0c0c0;
+  border-radius: 0;
+}
+
+/* Calendar View */
+[data-theme="classic-light"] .calendar-loading {
+  background: #c0c0c0;
+  color: #000000;
+}
+
+[data-theme="classic-light"] .calendar-grid {
+  background: #c0c0c0;
+  border: 2px inset #c0c0c0;
+  border-radius: 0;
+}
+
+[data-theme="classic-light"] .calendar-cell {
+  background: #ffffff;
+  border: 1px solid #808080;
+  border-radius: 0;
+  color: #000000;
+}
+
+[data-theme="classic-light"] .calendar-cell:hover {
+  background: #e0e0e0;
+  border: 1px solid #000000;
+}
+
+[data-theme="classic-light"] .calendar-cell.empty-cell {
+  background: #c0c0c0;
+  cursor: default;
+}
+
+[data-theme="classic-light"] .calendar-cell.today {
+  background: #000080;
+  color: #ffffff;
+  border: 2px solid #000000;
+}
+
+[data-theme="classic-light"] .calendar-cell.selected {
+  background: #000080;
+  color: #ffffff;
+  border: 2px solid #000000;
+}
+
+[data-theme="classic-light"] .calendar-cell.has-entry {
+  background: #ffff00;
+  border: 1px solid #808080;
+}
+
+[data-theme="classic-light"] .calendar-cell.has-entry.today {
+  background: #000080;
+  color: #ffffff;
+}
+
+[data-theme="classic-light"] .cell-content {
+  color: inherit;
+}
+
+[data-theme="classic-light"] .cell-label {
+  font-family: 'MS Sans Serif', sans-serif;
+  font-size: 11px;
+  text-shadow: none;
+  color: inherit;
+}
+
+[data-theme="classic-light"] .entry-indicator {
+  background: #000000;
+  border-radius: 0;
+}
+
+[data-theme="classic-light"] .weekday-cell {
+  background: #c0c0c0;
+  border: 1px solid #808080;
+  color: #000000;
+  font-family: 'MS Sans Serif', sans-serif;
+  text-shadow: none;
+}
+
+[data-theme="classic-light"] .day-number {
+  font-family: 'MS Sans Serif', sans-serif;
+  font-size: 11px;
+  color: inherit;
+  text-shadow: none;
+}
+
+[data-theme="classic-light"] .day-name {
+  font-family: 'MS Sans Serif', sans-serif;
+  font-size: 10px;
+  color: inherit;
+  text-shadow: none;
+}
+
+[data-theme="classic-light"] .day-month {
+  font-family: 'MS Sans Serif', sans-serif;
+  font-size: 9px;
+  color: inherit;
+  text-shadow: none;
+}
+
+/* Timeline View - Additional */
+[data-theme="classic-light"] .timeline-loading {
+  background: #c0c0c0;
+  color: #000000;
+}
+
+[data-theme="classic-light"] .timeline-month-view,
+[data-theme="classic-light"] .timeline-week-view {
+  background: #c0c0c0;
+}
+
+[data-theme="classic-light"] .month-view-content {
+  background: #c0c0c0;
+}
+
+[data-theme="classic-light"] .month-calendar-section {
+  background: #c0c0c0;
+}
+
+[data-theme="classic-light"] .month-week-entries-section {
+  background: #c0c0c0;
+  border-left: 2px solid #808080;
+}
+
+[data-theme="classic-light"] .week-entries-header {
+  background: #c0c0c0;
+  border-bottom: 2px inset #c0c0c0;
+  color: #000000;
+  font-family: 'MS Sans Serif', sans-serif;
+  text-shadow: none;
+}
+
+[data-theme="classic-light"] .week-entries-list {
+  background: #c0c0c0;
+}
+
+[data-theme="classic-light"] .week-entry-group-header {
+  background: #c0c0c0;
+  border-bottom: 1px solid #808080;
+}
+
+[data-theme="classic-light"] .week-label {
+  font-family: 'MS Sans Serif', sans-serif;
+  font-size: 11px;
+  color: #000000;
+  text-shadow: none;
+}
+
+[data-theme="classic-light"] .week-entry-count {
+  background: #000080;
+  color: #ffffff;
+  border: 1px solid #000000;
+  border-radius: 0;
+  font-family: 'MS Sans Serif', sans-serif;
+  font-size: 10px;
+}
+
+[data-theme="classic-light"] .week-entry-items {
+  background: transparent;
+}
+
+[data-theme="classic-light"] .week-entry-title {
+  font-family: 'MS Sans Serif', sans-serif;
+  font-size: 11px;
+  color: #000000;
+  text-shadow: none;
+}
+
+[data-theme="classic-light"] .week-entry-empty {
+  font-family: 'MS Sans Serif', sans-serif;
+  font-size: 10px;
+  color: #808080;
+  font-style: italic;
+}
+
+/* Entry Viewer - Additional */
+[data-theme="classic-light"] .header-top {
+  background: transparent;
+}
+
+[data-theme="classic-light"] .viewer-header h3,
+[data-theme="classic-light"] .editor-header h3 {
+  font-family: 'MS Sans Serif', sans-serif;
+  font-size: 12px;
+  color: #000000;
+  text-shadow: none;
+  font-weight: bold;
+}
+
+[data-theme="classic-light"] .header-actions {
+  background: transparent;
+}
+
+[data-theme="classic-light"] .duplicate-button {
+  background: #c0c0c0;
+  border: 2px outset #c0c0c0;
+  border-radius: 0;
+  font-family: 'MS Sans Serif', sans-serif;
+  font-size: 11px;
+  text-shadow: none;
+}
+
+[data-theme="classic-light"] .duplicate-button:hover {
+  border: 2px inset #c0c0c0;
+}
+
+[data-theme="classic-light"] .new-entry-button-header {
+  background: #c0c0c0;
+  border: 2px outset #c0c0c0;
+  border-radius: 0;
+  font-family: 'MS Sans Serif', sans-serif;
+  font-size: 11px;
+  text-shadow: none;
+}
+
+[data-theme="classic-light"] .new-entry-button-header:hover {
+  border: 2px inset #c0c0c0;
+}
+
+[data-theme="classic-light"] .time-range-badge-viewer {
+  background: #c0c0c0;
+  border: 1px solid #808080;
+  border-radius: 0;
+  color: #000000;
+  font-family: 'MS Sans Serif', sans-serif;
+  font-size: 10px;
+}
+
+[data-theme="classic-light"] .entry-date-display {
+  font-family: 'MS Sans Serif', sans-serif;
+  font-size: 11px;
+  color: #000000;
+}
+
+[data-theme="classic-light"] .viewer-content {
+  background: #ffffff;
+  color: #000000;
+}
+
+[data-theme="classic-light"] .viewer-title {
+  font-family: 'MS Sans Serif', sans-serif;
+  font-size: 14px;
+  font-weight: bold;
+  color: #000000;
+  text-shadow: none;
+  border-bottom: 1px solid #808080;
+}
+
+[data-theme="classic-light"] .viewer-text {
+  font-family: 'MS Sans Serif', sans-serif;
+  font-size: 11px;
+  color: #000000;
+  line-height: 1.4;
+}
+
+[data-theme="classic-light"] .viewer-tags {
+  background: transparent;
+  border-top: 1px solid #808080;
+}
+
+[data-theme="classic-light"] .viewer-tag {
+  background: #c0c0c0;
+  border: 1px solid #808080;
+  border-radius: 0;
+  color: #000000;
+  font-family: 'MS Sans Serif', sans-serif;
+  font-size: 10px;
+}
+
+[data-theme="classic-light"] .viewer-linked-entries {
+  background: transparent;
+  border-top: 1px solid #808080;
+}
+
+[data-theme="classic-light"] .viewer-linked-entries h4 {
+  font-family: 'MS Sans Serif', sans-serif;
+  font-size: 12px;
+  font-weight: bold;
+  color: #000000;
+  text-shadow: none;
+}
+
+[data-theme="classic-light"] .linked-entries-list {
+  background: transparent;
+}
+
+[data-theme="classic-light"] .linked-entry-item {
+  background: #ffffff;
+  border: 2px inset #c0c0c0;
+  border-radius: 0;
+  color: #000000;
+}
+
+[data-theme="classic-light"] .linked-entry-item:hover {
+  background: #e0e0e0;
+}
+
+[data-theme="classic-light"] .linked-entry-title {
+  font-family: 'MS Sans Serif', sans-serif;
+  font-size: 11px;
+  font-weight: bold;
+  color: #000000;
+  text-shadow: none;
+}
+
+[data-theme="classic-light"] .linked-entry-meta {
+  font-family: 'MS Sans Serif', sans-serif;
+  font-size: 10px;
+  color: #808080;
+}
+
+[data-theme="classic-light"] .linked-entry-date {
+  color: #000000;
+}
+
+[data-theme="classic-light"] .linked-entry-time-range {
+  background: #c0c0c0;
+  border: 1px solid #808080;
+  border-radius: 0;
+  color: #000000;
+  font-family: 'MS Sans Serif', sans-serif;
+  font-size: 9px;
+}
+
+[data-theme="classic-light"] .viewer-empty {
+  background: #c0c0c0;
+  color: #808080;
+  font-family: 'MS Sans Serif', sans-serif;
+  font-size: 11px;
+}
+
+[data-theme="classic-light"] .viewer-loading {
+  background: #c0c0c0;
+  color: #000000;
+  font-family: 'MS Sans Serif', sans-serif;
+  font-size: 11px;
+}
+
+[data-theme="classic-light"] .period-entries-controls {
+  background: #c0c0c0;
+  border-bottom: 2px inset #c0c0c0;
+}
+
+[data-theme="classic-light"] .period-entries-filter,
+[data-theme="classic-light"] .period-entries-sort {
+  background: transparent;
+}
+
+[data-theme="classic-light"] .period-entries-filter label,
+[data-theme="classic-light"] .period-entries-sort label {
+  font-family: 'MS Sans Serif', sans-serif;
+  font-size: 11px;
+  color: #000000;
+  text-shadow: none;
+  font-weight: bold;
+}
+
+[data-theme="classic-light"] .period-entries-tags {
+  background: transparent;
+}
+
+[data-theme="classic-light"] .period-entry-filter-tag {
+  background: #ffffff;
+  border: 2px inset #c0c0c0;
+  border-radius: 0;
+  color: #000000;
+  font-family: 'MS Sans Serif', sans-serif;
+  font-size: 10px;
+}
+
+[data-theme="classic-light"] .period-entry-filter-tag:hover {
+  background: #e0e0e0;
+}
+
+[data-theme="classic-light"] .period-entry-filter-tag.active {
+  background: #000080;
+  color: #ffffff;
+  border: 2px inset #000080;
+}
+
+[data-theme="classic-light"] .period-entry-clear-filters {
+  background: #c0c0c0;
+  border: 2px outset #c0c0c0;
+  border-radius: 0;
+  color: #000000;
+  font-family: 'MS Sans Serif', sans-serif;
+  font-size: 11px;
+}
+
+[data-theme="classic-light"] .period-entry-clear-filters:hover {
+  border: 2px inset #c0c0c0;
+}
+
+[data-theme="classic-light"] .period-entries-sort select {
+  background: #ffffff;
+  border: 2px inset #c0c0c0;
+  border-radius: 0;
+  color: #000000;
+  font-family: 'MS Sans Serif', sans-serif;
+  font-size: 11px;
+}
+
+[data-theme="classic-light"] .period-entries-list {
+  background: transparent;
+}
+
+[data-theme="classic-light"] .period-entry-item {
+  background: #ffffff;
+  border: 2px inset #c0c0c0;
+  border-radius: 0;
+  color: #000000;
+}
+
+[data-theme="classic-light"] .period-entry-item:hover {
+  background: #e0e0e0;
+  border: 2px solid #000000;
+}
+
+[data-theme="classic-light"] .period-entry-header {
+  background: transparent;
+}
+
+[data-theme="classic-light"] .period-entry-title-row {
+  background: transparent;
+}
+
+[data-theme="classic-light"] .period-entry-title {
+  font-family: 'MS Sans Serif', sans-serif;
+  font-size: 12px;
+  font-weight: bold;
+  color: #000000;
+  text-shadow: none;
+}
+
+[data-theme="classic-light"] .period-entry-actions {
+  background: transparent;
+}
+
+[data-theme="classic-light"] .period-entry-edit-button {
+  background: #c0c0c0;
+  border: 2px outset #c0c0c0;
+  border-radius: 0;
+  color: #000000;
+  font-family: 'MS Sans Serif', sans-serif;
+  font-size: 10px;
+}
+
+[data-theme="classic-light"] .period-entry-edit-button:hover {
+  border: 2px inset #c0c0c0;
+}
+
+[data-theme="classic-light"] .period-entry-badge {
+  background: #000080;
+  color: #ffffff;
+  border: 1px solid #000000;
+  border-radius: 0;
+  font-family: 'MS Sans Serif', sans-serif;
+  font-size: 9px;
+}
+
+[data-theme="classic-light"] .period-entry-meta {
+  background: transparent;
+}
+
+[data-theme="classic-light"] .period-entry-date {
+  font-family: 'MS Sans Serif', sans-serif;
+  font-size: 10px;
+  color: #000000;
+  text-decoration: underline;
+}
+
+[data-theme="classic-light"] .period-entry-content {
+  font-family: 'MS Sans Serif', sans-serif;
+  font-size: 11px;
+  color: #000000;
+  line-height: 1.4;
+}
+
+[data-theme="classic-light"] .period-entry-content-wrapper {
+  background: transparent;
+}
+
+[data-theme="classic-light"] .period-entry-tags {
+  background: transparent;
+  border-top: 1px solid #808080;
+}
+
+[data-theme="classic-light"] .period-entry-tag {
+  background: #c0c0c0;
+  border: 1px solid #808080;
+  border-radius: 0;
+  color: #000000;
+  font-family: 'MS Sans Serif', sans-serif;
+  font-size: 10px;
+}
+
+/* Journal Editor - Additional */
+[data-theme="classic-light"] .journal-editor-inline {
+  background: #c0c0c0;
+}
+
+[data-theme="classic-light"] .editor-loading {
+  background: #c0c0c0;
+  color: #000000;
+  font-family: 'MS Sans Serif', sans-serif;
+  font-size: 11px;
+}
+
+[data-theme="classic-light"] .editor-content {
+  background: #ffffff;
+  color: #000000;
+}
+
+[data-theme="classic-light"] .view-mode-message {
+  background: #c0c0c0;
+  color: #808080;
+  font-family: 'MS Sans Serif', sans-serif;
+  font-size: 11px;
+}
+
+[data-theme="classic-light"] .title-input {
+  background: #ffffff;
+  border: 2px inset #c0c0c0;
+  border-radius: 0;
+  color: #000000;
+  font-family: 'MS Sans Serif', sans-serif;
+  font-size: 11px;
+}
+
+[data-theme="classic-light"] .title-input:focus {
+  border: 2px inset #000080;
+  outline: none;
+}
+
+[data-theme="classic-light"] .content-input {
+  background: #ffffff;
+  border: 2px inset #c0c0c0;
+  border-radius: 0;
+  color: #000000;
+  font-family: 'MS Sans Serif', sans-serif;
+  font-size: 11px;
+}
+
+[data-theme="classic-light"] .content-input:focus {
+  border: 2px inset #000080;
+  outline: none;
+}
+
+[data-theme="classic-light"] .tags-section {
+  background: transparent;
+}
+
+[data-theme="classic-light"] .tags-input-container {
+  background: transparent;
+}
+
+[data-theme="classic-light"] .tag-input {
+  background: #ffffff;
+  border: 2px inset #c0c0c0;
+  border-radius: 0;
+  color: #000000;
+  font-family: 'MS Sans Serif', sans-serif;
+  font-size: 11px;
+}
+
+[data-theme="classic-light"] .tag-input:focus {
+  border: 2px inset #000080;
+  outline: none;
+}
+
+[data-theme="classic-light"] .add-tag-button {
+  background: #c0c0c0;
+  border: 2px outset #c0c0c0;
+  border-radius: 0;
+  color: #000000;
+  font-family: 'MS Sans Serif', sans-serif;
+  font-size: 11px;
+}
+
+[data-theme="classic-light"] .add-tag-button:hover {
+  border: 2px inset #c0c0c0;
+}
+
+[data-theme="classic-light"] .tags-list {
+  background: transparent;
+}
+
+[data-theme="classic-light"] .tag {
+  background: #c0c0c0;
+  border: 1px solid #808080;
+  border-radius: 0;
+  color: #000000;
+  font-family: 'MS Sans Serif', sans-serif;
+  font-size: 10px;
+}
+
+[data-theme="classic-light"] .tag-remove {
+  background: transparent;
+  border: none;
+  color: #000000;
+  font-family: 'MS Sans Serif', sans-serif;
+  font-size: 10px;
+}
+
+[data-theme="classic-light"] .tag-remove:hover {
+  background: #808080;
+  color: #ffffff;
+}
+
+[data-theme="classic-light"] .editor-footer {
+  background: #c0c0c0;
+  border-top: 2px inset #c0c0c0;
+}
+
+[data-theme="classic-light"] .footer-actions {
+  background: transparent;
+}
+
+[data-theme="classic-light"] .delete-button {
+  background: #c0c0c0;
+  border: 2px outset #c0c0c0;
+  border-radius: 0;
+  color: #000000;
+  font-family: 'MS Sans Serif', sans-serif;
+  font-size: 11px;
+}
+
+[data-theme="classic-light"] .delete-button:hover {
+  border: 2px inset #c0c0c0;
+  background: #ff0000;
+  color: #ffffff;
+}
+
+[data-theme="classic-light"] .save-button:disabled {
+  background: #808080;
+  color: #c0c0c0;
+  border: 2px inset #808080;
+  cursor: not-allowed;
+}
+
+[data-theme="classic-light"] .confirm-dialog-overlay {
+  background: rgba(0, 0, 0, 0.5);
+}
+
+[data-theme="classic-light"] .confirm-dialog {
+  background: #c0c0c0;
+  border: 2px outset #c0c0c0;
+  border-radius: 0;
+  color: #000000;
+  font-family: 'MS Sans Serif', sans-serif;
+  font-size: 11px;
+}
+
+[data-theme="classic-light"] .confirm-dialog-buttons {
+  background: transparent;
+}
+
+/* Journal List - Additional */
+[data-theme="classic-light"] .journal-list {
+  background: #c0c0c0;
+  border-right: 2px solid #808080;
+}
+
+[data-theme="classic-light"] .journal-list-loading {
+  background: #c0c0c0;
+  color: #000000;
+  font-family: 'MS Sans Serif', sans-serif;
+  font-size: 11px;
+}
+
+[data-theme="classic-light"] .journal-list-header {
+  background: #c0c0c0;
+  border-bottom: 2px inset #c0c0c0;
+}
+
+[data-theme="classic-light"] .journal-list-header h3 {
+  font-family: 'MS Sans Serif', sans-serif;
+  font-size: 12px;
+  font-weight: bold;
+  color: #000000;
+  text-shadow: none;
+}
+
+[data-theme="classic-light"] .journal-list-header-actions {
+  background: transparent;
+}
+
+[data-theme="classic-light"] .journal-list-content {
+  background: #c0c0c0;
+}
+
+[data-theme="classic-light"] .journal-list-controls {
+  background: #c0c0c0;
+  border-bottom: 2px inset #c0c0c0;
+}
+
+[data-theme="classic-light"] .journal-list-filter,
+[data-theme="classic-light"] .journal-list-sort {
+  background: transparent;
+}
+
+[data-theme="classic-light"] .journal-list-filter label,
+[data-theme="classic-light"] .journal-list-sort label {
+  font-family: 'MS Sans Serif', sans-serif;
+  font-size: 11px;
+  color: #000000;
+  text-shadow: none;
+  font-weight: bold;
+}
+
+[data-theme="classic-light"] .journal-list-tags {
+  background: transparent;
+}
+
+[data-theme="classic-light"] .journal-entry-filter-tag {
+  background: #ffffff;
+  border: 2px inset #c0c0c0;
+  border-radius: 0;
+  color: #000000;
+  font-family: 'MS Sans Serif', sans-serif;
+  font-size: 10px;
+}
+
+[data-theme="classic-light"] .journal-entry-filter-tag:hover {
+  background: #e0e0e0;
+}
+
+[data-theme="classic-light"] .journal-entry-filter-tag.active {
+  background: #000080;
+  color: #ffffff;
+  border: 2px inset #000080;
+}
+
+[data-theme="classic-light"] .journal-entry-clear-filters {
+  background: #c0c0c0;
+  border: 2px outset #c0c0c0;
+  border-radius: 0;
+  color: #000000;
+  font-family: 'MS Sans Serif', sans-serif;
+  font-size: 11px;
+}
+
+[data-theme="classic-light"] .journal-entry-clear-filters:hover {
+  border: 2px inset #c0c0c0;
+}
+
+[data-theme="classic-light"] .journal-list-sort select {
+  background: #ffffff;
+  border: 2px inset #c0c0c0;
+  border-radius: 0;
+  color: #000000;
+  font-family: 'MS Sans Serif', sans-serif;
+  font-size: 11px;
+}
+
+[data-theme="classic-light"] .journal-list-empty {
+  background: #c0c0c0;
+  color: #808080;
+  font-family: 'MS Sans Serif', sans-serif;
+  font-size: 11px;
+}
+
+[data-theme="classic-light"] .journal-entries {
+  background: transparent;
+}
+
+[data-theme="classic-light"] .journal-entry-item {
+  background: #ffffff;
+  border: 2px inset #c0c0c0;
+  border-radius: 0;
+  color: #000000;
+}
+
+[data-theme="classic-light"] .journal-entry-item:hover {
+  background: #e0e0e0;
+  border: 2px solid #000000;
+}
+
+[data-theme="classic-light"] .journal-entry-item.selected {
+  background: #000080;
+  color: #ffffff;
+  border: 2px solid #000000;
+}
+
+[data-theme="classic-light"] .journal-entry-item.bulk-edit-mode {
+  background: #ffffff;
+}
+
+[data-theme="classic-light"] .journal-entry-item.bulk-selected {
+  background: #ffff00;
+  border: 2px solid #000000;
+}
+
+[data-theme="classic-light"] .entry-item-header {
+  background: transparent;
+}
+
+[data-theme="classic-light"] .entry-item-title {
+  font-family: 'MS Sans Serif', sans-serif;
+  font-size: 12px;
+  font-weight: bold;
+  color: inherit;
+  text-shadow: none;
+}
+
+[data-theme="classic-light"] .entry-item-meta {
+  background: transparent;
+}
+
+[data-theme="classic-light"] .entry-time-range {
+  background: #c0c0c0;
+  border: 1px solid #808080;
+  border-radius: 0;
+  color: #000000;
+  font-family: 'MS Sans Serif', sans-serif;
+  font-size: 9px;
+}
+
+[data-theme="classic-light"] .entry-date {
+  font-family: 'MS Sans Serif', sans-serif;
+  font-size: 10px;
+  color: inherit;
+}
+
+[data-theme="classic-light"] .entry-item-preview {
+  font-family: 'MS Sans Serif', sans-serif;
+  font-size: 11px;
+  color: inherit;
+  line-height: 1.4;
+}
+
+[data-theme="classic-light"] .entry-item-tags {
+  background: transparent;
+}
+
+[data-theme="classic-light"] .entry-tag {
+  background: #c0c0c0;
+  border: 1px solid #808080;
+  border-radius: 0;
+  color: #000000;
+  font-family: 'MS Sans Serif', sans-serif;
+  font-size: 10px;
+}
+
+[data-theme="classic-light"] .entry-item-content {
+  background: transparent;
+}
+
+[data-theme="classic-light"] .entry-checkbox-wrapper {
+  background: transparent;
+}
+
+[data-theme="classic-light"] .entry-checkbox-wrapper input[type="checkbox"] {
+  width: 13px;
+  height: 13px;
+  border: 2px inset #c0c0c0;
+  background: #ffffff;
+}
+
+[data-theme="classic-light"] .bulk-edit-actions {
+  background: #ffff00;
+  border-bottom: 2px inset #c0c0c0;
+}
+
+[data-theme="classic-light"] .bulk-edit-selected-count {
+  font-family: 'MS Sans Serif', sans-serif;
+  font-size: 11px;
+  font-weight: bold;
+  color: #000000;
+  text-shadow: none;
+}
+
+[data-theme="classic-light"] .bulk-delete-button {
+  background: #c0c0c0;
+  border: 2px outset #c0c0c0;
+  border-radius: 0;
+  color: #000000;
+  font-family: 'MS Sans Serif', sans-serif;
+  font-size: 11px;
+}
+
+[data-theme="classic-light"] .bulk-delete-button:hover {
+  border: 2px inset #c0c0c0;
+  background: #ff0000;
+  color: #ffffff;
+}
+
+[data-theme="classic-light"] .bulk-edit-select-all {
+  background: #c0c0c0;
+  border-bottom: 2px inset #c0c0c0;
+}
+
+[data-theme="classic-light"] .bulk-edit-checkbox-label {
+  font-family: 'MS Sans Serif', sans-serif;
+  font-size: 11px;
+  color: #000000;
+  text-shadow: none;
+}
+
+/* Entry Edit Modal */
+[data-theme="classic-light"] .entry-edit-modal-overlay {
+  background: rgba(0, 0, 0, 0.5);
+}
+
+[data-theme="classic-light"] .entry-edit-modal {
+  background: #c0c0c0;
+  border: 2px outset #c0c0c0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+[data-theme="classic-light"] .modal-header {
+  background: #c0c0c0;
+  border-bottom: 2px inset #c0c0c0;
+}
+
+[data-theme="classic-light"] .modal-header-top {
+  background: transparent;
+}
+
+[data-theme="classic-light"] .modal-header-top h3 {
+  font-family: 'MS Sans Serif', sans-serif;
+  font-size: 12px;
+  font-weight: bold;
+  color: #000000;
+  text-shadow: none;
+}
+
+[data-theme="classic-light"] .modal-close-button {
+  background: #c0c0c0;
+  border: 2px outset #c0c0c0;
+  border-radius: 0;
+  color: #000000;
+  font-family: 'MS Sans Serif', sans-serif;
+  font-size: 11px;
+}
+
+[data-theme="classic-light"] .modal-close-button:hover {
+  border: 2px inset #c0c0c0;
+}
+
+[data-theme="classic-light"] .modal-entry-meta {
+  background: transparent;
+}
+
+[data-theme="classic-light"] .modal-entry-meta small {
+  font-family: 'MS Sans Serif', sans-serif;
+  font-size: 10px;
+  color: #808080;
+}
+
+[data-theme="classic-light"] .modal-content {
+  background: #ffffff;
+  color: #000000;
+}
+
+[data-theme="classic-light"] .modal-title-input {
+  background: #ffffff;
+  border: 2px inset #c0c0c0;
+  border-radius: 0;
+  color: #000000;
+  font-family: 'MS Sans Serif', sans-serif;
+  font-size: 11px;
+}
+
+[data-theme="classic-light"] .modal-title-input:focus {
+  border: 2px inset #000080;
+  outline: none;
+}
+
+[data-theme="classic-light"] .modal-content-input {
+  background: #ffffff;
+  border: 2px inset #c0c0c0;
+  border-radius: 0;
+  color: #000000;
+  font-family: 'MS Sans Serif', sans-serif;
+  font-size: 11px;
+}
+
+[data-theme="classic-light"] .modal-content-input:focus {
+  border: 2px inset #000080;
+  outline: none;
+}
+
+[data-theme="classic-light"] .modal-tags-section {
+  background: transparent;
+}
+
+[data-theme="classic-light"] .modal-tags-input-container {
+  background: transparent;
+}
+
+[data-theme="classic-light"] .modal-tag-input {
+  background: #ffffff;
+  border: 2px inset #c0c0c0;
+  border-radius: 0;
+  color: #000000;
+  font-family: 'MS Sans Serif', sans-serif;
+  font-size: 11px;
+}
+
+[data-theme="classic-light"] .modal-tag-input:focus {
+  border: 2px inset #000080;
+  outline: none;
+}
+
+[data-theme="classic-light"] .modal-add-tag-button {
+  background: #c0c0c0;
+  border: 2px outset #c0c0c0;
+  border-radius: 0;
+  color: #000000;
+  font-family: 'MS Sans Serif', sans-serif;
+  font-size: 11px;
+}
+
+[data-theme="classic-light"] .modal-add-tag-button:hover {
+  border: 2px inset #c0c0c0;
+}
+
+[data-theme="classic-light"] .modal-tags-list {
+  background: transparent;
+}
+
+[data-theme="classic-light"] .modal-tag {
+  background: #c0c0c0;
+  border: 1px solid #808080;
+  border-radius: 0;
+  color: #000000;
+  font-family: 'MS Sans Serif', sans-serif;
+  font-size: 10px;
+}
+
+[data-theme="classic-light"] .modal-tag-remove {
+  background: transparent;
+  border: none;
+  color: #000000;
+  font-family: 'MS Sans Serif', sans-serif;
+  font-size: 10px;
+}
+
+[data-theme="classic-light"] .modal-tag-remove:hover {
+  background: #808080;
+  color: #ffffff;
+}
+
+[data-theme="classic-light"] .modal-footer {
+  background: #c0c0c0;
+  border-top: 2px inset #c0c0c0;
+}
+
+[data-theme="classic-light"] .modal-duplicate-button {
+  background: #c0c0c0;
+  border: 2px outset #c0c0c0;
+  border-radius: 0;
+  color: #000000;
+  font-family: 'MS Sans Serif', sans-serif;
+  font-size: 11px;
+}
+
+[data-theme="classic-light"] .modal-duplicate-button:hover {
+  border: 2px inset #c0c0c0;
+}
+
+[data-theme="classic-light"] .modal-delete-button {
+  background: #c0c0c0;
+  border: 2px outset #c0c0c0;
+  border-radius: 0;
+  color: #000000;
+  font-family: 'MS Sans Serif', sans-serif;
+  font-size: 11px;
+}
+
+[data-theme="classic-light"] .modal-delete-button:hover {
+  border: 2px inset #c0c0c0;
+  background: #ff0000;
+  color: #ffffff;
+}
+
+[data-theme="classic-light"] .modal-footer-actions {
+  background: transparent;
+}
+
+[data-theme="classic-light"] .modal-cancel-button {
+  background: #c0c0c0;
+  border: 2px outset #c0c0c0;
+  border-radius: 0;
+  color: #000000;
+  font-family: 'MS Sans Serif', sans-serif;
+  font-size: 11px;
+}
+
+[data-theme="classic-light"] .modal-cancel-button:hover {
+  border: 2px inset #c0c0c0;
+}
+
+[data-theme="classic-light"] .modal-save-button {
+  background: #c0c0c0;
+  border: 2px outset #c0c0c0;
+  border-radius: 0;
+  color: #000000;
+  font-family: 'MS Sans Serif', sans-serif;
+  font-size: 11px;
+}
+
+[data-theme="classic-light"] .modal-save-button:hover:not(:disabled) {
+  border: 2px inset #c0c0c0;
+}
+
+[data-theme="classic-light"] .modal-save-button:disabled {
+  background: #808080;
+  color: #c0c0c0;
+  border: 2px inset #808080;
+  cursor: not-allowed;
+}
+
+/* Search View */
+[data-theme="classic-light"] .search-view {
+  background: #c0c0c0;
+  color: #000000;
+}
+
+[data-theme="classic-light"] .search-header {
+  background: #c0c0c0;
+  border-bottom: 2px inset #c0c0c0;
+}
+
+[data-theme="classic-light"] .search-input-container {
+  background: transparent;
+}
+
+[data-theme="classic-light"] .search-input {
+  background: #ffffff;
+  border: 2px inset #c0c0c0;
+  border-radius: 0;
+  color: #000000;
+  font-family: 'MS Sans Serif', sans-serif;
+  font-size: 11px;
+}
+
+[data-theme="classic-light"] .search-input:focus {
+  border: 2px inset #000080;
+  outline: none;
+}
+
+[data-theme="classic-light"] .search-filters-toggle {
+  background: #c0c0c0;
+  border: 2px outset #c0c0c0;
+  border-radius: 0;
+  color: #000000;
+  font-family: 'MS Sans Serif', sans-serif;
+  font-size: 11px;
+}
+
+[data-theme="classic-light"] .search-filters-toggle:hover {
+  border: 2px inset #c0c0c0;
+}
+
+[data-theme="classic-light"] .search-close-button {
+  background: #c0c0c0;
+  border: 2px outset #c0c0c0;
+  border-radius: 0;
+  color: #000000;
+  font-family: 'MS Sans Serif', sans-serif;
+  font-size: 11px;
+}
+
+[data-theme="classic-light"] .search-close-button:hover {
+  border: 2px inset #c0c0c0;
+}
+
+[data-theme="classic-light"] .search-filters {
+  background: #c0c0c0;
+  border-bottom: 2px inset #c0c0c0;
+}
+
+[data-theme="classic-light"] .filter-group {
+  background: transparent;
+}
+
+[data-theme="classic-light"] .filter-group label {
+  font-family: 'MS Sans Serif', sans-serif;
+  font-size: 11px;
+  font-weight: bold;
+  color: #000000;
+  text-shadow: none;
+}
+
+[data-theme="classic-light"] .filter-tags {
+  background: transparent;
+}
+
+[data-theme="classic-light"] .filter-tag {
+  background: #ffffff;
+  border: 2px inset #c0c0c0;
+  border-radius: 0;
+  color: #000000;
+  font-family: 'MS Sans Serif', sans-serif;
+  font-size: 10px;
+}
+
+[data-theme="classic-light"] .filter-tag:hover {
+  background: #e0e0e0;
+}
+
+[data-theme="classic-light"] .filter-tag.active {
+  background: #000080;
+  color: #ffffff;
+  border: 2px inset #000080;
+}
+
+[data-theme="classic-light"] .filter-empty {
+  font-family: 'MS Sans Serif', sans-serif;
+  font-size: 10px;
+  color: #808080;
+  font-style: italic;
+}
+
+[data-theme="classic-light"] .filter-time-ranges {
+  background: transparent;
+}
+
+[data-theme="classic-light"] .filter-time-range {
+  background: #ffffff;
+  border: 2px inset #c0c0c0;
+  border-radius: 0;
+  color: #000000;
+  font-family: 'MS Sans Serif', sans-serif;
+  font-size: 10px;
+}
+
+[data-theme="classic-light"] .filter-time-range:hover {
+  background: #e0e0e0;
+}
+
+[data-theme="classic-light"] .filter-time-range.active {
+  background: #000080;
+  color: #ffffff;
+  border: 2px inset #000080;
+}
+
+[data-theme="classic-light"] .filter-date-range {
+  background: transparent;
+}
+
+[data-theme="classic-light"] .filter-date-range input {
+  background: #ffffff;
+  border: 2px inset #c0c0c0;
+  border-radius: 0;
+  color: #000000;
+  font-family: 'MS Sans Serif', sans-serif;
+  font-size: 11px;
+}
+
+[data-theme="classic-light"] .filter-sort {
+  background: transparent;
+}
+
+[data-theme="classic-light"] .filter-sort select {
+  background: #ffffff;
+  border: 2px inset #c0c0c0;
+  border-radius: 0;
+  color: #000000;
+  font-family: 'MS Sans Serif', sans-serif;
+  font-size: 11px;
+}
+
+[data-theme="classic-light"] .clear-filters-button {
+  background: #c0c0c0;
+  border: 2px outset #c0c0c0;
+  border-radius: 0;
+  color: #000000;
+  font-family: 'MS Sans Serif', sans-serif;
+  font-size: 11px;
+}
+
+[data-theme="classic-light"] .clear-filters-button:hover {
+  border: 2px inset #c0c0c0;
+}
+
+[data-theme="classic-light"] .search-results {
+  background: #c0c0c0;
+  color: #000000;
+}
+
+[data-theme="classic-light"] .search-loading,
+[data-theme="classic-light"] .search-empty {
+  background: #c0c0c0;
+  color: #808080;
+  font-family: 'MS Sans Serif', sans-serif;
+  font-size: 11px;
+  font-style: italic;
+}
+
+[data-theme="classic-light"] .search-results-count {
+  font-family: 'MS Sans Serif', sans-serif;
+  font-size: 11px;
+  font-weight: bold;
+  color: #000000;
+  text-shadow: none;
+}
+
+[data-theme="classic-light"] .search-results-list {
+  background: transparent;
+}
+
+[data-theme="classic-light"] .search-result-item {
+  background: #ffffff;
+  border: 2px inset #c0c0c0;
+  border-radius: 0;
+  color: #000000;
+}
+
+[data-theme="classic-light"] .search-result-item:hover {
+  background: #e0e0e0;
+  border: 2px solid #000000;
+}
+
+[data-theme="classic-light"] .result-item-header {
+  background: transparent;
+}
+
+[data-theme="classic-light"] .result-item-title {
+  font-family: 'MS Sans Serif', sans-serif;
+  font-size: 12px;
+  font-weight: bold;
+  color: #000000;
+  text-shadow: none;
+}
+
+[data-theme="classic-light"] .result-item-meta {
+  background: transparent;
+}
+
+[data-theme="classic-light"] .result-time-range-badge {
+  background: #000080;
+  color: #ffffff;
+  border: 1px solid #000000;
+  border-radius: 0;
+  font-family: 'MS Sans Serif', sans-serif;
+  font-size: 9px;
+}
+
+[data-theme="classic-light"] .result-date {
+  font-family: 'MS Sans Serif', sans-serif;
+  font-size: 10px;
+  color: #808080;
+}
+
+[data-theme="classic-light"] .result-item-content {
+  font-family: 'MS Sans Serif', sans-serif;
+  font-size: 11px;
+  color: #000000;
+  line-height: 1.4;
+}
+
+[data-theme="classic-light"] .result-item-tags {
+  background: transparent;
+}
+
+[data-theme="classic-light"] .result-tag {
+  background: #c0c0c0;
+  border: 1px solid #808080;
+  border-radius: 0;
+  color: #000000;
+  font-family: 'MS Sans Serif', sans-serif;
+  font-size: 10px;
+}
+
+/* Preferences */
+[data-theme="classic-light"] .preferences-container {
+  background: #c0c0c0;
+  color: #000000;
+}
+
+[data-theme="classic-light"] .preferences-loading {
+  background: #c0c0c0;
+  color: #000000;
+  font-family: 'MS Sans Serif', sans-serif;
+  font-size: 11px;
+}
+
+[data-theme="classic-light"] .preferences-header {
+  background: #c0c0c0;
+  border-bottom: 2px inset #c0c0c0;
+}
+
+[data-theme="classic-light"] .preferences-header h1 {
+  font-family: 'MS Sans Serif', sans-serif;
+  font-size: 14px;
+  font-weight: bold;
+  color: #000000;
+  text-shadow: none;
+}
+
+[data-theme="classic-light"] .preferences-actions {
+  background: transparent;
+}
+
+[data-theme="classic-light"] .preferences-button {
+  background: #c0c0c0;
+  border: 2px outset #c0c0c0;
+  border-radius: 0;
+  color: #000000;
+  font-family: 'MS Sans Serif', sans-serif;
+  font-size: 11px;
+}
+
+[data-theme="classic-light"] .preferences-button:hover {
+  border: 2px inset #c0c0c0;
+}
+
+[data-theme="classic-light"] .preferences-content {
+  background: #c0c0c0;
+}
+
+[data-theme="classic-light"] .preferences-section {
+  background: #ffffff;
+  border: 2px inset #c0c0c0;
+  border-radius: 0;
+}
+
+[data-theme="classic-light"] .preferences-section h2 {
+  font-family: 'MS Sans Serif', sans-serif;
+  font-size: 12px;
+  font-weight: bold;
+  color: #000000;
+  text-shadow: none;
+  border-bottom: 1px solid #808080;
+}
+
+[data-theme="classic-light"] .preference-item {
+  background: transparent;
+}
+
+[data-theme="classic-light"] .preference-item label {
+  font-family: 'MS Sans Serif', sans-serif;
+  font-size: 11px;
+  color: #000000;
+  text-shadow: none;
+  font-weight: bold;
+}
+
+[data-theme="classic-light"] .preference-item input[type="text"],
+[data-theme="classic-light"] .preference-item input[type="number"],
+[data-theme="classic-light"] .preference-item select {
+  background: #ffffff;
+  border: 2px inset #c0c0c0;
+  border-radius: 0;
+  color: #000000;
+  font-family: 'MS Sans Serif', sans-serif;
+  font-size: 11px;
+}
+
+[data-theme="classic-light"] .preference-item input[type="text"]:focus,
+[data-theme="classic-light"] .preference-item input[type="number"]:focus,
+[data-theme="classic-light"] .preference-item select:focus {
+  border: 2px inset #000080;
+  outline: none;
+}
+
+[data-theme="classic-light"] .preference-item input[type="checkbox"] {
+  width: 13px;
+  height: 13px;
+  border: 2px inset #c0c0c0;
+  background: #ffffff;
+}
+
+[data-theme="classic-light"] .preference-item small {
+  font-family: 'MS Sans Serif', sans-serif;
+  font-size: 10px;
+  color: #808080;
+}
+
+[data-theme="classic-light"] .preference-note {
+  background: #ffff00;
+  border-left: 3px solid #808080;
+  color: #000000;
+  font-family: 'MS Sans Serif', sans-serif;
+  font-size: 10px;
+}
+
+[data-theme="classic-light"] .auto-save-indicator {
+  font-family: 'MS Sans Serif', sans-serif;
+  font-size: 11px;
+  color: #008000;
+}
+
+[data-theme="classic-light"] .export-toolbar {
+  background: transparent;
+}
+
+[data-theme="classic-light"] .export-controls {
+  background: transparent;
+}
+
+[data-theme="classic-light"] .export-controls select {
+  background: #ffffff;
+  border: 2px inset #c0c0c0;
+  border-radius: 0;
+  color: #000000;
+  font-family: 'MS Sans Serif', sans-serif;
+  font-size: 11px;
+}
+
+[data-theme="classic-light"] .about-section {
+  background: #ffffff;
+  border: 2px inset #c0c0c0;
+  border-radius: 0;
+}
+
+[data-theme="classic-light"] .about-section a {
+  color: #000080;
+  text-decoration: underline;
+}
+
+[data-theme="classic-light"] .about-section a:hover {
+  color: #0000ff;
+}
+
+/* About Page */
+[data-theme="classic-light"] .about-container {
+  background: #c0c0c0;
+  color: #000000;
+}
+
+[data-theme="classic-light"] .about-content {
+  background: #ffffff;
+  border: 2px outset #c0c0c0;
+  border-radius: 0;
+  color: #000000;
+}
+
+[data-theme="classic-light"] .about-header {
+  background: transparent;
+  border-bottom: 1px solid #808080;
+}
+
+[data-theme="classic-light"] .about-icon {
+  border: 2px inset #c0c0c0;
+  border-radius: 0;
+}
+
+[data-theme="classic-light"] .about-title-section h1 {
+  font-family: 'MS Sans Serif', sans-serif;
+  font-size: 16px;
+  font-weight: bold;
+  color: #000000;
+  text-shadow: none;
+}
+
+[data-theme="classic-light"] .about-description {
+  font-family: 'MS Sans Serif', sans-serif;
+  font-size: 11px;
+  color: #000000;
+}
+
+[data-theme="classic-light"] .about-section {
+  background: transparent;
+  border-top: 1px solid #808080;
+}
+
+[data-theme="classic-light"] .about-version {
+  font-family: 'MS Sans Serif', sans-serif;
+  font-size: 11px;
+  color: #000000;
+}
+
+[data-theme="classic-light"] .about-note {
+  font-family: 'MS Sans Serif', sans-serif;
+  font-size: 10px;
+  color: #808080;
+}
+
+[data-theme="classic-light"] .about-credits h2 {
+  font-family: 'MS Sans Serif', sans-serif;
+  font-size: 12px;
+  font-weight: bold;
+  color: #000000;
+  text-shadow: none;
+}
+
+[data-theme="classic-light"] .about-credits p {
+  font-family: 'MS Sans Serif', sans-serif;
+  font-size: 11px;
+  color: #000000;
+}
+
+[data-theme="classic-light"] .about-link {
+  color: #000080;
+  text-decoration: underline;
+}
+
+[data-theme="classic-light"] .about-link:hover {
+  color: #0000ff;
+}
+
+[data-theme="classic-light"] .about-credits-detailed {
+  background: transparent;
+}
+
+[data-theme="classic-light"] .about-credits-detailed h2 {
+  font-family: 'MS Sans Serif', sans-serif;
+  font-size: 12px;
+  font-weight: bold;
+  color: #000000;
+  text-shadow: none;
+}
+
+[data-theme="classic-light"] .credits-category {
+  background: transparent;
+}
+
+[data-theme="classic-light"] .credits-category h3 {
+  font-family: 'MS Sans Serif', sans-serif;
+  font-size: 11px;
+  font-weight: bold;
+  color: #000080;
+  text-shadow: none;
+}
+
+[data-theme="classic-light"] .credits-category ul {
+  background: transparent;
+}
+
+[data-theme="classic-light"] .credits-category li {
+  font-family: 'MS Sans Serif', sans-serif;
+  font-size: 11px;
+  color: #000000;
+}
+
+[data-theme="classic-light"] .credits-category li strong {
+  font-weight: bold;
+  color: #000000;
+}
+
+[data-theme="classic-light"] .credits-category li em {
+  font-style: italic;
+  color: #808080;
+}
+
+[data-theme="classic-light"] .credits-category p {
+  font-family: 'MS Sans Serif', sans-serif;
+  font-size: 11px;
+  color: #000000;
+}
+
+[data-theme="classic-light"] .credits-note {
+  font-family: 'MS Sans Serif', sans-serif;
+  font-size: 10px;
+  color: #808080;
+  font-style: italic;
+}
+
+/* Loading Screen - Windows 95 style (simplified) */
+[data-theme="classic-light"] .loading-screen {
+  background: #c0c0c0;
+  color: #000000;
+}
+
+[data-theme="classic-light"] .space-background {
+  background: #000080;
+}
+
+[data-theme="classic-light"] .nebula-layer {
+  background: transparent;
+}
+
+[data-theme="classic-light"] .starfield {
+  background: transparent;
+}
+
+[data-theme="classic-light"] .star {
+  background: #ffffff;
+}
+
+[data-theme="classic-light"] .loading-content {
+  background: transparent;
+  color: #ffffff;
+}
+
+[data-theme="classic-light"] .loading-logo {
+  background: transparent;
+}
+
+[data-theme="classic-light"] .loading-title {
+  font-family: 'MS Sans Serif', sans-serif;
+  font-size: 14px;
+  font-weight: bold;
+  color: #ffffff;
+  text-shadow: 1px 1px 0px #000000;
+}
+
+[data-theme="classic-light"] .loading-message {
+  font-family: 'MS Sans Serif', sans-serif;
+  font-size: 11px;
+  color: #ffffff;
+}
+
+[data-theme="classic-light"] .loading-progress {
+  background: transparent;
+}
+
+[data-theme="classic-light"] .loading-progress-bar {
+  background: #000000;
+  border: 2px inset #c0c0c0;
+  border-radius: 0;
+}
+
+[data-theme="classic-light"] .loading-progress-fill {
+  background: #000080;
+  border: 1px solid #ffffff;
+}
+
+[data-theme="classic-light"] .loading-progress-text {
+  font-family: 'MS Sans Serif', sans-serif;
+  font-size: 11px;
+  color: #ffffff;
+}
+
+[data-theme="classic-light"] .loading-spinner {
+  background: transparent;
+}
+
+[data-theme="classic-light"] .spinner-ring {
+  border-color: #ffffff;
+}
+
+/* Global Timeline Minimap - Windows 95 style (simplified) */
+[data-theme="classic-light"] .global-timeline-minimap {
+  background: #c0c0c0;
+  border-bottom: 2px inset #c0c0c0;
+}
+
+[data-theme="classic-light"] .minimap-container {
+  background: #ffffff;
+  border: 2px inset #c0c0c0;
+}
+
+[data-theme="classic-light"] .radial-dial {
+  background: transparent;
+}
+
+[data-theme="classic-light"] .radial-dial-center {
+  background: #000080;
+  border: 2px solid #000000;
+}
+
+[data-theme="classic-light"] .radial-arrow {
+  color: #000080;
+  text-shadow: 1px 1px 0px #000000;
+}
+
+[data-theme="classic-light"] .radial-label {
+  background: #ffffff;
+  border: 1px solid #808080;
+  border-radius: 0;
+  color: #000000;
+  font-family: 'MS Sans Serif', sans-serif;
+  font-size: 9px;
+}
+
+[data-theme="classic-light"] .timeline-path {
+  stroke: #000080;
+}
+
+[data-theme="classic-light"] .timeline-segments {
+  background: transparent;
+}
+
+[data-theme="classic-light"] .timeline-segment {
+  background: transparent;
+}
+
+[data-theme="classic-light"] .segment-indicator {
+  background: #808080;
+  border: 1px solid #000000;
+  border-radius: 0;
+}
+
+[data-theme="classic-light"] .timeline-segment.current .segment-indicator {
+  background: #000080;
+  border: 2px solid #000000;
+}
+
+[data-theme="classic-light"] .segment-label {
+  background: #000080;
+  color: #ffffff;
+  border: 1px solid #000000;
+  border-radius: 0;
+  font-family: 'MS Sans Serif', sans-serif;
+  font-size: 9px;
+}
+
+[data-theme="classic-light"] .entry-indicators {
+  background: transparent;
+}
+
+[data-theme="classic-light"] .entry-indicator-wrapper {
+  background: transparent;
+}
+
+[data-theme="classic-light"] .entry-indicator {
+  background: #000080;
+  border: 1px solid #000000;
+  border-radius: 0;
+}
+
+[data-theme="classic-light"] .scale-labels {
+  background: transparent;
+}
+
+[data-theme="classic-light"] .scale-label {
+  font-family: 'MS Sans Serif', sans-serif;
+  font-size: 9px;
+  color: #000000;
+  text-shadow: none;
+}
+

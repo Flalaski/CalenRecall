@@ -1,0 +1,46 @@
+/**
+ * Example Custom Theme
+ * 
+ * This is an example custom theme file to demonstrate the structure.
+ * You can use this as a reference when creating your own theme.
+ * 
+ * To use this theme:
+ * 1. Uncomment the import in src/themes.css
+ * 2. Register it in src/utils/themes.ts
+ * 3. Or rename this file and create your own theme based on it
+ */
+
+/* Example theme - Purple Night */
+[data-theme="example-custom-theme"] {
+  /* Base font settings if needed */
+}
+
+[data-theme="example-custom-theme"] body {
+  background: #1a0d2e;
+  color: #e0d4f0;
+}
+
+[data-theme="example-custom-theme"] .app {
+  background: #1a0d2e;
+}
+
+[data-theme="example-custom-theme"] .navigation-bar {
+  background: #2d1b4e;
+  border-bottom: 2px solid #4a2c6e;
+}
+
+[data-theme="example-custom-theme"] .nav-button {
+  background: #2d1b4e;
+  border: 1px solid #4a2c6e;
+  color: #e0d4f0;
+}
+
+[data-theme="example-custom-theme"] .nav-button:hover {
+  background: #3d2b5e;
+  border-color: #5a3c7e;
+}
+
+/* TODO: Add comprehensive styling for all components */
+/* Refer to COMPONENT_CLASSES.md for a complete list of classes to style */
+/* Copy the template from theme-template.css for structure */
+

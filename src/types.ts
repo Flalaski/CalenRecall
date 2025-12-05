@@ -60,7 +60,7 @@ export interface Preferences {
   weekStartsOn?: 0 | 1 | 2 | 3 | 4 | 5 | 6;
   autoSave?: boolean;
   autoSaveInterval?: number;
-  theme?: 'light' | 'dark' | 'auto';
+  theme?: string; // Theme name - dynamically discovered from themes folder
   fontSize?: 'small' | 'medium' | 'large';
   showMinimap?: boolean;
   minimapPosition?: 'left' | 'right' | 'top' | 'bottom';

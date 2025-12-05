@@ -1,0 +1,39 @@
+/**
+ * Main Themes File
+ * 
+ * This file imports all theme definitions.
+ * Each theme is defined in its own file in the ./themes/ directory.
+ * 
+ * NOTE: Custom themes are now automatically detected!
+ * Just add your theme CSS file to src/themes/your-theme-name.css
+ * and it will automatically appear in the preferences theme list.
+ * 
+ * The CSS files are automatically imported via src/utils/themeLoader.ts
+ * which uses Vite's import.meta.glob to discover all theme files.
+ */
+
+/* Import all built-in themes */
+@import './themes/classic-light.css';
+@import './themes/classic-dark.css';
+@import './themes/high-contrast.css';
+@import './themes/terminal.css';
+@import './themes/forest.css';
+@import './themes/ocean.css';
+@import './themes/sunset.css';
+@import './themes/retro80s.css';
+@import './themes/modern-minimal.css';
+
+/* Custom themes are automatically imported via themeLoader.ts */
+/* You can still manually add @import statements here if needed for explicit control */
+
+/* Common styles for all themes - ensure consistency */
+[data-theme]:not([data-theme="light"]):not([data-theme="dark"]) .paper-texture::before {
+  opacity: 0.1;
+}
+
+/* Auto theme handling */
+[data-theme="auto"] {
+  @media (prefers-color-scheme: dark) {
+    /* Will be handled by dark theme */
+  }
+}
