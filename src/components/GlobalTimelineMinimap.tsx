@@ -1,9 +1,10 @@
 import { useMemo, useState, useEffect, useRef } from 'react';
 import { TimeRange, JournalEntry } from '../types';
-import { formatDate, getWeekStart, getWeekEnd, getMonthStart, getMonthEnd, getYearEnd, getDecadeEnd, getZodiacColor, getZodiacColorForDecade, getCanonicalDate, parseISODate } from '../utils/dateUtils';
+import { formatDate as formatDateUtils, getWeekStart, getWeekEnd, getMonthStart, getMonthEnd, getYearEnd, getDecadeEnd, getZodiacColor, getZodiacColorForDecade, getCanonicalDate, parseISODate } from '../utils/dateUtils';
 import { addDays, addWeeks, addMonths, addYears, getYear, getMonth, getDate } from 'date-fns';
 import { playMechanicalClick, playMicroBlip, getAudioContext, createSliderNoise, SliderNoise } from '../utils/audioUtils';
 import { calculateEntryColor } from '../utils/entryColorUtils';
+import { useCalendar } from '../contexts/CalendarContext';
 import './GlobalTimelineMinimap.css';
 
 interface GlobalTimelineMinimapProps {
@@ -146,6 +147,7 @@ export default function GlobalTimelineMinimap({
   onEntrySelect,
   minimapSize = 'medium',
 }: GlobalTimelineMinimapProps) {
+  const { formatDate, calendar } = useCalendar();
   const [entries, setEntries] = useState<JournalEntry[]>([]);
   const [timelineRangeKey, setTimelineRangeKey] = useState(0); // Track timeline range changes to trigger entry reloading
   const [isDragging, setIsDragging] = useState(false);
@@ -186,12 +188,12 @@ export default function GlobalTimelineMinimap({
         
         // Use the electron API to get entries for the date range
         if (window.electronAPI) {
-          const startDateStr = formatDate(startDate);
-          const endDateStr = formatDate(endDate);
+          const startDateStr = formatDateUtils(startDate);
+          const endDateStr = formatDateUtils(endDate);
           const loadedEntries = await window.electronAPI.getEntries(startDateStr, endDateStr);
           console.log(`[TimelineMinimap] Loaded ${loadedEntries.length} entries from ${startDateStr} to ${endDateStr}`);
           // Log entries for selected date for debugging
-          const selectedStr = formatDate(selectedDate);
+          const selectedStr = formatDateUtils(selectedDate);
           const selectedEntries = loadedEntries.filter(e => e.date === selectedStr);
           if (selectedEntries.length > 0) {
             console.log(`[TimelineMinimap] Found ${selectedEntries.length} entries for ${selectedStr}:`, selectedEntries.map(e => ({ id: e.id, title: e.title, timeRange: e.timeRange })));
@@ -324,9 +326,11 @@ export default function GlobalTimelineMinimap({
         for (let year = startDecade; year <= endDecade; year += 10) {
           const decadeDate = new Date(year, 0, 1);
           const isCurrent = Math.floor(getYear(selectedDate) / 10) * 10 === year;
+          // Format using calendar-aware formatting to get proper year representation
+          const calendarYear = formatDate(decadeDate, 'YYYY');
           segments.push({
             date: decadeDate,
-            label: `${year}s`,
+            label: `${calendarYear}s`,
             isCurrent,
             viewMode: 'decade',
           });
@@ -343,9 +347,11 @@ export default function GlobalTimelineMinimap({
         for (let year = startYear; year <= endYear; year++) {
           const yearDate = new Date(year, 0, 1);
           const isCurrent = getYear(selectedDate) === year;
+          // Format using calendar-aware formatting to get proper year representation
+          const calendarYear = formatDate(yearDate, 'YYYY');
           segments.push({
             date: yearDate,
-            label: year.toString(),
+            label: calendarYear,
             isCurrent,
             viewMode: 'year',
           });
@@ -363,7 +369,7 @@ export default function GlobalTimelineMinimap({
           const isCurrent = getMonthStart(current).getTime() === monthStart.getTime();
           segments.push({
             date: new Date(getMonthStart(current)),
-            label: formatDate(current, 'MMM yyyy'),
+            label: formatDate(current, 'MMM YYYY'),
             isCurrent,
             viewMode: 'month',
           });
@@ -384,7 +390,7 @@ export default function GlobalTimelineMinimap({
           const isCurrent = weekStartDate.getTime() === weekStart.getTime();
           segments.push({
             date: weekStartDate,
-            label: formatDate(weekStartDate, 'MMM d'),
+            label: formatDate(weekStartDate, 'MMM D'),
             isCurrent,
             viewMode: 'week',
           });
@@ -405,7 +411,7 @@ export default function GlobalTimelineMinimap({
           const isCurrent = currentDay.getTime() === dayStart.getTime();
           segments.push({
             date: currentDay,
-            label: formatDate(currentDay, 'MMM d'),
+            label: formatDate(currentDay, 'MMM D'),
             isCurrent,
             viewMode: 'day',
           });
@@ -420,7 +426,7 @@ export default function GlobalTimelineMinimap({
     }
 
     return { segments, currentPosition, startDate, endDate };
-  }, [selectedDate, viewMode]);
+  }, [selectedDate, viewMode, formatDate, calendar]);
 
   // Calculate position percentage for the illuminated line (kept for potential future use)
   // Currently unused by the infinity tree, but preserved for design iterations.
@@ -1442,10 +1448,12 @@ export default function GlobalTimelineMinimap({
     for (let decade = startDecade; decade <= endDecade; decade += 10) {
       const decadeDate = new Date(decade, 0, 1);
       if (decadeDate >= startDate && decadeDate <= endDate) {
+        // Format using calendar-aware formatting to get proper year representation
+        const calendarYear = formatDate(decadeDate, 'YYYY');
         scales.decade.major.push({
           date: decadeDate,
           position: calculatePosition(decadeDate),
-          label: `${decade}s`,
+          label: `${calendarYear}s`,
         });
       }
     }
@@ -1453,10 +1461,12 @@ export default function GlobalTimelineMinimap({
     for (let year = startYear; year <= endYear; year += 5) {
       const yearDate = new Date(year, 0, 1);
       if (yearDate >= startDate && yearDate <= endDate && year % 10 !== 0) {
+        // Format using calendar-aware formatting to get proper year representation
+        const calendarYear = formatDate(yearDate, 'YYYY');
         scales.decade.minor.push({
           date: yearDate,
           position: calculatePosition(yearDate),
-          label: year.toString(),
+          label: calendarYear,
         });
       }
     }
@@ -1467,10 +1477,12 @@ export default function GlobalTimelineMinimap({
     for (let year = startYear; year <= endYear; year += yearStep) {
       const yearDate = new Date(year, 0, 1);
       if (yearDate >= startDate && yearDate <= endDate) {
+        // Format using calendar-aware formatting to get proper year representation
+        const calendarYear = formatDate(yearDate, 'YYYY');
         scales.year.major.push({
           date: yearDate,
           position: calculatePosition(yearDate),
-          label: year.toString(),
+          label: calendarYear,
         });
       }
     }
@@ -1526,7 +1538,7 @@ export default function GlobalTimelineMinimap({
           scales.month.major.push({
             date: monthStart,
             position: calculatePosition(monthStart),
-            label: formatDate(monthStart, 'MMM yyyy'),
+            label: formatDate(monthStart, 'MMM YYYY'),
           });
           monthMajorCount++;
         }
@@ -1544,7 +1556,7 @@ export default function GlobalTimelineMinimap({
           scales.month.minor.push({
             date: weekStart,
             position: calculatePosition(weekStart),
-            label: getDate(weekStart) <= 7 ? formatDate(weekStart, 'd') : undefined,
+            label: getDate(weekStart) <= 7 ? formatDate(weekStart, 'D') : undefined,
           });
           monthWeekCount++;
         }
@@ -1565,7 +1577,7 @@ export default function GlobalTimelineMinimap({
           scales.week.major.push({
             date: weekStart,
             position: calculatePosition(weekStart),
-            label: formatDate(weekStart, 'MMM d'),
+            label: formatDate(weekStart, 'MMM D'),
           });
           weekCount++;
         }
@@ -1584,7 +1596,7 @@ export default function GlobalTimelineMinimap({
           scales.week.minor.push({
             date: new Date(current),
             position: calculatePosition(current),
-            label: getDate(current) % 7 === 1 ? formatDate(current, 'd') : undefined,
+            label: getDate(current) % 7 === 1 ? formatDate(current, 'D') : undefined,
           });
           dayCount++;
         }
@@ -1606,7 +1618,7 @@ export default function GlobalTimelineMinimap({
           scales.day.major.push({
             date: dayStart,
             position: calculatePosition(dayStart),
-            label: formatDate(dayStart, 'MMM d'),
+            label: formatDate(dayStart, 'MMM D'),
           });
           dayMajorCount++;
         }
@@ -1635,7 +1647,7 @@ export default function GlobalTimelineMinimap({
     }
 
     return scales;
-  }, [timelineData, viewMode, timeScaleOrder]);
+  }, [timelineData, viewMode, timeScaleOrder, formatDate, calendar]);
 
 
   // Simple hash function to generate consistent vertical offset from entry date/id
@@ -3906,7 +3918,7 @@ export default function GlobalTimelineMinimap({
               
               // Debug: Log if label position is very small (might be clustering)
               if (labelPosition < 5 && idx < 10) {
-                console.log(`[DEBUG] Year minor label cluster check: "${mark.label}" at position ${labelPosition}%, date: ${mark.date ? formatDate(mark.date) : 'no date'}, style left: ${labelStyle.left}`);
+                console.log(`[DEBUG] Year minor label cluster check: "${mark.label}" at position ${labelPosition}%, date: ${mark.date ? formatDateUtils(mark.date) : 'no date'}, style left: ${labelStyle.left}`);
               }
               
               return (
@@ -4074,7 +4086,7 @@ export default function GlobalTimelineMinimap({
                 className={`timeline-segment ${segment.isCurrent ? 'current' : ''} ${isNearCurrent ? 'near-current' : ''}`}
                 style={{ left: `${position}%` }}
                 onClick={() => onTimePeriodSelect(segment.date, segment.viewMode)}
-                title={formatDate(segment.date, 'MMM d, yyyy')}
+                title={formatDate(segment.date, 'MMM D, YYYY')}
               >
                 <div className="segment-indicator" />
                 {segment.isCurrent && (
