@@ -7,6 +7,7 @@ import GlobalTimelineMinimap from './components/GlobalTimelineMinimap';
 import EntryEditModal from './components/EntryEditModal';
 import { TimeRange, JournalEntry, Preferences } from './types';
 import { getEntryForDate } from './services/journalService';
+import { playNewEntrySound } from './utils/audioUtils';
 import './App.css';
 
 function App() {
@@ -212,6 +213,47 @@ function App() {
     setIsNewEntry(true);
     setIsEditing(true);
   };
+
+  // Use ref to access current handleNewEntry in keyboard handler
+  const handleNewEntryRef = useRef(handleNewEntry);
+  
+  // Keep ref updated
+  useEffect(() => {
+    handleNewEntryRef.current = handleNewEntry;
+  }, [handleNewEntry]);
+
+  // Handle keyboard shortcut for New Entry button (Shift+Spacebar)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Don't handle keys if user is typing in an input, textarea, or contenteditable element
+      const target = e.target as HTMLElement;
+      if (
+        target.tagName === 'INPUT' ||
+        target.tagName === 'TEXTAREA' ||
+        target.isContentEditable ||
+        (target.closest('input') || target.closest('textarea') || target.closest('[contenteditable="true"]'))
+      ) {
+        return;
+      }
+
+      // Only handle Shift+Spacebar
+      if (e.key !== ' ' || !e.shiftKey) {
+        return;
+      }
+
+      // Prevent default behavior
+      e.preventDefault();
+
+      // Trigger New Entry button - use ref to get current handleNewEntry
+      playNewEntrySound();
+      handleNewEntryRef.current();
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, []); // Empty deps - we use ref to access current values
 
   const handleEdit = () => {
     setIsEditing(true);

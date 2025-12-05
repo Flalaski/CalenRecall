@@ -3817,12 +3817,18 @@ export default function GlobalTimelineMinimap({
         {/* Timeline segments */}
         <div className="timeline-segments">
           {timelineData.segments.map((segment, idx) => {
-            const position = (idx / (timelineData.segments.length - 1)) * 100;
+            // Calculate position safely, handling edge cases
+            const position = timelineData.segments.length > 1
+              ? (idx / (timelineData.segments.length - 1)) * 100
+              : 50; // Center if only one segment
             const isNearCurrent = Math.abs(idx - timelineData.currentPosition) <= 1;
+            
+            // Use a unique key that includes viewMode and date to ensure proper re-rendering
+            const segmentKey = `${segment.viewMode}-${segment.date.getTime()}-${idx}`;
             
             return (
               <div
-                key={idx}
+                key={segmentKey}
                 className={`timeline-segment ${segment.isCurrent ? 'current' : ''} ${isNearCurrent ? 'near-current' : ''}`}
                 style={{ left: `${position}%` }}
                 onClick={() => onTimePeriodSelect(segment.date, segment.viewMode)}

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { JournalEntry, TimeRange } from '../types';
 import { formatDate, getCanonicalDate } from '../utils/dateUtils';
 import { getEntryForDate, saveJournalEntry, deleteJournalEntry } from '../services/journalService';
@@ -29,6 +29,10 @@ export default function JournalEditor({
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [currentEntry, setCurrentEntry] = useState<JournalEntry | null>(null);
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [originalTitle, setOriginalTitle] = useState('');
+  const [originalContent, setOriginalContent] = useState('');
+  const [originalTags, setOriginalTags] = useState<string[]>([]);
 
   useEffect(() => {
     if (propSelectedEntry) {
@@ -36,6 +40,9 @@ export default function JournalEditor({
       setTitle(propSelectedEntry.title);
       setContent(propSelectedEntry.content);
       setTags(propSelectedEntry.tags || []);
+      setOriginalTitle(propSelectedEntry.title);
+      setOriginalContent(propSelectedEntry.content);
+      setOriginalTags(propSelectedEntry.tags || []);
       setCurrentEntry(propSelectedEntry);
       setLoading(false);
     } else if (isNewEntry) {
@@ -43,6 +50,9 @@ export default function JournalEditor({
       setTitle('');
       setContent('');
       setTags([]);
+      setOriginalTitle('');
+      setOriginalContent('');
+      setOriginalTags([]);
       setCurrentEntry(null);
       setLoading(false);
     } else {
@@ -61,10 +71,16 @@ export default function JournalEditor({
         setTitle(existingEntry.title);
         setContent(existingEntry.content);
         setTags(existingEntry.tags || []);
+        setOriginalTitle(existingEntry.title);
+        setOriginalContent(existingEntry.content);
+        setOriginalTags(existingEntry.tags || []);
       } else {
         setTitle('');
         setContent('');
         setTags([]);
+        setOriginalTitle('');
+        setOriginalContent('');
+        setOriginalTags([]);
       }
     } catch (error) {
       console.error('Error loading entry:', error);
@@ -214,6 +230,89 @@ export default function JournalEditor({
     }
   };
 
+  // Handle cancel with confirmation if needed
+  const handleCancel = useCallback(() => {
+    const titleChanged = title.trim() !== originalTitle.trim();
+    const contentChanged = content.trim() !== originalContent.trim();
+    const tagsChanged = JSON.stringify(tags.sort()) !== JSON.stringify(originalTags.sort());
+    const hasChanges = titleChanged || contentChanged || tagsChanged;
+    
+    if (hasChanges) {
+      setShowConfirmDialog(true);
+    } else {
+      playCancelSound();
+      if (onCancel) {
+        onCancel();
+      }
+    }
+  }, [title, content, tags, originalTitle, originalContent, originalTags, onCancel]);
+
+  // Confirm discard changes
+  const handleConfirmDiscard = useCallback(() => {
+    playCancelSound();
+    setShowConfirmDialog(false);
+    if (onCancel) {
+      onCancel();
+    }
+  }, [onCancel]);
+
+  // Cancel discard confirmation
+  const handleCancelDiscard = useCallback(() => {
+    setShowConfirmDialog(false);
+  }, []);
+
+  // Handle ESC key to cancel/edit
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Don't handle ESC if confirmation dialog is open (it will handle its own ESC)
+      if (showConfirmDialog) {
+        return;
+      }
+
+      // Don't handle ESC if user is typing in an input, textarea, or contenteditable element
+      const target = e.target as HTMLElement;
+      if (
+        target.tagName === 'INPUT' ||
+        target.tagName === 'TEXTAREA' ||
+        target.isContentEditable ||
+        (target.closest('input') || target.closest('textarea') || target.closest('[contenteditable="true"]'))
+      ) {
+        return;
+      }
+
+      // Handle ESC key
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        handleCancel();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [showConfirmDialog, handleCancel]);
+
+  // Handle Enter and ESC in confirmation dialog
+  useEffect(() => {
+    if (!showConfirmDialog) return;
+
+    const handleDialogKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        handleConfirmDiscard();
+      } else if (e.key === 'Escape') {
+        e.preventDefault();
+        handleCancelDiscard();
+      }
+    };
+
+    window.addEventListener('keydown', handleDialogKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleDialogKeyDown);
+    };
+  }, [showConfirmDialog, handleConfirmDiscard, handleCancelDiscard]);
+
   const getDateLabel = () => {
     switch (viewMode) {
       case 'decade':
@@ -309,10 +408,7 @@ export default function JournalEditor({
         )}
         <div className="footer-actions">
           {onCancel && (
-            <button className="cancel-button" onClick={() => {
-              playCancelSound();
-              onCancel();
-            }}>
+            <button className="cancel-button" onClick={handleCancel}>
               Cancel
             </button>
           )}
@@ -325,6 +421,23 @@ export default function JournalEditor({
           </button>
         </div>
       </div>
+      
+      {showConfirmDialog && (
+        <div className="confirm-dialog-overlay" onClick={handleCancelDiscard}>
+          <div className="confirm-dialog" onClick={(e) => e.stopPropagation()}>
+            <h4>Discard changes?</h4>
+            <p>You have unsaved changes. Are you sure you want to discard them?</p>
+            <div className="confirm-dialog-buttons">
+              <button className="confirm-button" onClick={handleConfirmDiscard}>
+                Discard (Enter)
+              </button>
+              <button className="cancel-button" onClick={handleCancelDiscard}>
+                Cancel (ESC)
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
