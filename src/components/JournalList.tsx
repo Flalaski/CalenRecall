@@ -1,10 +1,12 @@
 import { useState, useEffect, useMemo } from 'react';
 import { JournalEntry, TimeRange } from '../types';
-import { getEntriesForRange, deleteJournalEntry } from '../services/journalService';
+import { deleteJournalEntry } from '../services/journalService';
 import { formatDate, parseISODate } from '../utils/dateUtils';
 import { playNewEntrySound } from '../utils/audioUtils';
 import { useCalendar } from '../contexts/CalendarContext';
+import { useEntries } from '../contexts/EntriesContext';
 import { getTimeRangeLabelInCalendar } from '../utils/calendars/timeRangeConverter';
+import { filterEntriesForRange } from '../utils/entryFilterUtils';
 import './JournalList.css';
 
 interface JournalListProps {
@@ -21,9 +23,8 @@ export default function JournalList({
   onNewEntry,
 }: JournalListProps) {
   const { calendar } = useCalendar();
-  const [entries, setEntries] = useState<JournalEntry[]>([]);
+  const { entries: allEntries } = useEntries();
   const [filteredEntries, setFilteredEntries] = useState<JournalEntry[]>([]);
-  const [loading, setLoading] = useState(false);
   const [selectedEntryId, setSelectedEntryId] = useState<number | undefined>();
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [sortBy, setSortBy] = useState<'date' | 'title' | 'timeRange'>('date');
@@ -31,46 +32,19 @@ export default function JournalList({
   const [bulkEditMode, setBulkEditMode] = useState(false);
   const [selectedEntryIds, setSelectedEntryIds] = useState<Set<number>>(new Set());
 
+  // OPTIMIZATION: Filter entries from global context instead of querying database
+  const entries = useMemo(() => {
+    return filterEntriesForRange(allEntries, viewMode, selectedDate);
+  }, [allEntries, viewMode, selectedDate]);
+
   useEffect(() => {
-    loadEntries();
     setSelectedEntryId(undefined);
     // Clear bulk selection when changing date/view
     setSelectedEntryIds(new Set());
     setBulkEditMode(false);
   }, [selectedDate, viewMode]);
 
-  useEffect(() => {
-    const handleEntrySaved = () => {
-      if (process.env.NODE_ENV === 'development') {
-        console.log('JournalList: journalEntrySaved event received, reloading entries');
-      }
-      loadEntries();
-    };
-    window.addEventListener('journalEntrySaved', handleEntrySaved);
-    return () => {
-      window.removeEventListener('journalEntrySaved', handleEntrySaved);
-    };
-  }, [selectedDate, viewMode]);
-
-  const loadEntries = async () => {
-    setLoading(true);
-    try {
-      if (process.env.NODE_ENV === 'development') {
-        console.log('JournalList: Loading entries for', { viewMode, selectedDate: selectedDate.toISOString() });
-      }
-      const loadedEntries = await getEntriesForRange(viewMode, selectedDate);
-      if (process.env.NODE_ENV === 'development') {
-        console.log('JournalList: Loaded entries:', loadedEntries.length, loadedEntries);
-      }
-      setEntries(loadedEntries);
-    } catch (error) {
-      if (process.env.NODE_ENV === 'development') {
-        console.error('Error loading entries:', error);
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Removed loadEntries - now using EntriesContext with memoized filtering
 
   // Apply filters and sorting when entries or filter settings change
   useEffect(() => {
@@ -239,13 +213,8 @@ export default function JournalList({
     setSelectedTags([]);
   };
 
-  if (loading) {
-    return (
-      <div className="journal-list">
-        <div className="journal-list-loading">Loading entries...</div>
-      </div>
-    );
-  }
+  // Loading is handled at app level via EntriesContext
+  // Entries are preloaded, so no need for component-level loading state
 
   return (
     <div className="journal-list">

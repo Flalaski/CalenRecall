@@ -19,8 +19,10 @@ import { JournalEntry } from '../types';
 import { playCalendarSelectionSound } from '../utils/audioUtils';
 import { getEntryColorForDate } from '../utils/entryColorUtils';
 import { useCalendar } from '../contexts/CalendarContext';
+import { useEntries } from '../contexts/EntriesContext';
 import { dateToCalendarDate } from '../utils/calendars/calendarConverter';
 import { formatCalendarDate } from '../utils/calendars/calendarConverter';
+import { filterEntriesByDateRange, hasEntryForDate } from '../utils/entryFilterUtils';
 import './CalendarView.css';
 
 interface CalendarViewProps {
@@ -35,101 +37,58 @@ export default function CalendarView({
   onTimePeriodSelect,
 }: CalendarViewProps) {
   const { calendar } = useCalendar();
-  const [entries, setEntries] = useState<JournalEntry[]>([]);
-  const [loading, setLoading] = useState(false);
+  const { entries: allEntries } = useEntries();
 
-  useEffect(() => {
-    loadEntries();
-  }, [selectedDate, viewMode]);
-
-  useEffect(() => {
-    const handleEntrySaved = () => {
-      loadEntries();
-    };
-    window.addEventListener('journalEntrySaved', handleEntrySaved);
-    return () => {
-      window.removeEventListener('journalEntrySaved', handleEntrySaved);
-    };
-  }, [selectedDate, viewMode]);
-
-  const loadEntries = async () => {
-    setLoading(true);
-    try {
-      // Determine the date range we need to cover based on view mode
-      // We need to load entries that could apply to ANY date visible in the current view
-      let startDate: Date;
-      let endDate: Date;
-      
-      switch (viewMode) {
-        case 'decade':
-          const decadeStart = Math.floor(selectedDate.getFullYear() / 10) * 10;
-          startDate = new Date(decadeStart, 0, 1);
-          endDate = new Date(decadeStart + 9, 11, 31);
-          break;
-        case 'year':
-          startDate = new Date(selectedDate.getFullYear(), 0, 1);
-          endDate = new Date(selectedDate.getFullYear(), 11, 31);
-          break;
-        case 'month':
-          startDate = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1);
-          endDate = new Date(selectedDate.getFullYear(), selectedDate.getMonth() + 1, 0);
-          break;
-        case 'week':
-          startDate = getWeekStart(selectedDate);
-          endDate = getWeekEnd(selectedDate);
-          // For week view, we also need to load month entries that could apply
-          // So expand the range to include the full month(s) that contain this week
-          const weekStartMonth = new Date(startDate.getFullYear(), startDate.getMonth(), 1);
-          const weekEndMonth = new Date(endDate.getFullYear(), endDate.getMonth() + 1, 0);
-          // Use the wider range to catch month entries
-          if (weekStartMonth < startDate) startDate = weekStartMonth;
-          if (weekEndMonth > endDate) endDate = weekEndMonth;
-          break;
-        case 'day':
-          // For day view, load entries for the full month to catch month/week entries
-          startDate = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1);
-          endDate = new Date(selectedDate.getFullYear(), selectedDate.getMonth() + 1, 0);
-          break;
-        default:
-          startDate = selectedDate;
-          endDate = selectedDate;
+  // OPTIMIZATION: Filter entries from global context instead of querying database
+  const entries = useMemo(() => {
+    let startDate: Date;
+    let endDate: Date;
+    
+    switch (viewMode) {
+      case 'decade': {
+        const decadeStart = Math.floor(selectedDate.getFullYear() / 10) * 10;
+        startDate = new Date(decadeStart, 0, 1);
+        endDate = new Date(decadeStart + 9, 11, 31);
+        break;
       }
-      
-      // Load ALL entries in this date range using the database's getEntries function
-      // This will get entries regardless of their timeRange, as long as their date falls in range
-      if (!window.electronAPI) {
-        throw new Error('Electron API not available');
+      case 'year': {
+        startDate = new Date(selectedDate.getFullYear(), 0, 1);
+        endDate = new Date(selectedDate.getFullYear(), 11, 31);
+        break;
       }
-      
-      const startDateStr = formatDate(startDate);
-      const endDateStr = formatDate(endDate);
-      
-      if (process.env.NODE_ENV === 'development') {
-        console.log(`[CalendarView] Loading entries from ${startDateStr} to ${endDateStr} for ${viewMode} view`);
-        console.log(`[CalendarView] Selected date: ${formatDate(selectedDate)}`);
+      case 'month': {
+        startDate = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1);
+        endDate = new Date(selectedDate.getFullYear(), selectedDate.getMonth() + 1, 0);
+        break;
       }
-      
-      const allEntries = await window.electronAPI.getEntries(startDateStr, endDateStr);
-      
-      if (process.env.NODE_ENV === 'development') {
-        console.log(`[CalendarView] Loaded ${allEntries.length} entries from database:`, allEntries.map(e => ({
-          date: e.date,
-          timeRange: e.timeRange,
-          title: e.title
-        })));
+      case 'week': {
+        startDate = getWeekStart(selectedDate);
+        endDate = getWeekEnd(selectedDate);
+        // For week view, we also need to load month entries that could apply
+        // So expand the range to include the full month(s) that contain this week
+        const weekStartMonth = new Date(startDate.getFullYear(), startDate.getMonth(), 1);
+        const weekEndMonth = new Date(endDate.getFullYear(), endDate.getMonth() + 1, 0);
+        // Use the wider range to catch month entries
+        if (weekStartMonth < startDate) startDate = weekStartMonth;
+        if (weekEndMonth > endDate) endDate = weekEndMonth;
+        break;
       }
-      
-      // Store all entries - the hasEntry function will check if each date falls within any entry's range
-      setEntries(allEntries);
-    } catch (error) {
-      if (process.env.NODE_ENV === 'development') {
-        console.error('[CalendarView] Error loading entries:', error);
+      case 'day': {
+        // For day view, load entries for the full month to catch month/week entries
+        startDate = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1);
+        endDate = new Date(selectedDate.getFullYear(), selectedDate.getMonth() + 1, 0);
+        break;
       }
-      setEntries([]);
-    } finally {
-      setLoading(false);
+      default: {
+        startDate = selectedDate;
+        endDate = selectedDate;
+      }
     }
-  };
+    
+    return filterEntriesByDateRange(allEntries, startDate, endDate);
+  }, [allEntries, selectedDate, viewMode]);
+
+  // Removed loadEntries - now using EntriesContext with memoized filtering
 
   // Check if a date is the currently selected date (at appropriate granularity)
   const isSelected = (date: Date): boolean => {
@@ -150,84 +109,10 @@ export default function CalendarView({
     }
   };
 
-  // Memoize hasEntry to avoid recalculating on every render
-  // Create a memoized map of dates to boolean for quick lookup
-  const entryDateMap = useMemo(() => {
-    const map = new Map<string, boolean>();
-    if (entries.length === 0) {
-      return map;
-    }
-    
-    // Pre-calculate which dates have entries
-    // This is more efficient than checking on every render
-    entries.forEach(entry => {
-      const entryDate = parseISODate(entry.date);
-      
-      if (entry.timeRange === 'day') {
-        map.set(entry.date, true);
-      } else if (entry.timeRange === 'month') {
-        // Mark all days in the month
-        const year = entryDate.getFullYear();
-        const month = entryDate.getMonth();
-        const daysInMonth = new Date(year, month + 1, 0).getDate();
-        for (let day = 1; day <= daysInMonth; day++) {
-          const dateKey = formatDate(new Date(year, month, day));
-          map.set(dateKey, true);
-        }
-      } else if (entry.timeRange === 'week') {
-        // Mark all days in the week
-        const weekStart = new Date(entryDate);
-        const dayOfWeek = weekStart.getDay();
-        const daysToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
-        weekStart.setDate(weekStart.getDate() - daysToMonday);
-        weekStart.setHours(0, 0, 0, 0);
-        
-        for (let i = 0; i < 7; i++) {
-          const weekDay = new Date(weekStart);
-          weekDay.setDate(weekStart.getDate() + i);
-          const dateKey = formatDate(weekDay);
-          map.set(dateKey, true);
-        }
-      } else if (entry.timeRange === 'year') {
-        // Mark all days in the year (simplified - just mark year key)
-        const year = entryDate.getFullYear();
-        map.set(`year:${year}`, true);
-      } else if (entry.timeRange === 'decade') {
-        const decadeStart = Math.floor(entryDate.getFullYear() / 10) * 10;
-        map.set(`decade:${decadeStart}`, true);
-      }
-    });
-    
-    return map;
-  }, [entries]);
-
-  // Memoized hasEntry function using the pre-calculated map
+  // OPTIMIZATION: Use optimized hasEntryForDate utility
   const hasEntry = useCallback((date: Date): boolean => {
-    if (entries.length === 0) {
-      return false;
-    }
-    
-    const dateStr = formatDate(date);
-    
-    // Check day entry
-    if (entryDateMap.has(dateStr)) {
-      return true;
-    }
-    
-    // Check year entry
-    const year = date.getFullYear();
-    if (entryDateMap.has(`year:${year}`)) {
-      return true;
-    }
-    
-    // Check decade entry
-    const decadeStart = Math.floor(year / 10) * 10;
-    if (entryDateMap.has(`decade:${decadeStart}`)) {
-      return true;
-    }
-    
-    return false;
-  }, [entries.length, entryDateMap]);
+    return hasEntryForDate(entries, date);
+  }, [entries]);
 
   const renderDecadeView = () => {
     const years = getYearsInDecade(selectedDate);
@@ -433,9 +318,8 @@ export default function CalendarView({
     );
   };
 
-  if (loading) {
-    return <div className="calendar-loading">Loading...</div>;
-  }
+  // Loading is handled at app level via EntriesContext
+  // Entries are preloaded, so no need for component-level loading state
 
   switch (viewMode) {
     case 'decade':

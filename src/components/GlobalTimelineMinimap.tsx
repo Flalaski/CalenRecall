@@ -176,6 +176,11 @@ export default function GlobalTimelineMinimap({
   const lastBlipDateRef = useRef<Date | null>(null); // Track last date that triggered a micro blip
   const currentDragTargetDateRef = useRef<Date | null>(null); // Track the target date we're moving toward
   const sliderNoiseRef = useRef<SliderNoise | null>(null); // Track continuous slider noise for vertical drag feedback
+  // OPTIMIZATION: Track throttled indicator position for early entry filtering
+  // This allows approximate viewport filtering without recalculating on every drag movement
+  const throttledIndicatorPositionRef = useRef<number>(50); // Default to center
+  const lastThrottleUpdateRef = useRef<number>(0);
+  
   // SUPREME OPTIMIZATION: Entries are now preloaded globally via EntriesContext
   // No need to load entries here - they're already available in memory!
   // Just listen for entry updates to refresh the view
@@ -480,6 +485,22 @@ export default function GlobalTimelineMinimap({
     
     return { position, width };
   }, [selectedDate, viewMode, timelineData]);
+
+  // Update throttled position only when it changes significantly or after delay
+  // This allows approximate viewport filtering without recalculating on every drag movement
+  useEffect(() => {
+    const now = Date.now();
+    const positionChange = Math.abs(currentIndicatorMetrics.position - throttledIndicatorPositionRef.current);
+    const timeSinceUpdate = now - lastThrottleUpdateRef.current;
+    
+    // Update if position changed by more than 5% or 200ms have passed
+    if (positionChange > 5 || timeSinceUpdate > 200) {
+      throttledIndicatorPositionRef.current = currentIndicatorMetrics.position;
+      lastThrottleUpdateRef.current = now;
+      // Force recalculation by updating a state that triggers memo recalculation
+      setTimelineRangeKey(prev => prev + 1);
+    }
+  }, [currentIndicatorMetrics.position]);
 
   // Get color for current view mode
   const getViewModeColor = (mode: TimeRange): string => {
@@ -1778,6 +1799,17 @@ export default function GlobalTimelineMinimap({
     // For decade view (110 years), this reduces from checking all entries to only checking ~11 year buckets
     const filteredEntries: JournalEntry[] = [];
     
+    // OPTIMIZATION: For large time ranges, pre-filter by viewport to reduce processing
+    // Calculate approximate viewport range early to skip entries far from viewport
+    // Use throttled position to avoid recalculating on every drag movement
+    const viewportMargin = viewMode === 'decade' ? 0.20 : // 20% margin for decade (more generous for early filtering)
+                          viewMode === 'year' ? 0.25 :    // 25% margin for year
+                          0.35;                           // 35% margin for smaller views
+    const approximateViewportStart = throttledIndicatorPositionRef.current - (viewportMargin * 100);
+    const approximateViewportEnd = throttledIndicatorPositionRef.current + (viewportMargin * 100);
+    const viewportStartTime = timelineStartTime + (approximateViewportStart / 100) * totalTime;
+    const viewportEndTime = timelineStartTime + (approximateViewportEnd / 100) * totalTime;
+    
     // Only iterate over years that could be in range
     for (let year = timelineStartYear - 1; year <= timelineEndYear + 1; year++) {
       const yearEntries = entriesByYear.get(year);
@@ -1792,6 +1824,16 @@ export default function GlobalTimelineMinimap({
         continue;
       }
       
+      // OPTIMIZATION: For decade/year view, also check if year is near viewport
+      // This dramatically reduces entries processed for large time ranges
+      if (viewMode === 'decade' || viewMode === 'year') {
+        // If year is far from viewport, skip it (with some margin for entries that span years)
+        if (yearEnd < viewportStartTime - (365 * 24 * 60 * 60 * 1000) || 
+            yearStart > viewportEndTime + (365 * 24 * 60 * 60 * 1000)) {
+          continue;
+        }
+      }
+      
       // Year overlaps with timeline, add all entries from this year
       filteredEntries.push(...yearEntries);
     }
@@ -1799,6 +1841,38 @@ export default function GlobalTimelineMinimap({
     // If no entries are in range, return early
     if (filteredEntries.length === 0) {
       return [];
+    }
+    
+    // OPTIMIZATION: For very large entry sets, limit processing
+    // This prevents processing thousands of entries when only a few hundred are visible
+    const maxEntriesToProcess = viewMode === 'decade' ? 500 :
+                               viewMode === 'year' ? 1000 :
+                               2000; // month/week/day can handle more
+    
+    if (filteredEntries.length > maxEntriesToProcess) {
+      // Sample entries evenly across the timeline range
+      const step = Math.ceil(filteredEntries.length / maxEntriesToProcess);
+      const sampled: JournalEntry[] = [];
+      for (let i = 0; i < filteredEntries.length; i += step) {
+        sampled.push(filteredEntries[i]);
+      }
+      // Always include entries near viewport (use throttled position for consistency)
+      const viewportCenterTime = timelineStartTime + (throttledIndicatorPositionRef.current / 100) * totalTime;
+      const viewportRange = totalTime * 0.1; // 10% of timeline
+      const nearViewport = filteredEntries.filter(entry => {
+        const cached = dateCache.get(entry.date);
+        if (!cached) return false;
+        const entryDate = cached.canonical.get(entry.timeRange);
+        if (!entryDate) return false;
+        const entryTime = entryDate.getTime();
+        return Math.abs(entryTime - viewportCenterTime) < viewportRange;
+      });
+      // Combine sampled entries with viewport entries, removing duplicates
+      const combined = new Map<string, JournalEntry>();
+      sampled.forEach(e => combined.set(`${e.id}-${e.date}`, e));
+      nearViewport.forEach(e => combined.set(`${e.id}-${e.date}`, e));
+      filteredEntries.length = 0;
+      filteredEntries.push(...Array.from(combined.values()));
     }
     
     // SUPREME OPTIMIZATION: Group entries by date and timeRange using cached dates
@@ -1838,32 +1912,8 @@ export default function GlobalTimelineMinimap({
       });
     }
     
-    // SUPREME OPTIMIZATION: Viewport-based filtering - only process entries near viewport
-    // For large time ranges (especially decade view), this dramatically reduces processing
-    // Calculate viewport range based on current indicator position
-    const viewportMargin = viewMode === 'decade' ? 15 : 25; // Smaller margin for decade view
-    const visibleStartPercent = Math.max(0, currentIndicatorMetrics.position - viewportMargin);
-    const visibleEndPercent = Math.min(100, currentIndicatorMetrics.position + viewportMargin);
-    
-    // Filter cluster groups to only those in or near viewport BEFORE expensive calculations
-    const visibleClusterGroups = new Map<string, Array<{ entry: JournalEntry; position: number; color: string }>>();
-    for (const [key, group] of clusterGroups.entries()) {
-      // Check if any entry in this cluster is in the visible range
-      const hasVisibleEntry = group.some(item => 
-        item.position >= visibleStartPercent && item.position <= visibleEndPercent
-      );
-      
-      if (hasVisibleEntry) {
-        visibleClusterGroups.set(key, group);
-      }
-    }
-    
-    // Debug: Log cluster information (only if we have entries to process)
-    if (visibleClusterGroups.size > 0) {
-      console.log(`[TimelineMinimap] Processing ${filteredEntries.length} entries (filtered from ${entries.length} total) into ${visibleClusterGroups.size} visible clusters (${clusterGroups.size} total)`);
-    }
-    
     // Calculate positions for clusters and individual entries
+    // Note: Viewport filtering is done separately in visibleEntryPositions for stable memoization
     const result: Array<{ 
       entry: JournalEntry; 
       position: number; 
@@ -1900,8 +1950,8 @@ export default function GlobalTimelineMinimap({
       return true; // Position is available
     };
     
-    // Only process visible cluster groups to save massive computation
-    visibleClusterGroups.forEach((group) => {
+    // Process all cluster groups (viewport filtering done separately)
+    clusterGroups.forEach((group) => {
       // Get the timeRange for this group (all entries in a cluster have the same timeRange)
       const groupTimeRange = group[0].entry.timeRange;
       const sectionHeight = sectionHeights[groupTimeRange];
@@ -2107,7 +2157,51 @@ export default function GlobalTimelineMinimap({
     });
     
     return result;
-  }, [entries, timelineData, sectionHeights, entriesByYear, dateCache, entryColorCache, crystalSidesCache, currentIndicatorMetrics.position, viewMode]);
+  }, [entries, timelineData, sectionHeights, entriesByYear, dateCache, entryColorCache, crystalSidesCache, viewMode, timelineRangeKey]);
+
+  // OPTIMIZATION: Separate viewport filtering from base entry processing
+  // This allows stable memoization of base processing while filtering by viewport separately
+  const visibleEntryPositions = useMemo(() => {
+    if (entryPositions.length === 0) {
+      return [];
+    }
+
+    // Calculate viewport range based on current indicator position
+    // Use smaller margins for larger time ranges to reduce processing
+    const viewportMargin = viewMode === 'decade' ? 10 : 
+                          viewMode === 'year' ? 15 : 
+                          20; // Smaller margin for decade/year view
+    const visibleStartPercent = Math.max(0, currentIndicatorMetrics.position - viewportMargin);
+    const visibleEndPercent = Math.min(100, currentIndicatorMetrics.position + viewportMargin);
+    
+    // Filter to only entries in or near viewport
+    const filtered = entryPositions.filter(item => 
+      item.position >= visibleStartPercent && item.position <= visibleEndPercent
+    );
+    
+    // For decade view with many entries, limit the number rendered
+    if (viewMode === 'decade' && filtered.length > 200) {
+      // Sort by distance from center and take closest entries
+      const center = currentIndicatorMetrics.position;
+      return filtered
+        .map(item => ({ item, distance: Math.abs(item.position - center) }))
+        .sort((a, b) => a.distance - b.distance)
+        .slice(0, 200)
+        .map(({ item }) => item);
+    }
+    
+    // For year view with many entries, limit rendering
+    if (viewMode === 'year' && filtered.length > 300) {
+      const center = currentIndicatorMetrics.position;
+      return filtered
+        .map(item => ({ item, distance: Math.abs(item.position - center) }))
+        .sort((a, b) => a.distance - b.distance)
+        .slice(0, 300)
+        .map(({ item }) => item);
+    }
+    
+    return filtered;
+  }, [entryPositions, currentIndicatorMetrics.position, viewMode]);
 
   // Calculate viewport bounds in SVG coordinates for connection culling
   const viewportBounds = useMemo(() => {
@@ -4489,7 +4583,7 @@ export default function GlobalTimelineMinimap({
 
         {/* Entry indicators */}
         <div className="entry-indicators">
-          {entryPositions.map(({ entry, position, color, clusterIndex, clusterSize, clusterHexX, clusterCrystalSize, verticalOffset, polygonClipPath, sides }, idx) => {
+          {visibleEntryPositions.map(({ entry, position, color, clusterIndex, clusterSize, clusterHexX, clusterCrystalSize, verticalOffset, polygonClipPath, sides }, idx) => {
             const handleClick = (e: React.MouseEvent) => {
               e.stopPropagation();
               const entryDate = parseISODate(entry.date);
