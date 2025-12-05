@@ -16,6 +16,8 @@
   },
   "include": [
     "test-calendar-accuracy.ts",
+    "verify-epochs.ts",
+    "verify-chinese-calendar.ts",
     "../src/utils/calendars/**/*.ts"
   ],
   "exclude": [

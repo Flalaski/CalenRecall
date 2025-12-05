@@ -66,6 +66,7 @@ export function getCalendarEpoch(calendar: CalendarSystem): number {
     
     case 'mayan-tzolkin':
     case 'mayan-haab':
+    case 'mayan-longcount':
     case 'aztec-xiuhpohualli':
       // Mayan/Aztec epoch: August 11, 3114 BCE (Gregorian) = JDN 584283
       return 584283;

@@ -160,8 +160,11 @@ function calculateChineseYear(chineseYear: number): ChineseYearData {
       }
     }
     
-    // Check if this month has no solar term (leap month)
-    const isLeap = termsInMonth.length === 0;
+    // Check if this month has no major solar term (leap month)
+    // Major solar terms (中气) are the odd-numbered ones (1, 3, 5, 7, 9, 11, 13, 15, 17, 19, 21, 23)
+    // A leap month is a month that does NOT contain a major solar term
+    const hasMajorSolarTerm = termsInMonth.some(term => term % 2 === 1);
+    const isLeap = !hasMajorSolarTerm;
     
     // If this is a leap month, it takes the number of the previous regular month
     // Otherwise, use the current month number
@@ -265,30 +268,17 @@ export const chineseCalendar: CalendarConverter = {
     // Adjust based on whether we're before or after Chinese New Year
     let chineseYear = gregorianYear;
     
-    // Refine: if we're early in the Gregorian year (Jan-Feb), Chinese New Year might
-    // not have occurred yet, so we might still be in the previous Chinese year
-    // Check if we're before Chinese New Year for this Gregorian year
-    const yearDataCheck = getChineseYearData(chineseYear);
-    if (jdn < yearDataCheck.newYearJDN) {
-      // Chinese New Year hasn't occurred yet, so we're in the previous Chinese year
-      chineseYear--;
-    }
-    
-    // Refine year by checking Chinese New Year dates
-    // Start by getting the year data for our initial guess
+    // Get the Chinese New Year for the approximate year to determine the actual Chinese year
     let yearData = getChineseYearData(chineseYear);
     
-    // If before this year's New Year, go back years until we find the right one
-    while (jdn < yearData.newYearJDN) {
+    // If JDN is before this year's New Year, we're in the previous Chinese year
+    if (jdn < yearData.newYearJDN) {
       chineseYear--;
-      if (chineseYear < -10000) {
-        // Safety check to prevent infinite loops
-        break;
-      }
       yearData = getChineseYearData(chineseYear);
     }
     
-    // If after next year's New Year, go forward years until we find the right one
+    // Verify we have the correct year by checking against next year's New Year
+    // If JDN is at or after next year's New Year, we're actually in the next Chinese year
     let nextYearData = getChineseYearData(chineseYear + 1);
     while (jdn >= nextYearData.newYearJDN) {
       chineseYear++;
@@ -298,6 +288,23 @@ export const chineseCalendar: CalendarConverter = {
       }
       yearData = getChineseYearData(chineseYear);
       nextYearData = getChineseYearData(chineseYear + 1);
+    }
+    
+    // Double-check: if still before this year's New Year, go back
+    while (jdn < yearData.newYearJDN && chineseYear > -10000) {
+      chineseYear--;
+      yearData = getChineseYearData(chineseYear);
+    }
+    
+    // Special case: if JDN is exactly on Chinese New Year, return year, month 1, day 1
+    if (jdn === yearData.newYearJDN) {
+      return {
+        year: chineseYear,
+        month: 1,
+        day: 1,
+        calendar: 'chinese',
+        era: 'CE'
+      };
     }
     
     // Now find which month this JDN falls in

@@ -30,7 +30,9 @@
     "preview": "vite preview",
     "version:show": "node -p \"require('./package.json').version\"",
     "generate:icon": "node scripts/generate-icon.js",
-    "test:calendars": "ts-node --project scripts/tsconfig.json scripts/test-calendar-accuracy.ts"
+    "test:calendars": "ts-node --project scripts/tsconfig.json scripts/test-calendar-accuracy.ts",
+    "test:epochs": "ts-node --project scripts/tsconfig.json scripts/verify-epochs.ts",
+    "test:chinese": "ts-node --project scripts/tsconfig.json scripts/verify-chinese-calendar.ts"
   },
   "dependencies": {
     "better-sqlite3": "^12.5.0",
