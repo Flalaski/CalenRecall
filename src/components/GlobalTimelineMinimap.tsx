@@ -3939,66 +3939,140 @@ export default function GlobalTimelineMinimap({
           
           {/* Month labels */}
           {allScaleMarkings.month.major
-            .filter(mark => Math.abs(mark.position - currentIndicatorMetrics.position) <= LOCALIZATION_RANGE)
+            .filter(mark => {
+              // Ensure we have a valid label and a valid numeric position
+              if (!mark.label) return false;
+              if (!isFinite(mark.position)) return false;
+              if (mark.position < 0 || mark.position > 100) return false;
+              return true;
+            })
             .map((mark, idx) => {
+              // Explicitly ensure position is a valid number between 0 and 100
+              const labelPosition = Math.max(0, Math.min(100, Number(mark.position)));
+              
               const monthDate = mark.date ? new Date(mark.date.getFullYear(), mark.date.getMonth(), 15) : new Date();
               const zodiacColor = getZodiacColor(monthDate);
+              // Lighten the color for better readability on dark minimap background
+              const lightenedColor = lightenColor(zodiacColor, 0.5);
+              
+              // Calculate opacity and magnification based on distance from indicator
               const indicatorPosition = isFinite(currentIndicatorMetrics.position) 
                 ? Number(currentIndicatorMetrics.position) 
-                : 50;
-              const distanceFromIndicator = mark.position - indicatorPosition;
-              const magnificationScale = calculateMagnificationScale(distanceFromIndicator, LOCALIZATION_RANGE);
+                : 50; // Default to center if invalid
+              const distanceFromIndicator = labelPosition - indicatorPosition;
+              const absDistance = Math.abs(distanceFromIndicator);
+              const maxDistanceForFade = 50; // Maximum distance for full fade (50% of timeline)
+              const calculatedOpacity = 1 - (absDistance / maxDistanceForFade);
+              const labelOpacity = Math.max(0.1, Math.min(1, calculatedOpacity));
+              
+              // Calculate magnification scale using curve
+              const magnificationScale = calculateMagnificationScale(distanceFromIndicator, maxDistanceForFade);
               const baseFontSize = 0.8;
               const fontSize = `${baseFontSize * magnificationScale}rem`;
-              const absDistance = Math.abs(distanceFromIndicator);
-              const calculatedOpacity = 1 - (absDistance / LOCALIZATION_RANGE);
-              const labelOpacity = Math.max(0.2, Math.min(1, calculatedOpacity));
               
-              return mark.label && (
+              // Use truly unique key based on date, position, and index to prevent React element reuse
+              const monthDateTimestamp = mark.date ? mark.date.getTime() : Date.now() + idx;
+              const monthUniqueKey = `month-label-${monthDateTimestamp}-${labelPosition}-${idx}`;
+              
+              return (
                 <div
-                  key={`month-label-${idx}`}
+                  key={monthUniqueKey}
                   className={`scale-label month-label ${viewMode === 'month' ? 'current-scale' : ''}`}
                   style={{ 
-                    left: `${mark.position}%`, 
+                    position: 'absolute',
+                    left: `${labelPosition}%`, 
                     top: '85px', 
-                    color: zodiacColor,
+                    color: lightenedColor,
                     fontSize: fontSize,
                     opacity: labelOpacity,
                     transform: 'translate3d(-50%, 0, 0)',
+                    WebkitTransform: 'translate3d(-50%, 0, 0)',
+                    msTransform: 'translate3d(-50%, 0, 0)',
+                    zIndex: 2,
+                    pointerEvents: 'none',
                   }}
+                  data-position={labelPosition}
+                  data-label={mark.label}
                 >
                   {mark.label}
                 </div>
               );
             })}
           {allScaleMarkings.month.minor
-            .filter(mark => Math.abs(mark.position - currentIndicatorMetrics.position) <= LOCALIZATION_RANGE)
+            .filter(mark => {
+              // Ensure we have a valid label and a valid numeric position
+              if (!mark.label) return false;
+              if (!mark.date) return false;
+              if (!isFinite(mark.position)) return false;
+              if (mark.position < 0 || mark.position > 100) return false;
+              return true;
+            })
             .map((mark, idx) => {
+              // Explicitly ensure position is a valid number between 0 and 100
+              let labelPosition = Number(mark.position);
+              
+              // Safety check: only recalculate if position is not finite (NaN or Infinity)
+              if (!isFinite(labelPosition)) {
+                // Fallback: recalculate from date only if position is truly invalid
+                if (mark.date && timelineData.startDate && timelineData.endDate) {
+                  const timeOffset = mark.date.getTime() - timelineData.startDate.getTime();
+                  const totalTime = timelineData.endDate.getTime() - timelineData.startDate.getTime();
+                  if (totalTime > 0) {
+                    labelPosition = Math.max(0, Math.min(100, (timeOffset / totalTime) * 100));
+                  } else {
+                    labelPosition = 0;
+                  }
+                } else {
+                  labelPosition = 0;
+                }
+              }
+              
+              // Final validation and clamping - ensure we have a valid position (0-100 range)
+              labelPosition = Math.max(0, Math.min(100, labelPosition));
+              
               const monthDate = mark.date ? new Date(mark.date.getFullYear(), mark.date.getMonth(), 15) : new Date();
               const zodiacColor = getZodiacColor(monthDate);
+              // Lighten the color for better readability on dark minimap background
+              const lightenedColor = lightenColor(zodiacColor, 0.5);
+              
+              // Calculate opacity and magnification based on distance from indicator
               const indicatorPosition = isFinite(currentIndicatorMetrics.position) 
                 ? Number(currentIndicatorMetrics.position) 
-                : 50;
-              const distanceFromIndicator = mark.position - indicatorPosition;
-              const magnificationScale = calculateMagnificationScale(distanceFromIndicator, LOCALIZATION_RANGE);
+                : 50; // Default to center if invalid
+              const distanceFromIndicator = labelPosition - indicatorPosition;
+              const absDistance = Math.abs(distanceFromIndicator);
+              const maxDistanceForFade = 50; // Maximum distance for full fade (50% of timeline)
+              const calculatedOpacity = 1 - (absDistance / maxDistanceForFade);
+              const labelOpacity = Math.max(0.1, Math.min(1, calculatedOpacity));
+              
+              // Calculate magnification scale using curve
+              const magnificationScale = calculateMagnificationScale(distanceFromIndicator, maxDistanceForFade);
               const baseFontSize = 0.65;
               const fontSize = `${baseFontSize * magnificationScale}rem`;
-              const absDistance = Math.abs(distanceFromIndicator);
-              const calculatedOpacity = 1 - (absDistance / LOCALIZATION_RANGE);
-              const labelOpacity = Math.max(0.2, Math.min(1, calculatedOpacity));
               
-              return mark.label && (
+              // Use a truly unique key based on date timestamp to prevent React from reusing elements
+              const dateTimestamp = mark.date ? mark.date.getTime() : Date.now() + idx;
+              const uniqueKey = `month-minor-label-${dateTimestamp}-${labelPosition}`;
+              
+              return (
                 <div
-                  key={`month-minor-label-${idx}`}
+                  key={uniqueKey}
                   className="scale-label month-minor-label"
                   style={{ 
-                    left: `${mark.position}%`, 
+                    position: 'absolute',
+                    left: `${labelPosition}%`, 
                     top: '88px', 
-                    color: zodiacColor,
+                    color: lightenedColor,
                     fontSize: fontSize,
                     opacity: labelOpacity,
                     transform: 'translate3d(-50%, 0, 0)',
+                    WebkitTransform: 'translate3d(-50%, 0, 0)',
+                    msTransform: 'translate3d(-50%, 0, 0)',
+                    zIndex: 2,
+                    pointerEvents: 'none',
                   }}
+                  data-position={labelPosition}
+                  data-label={mark.label}
                 >
                   {mark.label}
                 </div>

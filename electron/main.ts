@@ -5,6 +5,7 @@ import { setupIpcHandlers } from './ipc-handlers';
 
 let mainWindow: BrowserWindow | null = null;
 let preferencesWindow: BrowserWindow | null = null;
+let aboutWindow: BrowserWindow | null = null;
 
 const isDev = process.env.NODE_ENV === 'development' || !app.isPackaged;
 
@@ -161,7 +162,7 @@ function createMenu() {
         {
           label: 'About CalenRecall',
           click: () => {
-            // You can add an about dialog here if needed
+            createAboutWindow();
           },
         },
       ],
@@ -241,6 +242,176 @@ function createPreferencesWindow() {
   preferencesWindow.on('close', (event) => {
     // Allow normal close behavior
     preferencesWindow = null;
+  });
+}
+
+function createAboutWindow() {
+  if (aboutWindow) {
+    aboutWindow.focus();
+    return;
+  }
+
+  // Calculate optimal window size based on content
+  // Content: 600px max-width + 40px padding each side = 680px width
+  // Estimated height: ~440px based on content structure
+  aboutWindow = new BrowserWindow({
+    width: 680,
+    height: 480,
+    minWidth: 500,
+    minHeight: 400,
+    parent: mainWindow || undefined,
+    modal: false,
+    resizable: true,
+    title: 'About CalenRecall',
+    show: false, // Hide initially until we size it
+    webPreferences: {
+      preload: path.join(__dirname, 'preload.js'),
+      nodeIntegration: false,
+      contextIsolation: true,
+    },
+    ...(process.platform === 'win32' && {
+      icon: path.join(__dirname, '../assets/icon.png'),
+    }),
+  });
+
+  // Handle external links in about window
+  aboutWindow.webContents.setWindowOpenHandler(({ url }) => {
+    // Only handle http/https URLs (external links)
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+      // Create browser window with custom dimensions
+      // 33% wider and twice as tall (assuming default ~800x600)
+      const browserWidth = Math.floor(800 * 1.33); // ~1064px
+      const browserHeight = 600 * 2; // 1200px
+      
+      const browserWindow = new BrowserWindow({
+        width: browserWidth,
+        height: browserHeight,
+        minWidth: 400,
+        minHeight: 300,
+        webPreferences: {
+          nodeIntegration: false,
+          contextIsolation: true,
+        },
+        ...(process.platform === 'win32' && {
+          icon: path.join(__dirname, '../assets/icon.png'),
+        }),
+      });
+      
+      browserWindow.loadURL(url);
+      
+      return { action: 'deny' }; // Prevent default handling
+    }
+    return { action: 'allow' }; // Allow other URLs
+  });
+
+  if (isDev) {
+    aboutWindow.loadURL('http://localhost:5173/about.html');
+  } else {
+    aboutWindow.loadFile(path.join(__dirname, '../dist/about.html'));
+  }
+
+  // Auto-size window to fit content after page loads
+  aboutWindow.webContents.once('did-finish-load', () => {
+    if (!aboutWindow) return;
+    
+    // Wait for layout to settle, then measure and resize
+    setTimeout(() => {
+      if (!aboutWindow) return;
+      
+      aboutWindow.webContents.executeJavaScript(`
+        (function() {
+          const container = document.querySelector('.about-container');
+          const content = document.querySelector('.about-content');
+          
+          if (!container || !content) {
+            return { width: 680, height: 520 };
+          }
+          
+          // Get the scroll height which gives natural content size
+          const body = document.body;
+          const html = document.documentElement;
+          
+          // Get the actual content height
+          const containerHeight = Math.max(
+            container.scrollHeight,
+            container.offsetHeight,
+            body.scrollHeight,
+            body.offsetHeight,
+            html.scrollHeight,
+            html.offsetHeight
+          );
+          
+          // Add extra padding to ensure nothing is cut off
+          const contentRect = content.getBoundingClientRect();
+          const containerRect = container.getBoundingClientRect();
+          
+          // Calculate total height including all padding and margins
+          // Get the bottom of the content element
+          const contentBottom = contentRect.bottom;
+          const containerTop = containerRect.top;
+          
+          // Calculate needed height: distance from container top to content bottom
+          // plus container bottom padding (40px) plus extra margin for safety
+          const totalHeight = Math.max(
+            containerHeight,
+            containerRect.height,
+            contentBottom - containerTop + 40 + 30 // container padding + safety margin
+          );
+          
+          // Width is fixed: 600px content + 80px container padding = 680px
+          return {
+            width: 680,
+            height: Math.ceil(totalHeight)
+          };
+        })();
+      `).then((size: { width: number; height: number }) => {
+        if (aboutWindow && size) {
+          // Clamp to reasonable bounds, but allow more height
+          const width = 680;
+          const height = Math.max(450, Math.min(700, size.height));
+          
+          aboutWindow.setSize(width, height, false);
+          
+          // Center the window
+          if (mainWindow && !mainWindow.isDestroyed()) {
+            const [mainX, mainY] = mainWindow.getPosition();
+            const [mainWidth, mainHeight] = mainWindow.getSize();
+            const x = mainX + Math.floor((mainWidth - width) / 2);
+            const y = mainY + Math.floor((mainHeight - height) / 2);
+            aboutWindow.setPosition(x, y, false);
+          } else {
+            aboutWindow.center();
+          }
+          
+          aboutWindow.show();
+        }
+      }).catch((error) => {
+        console.error('Error auto-sizing About window:', error);
+        // Show with default size if measurement fails
+        if (aboutWindow) {
+          if (mainWindow && !mainWindow.isDestroyed()) {
+            const [mainX, mainY] = mainWindow.getPosition();
+            const [mainWidth, mainHeight] = mainWindow.getSize();
+            aboutWindow.setPosition(
+              mainX + Math.floor((mainWidth - 680) / 2),
+              mainY + Math.floor((mainHeight - 480) / 2),
+              false
+            );
+          }
+          aboutWindow.show();
+        }
+      });
+    }, 300); // Wait longer for styles to fully apply
+  });
+
+  aboutWindow.on('closed', () => {
+    aboutWindow = null;
+  });
+
+  // Ensure window is properly destroyed on close
+  aboutWindow.on('close', (event) => {
+    // Allow normal close behavior
+    aboutWindow = null;
   });
 }
 
