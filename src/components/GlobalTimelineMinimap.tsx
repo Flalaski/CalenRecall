@@ -3,6 +3,7 @@ import { TimeRange, JournalEntry } from '../types';
 import { formatDate, getWeekStart, getWeekEnd, getMonthStart, getMonthEnd, getYearEnd, getDecadeEnd, getZodiacColor, getZodiacColorForDecade, getCanonicalDate } from '../utils/dateUtils';
 import { addDays, addWeeks, addMonths, addYears, getYear, getMonth, getDate } from 'date-fns';
 import { playMechanicalClick, playMicroBlip, getAudioContext } from '../utils/audioUtils';
+import { calculateEntryColor } from '../utils/entryColorUtils';
 import './GlobalTimelineMinimap.css';
 
 interface GlobalTimelineMinimapProps {
@@ -110,40 +111,16 @@ function calculateCrystalSides(entry: JournalEntry): number {
 }
 
 // Calculate color based on numerological patterns of content and time
-function calculateEntryColor(entry: JournalEntry): string {
-  // Combine title and content for numerological calculation
-  const text = (entry.title || '') + (entry.content || '');
+// Helper function to convert hex color to rgba
+function hexToRgba(hex: string, alpha: number): string {
+  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  if (!result) return hex; // Return original if not a valid hex color
   
-  // Calculate numerological value from text (sum of character codes with weighting)
-  let textValue = 0;
-  for (let i = 0; i < text.length; i++) {
-    const charCode = text.charCodeAt(i);
-    // Weight characters differently to create more variation
-    textValue += charCode * (i % 3 + 1);
-  }
+  const r = parseInt(result[1], 16);
+  const g = parseInt(result[2], 16);
+  const b = parseInt(result[3], 16);
   
-  // Calculate time-based numerological value
-  const entryDate = new Date(entry.date);
-  const timeValue = entryDate.getFullYear() * 10000 + 
-                    (entryDate.getMonth() + 1) * 100 + 
-                    entryDate.getDate();
-  
-  // Add timeRange to the calculation for additional variation
-  const timeRangeValue = entry.timeRange === 'decade' ? 1000 :
-                        entry.timeRange === 'year' ? 2000 :
-                        entry.timeRange === 'month' ? 3000 :
-                        entry.timeRange === 'week' ? 4000 : 5000;
-  
-  // Combine all values for numerological calculation
-  const combinedValue = (textValue + timeValue + timeRangeValue) % 360; // Use modulo 360 for hue
-  
-  // Calculate hue, saturation, and lightness with more variation
-  // Increased base saturation for vibrant colors (CSS filter will multiply this)
-  const hue = combinedValue; // 0-360 degrees
-  const saturation = 75 + (textValue % 20); // 75-95% saturation (very vibrant base)
-  const lightness = 45 + (timeValue % 15); // 45-60% lightness (more visible)
-  
-  return `hsl(${hue}, ${saturation}%, ${lightness}%)`;
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 }
 
 export default function GlobalTimelineMinimap({
@@ -522,6 +499,35 @@ export default function GlobalTimelineMinimap({
     }
   };
 
+  // Get color for the currently selected segment of time based on zodiac colors
+  const getSelectedSegmentColor = useMemo(() => {
+    switch (viewMode) {
+      case 'decade': {
+        const decadeStart = Math.floor(getYear(selectedDate) / 10) * 10;
+        return getZodiacColorForDecade(decadeStart) || '#9c27b0';
+      }
+      case 'year': {
+        const yearDate = new Date(getYear(selectedDate), 0, 1);
+        return getZodiacColor(yearDate) || '#0277bd';
+      }
+      case 'month': {
+        const monthDate = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 15);
+        return getZodiacColor(monthDate) || '#ef6c00';
+      }
+      case 'week': {
+        // Use the middle of the week for color
+        const weekStart = getWeekStart(selectedDate);
+        const weekMiddle = addDays(weekStart, 3);
+        return getZodiacColor(weekMiddle) || '#2e7d32';
+      }
+      case 'day': {
+        return getZodiacColor(selectedDate) || '#4a90e2';
+      }
+      default:
+        return '#4a90e2';
+    }
+  }, [selectedDate, viewMode]);
+
   // Calculate magnification scale based on distance from indicator
   // Uses an ease-out curve for smooth magnification effect
   const calculateMagnificationScale = (distanceFromIndicator: number, maxDistance: number = 50): number => {
@@ -646,8 +652,32 @@ export default function GlobalTimelineMinimap({
       const left = Math.max(0, Math.min(100, leftPercent));
       const width = Math.max(0.1, Math.min(100, widthPercent)); // Minimum 0.1% width for visibility
       
-      // Get color for this scale
-      const color = getViewModeColor(scale);
+      // Get zodiac color for this finer time period
+      let color: string;
+      switch (scale) {
+        case 'year': {
+          const yearDate = new Date(finerPeriodStart.getFullYear(), 0, 1);
+          color = getZodiacColor(yearDate) || getViewModeColor(scale);
+          break;
+        }
+        case 'month': {
+          const monthDate = new Date(finerPeriodStart.getFullYear(), finerPeriodStart.getMonth(), 15);
+          color = getZodiacColor(monthDate) || getViewModeColor(scale);
+          break;
+        }
+        case 'week': {
+          // Use the middle of the week for color
+          const weekMiddle = addDays(finerPeriodStart, 3);
+          color = getZodiacColor(weekMiddle) || getViewModeColor(scale);
+          break;
+        }
+        case 'day': {
+          color = getZodiacColor(finerPeriodStart) || getViewModeColor(scale);
+          break;
+        }
+        default:
+          color = getViewModeColor(scale);
+      }
       
       indicators.push({
         scale,
@@ -3925,6 +3955,17 @@ export default function GlobalTimelineMinimap({
             style={{ 
               left: `${currentIndicatorMetrics.position}%`,
               width: currentIndicatorMetrics.width,
+              background: `linear-gradient(to bottom, 
+                ${hexToRgba(getSelectedSegmentColor, 0.2)}, 
+                ${getSelectedSegmentColor}, 
+                ${hexToRgba(getSelectedSegmentColor, 0.2)}
+              )`,
+              borderLeftColor: getSelectedSegmentColor,
+              borderRightColor: getSelectedSegmentColor,
+              boxShadow: `
+                0 0 10px ${hexToRgba(getSelectedSegmentColor, 0.7)},
+                inset 0 0 10px ${hexToRgba(getSelectedSegmentColor, 0.3)}
+              `,
             }}
           >
             {/* Micro indicators for finer time scales */}

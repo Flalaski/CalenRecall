@@ -16,6 +16,7 @@ import {
 import { isSameDay, isSameMonth, isSameYear } from 'date-fns';
 import { JournalEntry } from '../types';
 import { playCalendarSelectionSound } from '../utils/audioUtils';
+import { getEntryColorForDate } from '../utils/entryColorUtils';
 import './CalendarView.css';
 
 interface CalendarViewProps {
@@ -214,6 +215,7 @@ export default function CalendarView({
       <div className="calendar-grid decade-view">
         {years.map((year, idx) => {
           const yearGradientColor = getZodiacGradientColorForYear(year.getFullYear());
+          const entryColor = hasEntry(year) ? getEntryColorForDate(entries, year, 'year') : null;
           return (
             <div
               key={idx}
@@ -228,7 +230,12 @@ export default function CalendarView({
                 <div className="cell-label" style={{ color: yearGradientColor }}>
                   {year.getFullYear()}
                 </div>
-                {hasEntry(year) && <div className="entry-indicator"></div>}
+                {hasEntry(year) && entryColor && (
+                  <div 
+                    className="entry-indicator"
+                    style={{ backgroundColor: entryColor }}
+                  ></div>
+                )}
               </div>
             </div>
           );
@@ -249,6 +256,7 @@ export default function CalendarView({
           // Use the 15th of each month as representative for the zodiac color
           const monthMidpoint = new Date(month.getFullYear(), month.getMonth(), 15);
           const zodiacColor = getZodiacColor(monthMidpoint);
+          const entryColor = hasEntry(month) ? getEntryColorForDate(entries, month, 'month') : null;
           return (
             <div
               key={idx}
@@ -261,7 +269,12 @@ export default function CalendarView({
             >
               <div className="cell-content">
                 <div className="cell-label month-title">{monthNames[idx]}</div>
-                {hasEntry(month) && <div className="entry-indicator"></div>}
+                {hasEntry(month) && entryColor && (
+                  <div 
+                    className="entry-indicator"
+                    style={{ backgroundColor: entryColor }}
+                  ></div>
+                )}
               </div>
             </div>
           );
@@ -291,6 +304,7 @@ export default function CalendarView({
           ))}
           {days.map((day, idx) => {
             const gradientColor = getZodiacGradientColor(day);
+            const entryColor = hasEntry(day) ? getEntryColorForDate(entries, day, 'day') : null;
             return (
               <div
                 key={idx}
@@ -303,7 +317,12 @@ export default function CalendarView({
               >
                 <div className="cell-content">
                   <div className="cell-label">{day.getDate()}</div>
-                  {hasEntry(day) && <div className="entry-indicator"></div>}
+                  {hasEntry(day) && entryColor && (
+                    <div 
+                      className="entry-indicator"
+                      style={{ backgroundColor: entryColor }}
+                    ></div>
+                  )}
                 </div>
               </div>
             );
@@ -330,6 +349,7 @@ export default function CalendarView({
         <div className="calendar-grid week-view">
           {days.map((day, idx) => {
             const gradientColor = getZodiacGradientColor(day);
+            const entryColor = hasEntry(day) ? getEntryColorForDate(entries, day, 'day') : null;
             return (
               <div
                 key={idx}
@@ -341,7 +361,12 @@ export default function CalendarView({
                 style={{ '--zodiac-gradient': gradientColor } as React.CSSProperties}
               >
                 <div className="cell-content">
-                  {hasEntry(day) && <div className="entry-indicator"></div>}
+                  {hasEntry(day) && entryColor && (
+                    <div 
+                      className="entry-indicator"
+                      style={{ backgroundColor: entryColor }}
+                    ></div>
+                  )}
                 </div>
               </div>
             );

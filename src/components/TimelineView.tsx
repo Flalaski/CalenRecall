@@ -3,6 +3,7 @@ import { JournalEntry, TimeRange } from '../types';
 import { formatDate, getDaysInMonth, getDaysInWeek, isToday, getWeekStart, getWeekEnd, getZodiacColor, getZodiacGradientColor, getZodiacGradientColorForYear, getZodiacColorForDecade } from '../utils/dateUtils';
 import { isSameDay, isSameMonth, isSameYear } from 'date-fns';
 import { playCalendarSelectionSound, playEntrySelectionSound, playEditSound } from '../utils/audioUtils';
+import { calculateEntryColor } from '../utils/entryColorUtils';
 import './TimelineView.css';
 
 interface TimelineViewProps {
@@ -220,7 +221,7 @@ export default function TimelineView({
   // Create pixel map for a year (12 months x ~30 days = 360 pixels, but we'll use 12x30 grid)
   const createYearPixelMap = (yearEntries: JournalEntry[]): string[] => {
     // Create a 12x30 grid (12 months, 30 days each)
-    // Each pixel represents one entry, colored by time range
+    // Each pixel represents one entry, colored using crystal colors
     const pixels: string[] = [];
     const totalPixels = 12 * 30; // 360 pixels
     
@@ -231,19 +232,10 @@ export default function TimelineView({
       return dateA.getTime() - dateB.getTime();
     });
     
-    // Map each entry to a pixel color based on time range
-    const timeRangeColors: Record<TimeRange, string> = {
-      'decade': '#9c27b0', // Purple
-      'year': '#2196f3',   // Blue
-      'month': '#ff9800',   // Orange
-      'week': '#4caf50',    // Green
-      'day': '#f44336',     // Red
-    };
-    
-    // Create pixel array - one entry per pixel
+    // Create pixel array - one entry per pixel, using crystal colors
     for (let i = 0; i < Math.min(sortedEntries.length, totalPixels); i++) {
       const entry = sortedEntries[i];
-      pixels.push(timeRangeColors[entry.timeRange] || '#999999');
+      pixels.push(calculateEntryColor(entry));
     }
     
     // Fill remaining pixels with transparent/empty
@@ -268,19 +260,10 @@ export default function TimelineView({
       return dateA.getTime() - dateB.getTime();
     });
     
-    // Map each entry to a pixel color based on time range
-    const timeRangeColors: Record<TimeRange, string> = {
-      'decade': '#9c27b0', // Purple
-      'year': '#2196f3',   // Blue
-      'month': '#ff9800',   // Orange
-      'week': '#4caf50',    // Green
-      'day': '#f44336',     // Red
-    };
-    
-    // Create pixel array - one entry per pixel
+    // Create pixel array - one entry per pixel, using crystal colors
     for (let i = 0; i < Math.min(sortedEntries.length, totalPixels); i++) {
       const entry = sortedEntries[i];
-      pixels.push(timeRangeColors[entry.timeRange] || '#999999');
+      pixels.push(calculateEntryColor(entry));
     }
     
     // Fill remaining pixels with transparent/empty
@@ -379,23 +362,27 @@ export default function TimelineView({
                   >
                     <div className="cell-date">{day.getDate()}</div>
                     <div className="cell-entries">
-                      {dayEntries.slice(0, 3).map((entry, eIdx) => (
-                        <div
-                          key={eIdx}
-                          className={`entry-badge entry-${entry.timeRange}`}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            playEntrySelectionSound();
-                            onEntrySelect(entry);
-                          }}
-                          title={entry.title}
-                        >
-                          <span className="badge-title">{entry.title}</span>
-                          {entry.tags && entry.tags.length > 0 && (
-                            <span className="badge-tag-count">{entry.tags.length}</span>
-                          )}
-                        </div>
-                      ))}
+                      {dayEntries.slice(0, 3).map((entry, eIdx) => {
+                        const entryColor = calculateEntryColor(entry);
+                        return (
+                          <div
+                            key={eIdx}
+                            className={`entry-badge entry-${entry.timeRange}`}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              playEntrySelectionSound();
+                              onEntrySelect(entry);
+                            }}
+                            title={entry.title}
+                            style={{ backgroundColor: entryColor }}
+                          >
+                            <span className="badge-title">{entry.title}</span>
+                            {entry.tags && entry.tags.length > 0 && (
+                              <span className="badge-tag-count">{entry.tags.length}</span>
+                            )}
+                          </div>
+                        );
+                      })}
                       {dayEntries.length > 3 && (
                         <div className="entry-badge more-entries">+{dayEntries.length - 3}</div>
                       )}
@@ -428,19 +415,23 @@ export default function TimelineView({
                       </div>
                       {weekEntries.length > 0 ? (
                         <div className="week-entry-items">
-                          {weekEntries.map((entry, eIdx) => (
-                            <div
-                              key={eIdx}
-                              className="week-entry-item"
-                              onClick={() => {
-                                playEntrySelectionSound();
-                                onEntrySelect(entry);
-                              }}
-                              title={entry.title}
-                            >
-                              <span className="week-entry-title">{entry.title}</span>
-                            </div>
-                          ))}
+                          {weekEntries.map((entry, eIdx) => {
+                            const entryColor = calculateEntryColor(entry);
+                            return (
+                              <div
+                                key={eIdx}
+                                className="week-entry-item"
+                                onClick={() => {
+                                  playEntrySelectionSound();
+                                  onEntrySelect(entry);
+                                }}
+                                title={entry.title}
+                                style={{ borderLeftColor: entryColor }}
+                              >
+                                <span className="week-entry-title">{entry.title}</span>
+                              </div>
+                            );
+                          })}
                         </div>
                       ) : (
                         <div className="week-entry-empty">No week entries</div>
@@ -493,16 +484,19 @@ export default function TimelineView({
                 style={{ '--zodiac-gradient': gradientColor } as React.CSSProperties}
               >
                 <div className="cell-entries-vertical">
-                  {dayEntries.map((entry, eIdx) => (
-                    <div
-                      key={eIdx}
-                      className={`entry-card entry-${entry.timeRange}`}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        playEntrySelectionSound();
-                        onEntrySelect(entry);
-                      }}
-                    >
+                  {dayEntries.map((entry, eIdx) => {
+                    const entryColor = calculateEntryColor(entry);
+                    return (
+                      <div
+                        key={eIdx}
+                        className={`entry-card entry-${entry.timeRange}`}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          playEntrySelectionSound();
+                          onEntrySelect(entry);
+                        }}
+                        style={{ borderLeftColor: entryColor }}
+                      >
                       <div className="card-title-row">
                         <div className="card-title">{entry.title}</div>
                         {onEditEntry && (
@@ -527,8 +521,9 @@ export default function TimelineView({
                           ))}
                         </div>
                       )}
-                    </div>
-                  ))}
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             );
@@ -553,15 +548,18 @@ export default function TimelineView({
               <p className="hint">Click on a date in month or week view to see entries, or create a new one.</p>
             </div>
           ) : (
-            dayEntries.map((entry, idx) => (
-              <div
-                key={idx}
-                className={`entry-card-full entry-${entry.timeRange}`}
-                onClick={() => {
-                  playEntrySelectionSound();
-                  onEntrySelect(entry);
-                }}
-              >
+            dayEntries.map((entry, idx) => {
+              const entryColor = calculateEntryColor(entry);
+              return (
+                <div
+                  key={idx}
+                  className={`entry-card-full entry-${entry.timeRange}`}
+                  onClick={() => {
+                    playEntrySelectionSound();
+                    onEntrySelect(entry);
+                  }}
+                  style={{ borderLeftColor: entryColor }}
+                >
                 <div className="card-header">
                   <div className="card-title-full">{entry.title}</div>
                   <div className="card-meta">
@@ -591,7 +589,8 @@ export default function TimelineView({
                   </div>
                 )}
               </div>
-            ))
+              );
+            })
           )}
         </div>
       </div>
@@ -640,20 +639,24 @@ export default function TimelineView({
                   </div>
                 )}
                 <div className="cell-entries">
-                  {monthEntries.slice(0, 2).map((entry, eIdx) => (
-                    <div
-                      key={eIdx}
-                      className={`entry-badge entry-${entry.timeRange}`}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        playEntrySelectionSound();
-                        onEntrySelect(entry);
-                      }}
-                      title={entry.title}
-                    >
-                      <span className="badge-title">{entry.title}</span>
-                    </div>
-                  ))}
+                  {monthEntries.slice(0, 2).map((entry, eIdx) => {
+                    const entryColor = calculateEntryColor(entry);
+                    return (
+                      <div
+                        key={eIdx}
+                        className={`entry-badge entry-${entry.timeRange}`}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          playEntrySelectionSound();
+                          onEntrySelect(entry);
+                        }}
+                        title={entry.title}
+                        style={{ backgroundColor: entryColor }}
+                      >
+                        <span className="badge-title">{entry.title}</span>
+                      </div>
+                    );
+                  })}
                   {monthEntries.length > 2 && (
                     <div className="entry-badge more-entries">+{monthEntries.length - 2}</div>
                   )}
@@ -711,20 +714,24 @@ export default function TimelineView({
                   </div>
                 )}
                 <div className="cell-entries">
-                  {yearEntries.slice(0, 2).map((entry, eIdx) => (
-                    <div
-                      key={eIdx}
-                      className={`entry-badge entry-${entry.timeRange}`}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        playEntrySelectionSound();
-                        onEntrySelect(entry);
-                      }}
-                      title={entry.title}
-                    >
-                      <span className="badge-title">{entry.title}</span>
-                    </div>
-                  ))}
+                  {yearEntries.slice(0, 2).map((entry, eIdx) => {
+                    const entryColor = calculateEntryColor(entry);
+                    return (
+                      <div
+                        key={eIdx}
+                        className={`entry-badge entry-${entry.timeRange}`}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          playEntrySelectionSound();
+                          onEntrySelect(entry);
+                        }}
+                        title={entry.title}
+                        style={{ backgroundColor: entryColor }}
+                      >
+                        <span className="badge-title">{entry.title}</span>
+                      </div>
+                    );
+                  })}
                   {yearEntries.length > 2 && (
                     <div className="entry-badge more-entries">+{yearEntries.length - 2}</div>
                   )}
