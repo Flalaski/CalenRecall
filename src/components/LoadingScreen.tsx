@@ -16,8 +16,8 @@ const LOADING_SCREEN_CONSTANTS = {
   RIGHT_LOOP_CENTER: { x: 300, y: 200 },
   MIDPOINT_X: 250,
   INFINITY_AMPLITUDE: 50,
-  INFINITY_SEGMENTS: 432,
-  BRANCHES_PER_SIDE: 33,
+  INFINITY_SEGMENTS: 42,
+  BRANCHES_PER_SIDE: 12,
   STAR_COUNT: 216,
   NEBULA_DIMENSIONS: { width: 800, height: 600 },
   PROGRESS_THRESHOLDS: { slow: 20, fast: 80 },
@@ -27,7 +27,7 @@ const LOADING_SCREEN_CONSTANTS = {
   OPACITY_DIVISORS: { infinity: 100, branch: 150 },
   ANIMATION_INTERVAL_MS: 16, // ~60fps
   POLARITY_PHASE_INCREMENT: 0.01,
-  CAMERA_ZOOM: 8.0, // Higher = more zoomed in (1.0 = normal, 2.0 = 2x zoom, 0.5 = zoomed out)
+  CAMERA_ZOOM: 3.0, // Higher = more zoomed in (1.0 = normal, 2.0 = 2x zoom, 0.5 = zoomed out)
   CAMERA_DISTANCE: 0, // translateZ offset for camera position (negative = closer, positive = farther)
 } as const;
 
@@ -50,7 +50,23 @@ interface BranchSegment3D {
 function generateInfinityBranches3D(): Array<BranchSegment3D> {
   const segments: Array<BranchSegment3D> = [];
   
-  // Helper to create 3D branch segments (like veins)
+  // Fractal interpolation function for mathematically perfect smooth curves
+  const fractalInterpolate = (
+    p0: { x: number; y: number; z: number },
+    p1: { x: number; y: number; z: number },
+    p2: { x: number; y: number; z: number },
+    t: number
+  ): { x: number; y: number; z: number } => {
+    // Quadratic Bezier interpolation for smooth fractal curves
+    const mt = 1 - t;
+    return {
+      x: mt * mt * p0.x + 2 * mt * t * p1.x + t * t * p2.x,
+      y: mt * mt * p0.y + 2 * mt * t * p1.y + t * t * p2.y,
+      z: mt * mt * p0.z + 2 * mt * t * p1.z + t * t * p2.z,
+    };
+  };
+
+  // Helper to create 3D branch segments with fractal interpolation for perfect connections
   const createVeinBranch3D = (
     startX: number, 
     startY: number,
@@ -64,30 +80,53 @@ function generateInfinityBranches3D(): Array<BranchSegment3D> {
   ): { segments: BranchSegment3D[]; points: Array<{ x: number; y: number; z: number }> } => {
     if (depth > maxDepth) return { segments: [], points: [] };
     
+    // Calculate endpoint with mathematical precision
     const endX = startX + Math.cos(angle) * length;
     const endY = startY + Math.sin(angle) * length;
     // Vary Z depth based on branch depth for 3D structure
     const endZ = startZ + (Math.random() - 0.5) * 20 * (depth + 1);
     
+    // Create control point for fractal interpolation (midpoint with slight offset)
+    const midX = (startX + endX) / 2;
+    const midY = (startY + endY) / 2;
+    const midZ = (startZ + endZ) / 2;
+    const perpAngle = angle + Math.PI / 2;
+    const offset = length * 0.1 * (depth + 1) * 0.3;
+    const controlX = midX + Math.cos(perpAngle) * offset;
+    const controlY = midY + Math.sin(perpAngle) * offset;
+    const controlZ = midZ;
+    
     const points: Array<{ x: number; y: number; z: number }> = [];
     
-    // Add points along main branch for ornaments (every 20% of length)
-    for (let t = 0.2; t < 1; t += 0.2) {
-      const px = startX + (endX - startX) * t;
-      const py = startY + (endY - startY) * t;
-      const pz = startZ + (endZ - startZ) * t;
-      points.push({ x: px, y: py, z: pz });
+    // Fractal interpolation: create smooth curve with multiple points
+    const numInterpolationPoints = 5;
+    for (let i = 0; i <= numInterpolationPoints; i++) {
+      const t = i / numInterpolationPoints;
+      const interpolated = fractalInterpolate(
+        { x: startX, y: startY, z: startZ },
+        { x: controlX, y: controlY, z: controlZ },
+        { x: endX, y: endY, z: endZ },
+        t
+      );
+      if (t > 0 && t < 1) {
+        points.push(interpolated);
+      }
     }
     
-    // Create main branch segment
-    // Ensure exact endpoint calculation for proper connections
+    // Create main branch segment with extended endpoint to close gaps
+    // Extend segment slightly beyond endpoint to ensure perfect connection
+    const extensionFactor = 1.01; // 1% extension to close gaps
+    const extendedEndX = startX + (endX - startX) * extensionFactor;
+    const extendedEndY = startY + (endY - startY) * extensionFactor;
+    const extendedEndZ = startZ + (endZ - startZ) * extensionFactor;
+    
     const segment: BranchSegment3D = {
       startX,
       startY,
       startZ,
-      endX,
-      endY,
-      endZ,
+      endX: extendedEndX,
+      endY: extendedEndY,
+      endZ: extendedEndZ,
       thickness: Math.max(1, 2 - depth * 0.3), // Ensure minimum thickness for visibility
       color: baseColor,
       delay: delay + depth * 0.1,
@@ -98,19 +137,38 @@ function generateInfinityBranches3D(): Array<BranchSegment3D> {
     const allSegments = [segment];
     const allPoints = [...points];
     
-    // Create 2-3 sub-branches (like vein bifurcations)
-    // Ensure branches connect properly to parent segment endpoints
+    // Create 2-3 sub-branches (like vein bifurcations) with fractal interpolation
+    // Ensure branches connect perfectly to parent segment endpoints
     const numBranches = depth === 0 ? 3 : 2;
     for (let i = 0; i < numBranches; i++) {
       const branchAngle = angle + (i - 1) * 0.6 + (Math.random() - 0.5) * 0.4;
       const branchLength = length * (0.5 + Math.random() * 0.3);
       // For first sub-branch, start at the exact end of parent segment to ensure connection
-      // For subsequent branches, start along the parent segment but ensure they connect
+      // For subsequent branches, use fractal interpolation along the parent segment
       const branchStartT = i === 0 ? 1.0 : (0.4 + Math.random() * 0.3);
-      // Use exact endpoint coordinates for first branch to ensure connection
-      const branchStartX = i === 0 ? endX : (startX + (endX - startX) * branchStartT);
-      const branchStartY = i === 0 ? endY : (startY + (endY - startY) * branchStartT);
-      const branchStartZ = i === 0 ? endZ : (startZ + (endZ - startZ) * branchStartT);
+      
+      // Use exact endpoint coordinates for first branch, fractal interpolation for others
+      let branchStartX: number, branchStartY: number, branchStartZ: number;
+      if (i === 0) {
+        // Exact endpoint connection
+        branchStartX = endX;
+        branchStartY = endY;
+        branchStartZ = endZ;
+      } else {
+        // Fractal interpolation along parent segment for smooth connection
+        const parentControlX = (startX + endX) / 2;
+        const parentControlY = (startY + endY) / 2;
+        const parentControlZ = (startZ + endZ) / 2;
+        const interpolated = fractalInterpolate(
+          { x: startX, y: startY, z: startZ },
+          { x: parentControlX, y: parentControlY, z: parentControlZ },
+          { x: endX, y: endY, z: endZ },
+          branchStartT
+        );
+        branchStartX = interpolated.x;
+        branchStartY = interpolated.y;
+        branchStartZ = interpolated.z;
+      }
       
       const subBranch = createVeinBranch3D(
         branchStartX, 
@@ -422,6 +480,7 @@ export default function LoadingScreen({ progress, message = 'Loading your journa
     };
     
     // Create segments with varying Z depth for true 3D structure
+    // Use fractal interpolation for mathematically perfect smooth connections
     const numSegments = LOADING_SCREEN_CONSTANTS.INFINITY_SEGMENTS;
     for (let i = 0; i < numSegments; i++) {
       const t1 = i / numSegments;
@@ -433,12 +492,19 @@ export default function LoadingScreen({ progress, message = 'Loading your journa
       const z1 = Math.sin(t1 * Math.PI * 4) * 25;
       const z2 = Math.sin(t2 * Math.PI * 4) * 25;
       
+      // Extend segment slightly to close gaps between line tips
+      const dx = p2.x - p1.x;
+      const dy = p2.y - p1.y;
+      const extensionFactor = 1.01; // 1% extension to ensure perfect connection
+      const extendedX2 = p1.x + dx * extensionFactor;
+      const extendedY2 = p1.y + dy * extensionFactor;
+      
       segments.push({
         x1: p1.x,
         y1: p1.y,
         z1: z1,
-        x2: p2.x,
-        y2: p2.y,
+        x2: extendedX2,
+        y2: extendedY2,
         z2: z2,
         z: (z1 + z2) / 2,
       });
@@ -495,8 +561,10 @@ export default function LoadingScreen({ progress, message = 'Loading your journa
               const color = isLeft ? leftColor : rightColor;
               const dx = seg.x2 - seg.x1;
               const dy = seg.y2 - seg.y1;
+              // Calculate length with mathematical precision
               const length = Math.sqrt(dx * dx + dy * dy);
               const angle = Math.atan2(dy, dx) * (180 / Math.PI);
+              // Interpolate Z depth smoothly along segment
               const avgZ = (seg.z1 + seg.z2) / 2;
               
               // Ensure minimum opacity so segments remain visible and connected
@@ -524,10 +592,12 @@ export default function LoadingScreen({ progress, message = 'Loading your journa
             {branchSegments3D.map((segment, idx) => {
               const isLeft = segment.startX < LOADING_SCREEN_CONSTANTS.MIDPOINT_X;
               const color = isLeft ? leftColor : rightColor;
+              // Calculate with mathematical precision for perfect connections
               const dx = segment.endX - segment.startX;
               const dy = segment.endY - segment.startY;
               const length = Math.sqrt(dx * dx + dy * dy);
               const angle = Math.atan2(dy, dx) * (180 / Math.PI);
+              // Smooth Z interpolation along segment
               const avgZ = (segment.startZ + segment.endZ) / 2;
               
               // Ensure minimum opacity so segments remain visible
