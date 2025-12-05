@@ -17,7 +17,6 @@
 [data-theme="bios"] * {
   border-radius: 0 !important;
   box-shadow: none !important;
-  text-shadow: none !important;
   -webkit-font-smoothing: none !important;
   -moz-osx-font-smoothing: unset !important;
   font-smooth: never !important;
@@ -26,6 +25,30 @@
   image-rendering: -moz-crisp-edges !important;
   image-rendering: crisp-edges !important;
 }
+
+/* Subtle light blue/cyan glow for BIOS theme - complements dark blue background */
+[data-theme="bios"] body,
+[data-theme="bios"] h1,
+[data-theme="bios"] h2,
+[data-theme="bios"] h3,
+[data-theme="bios"] h4,
+[data-theme="bios"] label,
+[data-theme="bios"] .date-label,
+[data-theme="bios"] .viewer-title,
+[data-theme="bios"] .viewer-text,
+[data-theme="bios"] .entry-item-title,
+[data-theme="bios"] .entry-item-preview,
+[data-theme="bios"] .period-entry-title,
+[data-theme="bios"] .period-entry-content,
+[data-theme="bios"] .journal-list-header h3,
+[data-theme="bios"] .viewer-header h3,
+[data-theme="bios"] .editor-header h3,
+[data-theme="bios"] .modal-header-top h3,
+[data-theme="bios"] p,
+[data-theme="bios"] span:not([class*="button"]):not([class*="tag"]):not([class*="badge"]):not([class*="nav"]) {
+  text-shadow: 0 0 13px rgba(173, 216, 230, 0.6) !important;
+}
+
 
 /* Remove borders from internal text/content elements - only containers need borders */
 [data-theme="bios"] p,
@@ -123,7 +146,7 @@
   border: 1px solid #c0c0c0;
   color: #ffffff;
   font-family: 'Fixedsys', 'Terminal', 'MS Sans Serif', system-ui, monospace;
-  text-shadow: none;
+  text-shadow: 0 0 4px rgba(173, 216, 230, 0.5);
 }
 
 [data-theme="bios"] .nav-button:hover {
