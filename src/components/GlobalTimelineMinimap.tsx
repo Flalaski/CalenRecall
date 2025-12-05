@@ -123,6 +123,22 @@ function hexToRgba(hex: string, alpha: number): string {
   return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 }
 
+// Lighten a hex color for better readability on dark backgrounds
+function lightenColor(hex: string, amount: number = 0.4): string {
+  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  
+  if (!result) return hex; // Return original if not a valid hex color
+  
+  const r = Math.min(255, parseInt(result[1], 16) + Math.round(255 * amount));
+  const g = Math.min(255, parseInt(result[2], 16) + Math.round(255 * amount));
+  const b = Math.min(255, parseInt(result[3], 16) + Math.round(255 * amount));
+  
+  return `#${[r, g, b].map(x => {
+    const hex = x.toString(16);
+    return hex.length === 1 ? '0' + hex : hex;
+  }).join('')}`;
+}
+
 export default function GlobalTimelineMinimap({
   selectedDate,
   viewMode,
@@ -3699,6 +3715,8 @@ export default function GlobalTimelineMinimap({
               // Get zodiac color for the year
               const yearDate = mark.date ? new Date(mark.date.getFullYear(), 0, 1) : new Date();
               const zodiacColor = getZodiacColor(yearDate);
+              // Lighten the color for better readability on dark minimap background
+              const lightenedColor = lightenColor(zodiacColor, 0.5);
               
               // Calculate opacity and magnification based on distance from indicator
               const indicatorPosition = isFinite(currentIndicatorMetrics.position) 
@@ -3720,7 +3738,7 @@ export default function GlobalTimelineMinimap({
                 position: 'absolute',
                 left: `${labelPosition}%`,
                 top: '45px',
-                color: zodiacColor,
+                color: lightenedColor,
                 opacity: labelOpacity,
                 fontSize: fontSize,
                 transform: 'translate3d(-50%, 0, 0)',
@@ -3813,11 +3831,14 @@ export default function GlobalTimelineMinimap({
               // CRITICAL: left must be set as a string with % to work correctly
               const leftValue = `${labelPosition}%`;
               
+              // Lighten the color for better readability on dark minimap background
+              const lightenedColor = lightenColor(zodiacColor, 0.5);
+              
               const labelStyle: React.CSSProperties = {
                 position: 'absolute',
                 left: leftValue, // Explicitly set as percentage string
                 top: '48px',
-                color: zodiacColor,
+                color: lightenedColor,
                 opacity: labelOpacity,
                 fontSize: fontSize,
                 transform: 'translate3d(-50%, 0, 0)',
