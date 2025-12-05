@@ -166,6 +166,9 @@
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeSpeed;
   overflow: visible;
+  /* Force GPU acceleration without conflicting with animation */
+  -webkit-perspective: 2000px;
+  perspective: 2000px;
 }
 
 /* 3D Infinity symbol segments - structural foundation of time tree */
@@ -175,7 +178,7 @@
   min-height: 3px;
   transform-origin: left center;
   transform-style: preserve-3d;
-  border-radius: 0;
+  border-radius: 50%;
   image-rendering: pixelated;
   image-rendering: crisp-edges;
   image-rendering: -moz-crisp-edges;
@@ -189,7 +192,7 @@
   outline: 1px solid transparent;
   overflow: visible;
   z-index: 1;
-  /* Ensure segments connect end-to-end and are double-sided */
+  /* Cylindrical appearance - rounded cross-section */
   box-sizing: border-box;
 }
 
@@ -200,7 +203,7 @@
   min-height: 1px;
   transform-origin: left center;
   transform-style: preserve-3d;
-  border-radius: 0;
+  border-radius: 50%;
   animation: branchFlow3D 3s linear infinite, branchPulse3D 2.5s ease-in-out infinite;
   image-rendering: pixelated;
   image-rendering: crisp-edges;
@@ -215,7 +218,7 @@
   outline: 1px solid transparent;
   overflow: visible;
   z-index: 2;
-  /* Ensure segments connect end-to-end to form complete tree structure and are double-sided */
+  /* Cylindrical appearance - rounded cross-section */
   box-sizing: border-box;
 }
 
@@ -294,19 +297,31 @@
 
 @keyframes infinity3DRotate {
   0% {
-    transform: rotateY(0deg) rotateX(10deg);
+    transform: translateZ(0) rotateY(0deg) rotateX(10deg);
+  }
+  12.5% {
+    transform: translateZ(0) rotateY(45deg) rotateX(7.5deg);
   }
   25% {
-    transform: rotateY(90deg) rotateX(5deg);
+    transform: translateZ(0) rotateY(90deg) rotateX(5deg);
+  }
+  37.5% {
+    transform: translateZ(0) rotateY(135deg) rotateX(7.5deg);
   }
   50% {
-    transform: rotateY(180deg) rotateX(10deg);
+    transform: translateZ(0) rotateY(180deg) rotateX(10deg);
+  }
+  62.5% {
+    transform: translateZ(0) rotateY(225deg) rotateX(7.5deg);
   }
   75% {
-    transform: rotateY(270deg) rotateX(5deg);
+    transform: translateZ(0) rotateY(270deg) rotateX(5deg);
+  }
+  87.5% {
+    transform: translateZ(0) rotateY(315deg) rotateX(7.5deg);
   }
   100% {
-    transform: rotateY(360deg) rotateX(10deg);
+    transform: translateZ(0) rotateY(360deg) rotateX(10deg);
   }
 }
 

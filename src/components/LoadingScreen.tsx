@@ -27,7 +27,7 @@ const LOADING_SCREEN_CONSTANTS = {
   OPACITY_DIVISORS: { infinity: 100, branch: 150 },
   ANIMATION_INTERVAL_MS: 16, // ~60fps
   POLARITY_PHASE_INCREMENT: 0.01,
-  CAMERA_ZOOM: 3.0, // Higher = more zoomed in (1.0 = normal, 2.0 = 2x zoom, 0.5 = zoomed out)
+  CAMERA_ZOOM: 1.0, // Higher = more zoomed in (1.0 = normal, 2.0 = 2x zoom, 0.5 = zoomed out)
   CAMERA_DISTANCE: 0, // translateZ offset for camera position (negative = closer, positive = farther)
   SINGULARITY_CENTER: { x: 250, y: 200 }, // Center singularity point representing present moment
   TEMPORAL_DISTANCE_SCALE: 0.5, // How much temporal distance affects spatial position (0-1 blend factor)
@@ -628,6 +628,27 @@ export default function LoadingScreen({ progress, message = 'Loading your journa
   // Blue for past (left), Red for future (right)
   const leftColor = `hsl(${200 + Math.sin(polarityPhase) * 40}, 70%, ${50 + Math.sin(polarityPhase) * 20}%)`; // Blue (past)
   const rightColor = `hsl(${0 + Math.cos(polarityPhase) * 20}, 70%, ${50 + Math.cos(polarityPhase) * 20}%)`; // Red (future)
+  
+  // Helper function to create cylindrical gradient from HSL color
+  const createCylindricalGradient = (hslColor: string): string => {
+    // Parse HSL color: hsl(h, s%, l%)
+    const match = hslColor.match(/hsl\((\d+(?:\.\d+)?),\s*(\d+(?:\.\d+)?)%,\s*(\d+(?:\.\d+)?)%\)/);
+    if (!match) return hslColor; // Fallback if parsing fails
+    
+    const h = parseFloat(match[1]);
+    const s = parseFloat(match[2]);
+    const l = parseFloat(match[3]);
+    
+    // Create highlight (lighter center) and shadow (darker edges) for cylindrical effect
+    const highlightL = Math.min(100, l + 25); // Lighter center
+    const shadowL = Math.max(0, l - 20); // Darker edges
+    
+    const highlightColor = `hsl(${h}, ${s}%, ${highlightL}%)`;
+    const shadowColor = `hsl(${h}, ${s}%, ${shadowL}%)`;
+    
+    // Radial gradient: highlight in center, base color in middle, shadow on edges
+    return `radial-gradient(ellipse at center, ${highlightColor} 0%, ${hslColor} 35%, ${shadowColor} 100%)`;
+  };
 
   return (
     <div className="loading-screen">
@@ -669,7 +690,7 @@ export default function LoadingScreen({ progress, message = 'Loading your journa
             {/* Infinity symbol core - 3D line segments with rotated duplicates to fill 3D space */}
             {infinitySegments3D.map((seg, idx) => {
               const isLeft = seg.x1 < LOADING_SCREEN_CONSTANTS.MIDPOINT_X;
-              const color = isLeft ? leftColor : rightColor;
+              const baseColor = isLeft ? leftColor : rightColor;
               const dx = seg.x2 - seg.x1;
               const dy = seg.y2 - seg.y1;
               // Calculate length with mathematical precision
@@ -683,35 +704,22 @@ export default function LoadingScreen({ progress, message = 'Loading your journa
               const zOpacityFactor = Math.abs(avgZ) / LOADING_SCREEN_CONSTANTS.OPACITY_DIVISORS.infinity;
               const finalOpacity = Math.max(0.4, baseOpacity - zOpacityFactor);
               
+              // Create cylindrical gradient for thin cylinder appearance
+              const cylindricalGradient = createCylindricalGradient(baseColor);
+              
               return (
-                <>
-                  {/* Main segment */}
-                  <div
-                    key={`infinity-seg-${idx}`}
-                    className="infinity-segment-3d"
-                    style={{
-                      left: `${seg.x1}px`,
-                      top: `${seg.y1}px`,
-                      width: `${length}px`,
-                      transform: `translateZ(${avgZ}px) rotateZ(${angle}deg)`,
-                      background: `linear-gradient(to right, ${color}, ${isLeft ? rightColor : leftColor})`,
-                      opacity: finalOpacity,
-                    }}
-                  />
-                  {/* Rotated duplicate to fill 3D space - perpendicular cross */}
-                  <div
-                    key={`infinity-seg-${idx}-perp`}
-                    className="infinity-segment-3d"
-                    style={{
-                      left: `${seg.x1}px`,
-                      top: `${seg.y1}px`,
-                      width: `${length}px`,
-                      transform: `translateZ(${avgZ}px) rotateZ(${angle}deg) rotateY(45deg)`,
-                      background: `linear-gradient(to right, ${color}, ${isLeft ? rightColor : leftColor})`,
-                      opacity: finalOpacity * 0.7, // Slightly more transparent for depth
-                    }}
-                  />
-                </>
+                <div
+                  key={`infinity-seg-${idx}`}
+                  className="infinity-segment-3d"
+                  style={{
+                    left: `${seg.x1}px`,
+                    top: `${seg.y1}px`,
+                    width: `${length}px`,
+                    transform: `translateZ(${avgZ}px) rotateZ(${angle}deg)`,
+                    background: cylindricalGradient,
+                    opacity: finalOpacity,
+                  }}
+                />
               );
             })}
             
@@ -732,41 +740,25 @@ export default function LoadingScreen({ progress, message = 'Loading your journa
               const zOpacityFactor = Math.abs(avgZ) / LOADING_SCREEN_CONSTANTS.OPACITY_DIVISORS.branch;
               const finalOpacity = Math.max(0.3, baseOpacity - zOpacityFactor);
               
+              // Create cylindrical gradient for thin cylinder appearance
+              const cylindricalGradient = createCylindricalGradient(color);
+              
               return (
-                <>
-                  {/* Main segment */}
-                  <div
-                    key={`branch-seg-${idx}`}
-                    className="branch-segment-3d"
-                    style={{
-                      left: `${segment.startX}px`,
-                      top: `${segment.startY}px`,
-                      width: `${length}px`,
-                      height: `${segment.thickness}px`,
-                      transform: `translateZ(${avgZ}px) rotateZ(${angle}deg)`,
-                      background: color,
-                      opacity: finalOpacity,
-                      animationDelay: `${segment.delay}s`,
-                      animationDuration: `${segment.duration}s`,
-                    }}
-                  />
-                  {/* Rotated duplicate to fill 3D space - perpendicular cross */}
-                  <div
-                    key={`branch-seg-${idx}-perp`}
-                    className="branch-segment-3d"
-                    style={{
-                      left: `${segment.startX}px`,
-                      top: `${segment.startY}px`,
-                      width: `${length}px`,
-                      height: `${segment.thickness}px`,
-                      transform: `translateZ(${avgZ}px) rotateZ(${angle}deg) rotateY(90deg)`,
-                      background: color,
-                      opacity: finalOpacity * 0.7, // Slightly more transparent for depth
-                      animationDelay: `${segment.delay}s`,
-                      animationDuration: `${segment.duration}s`,
-                    }}
-                  />
-                </>
+                <div
+                  key={`branch-seg-${idx}`}
+                  className="branch-segment-3d"
+                  style={{
+                    left: `${segment.startX}px`,
+                    top: `${segment.startY}px`,
+                    width: `${length}px`,
+                    height: `${segment.thickness}px`,
+                    transform: `translateZ(${avgZ}px) rotateZ(${angle}deg)`,
+                    background: cylindricalGradient,
+                    opacity: finalOpacity,
+                    animationDelay: `${segment.delay}s`,
+                    animationDuration: `${segment.duration}s`,
+                  }}
+                />
               );
             })}
             
