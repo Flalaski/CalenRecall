@@ -32,6 +32,8 @@ function App() {
   // Track if initial load has completed - after this, default view mode should NEVER be applied
   const initialLoadCompleteRef = useRef(false);
   const hasUserInteractedRef = useRef(false);
+  // Track when an entry is being selected to prevent loadCurrentEntry from overwriting it
+  const isSelectingEntryRef = useRef(false);
 
   // SUPREME OPTIMIZATION: Preload all entries at startup
   useEffect(() => {
@@ -218,7 +220,19 @@ function App() {
   // Load entry for current date/viewMode when they change
   useEffect(() => {
     if (!isNewEntry && !isEditing) {
-      loadCurrentEntry();
+      // In day view, don't auto-load an entry - user must click to select one
+      if (viewMode === 'day') {
+        // Only clear if we're not in the middle of selecting an entry
+        if (!isSelectingEntryRef.current) {
+          setSelectedEntry(null);
+        }
+      } else {
+        loadCurrentEntry();
+      }
+    }
+    // Reset the flag after the effect runs
+    if (isSelectingEntryRef.current) {
+      isSelectingEntryRef.current = false;
     }
   }, [selectedDate, viewMode, isNewEntry, isEditing]);
 
@@ -234,6 +248,10 @@ function App() {
 
   const handleTimePeriodSelect = (date: Date, newViewMode: TimeRange) => {
     hasUserInteractedRef.current = true; // Mark that user has interacted
+    // Clear selected entry when changing date/view in day view
+    if (newViewMode === 'day') {
+      setSelectedEntry(null);
+    }
     setSelectedDate(date);
     setViewMode(newViewMode);
     setIsEditing(false);
@@ -242,6 +260,10 @@ function App() {
 
   const handleViewModeChange = (mode: TimeRange) => {
     hasUserInteractedRef.current = true; // Mark that user has interacted
+    // Clear selected entry when switching to day view
+    if (mode === 'day') {
+      setSelectedEntry(null);
+    }
     setViewMode(mode);
     setIsEditing(false);
     setIsNewEntry(false);
@@ -249,6 +271,8 @@ function App() {
 
   const handleEntrySelect = (entry: JournalEntry) => {
     hasUserInteractedRef.current = true; // Mark that user has interacted
+    // Mark that we're selecting an entry to prevent loadCurrentEntry from overwriting it
+    isSelectingEntryRef.current = true;
     // Navigate to the entry's date and time range, then select the entry
     // Parse date string to avoid timezone issues (YYYY-MM-DD or -YYYY-MM-DD format)
     const entryDate = parseISODate(entry.date);

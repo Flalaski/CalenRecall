@@ -1,6 +1,7 @@
 /**
  * Terminal Theme
  * ASCII/DOS Terminal aesthetic with pixelated fonts and blocky borders
+ * CMYK color support: Cyan (#00ffff), Magenta (#ff00ff), Yellow (#ffff00), Black (#000000)
  */
 
 [data-theme="terminal"] body {
@@ -67,7 +68,7 @@
 
 [data-theme="terminal"] .nav-button:hover {
   background: #003300;
-  box-shadow: 0 0 10px #00ff00;
+  box-shadow: 0 0 10px #00ff00, 0 0 20px rgba(0, 255, 0, 0.3);
 }
 
 [data-theme="terminal"] .timeline-cell {
@@ -84,15 +85,24 @@
 [data-theme="terminal"] .timeline-cell.today {
   background: #003300;
   border: 2px solid #00ff00;
-  
+  box-shadow: 0 0 10px #00ff00, 0 0 20px rgba(0, 255, 0, 0.3);
 }
 
 [data-theme="terminal"] .editor-form input,
-[data-theme="terminal"] .editor-form textarea {
+[data-theme="terminal"] .editor-form textarea,
+[data-theme="terminal"] input[type="text"],
+[data-theme="terminal"] input[type="number"],
+[data-theme="terminal"] textarea {
   background: #000000;
   border: 1px solid #00ff00;
   color: #00ff00;
   font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
+}
+
+[data-theme="terminal"] input::placeholder,
+[data-theme="terminal"] textarea::placeholder {
+  color: #004400;
+  opacity: 0.7;
 }
 
 [data-theme="terminal"] {
@@ -157,7 +167,7 @@
 [data-theme="terminal"] .view-mode-button.active {
   background: #003300;
   border: 2px solid #00ff00;
-  
+  box-shadow: 0 0 10px #00ff00, 0 0 20px rgba(0, 255, 0, 0.3);
 }
 
 [data-theme="terminal"] .date-label {
@@ -245,19 +255,19 @@
 [data-theme="terminal"] .calendar-cell.today {
   background: #003300;
   border: 2px solid #00ff00;
-  
+  box-shadow: 0 0 10px #00ff00, 0 0 20px rgba(0, 255, 0, 0.3);
 }
 
 [data-theme="terminal"] .calendar-cell.selected {
   background: #003300;
   border: 2px solid #00ff00;
-  
+  box-shadow: 0 0 10px #00ff00, 0 0 20px rgba(0, 255, 0, 0.3);
 }
 
 [data-theme="terminal"] .calendar-cell.has-entry {
   background: #000000;
   border: 2px solid #00ff00;
-  
+  box-shadow: 0 0 5px #00ff00;
 }
 
 [data-theme="terminal"] .calendar-cell.has-entry.today {
@@ -398,13 +408,13 @@
 
 [data-theme="terminal"] .week-entry-item:hover {
   background: #003300;
-  
+  box-shadow: 0 0 5px #00ff00;
 }
 
 [data-theme="terminal"] .week-entry-title {
-  color: inherit;
+  color: #ffd700;
   font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
-  
+  text-shadow: 0 0 5px #ffd700;
 }
 
 [data-theme="terminal"] .week-entry-empty {
@@ -487,16 +497,27 @@
 }
 
 [data-theme="terminal"] .viewer-title {
-  color: #00ff00;
+  color: #ffd700;
   font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
-  
+  text-shadow: 0 0 5px #ffd700;
   border-bottom: 1px solid #00ff00;
 }
 
 [data-theme="terminal"] .viewer-text {
-  color: #00ff00;
+  color: #00ff88;
   font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
-  
+  text-shadow: 0 0 8px #00ff88, 0 0 12px rgba(0, 255, 136, 0.6);
+}
+
+/* Ensure all entry text content is bright green with glow */
+[data-theme="terminal"] .entry-item-content p,
+[data-theme="terminal"] .entry-item-content span,
+[data-theme="terminal"] .viewer-content p,
+[data-theme="terminal"] .viewer-content span:not([class]),
+[data-theme="terminal"] .period-entry-content p,
+[data-theme="terminal"] .period-entry-content span {
+  color: #00ff88 !important;
+  text-shadow: 0 0 8px #00ff88, 0 0 12px rgba(0, 255, 136, 0.6) !important;
 }
 
 [data-theme="terminal"] .viewer-tags {
@@ -540,9 +561,9 @@
 }
 
 [data-theme="terminal"] .linked-entry-title {
-  color: inherit;
+  color: #ffd700;
   font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
-  
+  text-shadow: 0 0 5px #ffd700;
 }
 
 [data-theme="terminal"] .linked-entry-meta {
@@ -550,8 +571,13 @@
   font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
 }
 
+[data-theme="terminal"] .linked-entry-content {
+  color: #00ff88;
+  text-shadow: 0 0 8px #00ff88, 0 0 12px rgba(0, 255, 136, 0.6);
+}
+
 [data-theme="terminal"] .linked-entry-date {
-  color: inherit;
+  color: #00ff00;
 }
 
 [data-theme="terminal"] .linked-entry-time-range {
@@ -559,7 +585,8 @@
   border: 1px solid #00ff00;
   color: #00ff00;
   font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
-  
+  text-shadow: 0 0 5px #00ff00;
+  box-shadow: 0 0 5px rgba(0, 255, 0, 0.3);
 }
 
 [data-theme="terminal"] .viewer-empty {
@@ -611,9 +638,11 @@
 }
 
 [data-theme="terminal"] .period-entry-filter-tag.active {
-  background: #003300;
-  border: 2px solid #00ff00;
-  
+  background: rgba(255, 0, 255, 0.2);
+  border: 2px solid #ff00ff;
+  color: #ff00ff;
+  box-shadow: 0 0 5px #ff00ff;
+  text-shadow: 0 0 5px #ff00ff;
 }
 
 [data-theme="terminal"] .period-entry-clear-filters {
@@ -655,7 +684,7 @@
 
 [data-theme="terminal"] .period-entry-item:hover {
   background: #003300;
-  
+  box-shadow: 0 0 5px #00ff00;
 }
 
 [data-theme="terminal"] .period-entry-header {
@@ -667,9 +696,9 @@
 }
 
 [data-theme="terminal"] .period-entry-title {
-  color: inherit;
+  color: #ffd700;
   font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
-  
+  text-shadow: 0 0 5px #ffd700;
 }
 
 [data-theme="terminal"] .period-entry-actions {
@@ -694,8 +723,8 @@
   color: #00ff00;
   border: 1px solid #00ff00;
   font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
-  
-  
+  text-shadow: 0 0 5px #00ff00;
+  box-shadow: 0 0 5px rgba(0, 255, 0, 0.3);
 }
 
 [data-theme="terminal"] .period-entry-meta {
@@ -709,9 +738,9 @@
 }
 
 [data-theme="terminal"] .period-entry-content {
-  color: inherit;
+  color: #00ff88;
   font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
-  
+  text-shadow: 0 0 8px #00ff88, 0 0 12px rgba(0, 255, 136, 0.6);
 }
 
 [data-theme="terminal"] .period-entry-content-wrapper {
@@ -976,9 +1005,11 @@
 }
 
 [data-theme="terminal"] .bulk-edit-toggle-button.active {
-  background: #003300;
-  border: 2px solid #00ff00;
-  
+  background: rgba(255, 255, 0, 0.2);
+  border: 2px solid #ffff00;
+  color: #ffff00;
+  box-shadow: 0 0 10px #ffff00;
+  text-shadow: 0 0 5px #ffff00;
 }
 
 [data-theme="terminal"] .journal-list-content {
@@ -1020,9 +1051,11 @@
 }
 
 [data-theme="terminal"] .journal-entry-filter-tag.active {
-  background: #003300;
-  border: 2px solid #00ff00;
-  
+  background: rgba(255, 0, 255, 0.2);
+  border: 2px solid #ff00ff;
+  color: #ff00ff;
+  box-shadow: 0 0 5px #ff00ff;
+  text-shadow: 0 0 5px #ff00ff;
 }
 
 [data-theme="terminal"] .journal-entry-clear-filters {
@@ -1077,7 +1110,7 @@
 [data-theme="terminal"] .journal-entry-item.selected {
   background: #003300;
   border: 2px solid #00ff00;
-  
+  box-shadow: 0 0 10px #00ff00, 0 0 20px rgba(0, 255, 0, 0.3);
 }
 
 [data-theme="terminal"] .journal-entry-item.bulk-edit-mode {
@@ -1085,9 +1118,9 @@
 }
 
 [data-theme="terminal"] .journal-entry-item.bulk-selected {
-  background: #003300;
-  border: 2px solid #00ff00;
-  
+  background: rgba(0, 255, 255, 0.1);
+  border: 2px solid #00ffff;
+  box-shadow: 0 0 10px #00ffff, 0 0 20px rgba(0, 255, 255, 0.3);
 }
 
 [data-theme="terminal"] .entry-item-header {
@@ -1095,9 +1128,9 @@
 }
 
 [data-theme="terminal"] .entry-item-title {
-  color: inherit;
+  color: #ffd700;
   font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
-  
+  text-shadow: 0 0 5px #ffd700;
 }
 
 [data-theme="terminal"] .entry-item-meta {
@@ -1109,18 +1142,20 @@
   border: 1px solid #00ff00;
   color: #00ff00;
   font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
-  
+  text-shadow: 0 0 5px #00ff00;
+  box-shadow: 0 0 5px rgba(0, 255, 0, 0.3);
 }
 
 [data-theme="terminal"] .entry-date {
-  color: inherit;
+  color: #00ff88;
   font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
+  text-shadow: 0 0 5px #00ff88;
 }
 
 [data-theme="terminal"] .entry-item-preview {
-  color: inherit;
+  color: #00ff88;
   font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
-  
+  text-shadow: 0 0 8px #00ff88, 0 0 12px rgba(0, 255, 136, 0.6);
 }
 
 [data-theme="terminal"] .entry-item-tags {
@@ -1137,6 +1172,27 @@
 
 [data-theme="terminal"] .entry-item-content {
   background: transparent;
+  color: #00ff88;
+}
+
+[data-theme="terminal"] .entry-item-content * {
+  color: #00ff88 !important;
+  text-shadow: 0 0 8px #00ff88, 0 0 12px rgba(0, 255, 136, 0.6);
+}
+
+/* Force all journal entry text content to be green, overriding any time range colors */
+[data-theme="terminal"] .journal-entry-item,
+[data-theme="terminal"] .journal-entry-item * {
+  color: #00ff88 !important;
+}
+
+[data-theme="terminal"] .journal-entry-item .entry-item-preview,
+[data-theme="terminal"] .journal-entry-item .entry-item-content,
+[data-theme="terminal"] .journal-entry-item .entry-item-content *,
+[data-theme="terminal"] .journal-entry-item p,
+[data-theme="terminal"] .journal-entry-item span:not([class*="tag"]):not([class*="badge"]):not([class*="button"]):not([class*="title"]) {
+  color: #00ff88 !important;
+  text-shadow: 0 0 8px #00ff88, 0 0 12px rgba(0, 255, 136, 0.6) !important;
 }
 
 [data-theme="terminal"] .entry-checkbox-wrapper {
@@ -1481,9 +1537,11 @@
 }
 
 [data-theme="terminal"] .filter-tag.active {
-  background: #003300;
-  border: 2px solid #00ff00;
-  
+  background: rgba(255, 0, 255, 0.2);
+  border: 2px solid #ff00ff;
+  color: #ff00ff;
+  box-shadow: 0 0 5px #ff00ff;
+  text-shadow: 0 0 5px #ff00ff;
 }
 
 [data-theme="terminal"] .filter-empty {
@@ -1510,9 +1568,11 @@
 }
 
 [data-theme="terminal"] .filter-time-range.active {
-  background: #003300;
-  border: 2px solid #00ff00;
-  
+  background: rgba(0, 255, 255, 0.2);
+  border: 2px solid #00ffff;
+  color: #00ffff;
+  box-shadow: 0 0 5px #00ffff;
+  text-shadow: 0 0 5px #00ffff;
 }
 
 [data-theme="terminal"] .filter-date-range {
@@ -1602,9 +1662,9 @@
 }
 
 [data-theme="terminal"] .result-item-title {
-  color: inherit;
+  color: #ffd700;
   font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
-  
+  text-shadow: 0 0 5px #ffd700;
 }
 
 [data-theme="terminal"] .result-item-meta {
@@ -1616,8 +1676,8 @@
   color: #00ff00;
   border: 1px solid #00ff00;
   font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
-  
-  
+  text-shadow: 0 0 5px #00ff00;
+  box-shadow: 0 0 5px rgba(0, 255, 0, 0.3);
 }
 
 [data-theme="terminal"] .result-date {
@@ -1626,9 +1686,9 @@
 }
 
 [data-theme="terminal"] .result-item-content {
-  color: inherit;
+  color: #00ff88;
   font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
-  
+  text-shadow: 0 0 8px #00ff88, 0 0 12px rgba(0, 255, 136, 0.6);
 }
 
 [data-theme="terminal"] .result-item-tags {
@@ -2002,13 +2062,13 @@
 [data-theme="terminal"] .segment-indicator {
   background: #00ff00;
   border: 1px solid #000000;
-  
+  box-shadow: 0 0 5px #00ff00, 0 0 10px rgba(0, 255, 0, 0.5);
 }
 
 [data-theme="terminal"] .timeline-segment.current .segment-indicator {
   background: #00ff00;
   border: 2px solid #000000;
-  
+  box-shadow: 0 0 10px #00ff00, 0 0 20px rgba(0, 255, 0, 0.7);
 }
 
 [data-theme="terminal"] .segment-label {
@@ -2023,7 +2083,7 @@
 [data-theme="terminal"] .entry-indicator {
   background: #00ff00;
   border: 1px solid #000000;
-  
+  box-shadow: 0 0 5px #00ff00, 0 0 10px rgba(0, 255, 0, 0.5);
 }
 
 [data-theme="terminal"] .scale-label {
@@ -2033,34 +2093,40 @@
 }
 
 /* Entry badges and cards - preserve time range colors, adapt backgrounds/text */
+/* CMYK Color Support - Entry Badges */
 [data-theme="terminal"] .entry-decade {
-  background: rgba(156, 39, 176, 0.2);
+  background: rgba(255, 0, 255, 0.15);
   color: #ff00ff;
-  
+  border: 1px solid #ff00ff;
+  text-shadow: 0 0 5px #ff00ff;
 }
 
 [data-theme="terminal"] .entry-year {
-  background: rgba(2, 119, 189, 0.2);
+  background: rgba(0, 255, 255, 0.15);
   color: #00ffff;
-  
+  border: 1px solid #00ffff;
+  text-shadow: 0 0 5px #00ffff;
 }
 
 [data-theme="terminal"] .entry-month {
-  background: rgba(239, 108, 0, 0.2);
-  color: #ffaa00;
-  
+  background: rgba(255, 255, 0, 0.15);
+  color: #ffff00;
+  border: 1px solid #ffff00;
+  text-shadow: 0 0 5px #ffff00;
 }
 
 [data-theme="terminal"] .entry-week {
-  background: rgba(46, 125, 50, 0.2);
+  background: rgba(0, 255, 0, 0.15);
   color: #00ff00;
-  
+  border: 1px solid #00ff00;
+  text-shadow: 0 0 5px #00ff00;
 }
 
 [data-theme="terminal"] .entry-day {
-  background: rgba(194, 24, 91, 0.2);
-  color: #ff00aa;
-  
+  background: rgba(255, 0, 255, 0.15);
+  color: #ff00ff;
+  border: 1px solid #ff00ff;
+  text-shadow: 0 0 5px #ff00ff;
 }
 
 [data-theme="terminal"] .entry-card {
@@ -2076,14 +2142,14 @@
 [data-theme="terminal"] .card-title,
 [data-theme="terminal"] .card-title-full,
 [data-theme="terminal"] .badge-title {
-  color: #00ff00;
+  color: #ffd700;
   font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
-  
+  text-shadow: 0 0 5px #ffd700;
 }
 
 [data-theme="terminal"] .entry-item-title {
-  color: #00ff00;
+  color: #ffd700;
   font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
-  
+  text-shadow: 0 0 5px #ffd700;
 }
 

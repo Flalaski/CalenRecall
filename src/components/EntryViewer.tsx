@@ -3,6 +3,8 @@ import { JournalEntry, TimeRange } from '../types';
 import { formatDate, getWeekStart, getWeekEnd, getMonthStart, getYearStart, getDecadeStart, parseISODate } from '../utils/dateUtils';
 import { playEditSound, playNewEntrySound } from '../utils/audioUtils';
 import { useCalendar } from '../contexts/CalendarContext';
+import { useEntries } from '../contexts/EntriesContext';
+import { filterEntriesForRange } from '../utils/entryFilterUtils';
 import { getTimeRangeLabelInCalendar } from '../utils/calendars/timeRangeConverter';
 import { saveJournalEntry, deleteJournalEntry } from '../services/journalService';
 import './EntryViewer.css';
@@ -27,6 +29,7 @@ export default function EntryViewer({
   onEditEntry,
 }: EntryViewerProps) {
   const { calendar } = useCalendar();
+  const { entries: allEntries } = useEntries();
   const [periodEntries, setPeriodEntries] = useState<JournalEntry[]>([]);
   const [loading, setLoading] = useState(false);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
@@ -36,6 +39,14 @@ export default function EntryViewer({
   const [loadingLinked, setLoadingLinked] = useState(false);
   const [bulkEditMode, setBulkEditMode] = useState(false);
   const [selectedEntryIds, setSelectedEntryIds] = useState<Set<number>>(new Set());
+
+  // Check if there are day entries for the selected date (for day view messaging)
+  const dayEntries = useMemo(() => {
+    if (viewMode === 'day') {
+      return filterEntriesForRange(allEntries, 'day', date);
+    }
+    return [];
+  }, [allEntries, viewMode, date]);
 
   useEffect(() => {
     loadPeriodEntries();
@@ -501,8 +512,26 @@ export default function EntryViewer({
           <div className="viewer-loading">Loading entries...</div>
         ) : periodEntries.length === 0 ? (
           <div className="viewer-empty">
-            <p>No {viewMode === 'month' ? 'month or week' : viewMode === 'year' ? 'year, month, or week' : viewMode === 'decade' ? 'decade, year, month, or week' : viewMode} entries for this period.</p>
-            <p className="hint">Click "+ New Entry" to create one.</p>
+            {viewMode === 'day' ? (
+              <>
+                {dayEntries.length > 0 ? (
+                  <>
+                    <p>No entry selected.</p>
+                    <p className="hint">Click an entry from the list to view it, or click "+ New Entry" to create one.</p>
+                  </>
+                ) : (
+                  <>
+                    <p>No entries for this day.</p>
+                    <p className="hint">Click "+ New Entry" to create one.</p>
+                  </>
+                )}
+              </>
+            ) : (
+              <>
+                <p>No {viewMode === 'month' ? 'month or week' : viewMode === 'year' ? 'year, month, or week' : viewMode === 'decade' ? 'decade, year, month, or week' : viewMode} entries for this period.</p>
+                <p className="hint">Click "+ New Entry" to create one.</p>
+              </>
+            )}
           </div>
         ) : (
           <Fragment>
