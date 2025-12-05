@@ -15,7 +15,7 @@ const LOADING_SCREEN_CONSTANTS = {
   LEFT_LOOP_CENTER: { x: 200, y: 200 },
   RIGHT_LOOP_CENTER: { x: 300, y: 200 },
   MIDPOINT_X: 250,
-  INFINITY_AMPLITUDE: 50,
+  INFINITY_AMPLITUDE: 36.9,
   INFINITY_SEGMENTS: 42,
   BRANCHES_PER_SIDE: 12,
   STAR_COUNT: 216,
@@ -29,6 +29,9 @@ const LOADING_SCREEN_CONSTANTS = {
   POLARITY_PHASE_INCREMENT: 0.01,
   CAMERA_ZOOM: 3.0, // Higher = more zoomed in (1.0 = normal, 2.0 = 2x zoom, 0.5 = zoomed out)
   CAMERA_DISTANCE: 0, // translateZ offset for camera position (negative = closer, positive = farther)
+  SINGULARITY_CENTER: { x: 250, y: 200 }, // Center singularity point representing present moment
+  TEMPORAL_DISTANCE_SCALE: 0.5, // How much temporal distance affects spatial position (0-1 blend factor)
+  MAX_TEMPORAL_DISTANCE_DAYS: 365 * 10, // 10 years - maximum temporal distance for scaling
 } as const;
 
 // Generate 3D positioned branch segments for true 3D structure
@@ -223,8 +226,8 @@ function generateInfinityBranches3D(): Array<BranchSegment3D> {
   return segments;
 }
 
-// Map entries to 3D branch positions based on their timeline position
-// Past entries go on left branches, future entries on right branches
+// Map entries to random 3D positions throughout the tree like ornaments
+// Past entries go on left side, future entries on right side
 function mapEntriesToBranches3D(
   entries: JournalEntry[],
   branchSegments: Array<BranchSegment3D>
@@ -275,57 +278,165 @@ function mapEntriesToBranches3D(
     }
   });
   
-  // Collect all 3D branch points - separate left and right segments
-  const leftSegmentPoints: Array<{ x: number; y: number; z: number; segmentIndex: number }> = [];
-  const rightSegmentPoints: Array<{ x: number; y: number; z: number; segmentIndex: number }> = [];
+  // Calculate tree bounds from all branch segments for random placement
+  let minX = Infinity, maxX = -Infinity;
+  let minY = Infinity, maxY = -Infinity;
+  let minZ = Infinity, maxZ = -Infinity;
   
-  // Find midpoint to separate left and right
-  const midX = LOADING_SCREEN_CONSTANTS.MIDPOINT_X;
-  
-  branchSegments.forEach((segment, segIdx) => {
+  branchSegments.forEach(segment => {
+    minX = Math.min(minX, segment.startX, segment.endX);
+    maxX = Math.max(maxX, segment.startX, segment.endX);
+    minY = Math.min(minY, segment.startY, segment.endY);
+    maxY = Math.max(maxY, segment.startY, segment.endY);
+    minZ = Math.min(minZ, segment.startZ, segment.endZ);
+    maxZ = Math.max(maxZ, segment.startZ, segment.endZ);
+    
+    // Also check points along segments
     segment.points.forEach(point => {
-      if (point.x < midX) {
-        leftSegmentPoints.push({ ...point, segmentIndex: segIdx });
-      } else {
-        rightSegmentPoints.push({ ...point, segmentIndex: segIdx });
-      }
+      minX = Math.min(minX, point.x);
+      maxX = Math.max(maxX, point.x);
+      minY = Math.min(minY, point.y);
+      maxY = Math.max(maxY, point.y);
+      minZ = Math.min(minZ, point.z);
+      maxZ = Math.max(maxZ, point.z);
     });
   });
   
-  // Guard against empty point arrays to prevent issues
-  if (leftSegmentPoints.length === 0 && rightSegmentPoints.length === 0) {
-    return [];
-  }
+  // Add some padding to bounds
+  const padding = 20;
+  minX -= padding;
+  maxX += padding;
+  minY -= padding;
+  maxY += padding;
+  minZ -= padding;
+  maxZ += padding;
   
-  // Map past entries to left branch points
+  const midX = LOADING_SCREEN_CONSTANTS.MIDPOINT_X;
+  const singularityCenter = LOADING_SCREEN_CONSTANTS.SINGULARITY_CENTER;
+  
+  // Helper function to calculate temporal distance from present moment
+  const getTemporalDistance = (entryDate: Date): number => {
+    const timeDiff = Math.abs(now.getTime() - entryDate.getTime());
+    return timeDiff / (1000 * 60 * 60 * 24); // Convert to days
+  };
+  
+  // Helper function to normalize temporal distance (0 = present, 1 = max distance)
+  const normalizeTemporalDistance = (days: number): number => {
+    return Math.min(1, days / LOADING_SCREEN_CONSTANTS.MAX_TEMPORAL_DISTANCE_DAYS);
+  };
+  
+  // Helper function to calculate spatial distance from center based on temporal distance
+  const getSpatialDistanceFromCenter = (normalizedTemporalDist: number): number => {
+    // Entries closer to present (smaller temporal distance) are closer to center
+    // Entries further from present (larger temporal distance) are further from center
+    const baseDistance = 30; // Minimum distance from center
+    const maxDistance = Math.max(
+      Math.abs(singularityCenter.x - minX),
+      Math.abs(singularityCenter.x - maxX),
+      Math.abs(singularityCenter.y - minY),
+      Math.abs(singularityCenter.y - maxY)
+    );
+    return baseDistance + normalizedTemporalDist * (maxDistance - baseDistance);
+  };
+  
+  // Generate random positions blended with temporal-distance-based positions
   const entryOrnaments: Array<{ entry: JournalEntry; x: number; y: number; z: number; segmentIndex: number }> = [];
   
-  if (leftSegmentPoints.length > 0) {
-    pastEntries.forEach((entry, entryIdx) => {
-      const point = leftSegmentPoints[entryIdx % leftSegmentPoints.length];
+  // Place past entries randomly on left side, blended with temporal distance from center
+  pastEntries.forEach((entry, entryIdx) => {
+    try {
+      const entryDate = parseISODate(entry.date);
+      const temporalDistDays = getTemporalDistance(entryDate);
+      const normalizedTemporalDist = normalizeTemporalDistance(temporalDistDays);
+      
+      // Use entry index as seed for consistent but varied positioning
+      const seed = entry.id || entryIdx;
+      const rng = (seed: number) => {
+        const x = Math.sin(seed * 12.9898) * 43758.5453;
+        return x - Math.floor(x);
+      };
+      
+      // Calculate angle for radial distribution from center (left side = 90-270 degrees)
+      const angle = Math.PI + (rng(seed * 5) - 0.5) * Math.PI; // 180 degrees ± 90
+      
+      // Spatial distance from center based on temporal distance
+      const spatialDist = getSpatialDistanceFromCenter(normalizedTemporalDist);
+      
+      // Temporal-based position (radial from center)
+      const temporalX = singularityCenter.x + Math.cos(angle) * spatialDist;
+      const temporalY = singularityCenter.y + Math.sin(angle) * spatialDist;
+      const temporalZ = (rng(seed * 11) - 0.5) * (maxZ - minZ);
+      
+      // Random position on left side
+      const randomX = minX + (midX - minX) * rng(seed * 3);
+      const randomY = minY + (maxY - minY) * rng(seed * 7);
+      const randomZ = minZ + (maxZ - minZ) * rng(seed * 11);
+      
+      // Blend temporal-based position with random position
+      const blendFactor = LOADING_SCREEN_CONSTANTS.TEMPORAL_DISTANCE_SCALE;
+      const x = temporalX * blendFactor + randomX * (1 - blendFactor);
+      const y = temporalY * blendFactor + randomY * (1 - blendFactor);
+      const z = temporalZ * blendFactor + randomZ * (1 - blendFactor);
+      
       entryOrnaments.push({
         entry,
-        x: point.x,
-        y: point.y,
-        z: point.z,
-        segmentIndex: point.segmentIndex,
+        x,
+        y,
+        z,
+        segmentIndex: Math.floor(rng(seed * 13) * branchSegments.length),
       });
-    });
-  }
+    } catch (error) {
+      console.warn('Error processing entry for ornament placement:', entry.date, error);
+    }
+  });
   
-  // Map future entries to right branch points
-  if (rightSegmentPoints.length > 0) {
-    futureEntries.forEach((entry, entryIdx) => {
-      const point = rightSegmentPoints[entryIdx % rightSegmentPoints.length];
+  // Place future entries randomly on right side, blended with temporal distance from center
+  futureEntries.forEach((entry, entryIdx) => {
+    try {
+      const entryDate = parseISODate(entry.date);
+      const temporalDistDays = getTemporalDistance(entryDate);
+      const normalizedTemporalDist = normalizeTemporalDistance(temporalDistDays);
+      
+      // Use entry index as seed for consistent but varied positioning
+      const seed = entry.id || (entryIdx + pastEntries.length);
+      const rng = (seed: number) => {
+        const x = Math.sin(seed * 12.9898) * 43758.5453;
+        return x - Math.floor(x);
+      };
+      
+      // Calculate angle for radial distribution from center (right side = -90-90 degrees)
+      const angle = (rng(seed * 5) - 0.5) * Math.PI; // 0 degrees ± 90
+      
+      // Spatial distance from center based on temporal distance
+      const spatialDist = getSpatialDistanceFromCenter(normalizedTemporalDist);
+      
+      // Temporal-based position (radial from center)
+      const temporalX = singularityCenter.x + Math.cos(angle) * spatialDist;
+      const temporalY = singularityCenter.y + Math.sin(angle) * spatialDist;
+      const temporalZ = (rng(seed * 11) - 0.5) * (maxZ - minZ);
+      
+      // Random position on right side
+      const randomX = midX + (maxX - midX) * rng(seed * 3);
+      const randomY = minY + (maxY - minY) * rng(seed * 7);
+      const randomZ = minZ + (maxZ - minZ) * rng(seed * 11);
+      
+      // Blend temporal-based position with random position
+      const blendFactor = LOADING_SCREEN_CONSTANTS.TEMPORAL_DISTANCE_SCALE;
+      const x = temporalX * blendFactor + randomX * (1 - blendFactor);
+      const y = temporalY * blendFactor + randomY * (1 - blendFactor);
+      const z = temporalZ * blendFactor + randomZ * (1 - blendFactor);
+      
       entryOrnaments.push({
         entry,
-        x: point.x,
-        y: point.y,
-        z: point.z,
-        segmentIndex: point.segmentIndex,
+        x,
+        y,
+        z,
+        segmentIndex: Math.floor(rng(seed * 13) * branchSegments.length),
       });
-    });
-  }
+    } catch (error) {
+      console.warn('Error processing entry for ornament placement:', entry.date, error);
+    }
+  });
   
   return entryOrnaments;
 }
