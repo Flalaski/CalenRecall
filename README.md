@@ -105,59 +105,57 @@ All builds are created in the `release` directory, and the folder will automatic
 
 ### Version Management
 
-CalenRecall uses [Semantic Versioning](https://semver.org/) (MAJOR.MINOR.PATCH):
+CalenRecall uses **automatic date-based versioning** that increments with each build. Versions follow the format:
 
-- **MAJOR** version for incompatible API changes
-- **MINOR** version for new functionality in a backwards compatible manner
-- **PATCH** version for backwards compatible bug fixes
+**`YYYY.MM.DD.BUILD`**
 
-#### Bumping Versions
+For example: `2024.01.15.3` means the 3rd build on January 15, 2024.
 
-**Option 1: Using npm scripts (recommended)**
+#### How It Works
+
+- **Automatic**: Version is automatically incremented before each build
+- **Date-based**: Each version includes the build date (YYYY.MM.DD)
+- **Build counter**: If multiple builds happen on the same day, the build number increments (1, 2, 3, ...)
+- **New day reset**: When a new day starts, the build number resets to 1
+
+#### Viewing Current Version
+
 ```bash
-npm run version:patch   # 1.0.0 -> 1.0.1 (bug fixes)
-npm run version:minor   # 1.0.0 -> 1.1.0 (new features)
-npm run version:major   # 1.0.0 -> 2.0.0 (breaking changes)
 npm run version:show    # Display current version
 ```
 
-**Option 2: Using the helper script**
+#### Manual Version Bump (if needed)
+
+If you need to manually trigger a version bump without building:
+
 ```bash
-node scripts/bump-version.js patch   # 1.0.0 -> 1.0.1
-node scripts/bump-version.js minor   # 1.0.0 -> 1.1.0
-node scripts/bump-version.js major   # 1.0.0 -> 2.0.0
-node scripts/bump-version.js         # Show current version
+npm run version:auto    # Manually trigger automatic version increment
 ```
 
 #### Release Workflow
 
-When creating a new release:
+The version is **automatically incremented** when you build. Simply:
 
-1. **Bump the version:**
-   ```bash
-   npm run version:patch  # or minor/major as appropriate
-   ```
-
-2. **Update CHANGELOG.md** with the changes for the new version
-
-3. **Commit the changes:**
-   ```bash
-   git add package.json CHANGELOG.md
-   git commit -m "Bump version to X.Y.Z"
-   ```
-
-4. **Create a git tag:**
-   ```bash
-   git tag -a vX.Y.Z -m "Version X.Y.Z"
-   git push origin main --tags
-   ```
-
-5. **Build the release:**
+1. **Build your release** (version increments automatically):
    ```bash
    npm run dist:win:pack  # or use build-all.bat
    ```
 
-The version in `package.json` is automatically used by electron-builder for the build artifacts.
+2. **Update CHANGELOG.md** with the changes for the new version (optional but recommended)
+
+3. **Commit the changes:**
+   ```bash
+   git add package.json CHANGELOG.md
+   git commit -m "Build version YYYY.MM.DD.BUILD"
+   ```
+
+4. **Create a git tag** (optional):
+   ```bash
+   git tag -a vYYYY.MM.DD.BUILD -m "Version YYYY.MM.DD.BUILD"
+   git push origin main --tags
+   ```
+
+The version in `package.json` is automatically used by electron-builder for the build artifacts. Build information is stored in `.build-info.json` (not tracked in git) to ensure consistent version incrementing.
 
 ### Project Structure
 

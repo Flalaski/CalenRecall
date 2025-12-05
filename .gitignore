@@ -29,6 +29,9 @@ release
 *.db-shm
 *.db-wal
 
+# Build info
+.build-info.json
+
 # Batch files (optional - uncomment if you don't want to track them)
 # *.bat
 
