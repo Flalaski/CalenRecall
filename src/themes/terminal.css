@@ -1,12 +1,51 @@
 /**
  * Terminal Theme
- * Monochrome terminal aesthetic
+ * ASCII/DOS Terminal aesthetic with pixelated fonts and blocky borders
  */
 
 [data-theme="terminal"] body {
   background: #000000;
   color: #00ff00;
-  font-family: 'Courier New', 'Consolas', monospace;
+  font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
+}
+
+/* ASCII/DOS UI Aesthetic - Blocky, Grid-like */
+[data-theme="terminal"] * {
+  border-radius: 0 !important;
+}
+
+
+/* Remove borders from internal text/content elements - only containers need borders */
+[data-theme="terminal"] p,
+[data-theme="terminal"] span:not([class*="button"]):not([class*="tag"]):not([class*="badge"]):not([class*="nav"]),
+[data-theme="terminal"] .entry-item-content,
+[data-theme="terminal"] .entry-item-preview,
+[data-theme="terminal"] .viewer-text,
+[data-theme="terminal"] .viewer-content > p,
+[data-theme="terminal"] .viewer-content > span:not([class]),
+[data-theme="terminal"] .modal-content > p,
+[data-theme="terminal"] .modal-content > span:not([class]),
+[data-theme="terminal"] .period-entry-content,
+[data-theme="terminal"] .period-entry-content-wrapper,
+[data-theme="terminal"] .linked-entry-content,
+[data-theme="terminal"] .entry-item-meta,
+[data-theme="terminal"] .header-top,
+[data-theme="terminal"] .entry-item-header,
+[data-theme="terminal"] .viewer-content,
+[data-theme="terminal"] .journal-list-content,
+[data-theme="terminal"] .period-entries-list {
+  border: none !important;
+  border-width: 0 !important;
+  border-style: none !important;
+}
+
+/* Grid-like ASCII array spacing - 1px gaps like DOS character grid */
+[data-theme="terminal"] .app-content {
+  gap: 1px !important;
+}
+
+[data-theme="terminal"] .journal-entries {
+  gap: 1px !important;
 }
 
 [data-theme="terminal"] .app {
@@ -22,7 +61,7 @@
   background: #000000;
   border: 1px solid #00ff00;
   color: #00ff00;
-  font-family: 'Courier New', monospace;
+  font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
   text-shadow: 0 0 5px #00ff00;
 }
 
@@ -39,13 +78,13 @@
 
 [data-theme="terminal"] .timeline-cell:hover {
   background: #003300;
-  box-shadow: 0 0 8px #00ff00;
+  
 }
 
 [data-theme="terminal"] .timeline-cell.today {
   background: #003300;
   border: 2px solid #00ff00;
-  box-shadow: 0 0 15px #00ff00;
+  
 }
 
 [data-theme="terminal"] .editor-form input,
@@ -53,7 +92,7 @@
   background: #000000;
   border: 1px solid #00ff00;
   color: #00ff00;
-  font-family: 'Courier New', monospace;
+  font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
 }
 
 [data-theme="terminal"] {
@@ -89,13 +128,13 @@
   background: #000000;
   border: 1px solid #00ff00;
   color: #00ff00;
-  font-family: 'Courier New', monospace;
-  text-shadow: 0 0 5px #00ff00;
+  font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
+  
 }
 
 [data-theme="terminal"] .today-button:hover {
   background: #003300;
-  box-shadow: 0 0 10px #00ff00;
+  
 }
 
 [data-theme="terminal"] .view-mode-selector {
@@ -106,25 +145,25 @@
   background: #000000;
   border: 1px solid #00ff00;
   color: #00ff00;
-  font-family: 'Courier New', monospace;
-  text-shadow: 0 0 5px #00ff00;
+  font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
+  
 }
 
 [data-theme="terminal"] .view-mode-button:hover {
   background: #003300;
-  box-shadow: 0 0 10px #00ff00;
+  
 }
 
 [data-theme="terminal"] .view-mode-button.active {
   background: #003300;
   border: 2px solid #00ff00;
-  box-shadow: 0 0 15px #00ff00;
+  
 }
 
 [data-theme="terminal"] .date-label {
   color: #00ff00;
-  font-family: 'Courier New', monospace;
-  text-shadow: 0 0 5px #00ff00;
+  font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
+  
 }
 
 [data-theme="terminal"] .calendar-selector {
@@ -135,12 +174,12 @@
   background: #000000;
   border: 1px solid #00ff00;
   color: #00ff00;
-  font-family: 'Courier New', monospace;
-  text-shadow: 0 0 5px #00ff00;
+  font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
+  
 }
 
 [data-theme="terminal"] .calendar-select:focus {
-  box-shadow: 0 0 10px #00ff00;
+  
   outline: 1px solid #00ff00;
 }
 
@@ -148,35 +187,35 @@
   background: #000000;
   border: 1px solid #00ff00;
   color: #00ff00;
-  font-family: 'Courier New', monospace;
+  font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
 }
 
 [data-theme="terminal"] .calendar-definition-toggle {
   background: #000000;
   border: 1px solid #00ff00;
   color: #00ff00;
-  font-family: 'Courier New', monospace;
-  text-shadow: 0 0 5px #00ff00;
+  font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
+  
 }
 
 [data-theme="terminal"] .calendar-definition-toggle:hover {
   background: #003300;
-  box-shadow: 0 0 10px #00ff00;
+  
 }
 
 [data-theme="terminal"] .calendar-definition-drawer {
   background: #000000;
   border: 1px solid #00ff00;
   color: #00ff00;
-  font-family: 'Courier New', monospace;
+  font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
 }
 
 /* Calendar View */
 [data-theme="terminal"] .calendar-loading {
   background: #000000;
   color: #00ff00;
-  font-family: 'Courier New', monospace;
-  text-shadow: 0 0 5px #00ff00;
+  font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
+  
 }
 
 [data-theme="terminal"] .calendar-grid {
@@ -188,13 +227,13 @@
   background: #000000;
   border: 1px solid #00ff00;
   color: #00ff00;
-  font-family: 'Courier New', monospace;
-  text-shadow: 0 0 3px #00ff00;
+  font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
+  
 }
 
 [data-theme="terminal"] .calendar-cell:hover {
   background: #003300;
-  box-shadow: 0 0 8px #00ff00;
+  
 }
 
 [data-theme="terminal"] .calendar-cell.empty-cell {
@@ -206,24 +245,24 @@
 [data-theme="terminal"] .calendar-cell.today {
   background: #003300;
   border: 2px solid #00ff00;
-  box-shadow: 0 0 15px #00ff00;
+  
 }
 
 [data-theme="terminal"] .calendar-cell.selected {
   background: #003300;
   border: 2px solid #00ff00;
-  box-shadow: 0 0 15px #00ff00;
+  
 }
 
 [data-theme="terminal"] .calendar-cell.has-entry {
   background: #000000;
   border: 2px solid #00ff00;
-  box-shadow: 0 0 8px #00ff00;
+  
 }
 
 [data-theme="terminal"] .calendar-cell.has-entry.today {
   background: #003300;
-  box-shadow: 0 0 15px #00ff00;
+  
 }
 
 [data-theme="terminal"] .cell-content {
@@ -232,13 +271,13 @@
 
 [data-theme="terminal"] .cell-label {
   color: inherit;
-  font-family: 'Courier New', monospace;
-  text-shadow: 0 0 3px #00ff00;
+  font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
+  
 }
 
 [data-theme="terminal"] .entry-indicator {
   background: #00ff00;
-  box-shadow: 0 0 5px #00ff00;
+  
   border-radius: 0;
 }
 
@@ -246,42 +285,42 @@
   background: #000000;
   border-bottom: 1px solid #00ff00;
   color: #00ff00;
-  font-family: 'Courier New', monospace;
-  text-shadow: 0 0 5px #00ff00;
+  font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
+  
 }
 
 [data-theme="terminal"] .weekday-cell {
   background: #000000;
   border: 1px solid #00ff00;
   color: #00ff00;
-  font-family: 'Courier New', monospace;
-  text-shadow: 0 0 3px #00ff00;
+  font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
+  
 }
 
 [data-theme="terminal"] .day-number {
   color: inherit;
-  font-family: 'Courier New', monospace;
-  text-shadow: 0 0 3px #00ff00;
+  font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
+  
 }
 
 [data-theme="terminal"] .day-name {
   color: inherit;
-  font-family: 'Courier New', monospace;
-  text-shadow: 0 0 3px #00ff00;
+  font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
+  
 }
 
 [data-theme="terminal"] .day-month {
   color: inherit;
-  font-family: 'Courier New', monospace;
-  text-shadow: 0 0 3px #00ff00;
+  font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
+  
 }
 
 /* Timeline View - Additional */
 [data-theme="terminal"] .timeline-loading {
   background: #000000;
   color: #00ff00;
-  font-family: 'Courier New', monospace;
-  text-shadow: 0 0 5px #00ff00;
+  font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
+  
 }
 
 [data-theme="terminal"] .timeline-month-view,
@@ -311,8 +350,8 @@
   background: #000000;
   border-bottom: 1px solid #00ff00;
   color: #00ff00;
-  font-family: 'Courier New', monospace;
-  text-shadow: 0 0 5px #00ff00;
+  font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
+  
 }
 
 [data-theme="terminal"] .week-entries-list {
@@ -325,9 +364,6 @@
   color: #00ff00;
 }
 
-[data-theme="terminal"] .week-entry-group:hover {
-  box-shadow: 0 0 10px #00ff00;
-}
 
 [data-theme="terminal"] .week-entry-group-header {
   background: #000000;
@@ -336,17 +372,17 @@
 
 [data-theme="terminal"] .week-label {
   color: #00ff00;
-  font-family: 'Courier New', monospace;
-  text-shadow: 0 0 5px #00ff00;
+  font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
+  
 }
 
 [data-theme="terminal"] .week-entry-count {
   background: #003300;
   color: #00ff00;
   border: 1px solid #00ff00;
-  font-family: 'Courier New', monospace;
-  text-shadow: 0 0 5px #00ff00;
-  box-shadow: 0 0 8px #00ff00;
+  font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
+  
+  
 }
 
 [data-theme="terminal"] .week-entry-items {
@@ -357,23 +393,23 @@
   background: #000000;
   border: 1px solid #00ff00;
   color: #00ff00;
-  font-family: 'Courier New', monospace;
+  font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
 }
 
 [data-theme="terminal"] .week-entry-item:hover {
   background: #003300;
-  box-shadow: 0 0 8px #00ff00;
+  
 }
 
 [data-theme="terminal"] .week-entry-title {
   color: inherit;
-  font-family: 'Courier New', monospace;
-  text-shadow: 0 0 3px #00ff00;
+  font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
+  
 }
 
 [data-theme="terminal"] .week-entry-empty {
   color: #004400;
-  font-family: 'Courier New', monospace;
+  font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
   font-style: italic;
 }
 
@@ -395,8 +431,8 @@
 [data-theme="terminal"] .viewer-header h3,
 [data-theme="terminal"] .editor-header h3 {
   color: #00ff00;
-  font-family: 'Courier New', monospace;
-  text-shadow: 0 0 5px #00ff00;
+  font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
+  
 }
 
 [data-theme="terminal"] .header-actions {
@@ -408,41 +444,41 @@
   background: #000000;
   border: 1px solid #00ff00;
   color: #00ff00;
-  font-family: 'Courier New', monospace;
-  text-shadow: 0 0 5px #00ff00;
+  font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
+  
 }
 
 [data-theme="terminal"] .edit-button:hover,
 [data-theme="terminal"] .duplicate-button:hover {
   background: #003300;
-  box-shadow: 0 0 10px #00ff00;
+  
 }
 
 [data-theme="terminal"] .new-entry-button-header {
   background: #000000;
   border: 1px solid #00ff00;
   color: #00ff00;
-  font-family: 'Courier New', monospace;
-  text-shadow: 0 0 5px #00ff00;
+  font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
+  
 }
 
 [data-theme="terminal"] .new-entry-button-header:hover {
   background: #003300;
-  box-shadow: 0 0 10px #00ff00;
+  
 }
 
 [data-theme="terminal"] .time-range-badge-viewer {
   background: #000000;
   border: 1px solid #00ff00;
   color: #00ff00;
-  font-family: 'Courier New', monospace;
-  text-shadow: 0 0 5px #00ff00;
+  font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
+  
 }
 
 [data-theme="terminal"] .entry-date-display {
   color: #00ff00;
-  font-family: 'Courier New', monospace;
-  text-shadow: 0 0 5px #00ff00;
+  font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
+  
 }
 
 [data-theme="terminal"] .viewer-content {
@@ -452,15 +488,15 @@
 
 [data-theme="terminal"] .viewer-title {
   color: #00ff00;
-  font-family: 'Courier New', monospace;
-  text-shadow: 0 0 5px #00ff00;
+  font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
+  
   border-bottom: 1px solid #00ff00;
 }
 
 [data-theme="terminal"] .viewer-text {
   color: #00ff00;
-  font-family: 'Courier New', monospace;
-  text-shadow: 0 0 3px #00ff00;
+  font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
+  
 }
 
 [data-theme="terminal"] .viewer-tags {
@@ -472,8 +508,8 @@
   background: #000000;
   border: 1px solid #00ff00;
   color: #00ff00;
-  font-family: 'Courier New', monospace;
-  text-shadow: 0 0 3px #00ff00;
+  font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
+  
 }
 
 [data-theme="terminal"] .viewer-linked-entries {
@@ -483,8 +519,8 @@
 
 [data-theme="terminal"] .viewer-linked-entries h4 {
   color: #00ff00;
-  font-family: 'Courier New', monospace;
-  text-shadow: 0 0 5px #00ff00;
+  font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
+  
 }
 
 [data-theme="terminal"] .linked-entries-list {
@@ -495,23 +531,23 @@
   background: #000000;
   border: 1px solid #00ff00;
   color: #00ff00;
-  font-family: 'Courier New', monospace;
+  font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
 }
 
 [data-theme="terminal"] .linked-entry-item:hover {
   background: #003300;
-  box-shadow: 0 0 8px #00ff00;
+  
 }
 
 [data-theme="terminal"] .linked-entry-title {
   color: inherit;
-  font-family: 'Courier New', monospace;
-  text-shadow: 0 0 3px #00ff00;
+  font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
+  
 }
 
 [data-theme="terminal"] .linked-entry-meta {
   color: inherit;
-  font-family: 'Courier New', monospace;
+  font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
 }
 
 [data-theme="terminal"] .linked-entry-date {
@@ -522,22 +558,22 @@
   background: #000000;
   border: 1px solid #00ff00;
   color: #00ff00;
-  font-family: 'Courier New', monospace;
-  text-shadow: 0 0 3px #00ff00;
+  font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
+  
 }
 
 [data-theme="terminal"] .viewer-empty {
   background: #000000;
   color: #004400;
-  font-family: 'Courier New', monospace;
+  font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
   font-style: italic;
 }
 
 [data-theme="terminal"] .viewer-loading {
   background: #000000;
   color: #00ff00;
-  font-family: 'Courier New', monospace;
-  text-shadow: 0 0 5px #00ff00;
+  font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
+  
 }
 
 [data-theme="terminal"] .period-entries-controls {
@@ -553,8 +589,8 @@
 [data-theme="terminal"] .period-entries-filter label,
 [data-theme="terminal"] .period-entries-sort label {
   color: #00ff00;
-  font-family: 'Courier New', monospace;
-  text-shadow: 0 0 5px #00ff00;
+  font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
+  
 }
 
 [data-theme="terminal"] .period-entries-tags {
@@ -565,44 +601,44 @@
   background: #000000;
   border: 1px solid #00ff00;
   color: #00ff00;
-  font-family: 'Courier New', monospace;
-  text-shadow: 0 0 3px #00ff00;
+  font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
+  
 }
 
 [data-theme="terminal"] .period-entry-filter-tag:hover {
   background: #003300;
-  box-shadow: 0 0 8px #00ff00;
+  
 }
 
 [data-theme="terminal"] .period-entry-filter-tag.active {
   background: #003300;
   border: 2px solid #00ff00;
-  box-shadow: 0 0 10px #00ff00;
+  
 }
 
 [data-theme="terminal"] .period-entry-clear-filters {
   background: #000000;
   border: 1px solid #00ff00;
   color: #00ff00;
-  font-family: 'Courier New', monospace;
-  text-shadow: 0 0 5px #00ff00;
+  font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
+  
 }
 
 [data-theme="terminal"] .period-entry-clear-filters:hover {
   background: #003300;
-  box-shadow: 0 0 10px #00ff00;
+  
 }
 
 [data-theme="terminal"] .period-entries-sort select {
   background: #000000;
   border: 1px solid #00ff00;
   color: #00ff00;
-  font-family: 'Courier New', monospace;
-  text-shadow: 0 0 5px #00ff00;
+  font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
+  
 }
 
 [data-theme="terminal"] .period-entries-sort select:focus {
-  box-shadow: 0 0 10px #00ff00;
+  
   outline: 1px solid #00ff00;
 }
 
@@ -614,12 +650,12 @@
   background: #000000;
   border: 1px solid #00ff00;
   color: #00ff00;
-  font-family: 'Courier New', monospace;
+  font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
 }
 
 [data-theme="terminal"] .period-entry-item:hover {
   background: #003300;
-  box-shadow: 0 0 8px #00ff00;
+  
 }
 
 [data-theme="terminal"] .period-entry-header {
@@ -632,8 +668,8 @@
 
 [data-theme="terminal"] .period-entry-title {
   color: inherit;
-  font-family: 'Courier New', monospace;
-  text-shadow: 0 0 5px #00ff00;
+  font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
+  
 }
 
 [data-theme="terminal"] .period-entry-actions {
@@ -644,22 +680,22 @@
   background: #000000;
   border: 1px solid #00ff00;
   color: #00ff00;
-  font-family: 'Courier New', monospace;
-  text-shadow: 0 0 3px #00ff00;
+  font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
+  
 }
 
 [data-theme="terminal"] .period-entry-edit-button:hover {
   background: #003300;
-  box-shadow: 0 0 8px #00ff00;
+  
 }
 
 [data-theme="terminal"] .period-entry-badge {
   background: #003300;
   color: #00ff00;
   border: 1px solid #00ff00;
-  font-family: 'Courier New', monospace;
-  text-shadow: 0 0 5px #00ff00;
-  box-shadow: 0 0 8px #00ff00;
+  font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
+  
+  
 }
 
 [data-theme="terminal"] .period-entry-meta {
@@ -668,14 +704,14 @@
 
 [data-theme="terminal"] .period-entry-date {
   color: inherit;
-  font-family: 'Courier New', monospace;
+  font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
   text-decoration: underline;
 }
 
 [data-theme="terminal"] .period-entry-content {
   color: inherit;
-  font-family: 'Courier New', monospace;
-  text-shadow: 0 0 3px #00ff00;
+  font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
+  
 }
 
 [data-theme="terminal"] .period-entry-content-wrapper {
@@ -691,8 +727,8 @@
   background: #000000;
   border: 1px solid #00ff00;
   color: #00ff00;
-  font-family: 'Courier New', monospace;
-  text-shadow: 0 0 3px #00ff00;
+  font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
+  
 }
 
 /* Journal Editor - Additional */
@@ -708,8 +744,8 @@
 [data-theme="terminal"] .editor-loading {
   background: #000000;
   color: #00ff00;
-  font-family: 'Courier New', monospace;
-  text-shadow: 0 0 5px #00ff00;
+  font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
+  
 }
 
 [data-theme="terminal"] .editor-header {
@@ -725,7 +761,7 @@
 [data-theme="terminal"] .view-mode-message {
   background: #000000;
   color: #004400;
-  font-family: 'Courier New', monospace;
+  font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
   font-style: italic;
 }
 
@@ -733,12 +769,12 @@
   background: #000000;
   border: 1px solid #00ff00;
   color: #00ff00;
-  font-family: 'Courier New', monospace;
-  text-shadow: 0 0 3px #00ff00;
+  font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
+  
 }
 
 [data-theme="terminal"] .title-input:focus {
-  box-shadow: 0 0 10px #00ff00;
+  
   outline: 1px solid #00ff00;
 }
 
@@ -746,12 +782,12 @@
   background: #000000;
   border: 1px solid #00ff00;
   color: #00ff00;
-  font-family: 'Courier New', monospace;
-  text-shadow: 0 0 3px #00ff00;
+  font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
+  
 }
 
 [data-theme="terminal"] .content-input:focus {
-  box-shadow: 0 0 10px #00ff00;
+  
   outline: 1px solid #00ff00;
 }
 
@@ -767,12 +803,12 @@
   background: #000000;
   border: 1px solid #00ff00;
   color: #00ff00;
-  font-family: 'Courier New', monospace;
-  text-shadow: 0 0 3px #00ff00;
+  font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
+  
 }
 
 [data-theme="terminal"] .tag-input:focus {
-  box-shadow: 0 0 10px #00ff00;
+  
   outline: 1px solid #00ff00;
 }
 
@@ -780,13 +816,13 @@
   background: #000000;
   border: 1px solid #00ff00;
   color: #00ff00;
-  font-family: 'Courier New', monospace;
-  text-shadow: 0 0 5px #00ff00;
+  font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
+  
 }
 
 [data-theme="terminal"] .add-tag-button:hover {
   background: #003300;
-  box-shadow: 0 0 10px #00ff00;
+  
 }
 
 [data-theme="terminal"] .tags-list {
@@ -797,8 +833,8 @@
   background: #000000;
   border: 1px solid #00ff00;
   color: #00ff00;
-  font-family: 'Courier New', monospace;
-  text-shadow: 0 0 3px #00ff00;
+  font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
+  
 }
 
 [data-theme="terminal"] .tag-remove {
@@ -810,7 +846,7 @@
 [data-theme="terminal"] .tag-remove:hover {
   background: #003300;
   color: #00ff00;
-  box-shadow: 0 0 5px #00ff00;
+  
 }
 
 [data-theme="terminal"] .editor-footer {
@@ -826,39 +862,39 @@
   background: #000000;
   border: 1px solid #00ff00;
   color: #00ff00;
-  font-family: 'Courier New', monospace;
-  text-shadow: 0 0 5px #00ff00;
+  font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
+  
 }
 
 [data-theme="terminal"] .cancel-button:hover {
   background: #003300;
-  box-shadow: 0 0 10px #00ff00;
+  
 }
 
 [data-theme="terminal"] .delete-button {
   background: #000000;
   border: 1px solid #ff0000;
   color: #ff0000;
-  font-family: 'Courier New', monospace;
-  text-shadow: 0 0 5px #ff0000;
+  font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
+  
 }
 
 [data-theme="terminal"] .delete-button:hover {
   background: #330000;
-  box-shadow: 0 0 10px #ff0000;
+  
 }
 
 [data-theme="terminal"] .save-button {
   background: #000000;
   border: 1px solid #00ff00;
   color: #00ff00;
-  font-family: 'Courier New', monospace;
-  text-shadow: 0 0 5px #00ff00;
+  font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
+  
 }
 
 [data-theme="terminal"] .save-button:hover:not(:disabled) {
   background: #003300;
-  box-shadow: 0 0 10px #00ff00;
+  
 }
 
 [data-theme="terminal"] .save-button:disabled {
@@ -866,7 +902,7 @@
   color: #004400;
   border: 1px solid #004400;
   cursor: not-allowed;
-  text-shadow: none;
+  
 }
 
 [data-theme="terminal"] .confirm-dialog-overlay {
@@ -877,8 +913,8 @@
   background: #000000;
   border: 2px solid #00ff00;
   color: #00ff00;
-  font-family: 'Courier New', monospace;
-  box-shadow: 0 0 20px #00ff00;
+  font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
+  
 }
 
 [data-theme="terminal"] .confirm-dialog-buttons {
@@ -894,8 +930,8 @@
 [data-theme="terminal"] .journal-list-loading {
   background: #000000;
   color: #00ff00;
-  font-family: 'Courier New', monospace;
-  text-shadow: 0 0 5px #00ff00;
+  font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
+  
 }
 
 [data-theme="terminal"] .journal-list-header {
@@ -905,8 +941,8 @@
 
 [data-theme="terminal"] .journal-list-header h3 {
   color: #00ff00;
-  font-family: 'Courier New', monospace;
-  text-shadow: 0 0 5px #00ff00;
+  font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
+  
 }
 
 [data-theme="terminal"] .journal-list-header-actions {
@@ -917,32 +953,32 @@
   background: #000000;
   border: 1px solid #00ff00;
   color: #00ff00;
-  font-family: 'Courier New', monospace;
-  text-shadow: 0 0 5px #00ff00;
+  font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
+  
 }
 
 [data-theme="terminal"] .new-entry-button:hover {
   background: #003300;
-  box-shadow: 0 0 10px #00ff00;
+  
 }
 
 [data-theme="terminal"] .bulk-edit-toggle-button {
   background: #000000;
   border: 1px solid #00ff00;
   color: #00ff00;
-  font-family: 'Courier New', monospace;
-  text-shadow: 0 0 5px #00ff00;
+  font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
+  
 }
 
 [data-theme="terminal"] .bulk-edit-toggle-button:hover {
   background: #003300;
-  box-shadow: 0 0 10px #00ff00;
+  
 }
 
 [data-theme="terminal"] .bulk-edit-toggle-button.active {
   background: #003300;
   border: 2px solid #00ff00;
-  box-shadow: 0 0 15px #00ff00;
+  
 }
 
 [data-theme="terminal"] .journal-list-content {
@@ -962,8 +998,8 @@
 [data-theme="terminal"] .journal-list-filter label,
 [data-theme="terminal"] .journal-list-sort label {
   color: #00ff00;
-  font-family: 'Courier New', monospace;
-  text-shadow: 0 0 5px #00ff00;
+  font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
+  
 }
 
 [data-theme="terminal"] .journal-list-tags {
@@ -974,51 +1010,51 @@
   background: #000000;
   border: 1px solid #00ff00;
   color: #00ff00;
-  font-family: 'Courier New', monospace;
-  text-shadow: 0 0 3px #00ff00;
+  font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
+  
 }
 
 [data-theme="terminal"] .journal-entry-filter-tag:hover {
   background: #003300;
-  box-shadow: 0 0 8px #00ff00;
+  
 }
 
 [data-theme="terminal"] .journal-entry-filter-tag.active {
   background: #003300;
   border: 2px solid #00ff00;
-  box-shadow: 0 0 10px #00ff00;
+  
 }
 
 [data-theme="terminal"] .journal-entry-clear-filters {
   background: #000000;
   border: 1px solid #00ff00;
   color: #00ff00;
-  font-family: 'Courier New', monospace;
-  text-shadow: 0 0 5px #00ff00;
+  font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
+  
 }
 
 [data-theme="terminal"] .journal-entry-clear-filters:hover {
   background: #003300;
-  box-shadow: 0 0 10px #00ff00;
+  
 }
 
 [data-theme="terminal"] .journal-list-sort select {
   background: #000000;
   border: 1px solid #00ff00;
   color: #00ff00;
-  font-family: 'Courier New', monospace;
-  text-shadow: 0 0 5px #00ff00;
+  font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
+  
 }
 
 [data-theme="terminal"] .journal-list-sort select:focus {
-  box-shadow: 0 0 10px #00ff00;
+  
   outline: 1px solid #00ff00;
 }
 
 [data-theme="terminal"] .journal-list-empty {
   background: #000000;
   color: #004400;
-  font-family: 'Courier New', monospace;
+  font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
   font-style: italic;
 }
 
@@ -1030,18 +1066,18 @@
   background: #000000;
   border: 1px solid #00ff00;
   color: #00ff00;
-  font-family: 'Courier New', monospace;
+  font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
 }
 
 [data-theme="terminal"] .journal-entry-item:hover {
   background: #003300;
-  box-shadow: 0 0 8px #00ff00;
+  
 }
 
 [data-theme="terminal"] .journal-entry-item.selected {
   background: #003300;
   border: 2px solid #00ff00;
-  box-shadow: 0 0 15px #00ff00;
+  
 }
 
 [data-theme="terminal"] .journal-entry-item.bulk-edit-mode {
@@ -1051,7 +1087,7 @@
 [data-theme="terminal"] .journal-entry-item.bulk-selected {
   background: #003300;
   border: 2px solid #00ff00;
-  box-shadow: 0 0 10px #00ff00;
+  
 }
 
 [data-theme="terminal"] .entry-item-header {
@@ -1060,8 +1096,8 @@
 
 [data-theme="terminal"] .entry-item-title {
   color: inherit;
-  font-family: 'Courier New', monospace;
-  text-shadow: 0 0 5px #00ff00;
+  font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
+  
 }
 
 [data-theme="terminal"] .entry-item-meta {
@@ -1072,19 +1108,19 @@
   background: #000000;
   border: 1px solid #00ff00;
   color: #00ff00;
-  font-family: 'Courier New', monospace;
-  text-shadow: 0 0 3px #00ff00;
+  font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
+  
 }
 
 [data-theme="terminal"] .entry-date {
   color: inherit;
-  font-family: 'Courier New', monospace;
+  font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
 }
 
 [data-theme="terminal"] .entry-item-preview {
   color: inherit;
-  font-family: 'Courier New', monospace;
-  text-shadow: 0 0 3px #00ff00;
+  font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
+  
 }
 
 [data-theme="terminal"] .entry-item-tags {
@@ -1095,8 +1131,8 @@
   background: #000000;
   border: 1px solid #00ff00;
   color: #00ff00;
-  font-family: 'Courier New', monospace;
-  text-shadow: 0 0 3px #00ff00;
+  font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
+  
 }
 
 [data-theme="terminal"] .entry-item-content {
@@ -1118,26 +1154,26 @@
 [data-theme="terminal"] .bulk-edit-actions {
   background: #003300;
   border-bottom: 1px solid #00ff00;
-  box-shadow: 0 0 10px #00ff00;
+  
 }
 
 [data-theme="terminal"] .bulk-edit-selected-count {
   color: #00ff00;
-  font-family: 'Courier New', monospace;
-  text-shadow: 0 0 5px #00ff00;
+  font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
+  
 }
 
 [data-theme="terminal"] .bulk-delete-button {
   background: #000000;
   border: 1px solid #ff0000;
   color: #ff0000;
-  font-family: 'Courier New', monospace;
-  text-shadow: 0 0 5px #ff0000;
+  font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
+  
 }
 
 [data-theme="terminal"] .bulk-delete-button:hover {
   background: #330000;
-  box-shadow: 0 0 10px #ff0000;
+  
 }
 
 [data-theme="terminal"] .bulk-edit-select-all {
@@ -1147,8 +1183,8 @@
 
 [data-theme="terminal"] .bulk-edit-checkbox-label {
   color: #00ff00;
-  font-family: 'Courier New', monospace;
-  text-shadow: 0 0 3px #00ff00;
+  font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
+  
 }
 
 /* Entry Edit Modal */
@@ -1160,7 +1196,7 @@
   background: #000000;
   border: 2px solid #00ff00;
   color: #00ff00;
-  box-shadow: 0 0 20px #00ff00;
+  
 }
 
 [data-theme="terminal"] .modal-header {
@@ -1174,21 +1210,21 @@
 
 [data-theme="terminal"] .modal-header-top h3 {
   color: #00ff00;
-  font-family: 'Courier New', monospace;
-  text-shadow: 0 0 5px #00ff00;
+  font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
+  
 }
 
 [data-theme="terminal"] .modal-close-button {
   background: #000000;
   border: 1px solid #00ff00;
   color: #00ff00;
-  font-family: 'Courier New', monospace;
-  text-shadow: 0 0 5px #00ff00;
+  font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
+  
 }
 
 [data-theme="terminal"] .modal-close-button:hover {
   background: #003300;
-  box-shadow: 0 0 10px #00ff00;
+  
 }
 
 [data-theme="terminal"] .modal-entry-meta {
@@ -1197,7 +1233,7 @@
 
 [data-theme="terminal"] .modal-entry-meta small {
   color: #004400;
-  font-family: 'Courier New', monospace;
+  font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
 }
 
 [data-theme="terminal"] .modal-content {
@@ -1209,12 +1245,12 @@
   background: #000000;
   border: 1px solid #00ff00;
   color: #00ff00;
-  font-family: 'Courier New', monospace;
-  text-shadow: 0 0 3px #00ff00;
+  font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
+  
 }
 
 [data-theme="terminal"] .modal-title-input:focus {
-  box-shadow: 0 0 10px #00ff00;
+  
   outline: 1px solid #00ff00;
 }
 
@@ -1222,12 +1258,12 @@
   background: #000000;
   border: 1px solid #00ff00;
   color: #00ff00;
-  font-family: 'Courier New', monospace;
-  text-shadow: 0 0 3px #00ff00;
+  font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
+  
 }
 
 [data-theme="terminal"] .modal-content-input:focus {
-  box-shadow: 0 0 10px #00ff00;
+  
   outline: 1px solid #00ff00;
 }
 
@@ -1243,12 +1279,12 @@
   background: #000000;
   border: 1px solid #00ff00;
   color: #00ff00;
-  font-family: 'Courier New', monospace;
-  text-shadow: 0 0 3px #00ff00;
+  font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
+  
 }
 
 [data-theme="terminal"] .modal-tag-input:focus {
-  box-shadow: 0 0 10px #00ff00;
+  
   outline: 1px solid #00ff00;
 }
 
@@ -1256,13 +1292,13 @@
   background: #000000;
   border: 1px solid #00ff00;
   color: #00ff00;
-  font-family: 'Courier New', monospace;
-  text-shadow: 0 0 5px #00ff00;
+  font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
+  
 }
 
 [data-theme="terminal"] .modal-add-tag-button:hover {
   background: #003300;
-  box-shadow: 0 0 10px #00ff00;
+  
 }
 
 [data-theme="terminal"] .modal-tags-list {
@@ -1273,8 +1309,8 @@
   background: #000000;
   border: 1px solid #00ff00;
   color: #00ff00;
-  font-family: 'Courier New', monospace;
-  text-shadow: 0 0 3px #00ff00;
+  font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
+  
 }
 
 [data-theme="terminal"] .modal-tag-remove {
@@ -1286,7 +1322,7 @@
 [data-theme="terminal"] .modal-tag-remove:hover {
   background: #003300;
   color: #00ff00;
-  box-shadow: 0 0 5px #00ff00;
+  
 }
 
 [data-theme="terminal"] .modal-footer {
@@ -1298,26 +1334,26 @@
   background: #000000;
   border: 1px solid #00ff00;
   color: #00ff00;
-  font-family: 'Courier New', monospace;
-  text-shadow: 0 0 5px #00ff00;
+  font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
+  
 }
 
 [data-theme="terminal"] .modal-duplicate-button:hover {
   background: #003300;
-  box-shadow: 0 0 10px #00ff00;
+  
 }
 
 [data-theme="terminal"] .modal-delete-button {
   background: #000000;
   border: 1px solid #ff0000;
   color: #ff0000;
-  font-family: 'Courier New', monospace;
-  text-shadow: 0 0 5px #ff0000;
+  font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
+  
 }
 
 [data-theme="terminal"] .modal-delete-button:hover {
   background: #330000;
-  box-shadow: 0 0 10px #ff0000;
+  
 }
 
 [data-theme="terminal"] .modal-footer-actions {
@@ -1328,26 +1364,26 @@
   background: #000000;
   border: 1px solid #00ff00;
   color: #00ff00;
-  font-family: 'Courier New', monospace;
-  text-shadow: 0 0 5px #00ff00;
+  font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
+  
 }
 
 [data-theme="terminal"] .modal-cancel-button:hover {
   background: #003300;
-  box-shadow: 0 0 10px #00ff00;
+  
 }
 
 [data-theme="terminal"] .modal-save-button {
   background: #000000;
   border: 1px solid #00ff00;
   color: #00ff00;
-  font-family: 'Courier New', monospace;
-  text-shadow: 0 0 5px #00ff00;
+  font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
+  
 }
 
 [data-theme="terminal"] .modal-save-button:hover:not(:disabled) {
   background: #003300;
-  box-shadow: 0 0 10px #00ff00;
+  
 }
 
 [data-theme="terminal"] .modal-save-button:disabled {
@@ -1355,7 +1391,7 @@
   color: #004400;
   border: 1px solid #004400;
   cursor: not-allowed;
-  text-shadow: none;
+  
 }
 
 /* Search View */
@@ -1377,12 +1413,12 @@
   background: #000000;
   border: 1px solid #00ff00;
   color: #00ff00;
-  font-family: 'Courier New', monospace;
-  text-shadow: 0 0 3px #00ff00;
+  font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
+  
 }
 
 [data-theme="terminal"] .search-input:focus {
-  box-shadow: 0 0 10px #00ff00;
+  
   outline: 1px solid #00ff00;
 }
 
@@ -1390,26 +1426,26 @@
   background: #000000;
   border: 1px solid #00ff00;
   color: #00ff00;
-  font-family: 'Courier New', monospace;
-  text-shadow: 0 0 5px #00ff00;
+  font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
+  
 }
 
 [data-theme="terminal"] .search-filters-toggle:hover {
   background: #003300;
-  box-shadow: 0 0 10px #00ff00;
+  
 }
 
 [data-theme="terminal"] .search-close-button {
   background: #000000;
   border: 1px solid #00ff00;
   color: #00ff00;
-  font-family: 'Courier New', monospace;
-  text-shadow: 0 0 5px #00ff00;
+  font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
+  
 }
 
 [data-theme="terminal"] .search-close-button:hover {
   background: #003300;
-  box-shadow: 0 0 10px #00ff00;
+  
 }
 
 [data-theme="terminal"] .search-filters {
@@ -1423,8 +1459,8 @@
 
 [data-theme="terminal"] .filter-group label {
   color: #00ff00;
-  font-family: 'Courier New', monospace;
-  text-shadow: 0 0 5px #00ff00;
+  font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
+  
 }
 
 [data-theme="terminal"] .filter-tags {
@@ -1435,24 +1471,24 @@
   background: #000000;
   border: 1px solid #00ff00;
   color: #00ff00;
-  font-family: 'Courier New', monospace;
-  text-shadow: 0 0 3px #00ff00;
+  font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
+  
 }
 
 [data-theme="terminal"] .filter-tag:hover {
   background: #003300;
-  box-shadow: 0 0 8px #00ff00;
+  
 }
 
 [data-theme="terminal"] .filter-tag.active {
   background: #003300;
   border: 2px solid #00ff00;
-  box-shadow: 0 0 10px #00ff00;
+  
 }
 
 [data-theme="terminal"] .filter-empty {
   color: #004400;
-  font-family: 'Courier New', monospace;
+  font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
   font-style: italic;
 }
 
@@ -1464,19 +1500,19 @@
   background: #000000;
   border: 1px solid #00ff00;
   color: #00ff00;
-  font-family: 'Courier New', monospace;
-  text-shadow: 0 0 3px #00ff00;
+  font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
+  
 }
 
 [data-theme="terminal"] .filter-time-range:hover {
   background: #003300;
-  box-shadow: 0 0 8px #00ff00;
+  
 }
 
 [data-theme="terminal"] .filter-time-range.active {
   background: #003300;
   border: 2px solid #00ff00;
-  box-shadow: 0 0 10px #00ff00;
+  
 }
 
 [data-theme="terminal"] .filter-date-range {
@@ -1487,12 +1523,12 @@
   background: #000000;
   border: 1px solid #00ff00;
   color: #00ff00;
-  font-family: 'Courier New', monospace;
-  text-shadow: 0 0 3px #00ff00;
+  font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
+  
 }
 
 [data-theme="terminal"] .filter-date-range input:focus {
-  box-shadow: 0 0 10px #00ff00;
+  
   outline: 1px solid #00ff00;
 }
 
@@ -1504,12 +1540,12 @@
   background: #000000;
   border: 1px solid #00ff00;
   color: #00ff00;
-  font-family: 'Courier New', monospace;
-  text-shadow: 0 0 5px #00ff00;
+  font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
+  
 }
 
 [data-theme="terminal"] .filter-sort select:focus {
-  box-shadow: 0 0 10px #00ff00;
+  
   outline: 1px solid #00ff00;
 }
 
@@ -1517,13 +1553,13 @@
   background: #000000;
   border: 1px solid #00ff00;
   color: #00ff00;
-  font-family: 'Courier New', monospace;
-  text-shadow: 0 0 5px #00ff00;
+  font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
+  
 }
 
 [data-theme="terminal"] .clear-filters-button:hover {
   background: #003300;
-  box-shadow: 0 0 10px #00ff00;
+  
 }
 
 [data-theme="terminal"] .search-results {
@@ -1535,14 +1571,14 @@
 [data-theme="terminal"] .search-empty {
   background: #000000;
   color: #004400;
-  font-family: 'Courier New', monospace;
+  font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
   font-style: italic;
 }
 
 [data-theme="terminal"] .search-results-count {
   color: #00ff00;
-  font-family: 'Courier New', monospace;
-  text-shadow: 0 0 5px #00ff00;
+  font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
+  
 }
 
 [data-theme="terminal"] .search-results-list {
@@ -1553,12 +1589,12 @@
   background: #000000;
   border: 1px solid #00ff00;
   color: #00ff00;
-  font-family: 'Courier New', monospace;
+  font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
 }
 
 [data-theme="terminal"] .search-result-item:hover {
   background: #003300;
-  box-shadow: 0 0 8px #00ff00;
+  
 }
 
 [data-theme="terminal"] .result-item-header {
@@ -1567,8 +1603,8 @@
 
 [data-theme="terminal"] .result-item-title {
   color: inherit;
-  font-family: 'Courier New', monospace;
-  text-shadow: 0 0 5px #00ff00;
+  font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
+  
 }
 
 [data-theme="terminal"] .result-item-meta {
@@ -1579,20 +1615,20 @@
   background: #003300;
   color: #00ff00;
   border: 1px solid #00ff00;
-  font-family: 'Courier New', monospace;
-  text-shadow: 0 0 5px #00ff00;
-  box-shadow: 0 0 8px #00ff00;
+  font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
+  
+  
 }
 
 [data-theme="terminal"] .result-date {
   color: inherit;
-  font-family: 'Courier New', monospace;
+  font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
 }
 
 [data-theme="terminal"] .result-item-content {
   color: inherit;
-  font-family: 'Courier New', monospace;
-  text-shadow: 0 0 3px #00ff00;
+  font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
+  
 }
 
 [data-theme="terminal"] .result-item-tags {
@@ -1603,8 +1639,8 @@
   background: #000000;
   border: 1px solid #00ff00;
   color: #00ff00;
-  font-family: 'Courier New', monospace;
-  text-shadow: 0 0 3px #00ff00;
+  font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
+  
 }
 
 /* Preferences */
@@ -1616,8 +1652,8 @@
 [data-theme="terminal"] .preferences-loading {
   background: #000000;
   color: #00ff00;
-  font-family: 'Courier New', monospace;
-  text-shadow: 0 0 5px #00ff00;
+  font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
+  
 }
 
 [data-theme="terminal"] .preferences-header {
@@ -1627,8 +1663,8 @@
 
 [data-theme="terminal"] .preferences-header h1 {
   color: #00ff00;
-  font-family: 'Courier New', monospace;
-  text-shadow: 0 0 5px #00ff00;
+  font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
+  
 }
 
 [data-theme="terminal"] .preferences-actions {
@@ -1639,13 +1675,13 @@
   background: #000000;
   border: 1px solid #00ff00;
   color: #00ff00;
-  font-family: 'Courier New', monospace;
-  text-shadow: 0 0 5px #00ff00;
+  font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
+  
 }
 
 [data-theme="terminal"] .preferences-button:hover {
   background: #003300;
-  box-shadow: 0 0 10px #00ff00;
+  
 }
 
 [data-theme="terminal"] .preferences-content {
@@ -1659,8 +1695,8 @@
 
 [data-theme="terminal"] .preferences-section h2 {
   color: #00ff00;
-  font-family: 'Courier New', monospace;
-  text-shadow: 0 0 5px #00ff00;
+  font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
+  
   border-bottom: 1px solid #00ff00;
 }
 
@@ -1670,8 +1706,8 @@
 
 [data-theme="terminal"] .preference-item label {
   color: #00ff00;
-  font-family: 'Courier New', monospace;
-  text-shadow: 0 0 3px #00ff00;
+  font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
+  
 }
 
 [data-theme="terminal"] .preference-item input[type="text"],
@@ -1680,14 +1716,14 @@
   background: #000000;
   border: 1px solid #00ff00;
   color: #00ff00;
-  font-family: 'Courier New', monospace;
-  text-shadow: 0 0 3px #00ff00;
+  font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
+  
 }
 
 [data-theme="terminal"] .preference-item input[type="text"]:focus,
 [data-theme="terminal"] .preference-item input[type="number"]:focus,
 [data-theme="terminal"] .preference-item select:focus {
-  box-shadow: 0 0 10px #00ff00;
+  
   outline: 1px solid #00ff00;
 }
 
@@ -1701,21 +1737,21 @@
 
 [data-theme="terminal"] .preference-item small {
   color: #004400;
-  font-family: 'Courier New', monospace;
+  font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
 }
 
 [data-theme="terminal"] .preference-note {
   background: #003300;
   border-left: 2px solid #00ff00;
   color: #00ff00;
-  font-family: 'Courier New', monospace;
-  text-shadow: 0 0 3px #00ff00;
+  font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
+  
 }
 
 [data-theme="terminal"] .auto-save-indicator {
   color: #00ff00;
-  font-family: 'Courier New', monospace;
-  text-shadow: 0 0 5px #00ff00;
+  font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
+  
 }
 
 [data-theme="terminal"] .export-toolbar {
@@ -1730,12 +1766,12 @@
   background: #000000;
   border: 1px solid #00ff00;
   color: #00ff00;
-  font-family: 'Courier New', monospace;
-  text-shadow: 0 0 5px #00ff00;
+  font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
+  
 }
 
 [data-theme="terminal"] .export-controls select:focus {
-  box-shadow: 0 0 10px #00ff00;
+  
   outline: 1px solid #00ff00;
 }
 
@@ -1748,12 +1784,12 @@
 [data-theme="terminal"] .about-section a {
   color: #00ff00;
   text-decoration: underline;
-  text-shadow: 0 0 5px #00ff00;
+  
 }
 
 [data-theme="terminal"] .about-section a:hover {
   color: #00ff00;
-  text-shadow: 0 0 10px #00ff00;
+  
 }
 
 /* About Page */
@@ -1766,7 +1802,7 @@
   background: #000000;
   border: 2px solid #00ff00;
   color: #00ff00;
-  box-shadow: 0 0 20px #00ff00;
+  
 }
 
 [data-theme="terminal"] .about-header {
@@ -1780,14 +1816,14 @@
 
 [data-theme="terminal"] .about-title-section h1 {
   color: #00ff00;
-  font-family: 'Courier New', monospace;
-  text-shadow: 0 0 5px #00ff00;
+  font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
+  
 }
 
 [data-theme="terminal"] .about-description {
   color: #00ff00;
-  font-family: 'Courier New', monospace;
-  text-shadow: 0 0 3px #00ff00;
+  font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
+  
 }
 
 [data-theme="terminal"] .about-section {
@@ -1797,37 +1833,34 @@
 
 [data-theme="terminal"] .about-version {
   color: #00ff00;
-  font-family: 'Courier New', monospace;
-  text-shadow: 0 0 3px #00ff00;
+  font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
+  
 }
 
 [data-theme="terminal"] .about-note {
   color: #004400;
-  font-family: 'Courier New', monospace;
+  font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
   font-style: italic;
 }
 
 [data-theme="terminal"] .about-credits h2 {
   color: #00ff00;
-  font-family: 'Courier New', monospace;
-  text-shadow: 0 0 5px #00ff00;
+  font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
+  
 }
 
 [data-theme="terminal"] .about-credits p {
   color: #00ff00;
-  font-family: 'Courier New', monospace;
-  text-shadow: 0 0 3px #00ff00;
+  font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
+  
 }
 
 [data-theme="terminal"] .about-link {
   color: #00ff00;
   text-decoration: underline;
-  text-shadow: 0 0 5px #00ff00;
+  
 }
 
-[data-theme="terminal"] .about-link:hover {
-  text-shadow: 0 0 10px #00ff00;
-}
 
 [data-theme="terminal"] .about-credits-detailed {
   background: transparent;
@@ -1835,8 +1868,8 @@
 
 [data-theme="terminal"] .about-credits-detailed h2 {
   color: #00ff00;
-  font-family: 'Courier New', monospace;
-  text-shadow: 0 0 5px #00ff00;
+  font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
+  
 }
 
 [data-theme="terminal"] .credits-category {
@@ -1845,8 +1878,8 @@
 
 [data-theme="terminal"] .credits-category h3 {
   color: #00ff00;
-  font-family: 'Courier New', monospace;
-  text-shadow: 0 0 5px #00ff00;
+  font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
+  
 }
 
 [data-theme="terminal"] .credits-category ul {
@@ -1855,13 +1888,13 @@
 
 [data-theme="terminal"] .credits-category li {
   color: #00ff00;
-  font-family: 'Courier New', monospace;
-  text-shadow: 0 0 3px #00ff00;
+  font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
+  
 }
 
 [data-theme="terminal"] .credits-category li strong {
   color: #00ff00;
-  text-shadow: 0 0 5px #00ff00;
+  
 }
 
 [data-theme="terminal"] .credits-category li em {
@@ -1871,13 +1904,13 @@
 
 [data-theme="terminal"] .credits-category p {
   color: #00ff00;
-  font-family: 'Courier New', monospace;
-  text-shadow: 0 0 3px #00ff00;
+  font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
+  
 }
 
 [data-theme="terminal"] .credits-note {
   color: #004400;
-  font-family: 'Courier New', monospace;
+  font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
   font-style: italic;
 }
 
@@ -1898,14 +1931,14 @@
 
 [data-theme="terminal"] .loading-title {
   color: #00ff00;
-  font-family: 'Courier New', monospace;
-  text-shadow: 0 0 10px #00ff00;
+  font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
+  
 }
 
 [data-theme="terminal"] .loading-message {
   color: #00ff00;
-  font-family: 'Courier New', monospace;
-  text-shadow: 0 0 5px #00ff00;
+  font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
+  
 }
 
 [data-theme="terminal"] .loading-progress {
@@ -1915,18 +1948,18 @@
 [data-theme="terminal"] .loading-progress-bar {
   background: #000000;
   border: 1px solid #00ff00;
-  box-shadow: 0 0 10px #00ff00;
+  
 }
 
 [data-theme="terminal"] .loading-progress-fill {
   background: #00ff00;
-  box-shadow: 0 0 10px #00ff00;
+  
 }
 
 [data-theme="terminal"] .loading-progress-text {
   color: #00ff00;
-  font-family: 'Courier New', monospace;
-  text-shadow: 0 0 5px #00ff00;
+  font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
+  
 }
 
 /* Global Timeline Minimap */
@@ -1943,21 +1976,21 @@
 [data-theme="terminal"] .radial-dial-center {
   background: #00ff00;
   border: 2px solid #000000;
-  box-shadow: 0 0 15px #00ff00;
+  
 }
 
 [data-theme="terminal"] .radial-arrow {
   color: #00ff00;
-  text-shadow: 0 0 10px #00ff00;
+  
 }
 
 [data-theme="terminal"] .radial-label {
   background: #000000;
   border: 1px solid #00ff00;
   color: #00ff00;
-  font-family: 'Courier New', monospace;
-  text-shadow: 0 0 5px #00ff00;
-  box-shadow: 0 0 10px #00ff00;
+  font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
+  
+  
 }
 
 [data-theme="terminal"] .timeline-path {
@@ -1969,65 +2002,65 @@
 [data-theme="terminal"] .segment-indicator {
   background: #00ff00;
   border: 1px solid #000000;
-  box-shadow: 0 0 8px #00ff00;
+  
 }
 
 [data-theme="terminal"] .timeline-segment.current .segment-indicator {
   background: #00ff00;
   border: 2px solid #000000;
-  box-shadow: 0 0 15px #00ff00;
+  
 }
 
 [data-theme="terminal"] .segment-label {
   background: #000000;
   color: #00ff00;
   border: 1px solid #00ff00;
-  font-family: 'Courier New', monospace;
-  text-shadow: 0 0 5px #00ff00;
-  box-shadow: 0 0 10px #00ff00;
+  font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
+  
+  
 }
 
 [data-theme="terminal"] .entry-indicator {
   background: #00ff00;
   border: 1px solid #000000;
-  box-shadow: 0 0 8px #00ff00;
+  
 }
 
 [data-theme="terminal"] .scale-label {
   color: #00ff00;
-  font-family: 'Courier New', monospace;
-  text-shadow: 0 0 5px #00ff00;
+  font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
+  
 }
 
 /* Entry badges and cards - preserve time range colors, adapt backgrounds/text */
 [data-theme="terminal"] .entry-decade {
   background: rgba(156, 39, 176, 0.2);
   color: #ff00ff;
-  text-shadow: 0 0 3px #ff00ff;
+  
 }
 
 [data-theme="terminal"] .entry-year {
   background: rgba(2, 119, 189, 0.2);
   color: #00ffff;
-  text-shadow: 0 0 3px #00ffff;
+  
 }
 
 [data-theme="terminal"] .entry-month {
   background: rgba(239, 108, 0, 0.2);
   color: #ffaa00;
-  text-shadow: 0 0 3px #ffaa00;
+  
 }
 
 [data-theme="terminal"] .entry-week {
   background: rgba(46, 125, 50, 0.2);
   color: #00ff00;
-  text-shadow: 0 0 3px #00ff00;
+  
 }
 
 [data-theme="terminal"] .entry-day {
   background: rgba(194, 24, 91, 0.2);
   color: #ff00aa;
-  text-shadow: 0 0 3px #ff00aa;
+  
 }
 
 [data-theme="terminal"] .entry-card {
@@ -2044,13 +2077,13 @@
 [data-theme="terminal"] .card-title-full,
 [data-theme="terminal"] .badge-title {
   color: #00ff00;
-  font-family: 'Courier New', monospace;
-  text-shadow: 0 0 3px #00ff00;
+  font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
+  
 }
 
 [data-theme="terminal"] .entry-item-title {
   color: #00ff00;
-  font-family: 'Courier New', monospace;
-  text-shadow: 0 0 3px #00ff00;
+  font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
+  
 }
 
