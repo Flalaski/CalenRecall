@@ -144,6 +144,67 @@ export default function NavigationBar({
             →
           </button>
           <h2 className={`date-label date-label-${viewMode}`}>{getDateLabel()}</h2>
+        </div>
+        <div className="right-controls">
+          <div className="view-mode-selector">
+            <button
+              className={`view-mode-button ${viewMode === 'decade' ? 'active' : ''}`}
+              onClick={() => {
+                playModeSelectionSound();
+                onViewModeChange('decade');
+              }}
+            >
+              Decade
+            </button>
+            <button
+              className={`view-mode-button ${viewMode === 'year' ? 'active' : ''}`}
+              onClick={() => {
+                playModeSelectionSound();
+                onViewModeChange('year');
+              }}
+            >
+              Year
+            </button>
+            <button
+              className={`view-mode-button ${viewMode === 'month' ? 'active' : ''}`}
+              onClick={() => {
+                playModeSelectionSound();
+                onViewModeChange('month');
+              }}
+            >
+              Month
+            </button>
+            <button
+              className={`view-mode-button ${viewMode === 'week' ? 'active' : ''}`}
+              onClick={() => {
+                playModeSelectionSound();
+                onViewModeChange('week');
+              }}
+            >
+              Week
+            </button>
+            <button
+              className={`view-mode-button ${viewMode === 'day' ? 'active' : ''}`}
+              onClick={() => {
+                playModeSelectionSound();
+                onViewModeChange('day');
+              }}
+            >
+              Day
+            </button>
+            {onOpenPreferences && (
+              <button
+                className="view-mode-button preferences-button"
+                onClick={() => {
+                  playSettingsSound();
+                  onOpenPreferences();
+                }}
+                title="Preferences"
+              >
+                ⚙️
+              </button>
+            )}
+          </div>
           <div className="calendar-selector">
             <select
               value={calendar}
@@ -163,65 +224,6 @@ export default function NavigationBar({
                 ))}
             </select>
           </div>
-        </div>
-        <div className="view-mode-selector">
-        <button
-          className={`view-mode-button ${viewMode === 'decade' ? 'active' : ''}`}
-          onClick={() => {
-            playModeSelectionSound();
-            onViewModeChange('decade');
-          }}
-        >
-          Decade
-        </button>
-        <button
-          className={`view-mode-button ${viewMode === 'year' ? 'active' : ''}`}
-          onClick={() => {
-            playModeSelectionSound();
-            onViewModeChange('year');
-          }}
-        >
-          Year
-        </button>
-        <button
-          className={`view-mode-button ${viewMode === 'month' ? 'active' : ''}`}
-          onClick={() => {
-            playModeSelectionSound();
-            onViewModeChange('month');
-          }}
-        >
-          Month
-        </button>
-        <button
-          className={`view-mode-button ${viewMode === 'week' ? 'active' : ''}`}
-          onClick={() => {
-            playModeSelectionSound();
-            onViewModeChange('week');
-          }}
-        >
-          Week
-        </button>
-        <button
-          className={`view-mode-button ${viewMode === 'day' ? 'active' : ''}`}
-          onClick={() => {
-            playModeSelectionSound();
-            onViewModeChange('day');
-          }}
-        >
-          Day
-        </button>
-        {onOpenPreferences && (
-          <button
-            className="view-mode-button preferences-button"
-            onClick={() => {
-              playSettingsSound();
-              onOpenPreferences();
-            }}
-            title="Preferences"
-          >
-            ⚙️
-          </button>
-        )}
         </div>
       </div>
       <div className="calendar-info-panel">
