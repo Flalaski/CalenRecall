@@ -428,7 +428,7 @@ export default function GlobalTimelineMinimap({
     }
 
     return { segments, currentPosition, startDate, endDate };
-  }, [selectedDate, viewMode, formatDate, calendar]);
+  }, [selectedDate, viewMode, formatDate, calendar, timelineRangeKey]);
 
   // Calculate position percentage for the illuminated line (kept for potential future use)
   // Currently unused by the infinity tree, but preserved for design iterations.
@@ -1831,7 +1831,7 @@ export default function GlobalTimelineMinimap({
       minY: -viewportMargin,
       maxY: minimapDimensions.height + viewportMargin,
     };
-  }, [currentIndicatorMetrics.position, minimapDimensions.height]);
+  }, [currentIndicatorMetrics.position, minimapDimensions.height, viewMode]);
 
   // Calculate main focus web node (center of present focus)
   const focusWebNode = useMemo(() => {
