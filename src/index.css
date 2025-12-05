@@ -327,6 +327,39 @@ body {
   overflow: hidden;
 }
 
+/* Wall-painted text styling utility */
+.wall-text {
+  font-family: 'Bebas Neue', 'Impact', 'Arial Black', 'Franklin Gothic Heavy', 'Arial Narrow', sans-serif;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Wall-painted text shadows - scaled by font size */
+.wall-text-small {
+  text-shadow: 
+    1px 1px 0px rgba(0, 0, 0, 0.15),
+    2px 2px 0px rgba(0, 0, 0, 0.1),
+    3px 3px 4px rgba(0, 0, 0, 0.08);
+}
+
+.wall-text-medium {
+  text-shadow: 
+    1.5px 1.5px 0px rgba(0, 0, 0, 0.15),
+    3px 3px 0px rgba(0, 0, 0, 0.1),
+    4px 4px 6px rgba(0, 0, 0, 0.08),
+    0 0 1px rgba(0, 0, 0, 0.1);
+}
+
+.wall-text-large {
+  text-shadow: 
+    2px 2px 0px rgba(0, 0, 0, 0.15),
+    4px 4px 0px rgba(0, 0, 0, 0.1),
+    6px 6px 8px rgba(0, 0, 0, 0.08),
+    0 0 2px rgba(0, 0, 0, 0.1);
+}
+
 /* Theme support */
 [data-theme="dark"] {
   background: #1e1e1e;

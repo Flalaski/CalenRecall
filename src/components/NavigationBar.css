@@ -31,6 +31,15 @@
   border: 1px solid #ddd;
   border-radius: 4px;
   transition: all 0.2s;
+  font-family: 'Bebas Neue', 'Impact', 'Arial Black', 'Franklin Gothic Heavy', 'Arial Narrow', sans-serif;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  text-shadow: 
+    1px 1px 0px rgba(0, 0, 0, 0.15),
+    2px 2px 0px rgba(0, 0, 0, 0.1),
+    3px 3px 4px rgba(0, 0, 0, 0.08);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 .nav-button:hover {
@@ -132,6 +141,15 @@
   border-radius: 4px;
   transition: all 0.2s;
   color: #666;
+  font-family: 'Bebas Neue', 'Impact', 'Arial Black', 'Franklin Gothic Heavy', 'Arial Narrow', sans-serif;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  text-shadow: 
+    1px 1px 0px rgba(0, 0, 0, 0.15),
+    2px 2px 0px rgba(0, 0, 0, 0.1),
+    3px 3px 4px rgba(0, 0, 0, 0.08);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 .view-mode-button:hover {

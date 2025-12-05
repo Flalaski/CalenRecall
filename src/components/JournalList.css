@@ -27,8 +27,18 @@
 .journal-list-header h3 {
   margin: 0;
   font-size: 1.1rem;
-  font-weight: 600;
+  font-weight: 400;
   color: #333;
+  font-family: 'Bebas Neue', 'Impact', 'Arial Black', 'Franklin Gothic Heavy', 'Arial Narrow', sans-serif;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  text-shadow: 
+    1.5px 1.5px 0px rgba(0, 0, 0, 0.15),
+    3px 3px 0px rgba(0, 0, 0, 0.1),
+    4px 4px 6px rgba(0, 0, 0, 0.08),
+    0 0 1px rgba(0, 0, 0, 0.1);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 .new-entry-button {
@@ -38,6 +48,15 @@
   border-radius: 4px;
   font-size: 0.9rem;
   transition: background 0.2s;
+  font-family: 'Bebas Neue', 'Impact', 'Arial Black', 'Franklin Gothic Heavy', 'Arial Narrow', sans-serif;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  text-shadow: 
+    1px 1px 0px rgba(0, 0, 0, 0.2),
+    2px 2px 0px rgba(0, 0, 0, 0.15),
+    3px 3px 4px rgba(0, 0, 0, 0.1);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 .new-entry-button:hover {
@@ -103,10 +122,19 @@
 }
 
 .entry-item-title {
-  font-weight: 600;
+  font-weight: 400;
   font-size: 1rem;
   color: #333;
   flex: 1;
+  font-family: 'Bebas Neue', 'Impact', 'Arial Black', 'Franklin Gothic Heavy', 'Arial Narrow', sans-serif;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  text-shadow: 
+    1px 1px 0px rgba(0, 0, 0, 0.15),
+    2px 2px 0px rgba(0, 0, 0, 0.1),
+    3px 3px 4px rgba(0, 0, 0, 0.08);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 .entry-item-meta {

@@ -34,7 +34,17 @@
   margin: 0;
   font-size: 1.2rem;
   color: #333;
-  font-weight: 700;
+  font-weight: 400;
+  font-family: 'Bebas Neue', 'Impact', 'Arial Black', 'Franklin Gothic Heavy', 'Arial Narrow', sans-serif;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  text-shadow: 
+    1.5px 1.5px 0px rgba(0, 0, 0, 0.15),
+    3px 3px 0px rgba(0, 0, 0, 0.1),
+    4px 4px 6px rgba(0, 0, 0, 0.08),
+    0 0 1px rgba(0, 0, 0, 0.1);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 .new-entry-button-header {
@@ -43,9 +53,18 @@
   color: white;
   border-radius: 4px;
   font-size: 0.85rem;
-  font-weight: 600;
+  font-weight: 400;
   transition: background-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
   will-change: transform;
+  font-family: 'Bebas Neue', 'Impact', 'Arial Black', 'Franklin Gothic Heavy', 'Arial Narrow', sans-serif;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  text-shadow: 
+    1px 1px 0px rgba(0, 0, 0, 0.2),
+    2px 2px 0px rgba(0, 0, 0, 0.15),
+    3px 3px 4px rgba(0, 0, 0, 0.1);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 .new-entry-button-header:hover {
@@ -239,6 +258,15 @@
   border-radius: 4px;
   font-size: 0.9rem;
   transition: background 0.2s;
+  font-family: 'Bebas Neue', 'Impact', 'Arial Black', 'Franklin Gothic Heavy', 'Arial Narrow', sans-serif;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  text-shadow: 
+    1px 1px 0px rgba(0, 0, 0, 0.2),
+    2px 2px 0px rgba(0, 0, 0, 0.15),
+    3px 3px 4px rgba(0, 0, 0, 0.1);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 .delete-button:hover {
@@ -253,6 +281,15 @@
   font-size: 0.9rem;
   transition: background 0.2s;
   margin-left: auto;
+  font-family: 'Bebas Neue', 'Impact', 'Arial Black', 'Franklin Gothic Heavy', 'Arial Narrow', sans-serif;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  text-shadow: 
+    1px 1px 0px rgba(0, 0, 0, 0.2),
+    2px 2px 0px rgba(0, 0, 0, 0.15),
+    3px 3px 4px rgba(0, 0, 0, 0.1);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 .save-button:hover:not(:disabled) {
