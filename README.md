@@ -11,7 +11,13 @@ A self-contained calendar journal application for Windows that helps you recall 
   - Month entries displayed in year view's month cells
   - Year entries displayed in decade view's year cells
   - All period entries (week/month/year/decade) listed in the right panel for easy access
-- **Global Timeline Minimap**: Visual overview of your entire timeline at the top of the window
+- **Global Timeline Minimap**: Interactive visual overview of your entire timeline featuring:
+  - Drag-to-navigate through time periods
+  - Visual indicators for entries at different time scales
+  - Smooth zooming between time scales (decade → year → month → week → day)
+  - Color-coded time scale indicators
+  - Entry clustering for dense time periods
+  - Real-time position updates as you navigate
 - **Preferences System**: Comprehensive settings including:
   - Default view mode, date format, week start day
   - Theme (light/dark/auto) and font size
@@ -59,6 +65,8 @@ npm run build
 ```
 
 This compiles both the React frontend and Electron backend.
+
+**Note**: The build process includes automatic cleanup of previous release files and will open the release folder when complete.
 
 Create a Windows distribution:
 
@@ -138,6 +146,22 @@ The database includes:
 
 Your data never leaves your device.
 
+## Troubleshooting
+
+### Build Issues
+
+If you encounter issues building native modules (like `better-sqlite3`):
+1. Ensure you have Python installed and accessible in your PATH
+2. Install Visual Studio Build Tools with C++ workload
+3. Run `npm run rebuild` to rebuild native modules
+
+### Database Location
+
+If you need to backup or restore your data, the database is located at:
+- Windows: `%APPDATA%\calenrecall\calenrecall.db`
+
+Simply copy this file to backup your entire journal history.
+
 ## Usage
 
 ### Creating Entries
@@ -156,6 +180,15 @@ You can create journal entries at different time scales:
 - **Month entries** appear in year view's month cells
 - **Year entries** appear in decade view's year cells
 - All period entries are also listed in the right panel for easy browsing and access
+
+### Navigating with the Timeline Minimap
+
+The timeline minimap at the top of the window provides quick navigation:
+- **Drag horizontally** to move through time periods
+- **Drag vertically** to zoom between time scales (decade ↔ year ↔ month ↔ week ↔ day)
+- **Click on segments** to jump to specific time periods
+- **Click on entry indicators** (colored gems) to view or navigate to entries
+- Entry indicators cluster together when multiple entries exist in the same time period
 
 ### Preferences
 
