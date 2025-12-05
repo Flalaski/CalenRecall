@@ -182,32 +182,37 @@ export function jdnToPersian(jdn: number): { year: number; month: number; day: n
         remainingDays -= yearLength;
         year--;
       } else if (remainingDays === yearLength) {
-        // Exactly at the start of this year (end of previous year)
-        // Return the first day of this year
+        // Exactly at the start of this year (first day)
         return { year, month: 1, day: 1 };
       } else {
         // Found the year
-        // remainingDays now represents days from the date to the end of the year (before epoch)
-        // We need to convert this to days from the start of the year to the date
-        const isLeapYear = isPersianLeapYear(year);
-        const yearLength2 = isLeapYear ? 366 : 365;
-        const daysFromStartOfYear = yearLength2 - remainingDays;
+        // remainingDays represents how many days BEFORE the epoch we are, within this year
+        // If remainingDays is 1, we're 1 day before epoch = last day of the year
+        if (remainingDays === 1) {
+          const lastMonth = 12;
+          const lastDay = getDaysInPersianMonth(year, lastMonth);
+          return { year, month: lastMonth, day: lastDay };
+        }
         
-        // Now find month and day from daysFromStartOfYear
+        // Otherwise, calculate day of year
+        // remainingDays tells us how many days before epoch, so:
+        // day of year = yearLength - remainingDays + 1
+        let dayOfYear = yearLength - remainingDays + 1;
+        
+        // Now find month and day
         let month = 1;
-        let day = daysFromStartOfYear; // 0-based day offset
+        let day = dayOfYear;
         
         for (let m = 1; m <= 12; m++) {
           const monthDays = getDaysInPersianMonth(year, m);
-          if (day < monthDays) {
+          if (day <= monthDays) {
             month = m;
             break;
           }
           day -= monthDays;
         }
         
-        // Convert to 1-based day
-        return { year, month, day: day + 1 };
+        return { year, month, day };
       }
     }
     
@@ -216,6 +221,11 @@ export function jdnToPersian(jdn: number): { year: number; month: number; day: n
   }
   
   // Normal case: days >= 0 (year >= 1)
+  // Handle epoch explicitly (days = 0)
+  if (days === 0) {
+    return { year: 1, month: 1, day: 1 };
+  }
+  
   // Approximate year using 33-year cycle
   // Average days per year = (33 * 365 + 8) / 33 = 365.2424...
   let year = Math.floor(days / 365.2424) + 1;

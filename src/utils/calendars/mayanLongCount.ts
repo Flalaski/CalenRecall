@@ -84,22 +84,47 @@ export const mayanLongCountCalendar: CalendarConverter = {
     const baktun = year;
     const katun = month;
     
+    // Handle negative dates (before epoch)
+    const isNegative = baktun < 0 || katun < 0 || day < 0;
+    
     // Decode tun, uinal, kin from day field
     // day = tun * 400 + uinal * 20 + kin
-    const tun = Math.floor(day / 400);
-    const remainingAfterTun = day % 400;
-    const uinal = Math.floor(remainingAfterTun / 20);
-    const kin = remainingAfterTun % 20;
+    // For negative days, use absolute value for decoding, then negate
+    const absDay = Math.abs(day);
+    let tun = Math.floor(absDay / 400);
+    let remainingAfterTun = absDay % 400;
+    let uinal = Math.floor(remainingAfterTun / 20);
+    let kin = remainingAfterTun % 20;
     
-    // Validate components
-    if (uinal >= 18) {
-      throw new Error(`Invalid uinal: ${uinal} (must be 0-17)`);
-    }
-    if (kin >= 20) {
-      throw new Error(`Invalid kin: ${kin} (must be 0-19)`);
+    // If negative, negate the components
+    if (isNegative) {
+      tun = -tun;
+      uinal = -uinal;
+      kin = -kin;
     }
     
-    const daysSinceEpoch = longCountToDays(baktun, katun, tun, uinal, kin);
+    // Validate components (use absolute values for validation)
+    if (Math.abs(uinal) >= 18) {
+      throw new Error(`Invalid uinal: ${uinal} (must be 0-17 or -17 to 0)`);
+    }
+    if (Math.abs(kin) >= 20) {
+      throw new Error(`Invalid kin: ${kin} (must be 0-19 or -19 to 0)`);
+    }
+    
+    // Use absolute values for baktun and katun in calculation
+    const absBaktun = Math.abs(baktun);
+    const absKatun = Math.abs(katun);
+    const absTun = Math.abs(tun);
+    const absUinal = Math.abs(uinal);
+    const absKin = Math.abs(kin);
+    
+    const daysSinceEpoch = longCountToDays(absBaktun, absKatun, absTun, absUinal, absKin);
+    
+    // If any component is negative, negate the result
+    if (isNegative) {
+      return MAYAN_EPOCH - daysSinceEpoch;
+    }
+    
     return MAYAN_EPOCH + daysSinceEpoch;
   },
 
@@ -173,6 +198,7 @@ export const mayanLongCountCalendar: CalendarConverter = {
 
   parseDate(dateString: string): CalendarDate {
     // Parse Long Count notation: baktun.katun.tun.uinal.kin
+    // Also handle simplified format: baktun.katun.day (where day is encoded)
     // Also handle negative dates: -baktun.katun.tun.uinal.kin
     const trimmed = dateString.trim();
     const isNegative = trimmed.startsWith('-');
@@ -184,11 +210,29 @@ export const mayanLongCountCalendar: CalendarConverter = {
       throw new Error(`Invalid Long Count date format: ${dateString} (need at least baktun.katun.tun)`);
     }
     
-    const baktun = (parts[0] || 0) * (isNegative ? -1 : 1);
-    const katun = (parts[1] || 0) * (isNegative ? -1 : 1);
-    const tun = parts[2] || 0;
-    const uinal = parts[3] || 0;
-    const kin = parts[4] || 0;
+    let baktun: number;
+    let katun: number;
+    let tun: number;
+    let uinal: number;
+    let kin: number;
+    
+    if (parts.length === 3) {
+      // Simplified format: baktun.katun.day (where day is encoded as tun*400 + uinal*20 + kin)
+      baktun = (parts[0] || 0) * (isNegative ? -1 : 1);
+      katun = (parts[1] || 0) * (isNegative ? -1 : 1);
+      const encodedDay = Math.abs(parts[2] || 0);
+      tun = Math.floor(encodedDay / 400);
+      const remainingAfterTun = encodedDay % 400;
+      uinal = Math.floor(remainingAfterTun / 20);
+      kin = remainingAfterTun % 20;
+    } else {
+      // Full format: baktun.katun.tun.uinal.kin
+      baktun = (parts[0] || 0) * (isNegative ? -1 : 1);
+      katun = (parts[1] || 0) * (isNegative ? -1 : 1);
+      tun = parts[2] || 0;
+      uinal = parts[3] || 0;
+      kin = parts[4] || 0;
+    }
     
     // Validate components
     if (uinal < 0 || uinal >= 18) {

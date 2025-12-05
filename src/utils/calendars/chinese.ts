@@ -244,9 +244,11 @@ export const chineseCalendar: CalendarConverter = {
       throw new Error(`Month ${month} not found in Chinese year ${year}`);
     }
     
-    // Validate day
-    if (day < 1 || day > targetMonth.length) {
-      throw new Error(`Invalid day ${day} for Chinese month ${month} (valid range: 1-${targetMonth.length})`);
+    // Validate and clamp day to valid range
+    if (day < 1) {
+      day = 1;
+    } else if (day > targetMonth.length) {
+      day = targetMonth.length;
     }
     
     // Calculate JDN: start of month + (day - 1)
@@ -255,34 +257,47 @@ export const chineseCalendar: CalendarConverter = {
 
   fromJDN(jdn: number): CalendarDate {
     // Find which Chinese year this JDN falls in
-    // Start with approximate year based on epoch
-    const AVERAGE_LUNAR_YEAR = 354.37; // Approximate for initial guess
-    const CHINESE_EPOCH_APPROX = gregorianToJDN(1900, 2, 5);
-    const daysSinceEpoch = jdn - CHINESE_EPOCH_APPROX;
-    const approximateYears = Math.floor(daysSinceEpoch / AVERAGE_LUNAR_YEAR);
-    let chineseYear = 1900 + approximateYears;
+    // Convert JDN to Gregorian to get approximate year
+    const { year: gregorianYear } = jdnToGregorian(jdn);
+    
+    // Chinese years roughly align with Gregorian years (Chinese New Year is typically
+    // in late January to mid-February), so use Gregorian year as initial approximation
+    // Adjust based on whether we're before or after Chinese New Year
+    let chineseYear = gregorianYear;
+    
+    // Refine: if we're early in the Gregorian year (Jan-Feb), Chinese New Year might
+    // not have occurred yet, so we might still be in the previous Chinese year
+    // Check if we're before Chinese New Year for this Gregorian year
+    const yearDataCheck = getChineseYearData(chineseYear);
+    if (jdn < yearDataCheck.newYearJDN) {
+      // Chinese New Year hasn't occurred yet, so we're in the previous Chinese year
+      chineseYear--;
+    }
     
     // Refine year by checking Chinese New Year dates
+    // Start by getting the year data for our initial guess
     let yearData = getChineseYearData(chineseYear);
     
-    // If before this year's New Year, go back a year
+    // If before this year's New Year, go back years until we find the right one
     while (jdn < yearData.newYearJDN) {
       chineseYear--;
+      if (chineseYear < -10000) {
+        // Safety check to prevent infinite loops
+        break;
+      }
       yearData = getChineseYearData(chineseYear);
     }
     
-    // If after next year's New Year, go forward a year
-    const nextYearData = getChineseYearData(chineseYear + 1);
+    // If after next year's New Year, go forward years until we find the right one
+    let nextYearData = getChineseYearData(chineseYear + 1);
     while (jdn >= nextYearData.newYearJDN) {
       chineseYear++;
-      yearData = getChineseYearData(chineseYear);
-      const nextYearData2 = getChineseYearData(chineseYear + 1);
-      if (jdn >= nextYearData2.newYearJDN) {
-        chineseYear++;
-        yearData = getChineseYearData(chineseYear);
-      } else {
+      if (chineseYear > 10000) {
+        // Safety check to prevent infinite loops
         break;
       }
+      yearData = getChineseYearData(chineseYear);
+      nextYearData = getChineseYearData(chineseYear + 1);
     }
     
     // Now find which month this JDN falls in
@@ -310,6 +325,30 @@ export const chineseCalendar: CalendarConverter = {
     if (!foundMonth) {
       // Fallback: use approximate calculation
       // This shouldn't happen, but handle edge cases
+      // If JDN is before the year's New Year, use first day of first month
+      if (jdn < yearData.newYearJDN) {
+        return {
+          year: chineseYear,
+          month: 1,
+          day: 1,
+          calendar: 'chinese',
+          era: 'CE'
+        };
+      }
+      
+      // If JDN is after the year's end, use last day of last month
+      const lastMonth = yearData.months[yearData.months.length - 1];
+      if (jdn >= lastMonth.endJDN) {
+        return {
+          year: chineseYear,
+          month: lastMonth.isLeap ? lastMonth.monthNumber + 12 : lastMonth.monthNumber,
+          day: lastMonth.length,
+          calendar: 'chinese',
+          era: 'CE'
+        };
+      }
+      
+      // Otherwise, find the closest month
       const daysInYear = jdn - yearData.newYearJDN;
       let month = 1;
       let day = 1;
@@ -318,7 +357,7 @@ export const chineseCalendar: CalendarConverter = {
       for (const m of yearData.months) {
         if (cumulativeDays + m.length > daysInYear) {
           month = m.isLeap ? m.monthNumber + 12 : m.monthNumber;
-          day = daysInYear - cumulativeDays + 1;
+          day = Math.max(1, Math.min(daysInYear - cumulativeDays + 1, m.length));
           break;
         }
         cumulativeDays += m.length;
@@ -337,10 +376,14 @@ export const chineseCalendar: CalendarConverter = {
     const day = jdn - foundMonth.startJDN + 1;
     const month = foundMonth.isLeap ? foundMonth.monthNumber + 12 : foundMonth.monthNumber;
     
+    // Ensure day is within valid range for the month
+    const maxDay = foundMonth.length;
+    const validDay = Math.max(1, Math.min(day, maxDay));
+    
     return {
       year: chineseYear,
       month: month,
-      day: day,
+      day: validDay,
       calendar: 'chinese',
       era: 'CE'
     };

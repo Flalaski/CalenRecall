@@ -117,9 +117,29 @@ export function jdnToCoptic(jdn: number): { year: number; month: number; day: nu
         remainingDays -= yearLength;
         year--;
       } else {
-        // Found the year, now find month and day
+        // Found the year
+        // remainingDays represents how many days BEFORE the epoch we are, within this year
+        // If remainingDays equals yearLength, we're at the START of the year (first day)
+        if (remainingDays === yearLength) {
+          return { year, month: 1, day: 1 };
+        }
+        
+        // If remainingDays is 1, we're 1 day before epoch = last day of the year
+        if (remainingDays === 1) {
+          const lastMonth = 13;
+          const lastDay = getDaysInCopticMonth(year, lastMonth);
+          return { year, month: lastMonth, day: lastDay };
+        }
+        
+        // Otherwise, calculate day of year
+        // remainingDays tells us how many days before epoch, so:
+        // day of year = yearLength - remainingDays + 1
+        // (if remainingDays = yearLength-1, we're 1 day into the year)
+        let dayOfYear = yearLength - remainingDays + 1;
+        
+        // Now find month and day
         let month = 1;
-        let day = remainingDays + 1;
+        let day = dayOfYear;
         
         for (let m = 1; m <= 13; m++) {
           const monthDays = getDaysInCopticMonth(year, m);
