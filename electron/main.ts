@@ -252,13 +252,15 @@ function createAboutWindow() {
   }
 
   // Calculate optimal window size based on content
-  // Content: 600px max-width + 40px padding each side = 680px width
-  // Estimated height: ~440px based on content structure
+  // Content: 800px max-width + 40px padding each side = 880px width
+  // Height: Allow scrolling, start with reasonable default
   aboutWindow = new BrowserWindow({
-    width: 680,
-    height: 480,
-    minWidth: 500,
-    minHeight: 400,
+    width: 900,
+    height: 700,
+    minWidth: 600,
+    minHeight: 500,
+    maxWidth: 1200, // Allow resizing wider if needed
+    maxHeight: undefined, // No max height limit - allow scrolling
     parent: mainWindow || undefined,
     modal: false,
     resizable: true,
@@ -324,51 +326,49 @@ function createAboutWindow() {
           const content = document.querySelector('.about-content');
           
           if (!container || !content) {
-            return { width: 680, height: 520 };
+            return { width: 900, height: 700 };
           }
           
           // Get the scroll height which gives natural content size
           const body = document.body;
           const html = document.documentElement;
           
-          // Get the actual content height
-          const containerHeight = Math.max(
-            container.scrollHeight,
-            container.offsetHeight,
-            body.scrollHeight,
-            body.offsetHeight,
-            html.scrollHeight,
-            html.offsetHeight
+          // Get the actual content height - use scrollHeight for full content
+          const contentHeight = Math.max(
+            container.scrollHeight || 0,
+            container.offsetHeight || 0,
+            body.scrollHeight || 0,
+            body.offsetHeight || 0,
+            html.scrollHeight || 0,
+            html.offsetHeight || 0,
+            content.scrollHeight || 0
           );
           
-          // Add extra padding to ensure nothing is cut off
-          const contentRect = content.getBoundingClientRect();
-          const containerRect = container.getBoundingClientRect();
+          // Calculate optimal width: content max-width (800px) + container padding (40px each side) = 880px
+          // Add a bit more for window chrome and comfort
+          const optimalWidth = 900;
           
-          // Calculate total height including all padding and margins
-          // Get the bottom of the content element
-          const contentBottom = contentRect.bottom;
-          const containerTop = containerRect.top;
+          // For height, allow scrolling - set a reasonable viewport height
+          // but ensure minimum height for readability
+          // Max viewport height: ~90% of screen height to ensure window fits
+          const screenHeight = window.screen.availHeight;
+          const maxViewportHeight = Math.floor(screenHeight * 0.85);
           
-          // Calculate needed height: distance from container top to content bottom
-          // plus container bottom padding (40px) plus extra margin for safety
-          const totalHeight = Math.max(
-            containerHeight,
-            containerRect.height,
-            contentBottom - containerTop + 40 + 30 // container padding + safety margin
+          // Use content height if it's reasonable, otherwise use a good default
+          const optimalHeight = Math.min(
+            Math.max(700, Math.ceil(contentHeight + 100)), // Content height + padding
+            maxViewportHeight // But cap at screen size
           );
           
-          // Width is fixed: 600px content + 80px container padding = 680px
           return {
-            width: 680,
-            height: Math.ceil(totalHeight)
+            width: optimalWidth,
+            height: optimalHeight
           };
         })();
       `).then((size: { width: number; height: number }) => {
         if (aboutWindow && size) {
-          // Clamp to reasonable bounds, but allow more height
-          const width = 680;
-          const height = Math.max(450, Math.min(700, size.height));
+          const width = size.width || 900;
+          const height = size.height || 700;
           
           aboutWindow.setSize(width, height, false);
           
@@ -393,8 +393,8 @@ function createAboutWindow() {
             const [mainX, mainY] = mainWindow.getPosition();
             const [mainWidth, mainHeight] = mainWindow.getSize();
             aboutWindow.setPosition(
-              mainX + Math.floor((mainWidth - 680) / 2),
-              mainY + Math.floor((mainHeight - 480) / 2),
+              mainX + Math.floor((mainWidth - 900) / 2),
+              mainY + Math.floor((mainHeight - 700) / 2),
               false
             );
           }
