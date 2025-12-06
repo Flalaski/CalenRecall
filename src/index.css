@@ -8,11 +8,37 @@
 }
 
 html {
-  background: transparent; /* Allow background art to show through */
+  height: 100%;
+  width: 100%;
+  /* Background will be set by theme CSS */
 }
 
 #root {
-  background: transparent; /* Allow background art to show through */
+  height: 100%;
+  width: 100%;
+  /* Background will be set by theme CSS */
+}
+
+body {
+  height: 100%;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  /* Background will be set by theme CSS */
+}
+
+/* Ensure html and #root match body background when theme is active */
+[data-theme] html {
+  background-color: var(--theme-body-bg, transparent);
+}
+
+[data-theme] #root {
+  background-color: var(--theme-body-bg, transparent);
+}
+
+/* Set CSS variable from body background for inheritance */
+[data-theme] body {
+  --theme-body-bg: inherit;
 }
 
 /* Paper-like noise texture - ever-shifting, more visible in shadows */
@@ -378,14 +404,22 @@ body {
 }
 
 /* Theme support */
-[data-theme="dark"] {
-  background: transparent; /* Allow background art to show through */
+[data-theme="dark"] html,
+[data-theme="dark"] body {
+  background: #1a1a1a;
   color: #e0e0e0;
+  --theme-body-bg: #1a1a1a;
+}
+
+[data-theme="dark"] #root {
+  background: #1a1a1a;
 }
 
 /* When custom background image is present, make all theme backgrounds transparent */
 /* Use html element selector for higher specificity to override theme rules */
+html[data-custom-background="true"][data-theme] html,
 html[data-custom-background="true"][data-theme] body,
+html[data-custom-background="true"][data-theme] #root,
 html[data-custom-background="true"][data-theme] .app,
 html[data-custom-background="true"][data-theme] .app-content,
 html[data-custom-background="true"][data-theme] .timeline-section,
@@ -437,26 +471,21 @@ html[data-custom-background="true"][data-theme] .editor-section {
   border-bottom-color: var(--bg-extracted-border, #e0e0e0);
 }
 
-[data-theme="dark"] body {
-  background: transparent; /* Allow background art to show through */
-  color: #e0e0e0;
-}
-
 [data-theme="dark"] .app {
-  background: transparent; /* Allow background art to show through */
+  background: #1a1a1a;
   color: #e0e0e0;
 }
 
 [data-theme="dark"] .app-content {
-  background: transparent; /* Allow background art to show through */
+  background: #1a1a1a;
 }
 
 [data-theme="dark"] .timeline-section {
-  background: transparent; /* Allow background art to show through */
+  background: #1a1a1a;
 }
 
 [data-theme="dark"] .editor-section {
-  background: transparent; /* Allow background art to show through */
+  background: #252525;
   border-left-color: #4a90e2;
 }
 

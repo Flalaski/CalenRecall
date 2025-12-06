@@ -51,7 +51,10 @@ export default function BackgroundArt({ backgroundImage, className = '', theme }
     }
   }, [backgroundImage, theme]);
 
-  // Removed excessive debug logging
+  // Only render if there's a background image
+  if (!backgroundImage) {
+    return null;
+  }
 
   // Render background art directly (not using portal)
   return (
@@ -71,49 +74,44 @@ export default function BackgroundArt({ backgroundImage, className = '', theme }
         overflow: 'hidden',
       }}
     >
-      {backgroundImage ? (
-        // User's custom image
-        <>
-          {/* Hidden test image to detect loading errors */}
-          <img
-            ref={testImageRef}
-            alt=""
-            style={{ display: 'none' }}
-          />
-          {imageLoadError && (
-            <div style={{
-              position: 'absolute',
-              top: '10px',
-              left: '10px',
-              background: 'rgba(255, 0, 0, 0.8)',
-              color: 'white',
-              padding: '8px',
-              borderRadius: '4px',
-              fontSize: '12px',
-              zIndex: 1000
-            }}>
-              Failed to load background image. Check console for details.
-            </div>
-          )}
-          <div
-            className="background-image"
-            style={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              width: '100%',
-              height: '100%',
-              backgroundImage: `url(${backgroundImage})`,
-              backgroundSize: 'cover',
-              backgroundPosition: 'center',
-              backgroundRepeat: 'no-repeat',
-              zIndex: 0,
-            }}
-          />
-        </>
-      ) : null}
+      {/* Hidden test image to detect loading errors */}
+      <img
+        ref={testImageRef}
+        alt=""
+        style={{ display: 'none' }}
+      />
+      {imageLoadError && (
+        <div style={{
+          position: 'absolute',
+          top: '10px',
+          left: '10px',
+          background: 'rgba(255, 0, 0, 0.8)',
+          color: 'white',
+          padding: '8px',
+          borderRadius: '4px',
+          fontSize: '12px',
+          zIndex: 1000
+        }}>
+          Failed to load background image. Check console for details.
+        </div>
+      )}
+      <div
+        className="background-image"
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          width: '100%',
+          height: '100%',
+          backgroundImage: `url(${backgroundImage})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat',
+          zIndex: 0,
+        }}
+      />
     </div>
   );
 }

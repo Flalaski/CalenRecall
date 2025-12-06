@@ -8,9 +8,15 @@
   font-size: 11px;
 }
 
+[data-theme="classic-light"] html,
 [data-theme="classic-light"] body {
   background: #c0c0c0;
   color: #000000;
+  --theme-body-bg: #c0c0c0;
+}
+
+[data-theme="classic-light"] #root {
+  background: #c0c0c0;
 }
 
 [data-theme="classic-light"] .app {

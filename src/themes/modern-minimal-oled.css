@@ -3,9 +3,15 @@
  * OLED-optimized dark variant with true black backgrounds for maximum power efficiency
  */
 
+[data-theme="modern-minimal-oled"] html,
 [data-theme="modern-minimal-oled"] body {
   background: #000000;
   color: #e0e0e0;
+  --theme-body-bg: #000000;
+}
+
+[data-theme="modern-minimal-oled"] #root {
+  background: #000000;
 }
 
 [data-theme="modern-minimal-oled"] .app {
