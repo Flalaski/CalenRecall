@@ -368,7 +368,7 @@ export default function PreferencesComponent() {
                 </>
               ) : (
                 <span style={{ fontSize: '0.9rem', color: '#666' }}>
-                  Using procedural artwork (generated from theme)
+                  Using default theme background
                 </span>
               )}
               <button
