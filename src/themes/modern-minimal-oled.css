@@ -1882,12 +1882,12 @@
 }
 
 [data-theme="modern-minimal-oled"] .entry-card {
-  background: #0a0a0a;
+  background: #0a0a0a !important;
   border-color: #1a1a1a;
 }
 
 [data-theme="modern-minimal-oled"] .entry-card-full {
-  background: #0a0a0a;
+  background: #0a0a0a !important;
   border-color: #1a1a1a;
 }
 

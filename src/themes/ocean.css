@@ -1751,12 +1751,12 @@
 }
 
 [data-theme="ocean"] .entry-card {
-  background: #0d47a1;
+  background: #0d47a1 !important;
   border-color: #1976d2;
 }
 
 [data-theme="ocean"] .entry-card-full {
-  background: #0d47a1;
+  background: #0d47a1 !important;
   border-color: #1976d2;
 }
 

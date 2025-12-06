@@ -2146,12 +2146,12 @@
 }
 
 [data-theme="terminal"] .entry-card {
-  background: #000000;
+  background: #000000 !important;
   border-color: #00ff00;
 }
 
 [data-theme="terminal"] .entry-card-full {
-  background: #000000;
+  background: #000000 !important;
   border-color: #00ff00;
 }
 

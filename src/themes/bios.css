@@ -2215,12 +2215,12 @@
 }
 
 [data-theme="bios"] .entry-card {
-  background: #606060;
+  background: #606060 !important;
   border-color: #808080;
 }
 
 [data-theme="bios"] .entry-card-full {
-  background: #606060;
+  background: #606060 !important;
   border-color: #808080;
 }
 

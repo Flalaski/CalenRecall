@@ -1990,12 +1990,12 @@
 }
 
 [data-theme="aero-glass"] .entry-card {
-  background: #ffffff;
+  background: #ffffff !important;
   border-color: #e0e0e0;
 }
 
 [data-theme="aero-glass"] .entry-card-full {
-  background: #ffffff;
+  background: #ffffff !important;
   border-color: #e0e0e0;
 }
 

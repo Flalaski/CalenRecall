@@ -513,13 +513,13 @@ body {
 }
 
 [data-theme="dark"] .month-entry-item {
-  background: #353535;
+  background: #353535 !important;
   border-color: #404040;
   color: #e0e0e0;
 }
 
 [data-theme="dark"] .month-entry-item:hover {
-  background: #3d3d3d;
+  background: #3d3d3d !important;
   border-color: #ff9800;
 }
 
@@ -685,38 +685,38 @@ body {
 }
 
 [data-theme="dark"] .entry-card {
-  background: #353535;
+  background: #353535 !important;
   border-color: #404040;
   color: #e0e0e0;
 }
 
 [data-theme="dark"] .entry-card.entry-decade {
-  background: #353535;
+  background: #353535 !important;
   border-left-color: #9c27b0;
 }
 
 [data-theme="dark"] .entry-card.entry-year {
-  background: #353535;
+  background: #353535 !important;
   border-left-color: #0277bd;
 }
 
 [data-theme="dark"] .entry-card.entry-month {
-  background: #353535;
+  background: #353535 !important;
   border-left-color: #ef6c00;
 }
 
 [data-theme="dark"] .entry-card.entry-week {
-  background: #353535;
+  background: #353535 !important;
   border-left-color: #2e7d32;
 }
 
 [data-theme="dark"] .entry-card.entry-day {
-  background: #353535;
+  background: #353535 !important;
   border-left-color: #c2185b;
 }
 
 [data-theme="dark"] .entry-card:hover {
-  background: #3d3d3d;
+  background: #3d3d3d !important;
 }
 
 [data-theme="dark"] .entry-card .card-title,
@@ -749,38 +749,38 @@ body {
 }
 
 [data-theme="dark"] .entry-card-full {
-  background: #353535;
+  background: #353535 !important;
   border-color: #404040;
   color: #e0e0e0;
 }
 
 [data-theme="dark"] .entry-card-full.entry-decade {
-  background: #353535;
+  background: #353535 !important;
   border-left-color: #9c27b0;
 }
 
 [data-theme="dark"] .entry-card-full.entry-year {
-  background: #353535;
+  background: #353535 !important;
   border-left-color: #0277bd;
 }
 
 [data-theme="dark"] .entry-card-full.entry-month {
-  background: #353535;
+  background: #353535 !important;
   border-left-color: #ef6c00;
 }
 
 [data-theme="dark"] .entry-card-full.entry-week {
-  background: #353535;
+  background: #353535 !important;
   border-left-color: #2e7d32;
 }
 
 [data-theme="dark"] .entry-card-full.entry-day {
-  background: #353535;
+  background: #353535 !important;
   border-left-color: #c2185b;
 }
 
 [data-theme="dark"] .entry-card-full:hover {
-  background: #3d3d3d;
+  background: #3d3d3d !important;
 }
 
 [data-theme="dark"] .entry-card-full.bulk-selected {

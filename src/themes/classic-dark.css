@@ -2133,12 +2133,12 @@
 }
 
 [data-theme="classic-dark"] .entry-card {
-  background: #1e1e1e;
+  background: #1e1e1e !important;
   border-color: #404040;
 }
 
 [data-theme="classic-dark"] .entry-card-full {
-  background: #1e1e1e;
+  background: #1e1e1e !important;
   border-color: #404040;
 }
 

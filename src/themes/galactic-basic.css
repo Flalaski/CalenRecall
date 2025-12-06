@@ -2187,12 +2187,12 @@
 }
 
 [data-theme="galactic-basic"] .entry-card {
-  background: #000011;
+  background: #000011 !important;
   border-color: #00aaff;
 }
 
 [data-theme="galactic-basic"] .entry-card-full {
-  background: #000011;
+  background: #000011 !important;
   border-color: #00aaff;
 }
 

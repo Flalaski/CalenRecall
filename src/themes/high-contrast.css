@@ -1949,12 +1949,12 @@
 }
 
 [data-theme="high-contrast"] .entry-card {
-  background: #000000;
+  background: #000000 !important;
   border: 3px solid #ffffff;
 }
 
 [data-theme="high-contrast"] .entry-card-full {
-  background: #000000;
+  background: #000000 !important;
   border: 3px solid #ffffff;
 }
 

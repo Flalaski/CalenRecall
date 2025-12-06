@@ -1938,12 +1938,12 @@
 }
 
 [data-theme="retro80s"] .entry-card {
-  background: #1a0033;
+  background: #1a0033 !important;
   border-color: #6600cc;
 }
 
 [data-theme="retro80s"] .entry-card-full {
-  background: #1a0033;
+  background: #1a0033 !important;
   border-color: #6600cc;
 }
 

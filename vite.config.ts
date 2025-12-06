@@ -11,6 +11,7 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     emptyOutDir: true,
+    cssCodeSplit: false, // Bundle all CSS into a single file to preserve order
     rollupOptions: {
       input: {
         main: path.resolve(__dirname, 'index.html'),

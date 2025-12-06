@@ -2403,7 +2403,7 @@
 
 [data-theme="the-real-world"] .entry-card,
 [data-theme="the-real-world"] .entry-card-full {
-  background: #1a1a1a;
+  background: #1a1a1a !important;
   border: 1px solid #7fbf7f;
 }
 
