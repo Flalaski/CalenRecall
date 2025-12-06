@@ -25,7 +25,7 @@ export interface EntryAttachment {
 export type TimeRange = 'decade' | 'year' | 'month' | 'week' | 'day';
 
 // Supported export formats for storybook export
-export type ExportFormat = 'markdown' | 'text' | 'json' | 'rtf' | 'pdf' | 'dec';
+export type ExportFormat = 'markdown' | 'text' | 'json' | 'rtf' | 'pdf' | 'dec' | 'csv';
 
 export interface EntryVersion {
   id: number;

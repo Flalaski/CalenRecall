@@ -24,7 +24,7 @@ export interface EntryAttachment {
 
 export type TimeRange = 'decade' | 'year' | 'month' | 'week' | 'day';
 
-export type ExportFormat = 'markdown' | 'text' | 'json' | 'rtf' | 'pdf' | 'dec';
+export type ExportFormat = 'markdown' | 'text' | 'json' | 'rtf' | 'pdf' | 'dec' | 'csv';
 
 export interface EntryVersion {
   id: number;
@@ -113,6 +113,8 @@ declare global {
       resetPreferences: () => Promise<{ success: boolean }>;
       openPreferences: () => Promise<void>;
       closePreferencesWindow: () => Promise<void>;
+      onImportProgress: (callback: (progress: { stage: string; progress: number; message: string; total?: number; imported?: number; skipped?: number }) => void) => void;
+      removeImportProgressListener: () => void;
     };
   }
 }

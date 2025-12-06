@@ -9,6 +9,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - Version control system for builds
+- Import progress feedback with progress bar for large imports
+- CSV export format option for journal entries
+- Comprehensive import format documentation (JSON and Markdown)
+- Calendar authenticity audit documentation (17 calendars reviewed)
+- Epoch verification tools and test scripts
+- Entry preloading optimization for faster startup
+- Enhanced loading screen with progress indicators
+
+### Improved
+- Import process now shows real-time progress with detailed statistics
+- Export functionality expanded to include CSV format
+- Calendar system accuracy verified and documented
+- Performance optimizations for entry loading
+
+### Fixed
+- Mayan Long Count epoch bug (missing case statement)
+- Entry loading performance issues
+
+### Documentation
+- Added `IMPORT_FORMAT.md` with detailed import/export specifications
+- Created comprehensive calendar audit reports
+- Documented calendar system limitations and approximations
+- Added user guide for calendar systems
 
 ## [1.0.0] - 2024-01-XX
 

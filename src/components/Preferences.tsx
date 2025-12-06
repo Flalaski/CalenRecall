@@ -4,6 +4,7 @@ import { playResetSound, playExportSound } from '../utils/audioUtils';
 import { CALENDAR_INFO } from '../utils/calendars/types';
 import { AVAILABLE_THEMES, applyTheme, initializeTheme } from '../utils/themes';
 import HotkeyDiagram from './HotkeyDiagram';
+import ImportProgressModal from './ImportProgressModal';
 import packageJson from '../../package.json';
 import './Preferences.css';
 
@@ -16,6 +17,14 @@ export default function PreferencesComponent() {
   const [isImporting, setIsImporting] = useState(false);
   const [isBackingUp, setIsBackingUp] = useState(false);
   const [isRestoring, setIsRestoring] = useState(false);
+  const [importProgress, setImportProgress] = useState({
+    isOpen: false,
+    progress: 0,
+    message: '',
+    total: undefined as number | undefined,
+    imported: undefined as number | undefined,
+    skipped: undefined as number | undefined,
+  });
 
   useEffect(() => {
     loadPreferences();
@@ -42,8 +51,32 @@ export default function PreferencesComponent() {
     let cleanup: (() => void) | undefined;
     setupTheme().then(fn => cleanup = fn);
     
+    // Set up import progress listener
+    if (window.electronAPI && window.electronAPI.onImportProgress) {
+      window.electronAPI.onImportProgress((progress) => {
+        setImportProgress({
+          isOpen: true,
+          progress: progress.progress,
+          message: progress.message,
+          total: progress.total,
+          imported: progress.imported,
+          skipped: progress.skipped,
+        });
+        
+        // Close modal when complete or error
+        if (progress.stage === 'complete' || progress.stage === 'error') {
+          setTimeout(() => {
+            setImportProgress(prev => ({ ...prev, isOpen: false }));
+          }, 2000);
+        }
+      });
+    }
+    
     return () => {
       if (cleanup) cleanup();
+      if (window.electronAPI && window.electronAPI.removeImportProgressListener) {
+        window.electronAPI.removeImportProgressListener();
+      }
     };
   }, []);
 
@@ -122,18 +155,45 @@ export default function PreferencesComponent() {
     playExportSound();
     try {
       setIsImporting(true);
+      setImportProgress({
+        isOpen: true,
+        progress: 0,
+        message: 'Starting import...',
+        total: undefined,
+        imported: undefined,
+        skipped: undefined,
+      });
+      
       const result = await window.electronAPI.importEntries(importFormat);
+      
       if (result.success) {
-        alert(`Import successful! Imported ${result.imported} entries${result.skipped ? `, skipped ${result.skipped} duplicates` : ''}.`);
-        // Refresh the main window
-        window.location.reload();
+        // Progress modal will show completion message and close automatically
+        // Refresh the main window after a short delay
+        setTimeout(() => {
+          window.location.reload();
+        }, 2000);
       } else if (!result.canceled) {
         console.error('Import failed:', result.error, result.message);
-        alert(`Import failed: ${result.message || result.error || 'Unknown error'}`);
+        setImportProgress(prev => ({
+          ...prev,
+          message: `Import failed: ${result.message || result.error || 'Unknown error'}`,
+        }));
+        setTimeout(() => {
+          setImportProgress(prev => ({ ...prev, isOpen: false }));
+        }, 3000);
+      } else {
+        // User canceled
+        setImportProgress(prev => ({ ...prev, isOpen: false }));
       }
     } catch (error) {
       console.error('Error during import:', error);
-      alert('Import failed. Please try again.');
+      setImportProgress(prev => ({
+        ...prev,
+        message: 'Import failed. Please try again.',
+      }));
+      setTimeout(() => {
+        setImportProgress(prev => ({ ...prev, isOpen: false }));
+      }, 3000);
     } finally {
       setIsImporting(false);
     }
@@ -402,6 +462,7 @@ export default function PreferencesComponent() {
                 <option value="markdown">Markdown (.md)</option>
                 <option value="text">Plain text (.txt)</option>
                 <option value="json">JSON (.json)</option>
+                <option value="csv">CSV (.csv)</option>
                 <option value="rtf">Rich Text (.rtf)</option>
                 <option value="pdf">PDF (.pdf)</option>
                 <option value="dec">Decades summary (.dec)</option>
@@ -573,6 +634,14 @@ export default function PreferencesComponent() {
           </div>
         </div>
       </div>
+      <ImportProgressModal
+        isOpen={importProgress.isOpen}
+        progress={importProgress.progress}
+        message={importProgress.message}
+        total={importProgress.total}
+        imported={importProgress.imported}
+        skipped={importProgress.skipped}
+      />
     </div>
   );
 }

@@ -132,5 +132,14 @@ contextBridge.exposeInMainWorld('electronAPI', {
   
   closePreferencesWindow: (): Promise<void> =>
     ipcRenderer.invoke('close-preferences-window'),
+  
+  // Import progress listener
+  onImportProgress: (callback: (progress: { stage: string; progress: number; message: string; total?: number; imported?: number; skipped?: number }) => void) => {
+    ipcRenderer.on('import-progress', (_event, progress) => callback(progress));
+  },
+  
+  removeImportProgressListener: () => {
+    ipcRenderer.removeAllListeners('import-progress');
+  },
 });
 

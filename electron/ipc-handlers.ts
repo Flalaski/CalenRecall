@@ -293,6 +293,8 @@ export function setupIpcHandlers() {
         ? [{ name: 'Rich Text', extensions: ['rtf'] }]
         : format === 'pdf'
         ? [{ name: 'PDF', extensions: ['pdf'] }]
+        : format === 'csv'
+        ? [{ name: 'CSV', extensions: ['csv'] }]
         : [{ name: 'Decades Export', extensions: ['dec'] }];
 
     const { canceled, filePath } = await dialog.showSaveDialog({
@@ -347,8 +349,9 @@ export function setupIpcHandlers() {
   /**
    * Import journal entries from a file.
    * Supports JSON and Markdown formats.
+   * Sends progress updates via IPC events.
    */
-  ipcMain.handle('import-entries', async (_event, format: 'json' | 'markdown') => {
+  ipcMain.handle('import-entries', async (event, format: 'json' | 'markdown') => {
     const { canceled, filePaths } = await dialog.showOpenDialog({
       title: 'Import Entries',
       filters:
@@ -365,17 +368,31 @@ export function setupIpcHandlers() {
     const filePath = filePaths[0];
 
     try {
+      // Send progress: Reading file
+      event.sender.send('import-progress', { stage: 'reading', progress: 0, message: 'Reading file...' });
+      
       const content = fs.readFileSync(filePath, { encoding: 'utf-8' });
+      
+      // Send progress: Parsing content
+      event.sender.send('import-progress', { stage: 'parsing', progress: 25, message: 'Parsing entries...' });
+      
       const entries = parseImportContent(content, format);
 
       if (entries.length === 0) {
         return { success: false, canceled: false, error: 'no_entries', message: 'No entries found in file' };
       }
 
-      // Save all entries
+      // Send progress: Starting import
+      event.sender.send('import-progress', { stage: 'importing', progress: 30, message: `Importing ${entries.length} entries...`, total: entries.length, imported: 0, skipped: 0 });
+
+      // Save all entries with progress updates
       let imported = 0;
       let skipped = 0;
-      for (const entry of entries) {
+      const total = entries.length;
+      const progressInterval = Math.max(1, Math.floor(total / 50)); // Update every 2% or at least every entry
+      
+      for (let i = 0; i < entries.length; i++) {
+        const entry = entries[i];
         try {
           // Don't import entries with IDs (they're duplicates)
           if (!entry.id) {
@@ -388,7 +405,30 @@ export function setupIpcHandlers() {
           console.error('Error importing entry:', error);
           skipped++;
         }
+        
+        // Send progress update periodically
+        if (i % progressInterval === 0 || i === entries.length - 1) {
+          const progress = 30 + Math.floor((i / total) * 70); // 30-100%
+          event.sender.send('import-progress', {
+            stage: 'importing',
+            progress,
+            message: `Imported ${imported} entries${skipped > 0 ? `, skipped ${skipped}` : ''}...`,
+            total,
+            imported,
+            skipped,
+          });
+        }
       }
+
+      // Send completion
+      event.sender.send('import-progress', {
+        stage: 'complete',
+        progress: 100,
+        message: `Import complete! Imported ${imported} entries${skipped > 0 ? `, skipped ${skipped} duplicates` : ''}.`,
+        total,
+        imported,
+        skipped,
+      });
 
       return {
         success: true,
@@ -399,6 +439,11 @@ export function setupIpcHandlers() {
       };
     } catch (error: any) {
       console.error('Error importing entries:', error);
+      event.sender.send('import-progress', {
+        stage: 'error',
+        progress: 0,
+        message: `Import failed: ${error.message || 'Unknown error'}`,
+      });
       return {
         success: false,
         canceled: false,
@@ -693,6 +738,8 @@ function formatExportContent(entries: JournalEntry[], format: ExportFormat): str
       return formatAsRtf(entries);
     case 'dec':
       return formatAsDecades(entries);
+    case 'csv':
+      return formatAsCsv(entries);
     case 'markdown':
     default:
       return formatAsMarkdown(entries);
@@ -840,6 +887,39 @@ function formatAsDecades(entries: JournalEntry[]): string {
     lines.push('');
   }
 
+  return lines.join('\n');
+}
+
+/**
+ * Format entries as CSV (Comma-Separated Values).
+ * Escapes commas, quotes, and newlines in content.
+ */
+function formatAsCsv(entries: JournalEntry[]): string {
+  // CSV header
+  const lines: string[] = [];
+  lines.push('Date,Time Range,Title,Content,Tags,Created At,Updated At');
+  
+  // Helper function to escape CSV fields
+  const escapeCsvField = (field: string): string => {
+    // If field contains comma, quote, or newline, wrap in quotes and escape quotes
+    if (field.includes(',') || field.includes('"') || field.includes('\n') || field.includes('\r')) {
+      return `"${field.replace(/"/g, '""')}"`;
+    }
+    return field;
+  };
+  
+  for (const entry of entries) {
+    const date = escapeCsvField(entry.date);
+    const timeRange = escapeCsvField(entry.timeRange);
+    const title = escapeCsvField(entry.title);
+    const content = escapeCsvField(entry.content);
+    const tags = escapeCsvField((entry.tags || []).join('; '));
+    const createdAt = escapeCsvField(entry.createdAt);
+    const updatedAt = escapeCsvField(entry.updatedAt);
+    
+    lines.push(`${date},${timeRange},${title},${content},${tags},${createdAt},${updatedAt}`);
+  }
+  
   return lines.join('\n');
 }
 
