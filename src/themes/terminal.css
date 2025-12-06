@@ -296,6 +296,10 @@
   border-bottom: 1px solid #00ff00;
   color: #00ff00;
   font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
+}
+
+[data-theme="terminal"] .day-header h2 {
+  color: #00ff00;
   
 }
 
@@ -2151,5 +2155,25 @@
   color: #ffd700;
   font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
   text-shadow: 0 0 5px #ffd700;
+}
+
+[data-theme="terminal"] .card-tag-full {
+  background: #003300;
+  color: #00ff00;
+  border: 1px solid #00ff00;
+}
+
+[data-theme="terminal"] .card-content-full {
+  color: #00ff00;
+}
+
+[data-theme="terminal"] .card-date {
+  color: #00ff00;
+}
+
+[data-theme="terminal"] .time-range-badge {
+  background: #003300;
+  color: #00ff00;
+  border: 1px solid #00ff00;
 }
 

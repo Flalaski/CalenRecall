@@ -100,6 +100,10 @@
   text-shadow: none;
 }
 
+[data-theme="classic-dark"] .day-header h2 {
+  color: #e0e0e0;
+}
+
 /* Entry Cards */
 [data-theme="classic-dark"] .week-entry-group {
   background: #1e1e1e;
@@ -2092,5 +2096,23 @@
 
 [data-theme="classic-dark"] .entry-item-title {
   color: #e0e0e0;
+}
+
+[data-theme="classic-dark"] .card-tag-full {
+  background: #404040;
+  color: #ffffff;
+}
+
+[data-theme="classic-dark"] .card-content-full {
+  color: #e0e0e0;
+}
+
+[data-theme="classic-dark"] .card-date {
+  color: #b0b0b0;
+}
+
+[data-theme="classic-dark"] .time-range-badge {
+  background: #404040;
+  color: #ffffff;
 }
 

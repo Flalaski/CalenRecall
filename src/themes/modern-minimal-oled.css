@@ -234,6 +234,10 @@
   text-shadow: none;
 }
 
+[data-theme="modern-minimal-oled"] .day-header h2 {
+  color: #e0e0e0;
+}
+
 [data-theme="modern-minimal-oled"] .weekday-cell {
   background: #0a0a0a;
   border: 1px solid #0f0f0f;
@@ -1883,5 +1887,23 @@
 
 [data-theme="modern-minimal-oled"] .entry-item-title {
   color: #e0e0e0;
+}
+
+[data-theme="modern-minimal-oled"] .card-tag-full {
+  background: #1a1a1a;
+  color: #ffffff;
+}
+
+[data-theme="modern-minimal-oled"] .card-content-full {
+  color: #e0e0e0;
+}
+
+[data-theme="modern-minimal-oled"] .card-date {
+  color: #808080;
+}
+
+[data-theme="modern-minimal-oled"] .time-range-badge {
+  background: #1a1a1a;
+  color: #ffffff;
 }
 

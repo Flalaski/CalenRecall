@@ -243,6 +243,10 @@
   text-shadow: 0 0 10px #00ffff;
 }
 
+[data-theme="retro80s"] .day-header h2 {
+  color: #00ffff;
+}
+
 [data-theme="retro80s"] .weekday-cell {
   background: linear-gradient(135deg, #ff00ff, #00ffff);
   border: 2px solid #ffff00;
@@ -1941,5 +1945,25 @@
 [data-theme="retro80s"] .entry-item-title {
   color: #00ffff;
   text-shadow: 0 0 5px #00ffff;
+}
+
+[data-theme="retro80s"] .card-tag-full {
+  background: #330066;
+  color: #00ffff;
+  border: 1px solid #00ffff;
+}
+
+[data-theme="retro80s"] .card-content-full {
+  color: #00ffff;
+}
+
+[data-theme="retro80s"] .card-date {
+  color: #00ffff;
+}
+
+[data-theme="retro80s"] .time-range-badge {
+  background: #330066;
+  color: #00ffff;
+  border: 1px solid #00ffff;
 }
 

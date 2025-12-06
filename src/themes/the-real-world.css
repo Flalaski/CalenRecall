@@ -342,6 +342,10 @@
   border-bottom: 2px solid #7fbf7f;
   color: #7fbf7f;
   font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
+}
+
+[data-theme="the-real-world"] .day-header h2 {
+  color: #7fbf7f;
   font-weight: bold;
   font-size: 11px;
   padding: 4px;
@@ -2399,4 +2403,24 @@
   font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
   font-weight: bold;
   font-size: 12px;
+}
+
+[data-theme="the-real-world"] .card-tag-full {
+  background: #2a4a2a;
+  color: #7fbf7f;
+  border: 1px solid #7fbf7f;
+}
+
+[data-theme="the-real-world"] .card-content-full {
+  color: #9fcf9f;
+}
+
+[data-theme="the-real-world"] .card-date {
+  color: #7fbf7f;
+}
+
+[data-theme="the-real-world"] .time-range-badge {
+  background: #2a4a2a;
+  color: #7fbf7f;
+  border: 1px solid #7fbf7f;
 }

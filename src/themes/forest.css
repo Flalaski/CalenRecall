@@ -221,6 +221,10 @@
   color: #c8e6c9;
 }
 
+[data-theme="forest"] .day-header h2 {
+  color: #e8f5e9;
+}
+
 [data-theme="forest"] .weekday-cell {
   background: #2d5a2d;
   border: 1px solid #4a7c4a;
@@ -1753,5 +1757,23 @@
 
 [data-theme="forest"] .entry-item-title {
   color: #c8e6c9;
+}
+
+[data-theme="forest"] .card-tag-full {
+  background: #2e7d32;
+  color: #ffffff;
+}
+
+[data-theme="forest"] .card-content-full {
+  color: #c8e6c9;
+}
+
+[data-theme="forest"] .card-date {
+  color: #a5d6a7;
+}
+
+[data-theme="forest"] .time-range-badge {
+  background: #2e7d32;
+  color: #ffffff;
 }
 

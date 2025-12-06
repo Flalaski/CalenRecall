@@ -234,6 +234,10 @@
   text-shadow: none;
 }
 
+[data-theme="modern-minimal"] .day-header h2 {
+  color: #212121;
+}
+
 [data-theme="modern-minimal"] .weekday-cell {
   background: #ffffff;
   border: 1px solid #f0f0f0;

@@ -380,6 +380,10 @@
   text-shadow: none;
 }
 
+[data-theme="bios"] .day-header h2 {
+  color: #ffffff;
+}
+
 [data-theme="bios"] .weekday-cell {
   background: #000080;
   border: 1px solid #c0c0c0;
@@ -2219,5 +2223,58 @@
 [data-theme="bios"] .entry-viewer *,
 [data-theme="bios"] .modal-content * {
   color: #ffffff !important;
+}
+
+/* Tag text in day view entries should be dark for contrast */
+[data-theme="bios"] .card-tag-full {
+  background: #000080;
+  color: #000000 !important;
+  border: 1px solid #808080 !important;
+}
+#043444
+[data-theme="bios"] .card-content-full {
+  color: #ffffff !important;
+}
+
+[data-theme="bios"] .card-date {
+  color: #ffffff !important;
+}
+
+[data-theme="bios"] .time-range-badge {
+  background: #000080;
+  color: #ffffff;
+  border: 1px solid #c0c0c0;
+}
+
+[data-theme="bios"] .card-edit-button,
+[data-theme="bios"] .card-edit-button-small {
+  background: #606060;
+  color: #ffffff;
+  border: 1px solid #c0c0c0;
+}
+
+[data-theme="bios"] .card-edit-button:hover,
+[data-theme="bios"] .card-edit-button-small:hover {
+  background: #808080;
+  border-color: #c0c0c0;
+}
+
+[data-theme="bios"] .no-entries-message {
+  color: #ffffff !important;
+}
+
+[data-theme="bios"] .no-entries-message .hint {
+  color: #c0c0c0 !important;
+}
+
+[data-theme="bios"] .entry-card-full.bulk-selected {
+  background: #0000aa !important;
+  border-color: #c0c0c0 !important;
+  box-shadow: none !important;
+}
+
+[data-theme="bios"] .entry-card-full.bulk-selected:hover {
+  background: #0000cc !important;
+  border-color: #c0c0c0 !important;
 }
 

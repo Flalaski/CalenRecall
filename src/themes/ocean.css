@@ -221,6 +221,10 @@
   color: #b3e5fc;
 }
 
+[data-theme="ocean"] .day-header h2 {
+  color: #e0f2f7;
+}
+
 [data-theme="ocean"] .weekday-cell {
   background: #003d6b;
   border: 1px solid #005a9e;
@@ -1753,5 +1757,23 @@
 
 [data-theme="ocean"] .entry-item-title {
   color: #e3f2fd;
+}
+
+[data-theme="ocean"] .card-tag-full {
+  background: #0277bd;
+  color: #ffffff;
+}
+
+[data-theme="ocean"] .card-content-full {
+  color: #e3f2fd;
+}
+
+[data-theme="ocean"] .card-date {
+  color: #b3e5fc;
+}
+
+[data-theme="ocean"] .time-range-badge {
+  background: #0277bd;
+  color: #ffffff;
 }
 

@@ -238,6 +238,10 @@
   font-weight: bold;
 }
 
+[data-theme="high-contrast"] .day-header h2 {
+  color: #ffffff;
+}
+
 [data-theme="high-contrast"] .weekday-cell {
   background: #000000;
   border: 2px solid #ffffff;
@@ -1954,5 +1958,25 @@
   color: #ffffff;
   font-weight: bold;
   text-shadow: 1px 1px 0px #000000;
+}
+
+[data-theme="high-contrast"] .card-tag-full {
+  background: #ffffff;
+  color: #000000;
+  border: 1px solid #ffffff;
+}
+
+[data-theme="high-contrast"] .card-content-full {
+  color: #ffffff;
+}
+
+[data-theme="high-contrast"] .card-date {
+  color: #ffffff;
+}
+
+[data-theme="high-contrast"] .time-range-badge {
+  background: #ffffff;
+  color: #000000;
+  border: 1px solid #ffffff;
 }
 

@@ -530,7 +530,7 @@ body {
 }
 
 [data-theme="dark"] .day-header h2 {
-  color: #ffffff;
+  color: #ffffff !important;
 }
 
 [data-theme="dark"] .cell-month-label,
@@ -684,7 +684,7 @@ body {
 }
 
 [data-theme="dark"] .day-header h2 {
-  color: #ffffff;
+  color: #ffffff !important;
   font-weight: 600;
 }
 
