@@ -189,11 +189,8 @@
 /* Borders removed - only apply to specific elements that need them */
 
 [data-theme="bios"] .app-content {
-  background: #000080;
+  background: transparent;
   gap: 1px;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  border: 2px solid #c0c0c0;
 }
 
 [data-theme="bios"] .timeline-section {
@@ -515,6 +512,10 @@
 [data-theme="bios"] .entry-viewer {
   background: #808080;
   color: #ffffff;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
 }
 
 [data-theme="bios"] .viewer-header {
@@ -582,6 +583,9 @@
 [data-theme="bios"] .viewer-content {
   background: #606060;
   color: #ffffff;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
 }
 
 [data-theme="bios"] .viewer-title {
@@ -661,10 +665,15 @@
 }
 
 [data-theme="bios"] .viewer-empty {
-  background: #000080;
+  background: #606060;
   color: #808080;
   font-family: 'Fixedsys', 'Terminal', 'MS Sans Serif', system-ui, monospace;
   font-style: italic;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
 }
 
 [data-theme="bios"] .viewer-loading {
@@ -741,7 +750,7 @@
 }
 
 [data-theme="bios"] .period-entries-list {
-  background: transparent;
+  background: #606060;
 }
 
 [data-theme="bios"] .period-entry-item {
@@ -832,11 +841,19 @@
 /* Journal Editor - Additional */
 [data-theme="bios"] .journal-editor-inline {
   background: #000080;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
 }
 
 [data-theme="bios"] .journal-editor {
   background: #000080;
   color: #ffffff;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
 }
 
 [data-theme="bios"] .editor-loading {
@@ -854,6 +871,9 @@
 [data-theme="bios"] .editor-content {
   background: #000080;
   color: #ffffff;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
 }
 
 [data-theme="bios"] .view-mode-message {
