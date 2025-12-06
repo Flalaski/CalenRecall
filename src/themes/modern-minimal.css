@@ -285,6 +285,36 @@
   border-left: 1px solid #e0e0e0;
 }
 
+[data-theme="modern-minimal"] .month-entries-section {
+  border-bottom: 1px solid #e0e0e0;
+}
+
+[data-theme="modern-minimal"] .month-entries-header {
+  background: #ffffff;
+  border-bottom: 1px solid #e0e0e0;
+  color: #616161;
+  text-shadow: none;
+}
+
+[data-theme="modern-minimal"] .month-entries-list {
+  background: #fafafa;
+}
+
+[data-theme="modern-minimal"] .month-entry-title {
+  color: #424242;
+  text-shadow: none;
+}
+
+[data-theme="modern-minimal"] .month-entry-preview {
+  color: #757575;
+  text-shadow: none;
+}
+
+[data-theme="modern-minimal"] .month-entry-empty {
+  color: #bdbdbd;
+  text-shadow: none;
+}
+
 [data-theme="modern-minimal"] .timeline-grid {
   background: #ffffff;
   border: 1px solid #e0e0e0;

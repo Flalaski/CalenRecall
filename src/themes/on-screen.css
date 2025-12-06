@@ -441,6 +441,43 @@
   border-radius: 0;
 }
 
+[data-theme="on-screen"] .month-entries-section {
+  border-bottom: 4px solid #FF9900;
+}
+
+[data-theme="on-screen"] .month-entries-header {
+  background: #004488;
+  border: none;
+  border-bottom: 4px solid #FF9900;
+  border-radius: 0;
+  color: #FFFFFF;
+  font-family: 'Antonio', 'Arial Narrow', 'Helvetica Condensed', sans-serif;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  padding: 1rem;
+  text-transform: uppercase;
+}
+
+[data-theme="on-screen"] .month-entries-list {
+  background: #003366;
+}
+
+[data-theme="on-screen"] .month-entry-title {
+  color: #FFFFFF;
+  font-family: 'Antonio', 'Arial Narrow', 'Helvetica Condensed', sans-serif;
+  font-weight: 600;
+}
+
+[data-theme="on-screen"] .month-entry-preview {
+  color: #CCCCCC;
+  font-family: 'Antonio', 'Arial Narrow', 'Helvetica Condensed', sans-serif;
+}
+
+[data-theme="on-screen"] .month-entry-empty {
+  color: #888888;
+  font-family: 'Antonio', 'Arial Narrow', 'Helvetica Condensed', sans-serif;
+}
+
 [data-theme="on-screen"] .timeline-grid {
   background: #000000;
   border: none;

@@ -355,6 +355,37 @@
   border-left: 1px solid #00ff00;
 }
 
+[data-theme="terminal"] .month-entries-section {
+  border-bottom: 1px solid #00ff00;
+}
+
+[data-theme="terminal"] .month-entries-header {
+  background: #000000;
+  border-bottom: 1px solid #00ff00;
+  color: #00ff00;
+  font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
+}
+
+[data-theme="terminal"] .month-entries-list {
+  background: #000000;
+}
+
+[data-theme="terminal"] .month-entry-title {
+  color: #ffd700;
+  font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
+  text-shadow: 0 0 5px #ffd700;
+}
+
+[data-theme="terminal"] .month-entry-preview {
+  color: #00ff88;
+  font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
+}
+
+[data-theme="terminal"] .month-entry-empty {
+  color: #004400;
+  font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
+}
+
 [data-theme="terminal"] .timeline-grid {
   background: #000000;
   border: 1px solid #00ff00;

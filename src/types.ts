@@ -70,6 +70,7 @@ export interface Preferences {
   lastViewedMode?: 'decade' | 'year' | 'month' | 'week' | 'day';
   defaultCalendar?: string; // Calendar system (e.g., 'gregorian', 'islamic', 'hebrew')
   showMultipleCalendars?: boolean; // Show date in multiple calendars simultaneously
+  backgroundImage?: string; // Path to custom background image, or empty for procedural art
 }
 
 declare global {
@@ -115,6 +116,9 @@ declare global {
       closePreferencesWindow: () => Promise<void>;
       onImportProgress: (callback: (progress: { stage: string; progress: number; message: string; total?: number; imported?: number; skipped?: number }) => void) => void;
       removeImportProgressListener: () => void;
+      selectBackgroundImage: () => Promise<{ success: boolean; canceled?: boolean; error?: string; message?: string; path?: string; fullPath?: string }>;
+      clearBackgroundImage: () => Promise<{ success: boolean; error?: string; message?: string }>;
+      getBackgroundImagePath: () => Promise<{ success: boolean; error?: string; message?: string; path?: string | null }>;
     };
   }
 }

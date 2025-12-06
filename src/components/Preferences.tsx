@@ -312,6 +312,58 @@ export default function PreferencesComponent() {
               <option value="xxxLarge">XXX Large</option>
             </select>
           </div>
+
+          <div className="preference-item">
+            <label>Background Image</label>
+            <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
+              {preferences.backgroundImage ? (
+                <>
+                  <span style={{ fontSize: '0.9rem', color: '#666' }}>
+                    Custom image set
+                  </span>
+                  <button
+                    className="preferences-button"
+                    onClick={async () => {
+                      if (window.electronAPI) {
+                        const result = await window.electronAPI.clearBackgroundImage();
+                        if (result.success) {
+                          await loadPreferences();
+                        } else {
+                          alert(`Failed to clear background image: ${result.message || result.error}`);
+                        }
+                      }
+                    }}
+                  >
+                    Clear
+                  </button>
+                </>
+              ) : (
+                <span style={{ fontSize: '0.9rem', color: '#666' }}>
+                  Using procedural artwork (generated from theme)
+                </span>
+              )}
+              <button
+                className="preferences-button"
+                onClick={async () => {
+                  if (window.electronAPI) {
+                    const result = await window.electronAPI.selectBackgroundImage();
+                    if (result.success && result.path) {
+                      await loadPreferences();
+                    } else if (!result.canceled) {
+                      alert(`Failed to set background image: ${result.message || result.error}`);
+                    }
+                  }
+                }}
+              >
+                {preferences.backgroundImage ? 'Change Image' : 'Select Image'}
+              </button>
+            </div>
+            <small>
+              {preferences.backgroundImage
+                ? 'A custom background image is set. Clear it to use procedural artwork based on your theme.'
+                : 'Select a custom background image, or leave empty to use procedural abstract artwork that matches your active theme.'}
+            </small>
+          </div>
         </div>
 
         <div className="preferences-section">

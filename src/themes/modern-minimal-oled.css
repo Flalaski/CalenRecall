@@ -285,6 +285,36 @@
   border-left: 1px solid #1a1a1a;
 }
 
+[data-theme="modern-minimal-oled"] .month-entries-section {
+  border-bottom: 1px solid #1a1a1a;
+}
+
+[data-theme="modern-minimal-oled"] .month-entries-header {
+  background: #0a0a0a;
+  border-bottom: 1px solid #1a1a1a;
+  color: #808080;
+  text-shadow: none;
+}
+
+[data-theme="modern-minimal-oled"] .month-entries-list {
+  background: #000000;
+}
+
+[data-theme="modern-minimal-oled"] .month-entry-title {
+  color: #b0b0b0;
+  text-shadow: none;
+}
+
+[data-theme="modern-minimal-oled"] .month-entry-preview {
+  color: #808080;
+  text-shadow: none;
+}
+
+[data-theme="modern-minimal-oled"] .month-entry-empty {
+  color: #666666;
+  text-shadow: none;
+}
+
 [data-theme="modern-minimal-oled"] .timeline-grid {
   background: #0a0a0a;
   border: 1px solid #1a1a1a;

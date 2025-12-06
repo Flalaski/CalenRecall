@@ -433,6 +433,38 @@
   border: 1px solid #c0c0c0;
 }
 
+[data-theme="bios"] .month-entries-section {
+  border-bottom: 1px solid #c0c0c0;
+}
+
+[data-theme="bios"] .month-entries-header {
+  background: #000080;
+  border: 1px solid #c0c0c0;
+  color: #ffffff;
+  font-family: 'Fixedsys', 'Terminal', 'MS Sans Serif', system-ui, monospace;
+  text-shadow: none;
+}
+
+[data-theme="bios"] .month-entries-list {
+  background: #000080;
+}
+
+[data-theme="bios"] .month-entry-title {
+  color: #ffffff;
+  font-family: 'Fixedsys', 'Terminal', 'MS Sans Serif', system-ui, monospace;
+  text-shadow: none;
+}
+
+[data-theme="bios"] .month-entry-preview {
+  color: #c0c0c0;
+  font-family: 'Fixedsys', 'Terminal', 'MS Sans Serif', system-ui, monospace;
+}
+
+[data-theme="bios"] .month-entry-empty {
+  color: #808080;
+  font-family: 'Fixedsys', 'Terminal', 'MS Sans Serif', system-ui, monospace;
+}
+
 [data-theme="bios"] .timeline-grid {
   background: #000080;
   border: 1px solid #c0c0c0;

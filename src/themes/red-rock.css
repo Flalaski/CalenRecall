@@ -267,6 +267,32 @@
   border-left: 2px solid #9d5544;
 }
 
+[data-theme="red-rock"] .month-entries-section {
+  border-bottom: 2px solid #9d5544;
+}
+
+[data-theme="red-rock"] .month-entries-header {
+  background: #6b2e2a;
+  border-bottom: 2px solid #9d5544;
+  color: #f5d5b8;
+}
+
+[data-theme="red-rock"] .month-entries-list {
+  background: #3d1f1a;
+}
+
+[data-theme="red-rock"] .month-entry-title {
+  color: #f5d5b8;
+}
+
+[data-theme="red-rock"] .month-entry-preview {
+  color: #d5b598;
+}
+
+[data-theme="red-rock"] .month-entry-empty {
+  color: #ad6e5f;
+}
+
 [data-theme="red-rock"] .timeline-grid {
   background: #3d1f1a;
   border: 2px solid #9d5544;

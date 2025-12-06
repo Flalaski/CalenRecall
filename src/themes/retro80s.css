@@ -294,6 +294,35 @@
   border-left: 3px solid #ff00ff;
 }
 
+[data-theme="retro80s"] .month-entries-section {
+  border-bottom: 3px solid #ff00ff;
+}
+
+[data-theme="retro80s"] .month-entries-header {
+  background: linear-gradient(135deg, #ff00ff, #00ffff);
+  border-bottom: 3px solid #ffff00;
+  color: #ffffff;
+  text-shadow: 0 0 10px #00ffff;
+}
+
+[data-theme="retro80s"] .month-entries-list {
+  background: #000000;
+}
+
+[data-theme="retro80s"] .month-entry-title {
+  color: #00ffff;
+  text-shadow: 0 0 5px #00ffff;
+}
+
+[data-theme="retro80s"] .month-entry-preview {
+  color: #00ffff;
+  text-shadow: 0 0 3px #00ffff;
+}
+
+[data-theme="retro80s"] .month-entry-empty {
+  color: #660066;
+}
+
 [data-theme="retro80s"] .timeline-grid {
   background: #000000;
   border: 3px solid #ff00ff;

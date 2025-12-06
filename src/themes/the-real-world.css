@@ -405,6 +405,42 @@
   padding: 6px;
 }
 
+[data-theme="the-real-world"] .month-entries-section {
+  border-bottom: 1px solid #7fbf7f;
+}
+
+[data-theme="the-real-world"] .month-entries-header {
+  background: #1a1a1a;
+  border-bottom: 1px solid #7fbf7f;
+  color: #7fbf7f;
+  font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
+  font-weight: bold;
+  font-size: 12px;
+  padding: 4px 6px;
+}
+
+[data-theme="the-real-world"] .month-entries-list {
+  background: transparent;
+}
+
+[data-theme="the-real-world"] .month-entry-title {
+  color: #9fcf9f;
+  font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
+  font-weight: bold;
+  font-size: 12px;
+}
+
+[data-theme="the-real-world"] .month-entry-preview {
+  color: #7fbf7f;
+  font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
+  font-size: 11px;
+}
+
+[data-theme="the-real-world"] .month-entry-empty {
+  color: #404040;
+  font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
+}
+
 [data-theme="the-real-world"] .timeline-grid {
   background: #1a1a1a;
   border: 1px solid #7fbf7f;

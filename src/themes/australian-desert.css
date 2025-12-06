@@ -267,6 +267,32 @@
   border-left: 2px solid #a6734f;
 }
 
+[data-theme="australian-desert"] .month-entries-section {
+  border-bottom: 2px solid #a6734f;
+}
+
+[data-theme="australian-desert"] .month-entries-header {
+  background: #7a4a35;
+  border-bottom: 2px solid #a6734f;
+  color: #f4e4c1;
+}
+
+[data-theme="australian-desert"] .month-entries-list {
+  background: #4a2820;
+}
+
+[data-theme="australian-desert"] .month-entry-title {
+  color: #f4e4c1;
+}
+
+[data-theme="australian-desert"] .month-entry-preview {
+  color: #d4c4a1;
+}
+
+[data-theme="australian-desert"] .month-entry-empty {
+  color: #b6896f;
+}
+
 [data-theme="australian-desert"] .timeline-grid {
   background: #4a2820;
   border: 2px solid #a6734f;

@@ -7,6 +7,7 @@ import GlobalTimelineMinimap from './components/GlobalTimelineMinimap';
 import EntryEditModal from './components/EntryEditModal';
 import SearchView from './components/SearchView';
 import LoadingScreen from './components/LoadingScreen';
+import BackgroundArt from './components/BackgroundArt';
 import { TimeRange, JournalEntry, Preferences } from './types';
 import { getEntryForDate } from './services/journalService';
 import { playNewEntrySound } from './utils/audioUtils';
@@ -28,6 +29,7 @@ function App() {
   const [showSearch, setShowSearch] = useState(false);
   const [loadingProgress, setLoadingProgress] = useState(0);
   const [loadingMessage, setLoadingMessage] = useState('Initializing...');
+  const [backgroundImagePath, setBackgroundImagePath] = useState<string | null>(null);
   
   // Track if initial load has completed - after this, default view mode should NEVER be applied
   const initialLoadCompleteRef = useRef(false);
@@ -152,6 +154,14 @@ function App() {
           if (prefs.fontSize) {
             document.documentElement.setAttribute('data-font-size', prefs.fontSize);
           }
+
+          // Load background image path
+          if (window.electronAPI && prefs.backgroundImage) {
+            const bgResult = await window.electronAPI.getBackgroundImagePath();
+            if (bgResult.success && bgResult.path) {
+              setBackgroundImagePath(bgResult.path);
+            }
+          }
         }
       } catch (error) {
         console.error('Error loading preferences:', error);
@@ -167,7 +177,7 @@ function App() {
     // NOTE: Do NOT reset viewMode to default - default view mode only applies on initial load
     const interval = setInterval(() => {
       if (window.electronAPI) {
-        window.electronAPI.getAllPreferences().then(prefs => {
+        window.electronAPI.getAllPreferences().then(async prefs => {
           setPreferences(prefs);
           // NEVER reset viewMode - user's current view should always be preserved
           // Default view mode is ONLY applied on the very first load, never after
@@ -175,6 +185,17 @@ function App() {
           applyTheme(theme);
           if (prefs.fontSize) {
             document.documentElement.setAttribute('data-font-size', prefs.fontSize);
+          }
+          // Update background image if changed
+          if (prefs.backgroundImage) {
+            const bgResult = await window.electronAPI.getBackgroundImagePath();
+            if (bgResult.success && bgResult.path) {
+              setBackgroundImagePath(bgResult.path);
+            } else {
+              setBackgroundImagePath(null);
+            }
+          } else {
+            setBackgroundImagePath(null);
           }
         }).catch(console.error);
       }
@@ -412,6 +433,7 @@ function App() {
             onTimePeriodSelect={handleTimePeriodSelect}
             onEntrySelect={handleEntrySelect}
             onEditEntry={handleEditEntry}
+            backgroundImage={backgroundImagePath || undefined}
           />
         </div>
         <div className="editor-section">

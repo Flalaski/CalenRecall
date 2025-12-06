@@ -554,6 +554,104 @@ export function setupIpcHandlers() {
       };
     }
   });
+
+  /**
+   * Select a background image file.
+   * Copies the image to user data directory and returns the path.
+   */
+  ipcMain.handle('select-background-image', async () => {
+    const { canceled, filePaths } = await dialog.showOpenDialog({
+      title: 'Select Background Image',
+      properties: ['openFile'],
+      filters: [
+        { name: 'Images', extensions: ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp'] },
+        { name: 'All Files', extensions: ['*'] },
+      ],
+    });
+
+    if (canceled || !filePaths || filePaths.length === 0) {
+      return { success: false, canceled: true };
+    }
+
+    const sourcePath = filePaths[0];
+
+    try {
+      // Create backgrounds directory in user data
+      const userDataPath = app.getPath('userData');
+      const backgroundsDir = path.join(userDataPath, 'backgrounds');
+      if (!fs.existsSync(backgroundsDir)) {
+        fs.mkdirSync(backgroundsDir, { recursive: true });
+      }
+
+      // Generate unique filename
+      const fileExt = path.extname(sourcePath);
+      const uniqueId = `bg-${Date.now()}`;
+      const destFileName = `${uniqueId}${fileExt}`;
+      const destPath = path.join(backgroundsDir, destFileName);
+
+      // Copy file
+      fs.copyFileSync(sourcePath, destPath);
+
+      // Save path as preference (store relative path from userData)
+      const relativePath = path.relative(userDataPath, destPath);
+      setPreference('backgroundImage', relativePath);
+
+      return {
+        success: true,
+        path: relativePath,
+        fullPath: destPath,
+      };
+    } catch (error: any) {
+      console.error('Error copying background image:', error);
+      return {
+        success: false,
+        canceled: false,
+        error: 'copy_failed',
+        message: error.message || 'Failed to copy background image',
+      };
+    }
+  });
+
+  /**
+   * Clear the background image preference.
+   */
+  ipcMain.handle('clear-background-image', async () => {
+    try {
+      setPreference('backgroundImage', '');
+      return { success: true };
+    } catch (error: any) {
+      console.error('Error clearing background image:', error);
+      return {
+        success: false,
+        error: 'clear_failed',
+        message: error.message || 'Failed to clear background image',
+      };
+    }
+  });
+
+  /**
+   * Get the full path to the background image.
+   */
+  ipcMain.handle('get-background-image-path', async () => {
+    try {
+      const bgImage = getPreference('backgroundImage');
+      if (!bgImage || typeof bgImage !== 'string') {
+        return { success: true, path: null };
+      }
+      const userDataPath = app.getPath('userData');
+      const fullPath = path.join(userDataPath, bgImage);
+      // Return as file:// URL for use in renderer
+      const fileUrl = `file:///${fullPath.replace(/\\/g, '/')}`;
+      return { success: true, path: fileUrl };
+    } catch (error: any) {
+      console.error('Error getting background image path:', error);
+      return {
+        success: false,
+        error: 'get_path_failed',
+        message: error.message || 'Failed to get background image path',
+      };
+    }
+  });
 }
 
 /**

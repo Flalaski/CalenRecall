@@ -267,6 +267,32 @@
   border-left: 2px solid #8d6e63;
 }
 
+[data-theme="sunset"] .month-entries-section {
+  border-bottom: 2px solid #8d6e63;
+}
+
+[data-theme="sunset"] .month-entries-header {
+  background: #5d4037;
+  border-bottom: 2px solid #8d6e63;
+  color: #ffe0b2;
+}
+
+[data-theme="sunset"] .month-entries-list {
+  background: #3e2723;
+}
+
+[data-theme="sunset"] .month-entry-title {
+  color: #ffe0b2;
+}
+
+[data-theme="sunset"] .month-entry-preview {
+  color: #dec092;
+}
+
+[data-theme="sunset"] .month-entry-empty {
+  color: #9d7e73;
+}
+
 [data-theme="sunset"] .timeline-grid {
   background: #3e2723;
   border: 2px solid #8d6e63;

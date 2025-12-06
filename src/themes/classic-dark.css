@@ -367,6 +367,41 @@
   border-left: 2px solid #606060;
 }
 
+[data-theme="classic-dark"] .month-entries-section {
+  border-bottom: 2px solid #606060;
+}
+
+[data-theme="classic-dark"] .month-entries-header {
+  background: #404040;
+  border-top: 2px solid #000000;
+  border-left: 2px solid #000000;
+  border-bottom: 2px solid #808080;
+  border-right: 2px solid #808080;
+  color: #e0e0e0;
+  font-family: 'MS Sans Serif', sans-serif;
+  text-shadow: none;
+}
+
+[data-theme="classic-dark"] .month-entries-list {
+  background: #404040;
+}
+
+[data-theme="classic-dark"] .month-entry-title {
+  color: #e0e0e0;
+  font-family: 'MS Sans Serif', sans-serif;
+  text-shadow: none;
+}
+
+[data-theme="classic-dark"] .month-entry-preview {
+  color: #b0b0b0;
+  font-family: 'MS Sans Serif', sans-serif;
+}
+
+[data-theme="classic-dark"] .month-entry-empty {
+  color: #808080;
+  font-family: 'MS Sans Serif', sans-serif;
+}
+
 [data-theme="classic-dark"] .week-entries-header {
   background: #404040;
   border-top: 2px solid #000000;

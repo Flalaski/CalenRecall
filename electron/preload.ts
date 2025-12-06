@@ -20,6 +20,9 @@ export interface Preferences {
   restoreLastView?: boolean;
   lastViewedDate?: string;
   lastViewedMode?: 'decade' | 'year' | 'month' | 'week' | 'day';
+  defaultCalendar?: string; // Calendar system (e.g., 'gregorian', 'islamic', 'hebrew')
+  showMultipleCalendars?: boolean; // Show date in multiple calendars simultaneously
+  backgroundImage?: string; // Path to custom background image, or empty for procedural art
 }
 
 contextBridge.exposeInMainWorld('electronAPI', {
@@ -141,5 +144,15 @@ contextBridge.exposeInMainWorld('electronAPI', {
   removeImportProgressListener: () => {
     ipcRenderer.removeAllListeners('import-progress');
   },
+
+  // Background image operations
+  selectBackgroundImage: (): Promise<{ success: boolean; canceled?: boolean; error?: string; message?: string; path?: string; fullPath?: string }> =>
+    ipcRenderer.invoke('select-background-image'),
+
+  clearBackgroundImage: (): Promise<{ success: boolean; error?: string; message?: string }> =>
+    ipcRenderer.invoke('clear-background-image'),
+
+  getBackgroundImagePath: (): Promise<{ success: boolean; error?: string; message?: string; path?: string | null }> =>
+    ipcRenderer.invoke('get-background-image-path'),
 });
 

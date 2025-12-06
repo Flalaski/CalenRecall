@@ -396,6 +396,37 @@
   border-left: 1px solid #00aaff;
 }
 
+[data-theme="galactic-basic"] .month-entries-section {
+  border-bottom: 1px solid #00aaff;
+}
+
+[data-theme="galactic-basic"] .month-entries-header {
+  background: #000011;
+  border-bottom: 1px solid #00aaff;
+  color: #00aaff;
+  font-family: 'Arial', 'Helvetica', 'Verdana', sans-serif;
+}
+
+[data-theme="galactic-basic"] .month-entries-list {
+  background: #000011;
+}
+
+[data-theme="galactic-basic"] .month-entry-title {
+  color: #ffd700;
+  font-family: 'Arial', 'Helvetica', 'Verdana', sans-serif;
+  text-shadow: 0 0 5px #ffd700;
+}
+
+[data-theme="galactic-basic"] .month-entry-preview {
+  color: #66ccff;
+  font-family: 'Arial', 'Helvetica', 'Verdana', sans-serif;
+}
+
+[data-theme="galactic-basic"] .month-entry-empty {
+  color: #002244;
+  font-family: 'Arial', 'Helvetica', 'Verdana', sans-serif;
+}
+
 [data-theme="galactic-basic"] .timeline-grid {
   background: #000011;
   border: 1px solid #00aaff;

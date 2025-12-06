@@ -1,0 +1,85 @@
+.background-art {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: -1;
+  pointer-events: none;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+/* Add subtle noise texture overlay during transitions */
+.background-art::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  opacity: 0;
+  background-image: 
+    repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0, 0, 0, 0.03) 2px, rgba(0, 0, 0, 0.03) 4px),
+    repeating-linear-gradient(90deg, transparent, transparent 2px, rgba(0, 0, 0, 0.03) 2px, rgba(0, 0, 0, 0.03) 4px);
+  background-size: 4px 4px;
+  pointer-events: none;
+  z-index: 3;
+  transition: opacity 0.3s ease;
+}
+
+.background-art.is-transitioning::after {
+  opacity: 0.3;
+}
+
+.background-image,
+.background-procedural-gradient {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.background-lava-canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  image-rendering: auto;
+  will-change: contents;
+  pointer-events: none;
+  z-index: -1;
+}
+
+/* Ensure content appears above background */
+.timeline-month-view,
+.timeline-week-view,
+.timeline-day-view,
+.timeline-year-view,
+.timeline-decade-view {
+  position: relative;
+  z-index: 0;
+  isolation: isolate;
+}
+
+/* Ensure all calendar content is above background */
+.timeline-month-view > *:not(.background-art),
+.timeline-week-view > *:not(.background-art),
+.timeline-day-view > *:not(.background-art),
+.timeline-year-view > *:not(.background-art),
+.timeline-decade-view > *:not(.background-art) {
+  position: relative;
+  z-index: 1;
+}
+
+.month-view-content,
+.weekday-header,
+.timeline-grid {
+  position: relative;
+  z-index: 1;
+}
+
