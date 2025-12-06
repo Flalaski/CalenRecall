@@ -684,6 +684,70 @@ body {
   color: #d0d0d0;
 }
 
+[data-theme="dark"] .entry-card {
+  background: #353535;
+  border-color: #404040;
+  color: #e0e0e0;
+}
+
+[data-theme="dark"] .entry-card.entry-decade {
+  background: #353535;
+  border-left-color: #9c27b0;
+}
+
+[data-theme="dark"] .entry-card.entry-year {
+  background: #353535;
+  border-left-color: #0277bd;
+}
+
+[data-theme="dark"] .entry-card.entry-month {
+  background: #353535;
+  border-left-color: #ef6c00;
+}
+
+[data-theme="dark"] .entry-card.entry-week {
+  background: #353535;
+  border-left-color: #2e7d32;
+}
+
+[data-theme="dark"] .entry-card.entry-day {
+  background: #353535;
+  border-left-color: #c2185b;
+}
+
+[data-theme="dark"] .entry-card:hover {
+  background: #3d3d3d;
+}
+
+[data-theme="dark"] .entry-card .card-title,
+[data-theme="dark"] .entry-card .card-content,
+[data-theme="dark"] .entry-card .card-date,
+[data-theme="dark"] .entry-card .card-preview {
+  color: #ffffff;
+}
+
+[data-theme="dark"] .entry-card .card-tag {
+  background: #3d4a5d;
+  color: #90caf9;
+  border-color: #555;
+}
+
+[data-theme="dark"] .card-edit-button,
+[data-theme="dark"] .card-edit-button-small {
+  background: #2d2d2d;
+  color: #888;
+  border-color: #404040;
+  opacity: 0.7;
+}
+
+[data-theme="dark"] .card-edit-button:hover,
+[data-theme="dark"] .card-edit-button-small:hover {
+  background: #353535;
+  color: #aaa;
+  border-color: #505050;
+  opacity: 0.9;
+}
+
 [data-theme="dark"] .entry-card-full {
   background: #353535;
   border-color: #404040;
