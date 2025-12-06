@@ -26,6 +26,7 @@
 @import './themes/bios.css';
 @import './themes/the-real-world.css';
 @import './themes/on-screen.css';
+@import './themes/aero-glass.css';
 
 /* Custom themes are automatically imported via themeLoader.ts */
 /* You can still manually add @import statements here if needed for explicit control */
