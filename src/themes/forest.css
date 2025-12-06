@@ -520,13 +520,13 @@
 }
 
 [data-theme="forest"] .month-entry-item {
-  background: #2d4a2d;
+  background: #2d4a2d !important;
   border: 1px solid #4a6a4a;
   color: #c8e6c9;
 }
 
 [data-theme="forest"] .month-entry-item:hover {
-  background: #3d5a3d;
+  background: #3d5a3d !important;
   border-color: #5a8c5a;
 }
 

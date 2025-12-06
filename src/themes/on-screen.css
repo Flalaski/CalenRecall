@@ -972,7 +972,7 @@
 }
 
 [data-theme="on-screen"] .month-entry-item {
-  background: #004488;
+  background: #004488 !important;
   border: none;
   border-left: 4px solid #FF9900;
   border-radius: 20px 20px 0 0;
@@ -981,7 +981,7 @@
 }
 
 [data-theme="on-screen"] .month-entry-item:hover {
-  background: #0055AA;
+  background: #0055AA !important;
   transform: translateX(4px);
 }
 

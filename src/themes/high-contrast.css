@@ -579,13 +579,13 @@
 }
 
 [data-theme="high-contrast"] .month-entry-item {
-  background: #000000;
+  background: #000000 !important;
   border: 2px solid #ffffff;
   color: #ffffff;
 }
 
 [data-theme="high-contrast"] .month-entry-item:hover {
-  background: #ffffff;
+  background: #ffffff !important;
   color: #000000;
   border: 3px solid #ffff00;
 }

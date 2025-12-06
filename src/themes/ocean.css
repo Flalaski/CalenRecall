@@ -520,13 +520,13 @@
 }
 
 [data-theme="ocean"] .month-entry-item {
-  background: #003355;
+  background: #003355 !important;
   border: 1px solid #005a9e;
   color: #b3e5fc;
 }
 
 [data-theme="ocean"] .month-entry-item:hover {
-  background: #004365;
+  background: #004365 !important;
   border-color: #006aae;
 }
 

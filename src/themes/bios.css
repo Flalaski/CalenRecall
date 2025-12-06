@@ -754,14 +754,14 @@
 }
 
 [data-theme="bios"] .month-entry-item {
-  background: #000080;
+  background: #000080 !important;
   border: 1px solid #c0c0c0;
   color: #ffffff;
   font-family: 'Fixedsys', 'Terminal', 'MS Sans Serif', system-ui, monospace;
 }
 
 [data-theme="bios"] .month-entry-item:hover {
-  background: #0000aa;
+  background: #0000aa !important;
   box-shadow: none;
 }
 

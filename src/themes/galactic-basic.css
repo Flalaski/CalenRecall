@@ -721,14 +721,14 @@
 }
 
 [data-theme="galactic-basic"] .month-entry-item {
-  background: #000011;
+  background: #000011 !important;
   border: 1px solid #00aaff;
   color: #00aaff;
   font-family: 'Arial', 'Helvetica', 'Verdana', sans-serif;
 }
 
 [data-theme="galactic-basic"] .month-entry-item:hover {
-  background: #003366;
+  background: #003366 !important;
   box-shadow: 0 0 5px #00aaff;
 }
 

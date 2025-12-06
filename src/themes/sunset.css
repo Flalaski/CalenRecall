@@ -520,13 +520,13 @@
 }
 
 [data-theme="sunset"] .month-entry-item {
-  background: #4e3733;
+  background: #4e3733 !important;
   border: 1px solid #8d6e63;
   color: #ffe0b2;
 }
 
 [data-theme="sunset"] .month-entry-item:hover {
-  background: #5e4743;
+  background: #5e4743 !important;
   border-color: #9d7e73;
 }
 
