@@ -328,6 +328,8 @@ export default function PreferencesComponent() {
                         const result = await window.electronAPI.clearBackgroundImage();
                         if (result.success) {
                           await loadPreferences();
+                          // Trigger a preference update event so App.tsx picks up the change
+                          window.dispatchEvent(new CustomEvent('preferences-updated'));
                         } else {
                           alert(`Failed to clear background image: ${result.message || result.error}`);
                         }
@@ -347,8 +349,10 @@ export default function PreferencesComponent() {
                 onClick={async () => {
                   if (window.electronAPI) {
                     const result = await window.electronAPI.selectBackgroundImage();
-                    if (result.success && result.path) {
+                    if (result.success) {
                       await loadPreferences();
+                      // Trigger a preference update event so App.tsx picks up the change
+                      window.dispatchEvent(new CustomEvent('preferences-updated'));
                     } else if (!result.canceled) {
                       alert(`Failed to set background image: ${result.message || result.error}`);
                     }
@@ -362,6 +366,21 @@ export default function PreferencesComponent() {
               {preferences.backgroundImage
                 ? 'A custom background image is set. Clear it to use procedural artwork based on your theme.'
                 : 'Select a custom background image, or leave empty to use procedural abstract artwork that matches your active theme.'}
+            </small>
+          </div>
+
+          <div className="preference-item">
+            <label>
+              <input
+                type="checkbox"
+                checked={preferences.enableProceduralArt !== false}
+                onChange={(e) => updatePreference('enableProceduralArt', e.target.checked)}
+              />
+              Enable Procedural Background Art
+            </label>
+            <small>
+              When enabled, generates abstract artwork based on your active theme. Disable to show a plain background.
+              This only applies when no custom background image is set.
             </small>
           </div>
         </div>

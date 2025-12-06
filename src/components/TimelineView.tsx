@@ -10,7 +10,6 @@ import { dateToCalendarDate } from '../utils/calendars/calendarConverter';
 import { formatCalendarDate } from '../utils/calendars/calendarConverter';
 import { deleteJournalEntry } from '../services/journalService';
 import { filterEntriesByDateRange } from '../utils/entryFilterUtils';
-import BackgroundArt from './BackgroundArt';
 import './TimelineView.css';
 
 interface TimelineViewProps {
@@ -19,7 +18,6 @@ interface TimelineViewProps {
   onTimePeriodSelect: (date: Date, viewMode: TimeRange) => void;
   onEntrySelect: (entry: JournalEntry) => void;
   onEditEntry?: (entry: JournalEntry) => void;
-  backgroundImage?: string;
 }
 
 export default function TimelineView({
@@ -28,7 +26,6 @@ export default function TimelineView({
   onTimePeriodSelect,
   onEntrySelect,
   onEditEntry,
-  backgroundImage,
 }: TimelineViewProps) {
   const { calendar } = useCalendar();
   const { entries: allEntries } = useEntries();
@@ -314,7 +311,6 @@ export default function TimelineView({
     
     return (
       <div className="timeline-month-view">
-        <BackgroundArt backgroundImage={backgroundImage} />
         <div className="month-view-content">
           <div className="month-calendar-section">
             <div className="weekday-header">
@@ -483,7 +479,6 @@ export default function TimelineView({
     
     return (
       <div className="timeline-week-view">
-        <BackgroundArt backgroundImage={backgroundImage} />
         <div className="weekday-header">
           {weekDays.map((day, idx) => {
             const dayDate = days[idx];
@@ -620,7 +615,6 @@ export default function TimelineView({
     
     return (
       <div className="timeline-day-view">
-        <BackgroundArt backgroundImage={backgroundImage} />
         <div className="day-header">
           <h2>
             {(() => {
@@ -755,7 +749,6 @@ export default function TimelineView({
     
     return (
       <div className="timeline-year-view">
-        <BackgroundArt backgroundImage={backgroundImage} />
         <div className="year-grid">
           {months.map((month, idx) => {
             const monthEntries = getEntriesForDate(month, 'year');
@@ -829,7 +822,6 @@ export default function TimelineView({
     
     return (
       <div className="timeline-decade-view">
-        <BackgroundArt backgroundImage={backgroundImage} />
         <div className="decade-grid">
           {years.map((year, idx) => {
             const yearEntries = getEntriesForDate(year, 'decade');

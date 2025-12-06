@@ -6,9 +6,10 @@ import './BackgroundArt.css';
 interface BackgroundArtProps {
   backgroundImage?: string;
   className?: string;
+  enableProceduralArt?: boolean; // Default: true
 }
 
-export default function BackgroundArt({ backgroundImage, className = '' }: BackgroundArtProps) {
+export default function BackgroundArt({ backgroundImage, className = '', enableProceduralArt = true }: BackgroundArtProps) {
   const [proceduralGradient, setProceduralGradient] = useState<string>('');
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animationCleanupRef = useRef<(() => void) | null>(null);
@@ -16,7 +17,7 @@ export default function BackgroundArt({ backgroundImage, className = '' }: Backg
 
   // Initialize lava lamp canvas animation
   useEffect(() => {
-    if (!backgroundImage && canvasRef.current) {
+    if (!backgroundImage && enableProceduralArt && canvasRef.current) {
       // Clean up previous animation
       if (animationCleanupRef.current) {
         animationCleanupRef.current();
@@ -64,7 +65,7 @@ export default function BackgroundArt({ backgroundImage, className = '' }: Backg
 
   // Restart animation when theme changes to update colors smoothly
   useEffect(() => {
-    if (!backgroundImage && typeof document !== 'undefined') {
+    if (!backgroundImage && enableProceduralArt && typeof document !== 'undefined') {
       let timeoutId: NodeJS.Timeout | null = null;
       
       const observer = new MutationObserver(() => {
@@ -102,7 +103,7 @@ export default function BackgroundArt({ backgroundImage, className = '' }: Backg
         }
       };
     }
-  }, [backgroundImage]);
+  }, [backgroundImage, enableProceduralArt]);
 
   return (
     <div ref={containerRef} className={`background-art ${className}`}>
@@ -117,7 +118,7 @@ export default function BackgroundArt({ backgroundImage, className = '' }: Backg
             backgroundRepeat: 'no-repeat',
           }}
         />
-      ) : (
+      ) : enableProceduralArt ? (
         // Lava lamp style continuously morphing art
         <>
           <canvas
@@ -141,7 +142,7 @@ export default function BackgroundArt({ backgroundImage, className = '' }: Backg
             />
           )}
         </>
-      )}
+      ) : null}
     </div>
   );
 }

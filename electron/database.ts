@@ -1136,6 +1136,7 @@ export interface Preferences {
   defaultCalendar?: string; // Calendar system (e.g., 'gregorian', 'islamic', 'hebrew')
   showMultipleCalendars?: boolean; // Show date in multiple calendars simultaneously
   backgroundImage?: string; // Path to custom background image, or empty for procedural art
+  enableProceduralArt?: boolean; // Enable procedural background art (default: true)
 }
 
 const DEFAULT_PREFERENCES: Preferences = {

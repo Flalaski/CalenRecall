@@ -173,11 +173,11 @@ function App() {
     
     loadPreferences();
     
-    // Check for preference updates periodically (when preferences window closes)
-    // NOTE: Do NOT reset viewMode to default - default view mode only applies on initial load
-    const interval = setInterval(() => {
+    // Function to refresh preferences and background image
+    const refreshPreferences = async () => {
       if (window.electronAPI) {
-        window.electronAPI.getAllPreferences().then(async prefs => {
+        try {
+          const prefs = await window.electronAPI.getAllPreferences();
           setPreferences(prefs);
           // NEVER reset viewMode - user's current view should always be preserved
           // Default view mode is ONLY applied on the very first load, never after
@@ -197,11 +197,28 @@ function App() {
           } else {
             setBackgroundImagePath(null);
           }
-        }).catch(console.error);
+        } catch (error) {
+          console.error('Error refreshing preferences:', error);
+        }
       }
+    };
+
+    // Listen for immediate preference updates
+    const handlePreferencesUpdate = () => {
+      refreshPreferences();
+    };
+    window.addEventListener('preferences-updated', handlePreferencesUpdate);
+
+    // Check for preference updates periodically (when preferences window closes)
+    // NOTE: Do NOT reset viewMode to default - default view mode only applies on initial load
+    const interval = setInterval(() => {
+      refreshPreferences();
     }, 1000);
     
-    return () => clearInterval(interval);
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('preferences-updated', handlePreferencesUpdate);
+    };
     // Empty dependency array - this effect ONLY runs once on mount
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -404,6 +421,10 @@ function App() {
 
   return (
     <div className="app">
+      <BackgroundArt 
+        backgroundImage={backgroundImagePath || undefined}
+        enableProceduralArt={preferences.enableProceduralArt !== false}
+      />
       <NavigationBar
         viewMode={viewMode}
         onViewModeChange={handleViewModeChange}
@@ -433,7 +454,6 @@ function App() {
             onTimePeriodSelect={handleTimePeriodSelect}
             onEntrySelect={handleEntrySelect}
             onEditEntry={handleEditEntry}
-            backgroundImage={backgroundImagePath || undefined}
           />
         </div>
         <div className="editor-section">

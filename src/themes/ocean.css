@@ -34,6 +34,15 @@
   color: #b3e5fc;
 }
 
+[data-theme="ocean"] .cell-date {
+  color: #b3e5fc !important;
+  border-bottom-color: #005a9e;
+  text-shadow: 
+    1px 1px 0px rgba(0, 0, 0, 0.3),
+    2px 2px 0px rgba(0, 0, 0, 0.2),
+    3px 3px 4px rgba(0, 0, 0, 0.15);
+}
+
 [data-theme="ocean"] .timeline-cell:hover {
   background: #004365;
 }
