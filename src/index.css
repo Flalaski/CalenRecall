@@ -609,6 +609,85 @@ body {
   color: #b0b0b0;
 }
 
+[data-theme="dark"] .journal-entry-item {
+  background: #353535;
+  border-color: #404040;
+  color: #e0e0e0;
+}
+
+[data-theme="dark"] .journal-entry-item:hover {
+  background: #3d3d3d;
+  border-color: #4a90e2;
+}
+
+[data-theme="dark"] .journal-entry-item.selected {
+  background: #2d4a5f;
+  border-color: #4a90e2;
+}
+
+[data-theme="dark"] .journal-entry-item.bulk-selected {
+  background: #5a4a2d;
+  border-color: #ffc107;
+}
+
+[data-theme="dark"] .journal-entry-item .entry-item-title,
+[data-theme="dark"] .journal-entry-item .entry-item-preview,
+[data-theme="dark"] .journal-entry-item .entry-item-content,
+[data-theme="dark"] .journal-entry-item .entry-item-meta {
+  color: #e0e0e0;
+}
+
+[data-theme="dark"] .entry-card-full .card-content-full,
+[data-theme="dark"] .entry-card-full .card-date,
+[data-theme="dark"] .entry-card-full .entry-item-preview,
+[data-theme="dark"] .entry-card-full .entry-item-content {
+  color: #d0d0d0;
+}
+
+[data-theme="dark"] .entry-card-full {
+  background: #353535;
+  border-color: #404040;
+  color: #e0e0e0;
+}
+
+[data-theme="dark"] .entry-card-full.entry-decade {
+  background: #353535;
+  border-left-color: #9c27b0;
+}
+
+[data-theme="dark"] .entry-card-full.entry-year {
+  background: #353535;
+  border-left-color: #0277bd;
+}
+
+[data-theme="dark"] .entry-card-full.entry-month {
+  background: #353535;
+  border-left-color: #ef6c00;
+}
+
+[data-theme="dark"] .entry-card-full.entry-week {
+  background: #353535;
+  border-left-color: #2e7d32;
+}
+
+[data-theme="dark"] .entry-card-full.entry-day {
+  background: #353535;
+  border-left-color: #c2185b;
+}
+
+[data-theme="dark"] .entry-card-full:hover {
+  background: #3d3d3d;
+}
+
+[data-theme="dark"] .entry-card-full.bulk-selected {
+  background: #5a4a2d !important;
+  border-color: #ffc107 !important;
+}
+
+[data-theme="dark"] .entry-card-full.bulk-selected:hover {
+  background: #6a5a3d !important;
+}
+
 [data-theme="dark"] .period-entry-item {
   background: #2d2d2d;
   border-color: #404040;
@@ -661,16 +740,18 @@ body {
 }
 
 [data-theme="dark"] .card-title {
-  color: #1a1a1a;
+  color: #ffffff;
   font-weight: 600;
 }
 
 [data-theme="dark"] .card-title-full {
-  color: #1a1a1a;
+  color: #ffffff;
   font-weight: 600;
 }
 
-/* Ensure card titles are dark on light-colored entry card backgrounds */
+/* Card titles should be light on dark entry card backgrounds */
+[data-theme="dark"] .entry-card-full .card-title-full,
+[data-theme="dark"] .entry-card .card-title,
 [data-theme="dark"] .entry-card-full.entry-day .card-title-full,
 [data-theme="dark"] .entry-card-full.entry-week .card-title-full,
 [data-theme="dark"] .entry-card-full.entry-month .card-title-full,
@@ -681,7 +762,7 @@ body {
 [data-theme="dark"] .entry-card.entry-month .card-title,
 [data-theme="dark"] .entry-card.entry-year .card-title,
 [data-theme="dark"] .entry-card.entry-decade .card-title {
-  color: #1a1a1a;
+  color: #ffffff;
 }
 
 [data-theme="dark"] .day-header h2 {
