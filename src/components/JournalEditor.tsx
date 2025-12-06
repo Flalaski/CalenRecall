@@ -410,8 +410,12 @@ export default function JournalEditor({
               placeholder="Add a tag..."
               value={tagInput}
               onChange={(e) => setTagInput(e.target.value)}
-              onKeyPress={(e) => {
-                if (e.key === 'Enter') {
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && e.ctrlKey) {
+                  e.preventDefault();
+                  handleSave();
+                } else if (e.key === 'Enter') {
+                  e.preventDefault();
                   handleAddTag();
                 }
               }}
