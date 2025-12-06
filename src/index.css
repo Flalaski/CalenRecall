@@ -488,6 +488,12 @@ body {
   color: #e0e0e0;
 }
 
+[data-theme="dark"] .month-entries-header {
+  background: #2d2d2d;
+  border-bottom-color: #404040;
+  color: #e0e0e0;
+}
+
 [data-theme="dark"] .week-entry-group {
   background: #2d2d2d;
   border-color: #404040;
@@ -502,8 +508,27 @@ body {
 }
 
 [data-theme="dark"] .week-entry-title {
-  color: #1a1a1a;
+  color: #ffffff;
   font-weight: 600;
+}
+
+[data-theme="dark"] .month-entry-item {
+  background: #353535;
+  border-color: #404040;
+  color: #e0e0e0;
+}
+
+[data-theme="dark"] .month-entry-item:hover {
+  background: #3d3d3d;
+  border-color: #ff9800;
+}
+
+[data-theme="dark"] .month-entry-title {
+  color: #ffffff;
+}
+
+[data-theme="dark"] .month-entry-preview {
+  color: #d0d0d0;
 }
 
 [data-theme="dark"] .badge-title {
@@ -564,6 +589,21 @@ body {
 
 [data-theme="dark"] .week-entry-empty {
   color: #888;
+}
+
+[data-theme="dark"] .week-entry-count {
+  background: #4caf50;
+  color: #ffffff;
+}
+
+[data-theme="dark"] .month-entry-empty {
+  color: #888;
+}
+
+[data-theme="dark"] .month-entry-tag {
+  background: #3d4a5d;
+  color: #90caf9;
+  border-color: #555;
 }
 
 /* Entry Viewer Dark Theme */
