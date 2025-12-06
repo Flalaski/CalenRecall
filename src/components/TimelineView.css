@@ -68,7 +68,7 @@
 }
 
 .week-entry-group {
-  background: white;
+  background: transparent;
   border: 1px solid #e0e0e0;
   border-radius: 6px;
   padding: 0.75rem;
@@ -197,7 +197,7 @@
 
 .month-entry-item {
   padding: 0.75rem;
-  background: white;
+  background: transparent;
   border: 1px solid #e0e0e0;
   border-radius: 6px;
   cursor: pointer;
@@ -209,7 +209,7 @@
 }
 
 .month-entry-item:hover {
-  background: #fff8e1;
+  background: transparent;
   border-color: #ff9800;
   transform: translateX(2px);
   box-shadow: 0 2px 4px rgba(255, 152, 0, 0.1);
@@ -340,7 +340,7 @@
 }
 
 .timeline-cell {
-  background: white;
+  background: transparent;
   border: 1px solid #e0e0e0;
   position: relative;
   overflow: hidden;
@@ -396,14 +396,14 @@
 }
 
 .timeline-cell:hover {
-  background: #f9f9f9;
+  background: transparent;
   border-color: #4a90e2;
   box-shadow: 0 2px 8px rgba(74, 144, 226, 0.15);
   z-index: 1;
 }
 
 .timeline-cell.empty-cell {
-  background: #fafafa;
+  background: transparent;
   cursor: default;
 }
 
@@ -426,7 +426,7 @@
 }
 
 .timeline-cell.has-entries {
-  background: #fff9e6;
+  background: transparent;
 }
 
 .timeline-cell.has-entries.today {
@@ -525,7 +525,7 @@
 }
 
 .entry-month {
-  background: #fff3e0;
+  background: transparent;
   border-left-color: #ef6c00;
   border-left-width: 3px;
   border-left-style: solid;
@@ -578,7 +578,7 @@
 }
 
 .entry-card {
-  background: white;
+  background: transparent;
   border: 1px solid #e0e0e0;
   border-radius: 4px;
   padding: 0.5rem;
@@ -727,7 +727,7 @@
 }
 
 .entry-card-full {
-  background: white;
+  background: transparent;
   border: 1px solid #e0e0e0;
   border-radius: 6px;
   padding: 1rem;
@@ -746,7 +746,7 @@
   border-left-color: #9c27b0;
   border-left-width: 8px;
   border-left-style: double;
-  background: #faf5ff;
+  background: transparent;
   border-radius: 0;
 }
 
@@ -754,7 +754,7 @@
   border-left-color: #0277bd;
   border-left-width: 6px;
   border-left-style: solid;
-  background: #f0f9ff;
+  background: transparent;
   border-radius: 4px;
 }
 
@@ -762,7 +762,7 @@
   border-left-color: #ef6c00;
   border-left-width: 5px;
   border-left-style: solid;
-  background: #fffbf5;
+  background: transparent;
   border-radius: 6px;
   border-top-left-radius: 0;
   border-bottom-left-radius: 0;
@@ -772,7 +772,7 @@
   border-left-color: #2e7d32;
   border-left-width: 4px;
   border-left-style: dashed;
-  background: #f5fff5;
+  background: transparent;
   border-radius: 8px;
 }
 
@@ -780,7 +780,7 @@
   border-left-color: #c2185b;
   border-left-width: 4px;
   border-left-style: solid;
-  background: #fff5f9;
+  background: transparent;
   border-radius: 10px;
 }
 

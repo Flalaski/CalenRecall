@@ -2,13 +2,13 @@
   display: flex;
   flex-direction: column;
   height: 100%;
-  background: white;
+  background: transparent;
 }
 
 .viewer-header {
   padding: 1rem 1.5rem;
   border-bottom: 2px solid #e0e0e0;
-  background: linear-gradient(to bottom, #ffffff, #f5f5f5);
+  background: transparent;
   position: sticky;
   top: 0;
   z-index: 10;
@@ -321,7 +321,7 @@
   font-size: 0.875rem;
   border: 1px solid #e0e0e0;
   border-radius: 16px;
-  background: white;
+  background: transparent;
   color: #333;
   cursor: pointer;
   transition: all 0.2s;
@@ -342,7 +342,7 @@
   font-size: 0.875rem;
   border: 1px solid #e0e0e0;
   border-radius: 16px;
-  background: white;
+  background: transparent;
   color: #666;
   cursor: pointer;
   transition: all 0.2s;
@@ -364,7 +364,7 @@
   font-size: 0.875rem;
   border: 1px solid #e0e0e0;
   border-radius: 4px;
-  background: white;
+  background: transparent;
   color: #333;
 }
 
@@ -390,7 +390,7 @@
 }
 
 .period-entry-item {
-  background: white;
+  background: transparent;
   border: 1px solid #e0e0e0;
   border-radius: 8px;
   padding: 1.25rem;
