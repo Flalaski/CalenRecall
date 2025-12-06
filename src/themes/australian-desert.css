@@ -1,0 +1,1790 @@
+/**
+ * Australian Desert Theme
+ * Warm Australian desert theme with reds, oranges, and golds
+ */
+
+[data-theme="australian-desert"] body {
+  background: #4a2820;
+  color: #f4e4c1;
+}
+
+[data-theme="australian-desert"] .app {
+  background: #4a2820;
+}
+
+[data-theme="australian-desert"] .navigation-bar {
+  background: #7a4a35;
+  border-bottom: 2px solid #a6734f;
+}
+
+[data-theme="australian-desert"] .nav-button {
+  background: #7a4a35;
+  border: 1px solid #a6734f;
+  color: #f4e4c1;
+}
+
+[data-theme="australian-desert"] .nav-button:hover {
+  background: #8a5a45;
+  border-color: #b6896f;
+}
+
+[data-theme="australian-desert"] .timeline-cell {
+  background: #6a4030;
+  border: 1px solid #a6734f;
+  color: #f4e4c1;
+}
+
+[data-theme="australian-desert"] .timeline-cell:hover {
+  background: #7a5040;
+}
+
+[data-theme="australian-desert"] .timeline-cell.today {
+  background: #d48728;
+  color: #ffffff;
+  border: 2px solid #e49d38;
+}
+
+[data-theme="australian-desert"] .week-entry-group {
+  background: #6a4030;
+  border: 1px solid #a6734f;
+}
+
+[data-theme="australian-desert"] {
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 14px;
+}
+
+[data-theme="australian-desert"] .app-content {
+  background: #4a2820;
+  gap: 2px;
+}
+
+[data-theme="australian-desert"] .timeline-section {
+  background: #4a2820;
+}
+
+[data-theme="australian-desert"] .editor-section {
+  background: #4a2820;
+  border-left: 2px solid #a6734f;
+}
+
+/* Navigation Bar - Additional */
+[data-theme="australian-desert"] .navigation-bar-top-row {
+  background: #7a4a35;
+  border-bottom: 2px solid #a6734f;
+}
+
+[data-theme="australian-desert"] .nav-controls {
+  background: transparent;
+}
+
+[data-theme="australian-desert"] .today-button {
+  background: #7a4a35;
+  border: 1px solid #a6734f;
+  color: #f4e4c1;
+}
+
+[data-theme="australian-desert"] .today-button:hover {
+  background: #8a5a45;
+  border-color: #b6896f;
+}
+
+[data-theme="australian-desert"] .view-mode-selector {
+  background: transparent;
+}
+
+[data-theme="australian-desert"] .view-mode-button {
+  background: #7a4a35;
+  border: 1px solid #a6734f;
+  color: #f4e4c1;
+}
+
+[data-theme="australian-desert"] .view-mode-button:hover {
+  background: #8a5a45;
+  border-color: #b6896f;
+}
+
+[data-theme="australian-desert"] .view-mode-button.active {
+  background: #d48728;
+  color: #ffffff;
+  border-color: #e49d38;
+}
+
+[data-theme="australian-desert"] .date-label {
+  color: #f4e4c1;
+}
+
+[data-theme="australian-desert"] .calendar-selector {
+  background: #7a4a35;
+}
+
+[data-theme="australian-desert"] .calendar-select {
+  background: #6a4030;
+  border: 1px solid #a6734f;
+  color: #f4e4c1;
+}
+
+[data-theme="australian-desert"] .calendar-select:focus {
+  border-color: #e49d38;
+  outline: 2px solid #e49d38;
+}
+
+[data-theme="australian-desert"] .calendar-info-panel {
+  background: #6a4030;
+  border: 1px solid #a6734f;
+  color: #f4e4c1;
+}
+
+[data-theme="australian-desert"] .calendar-definition-toggle {
+  background: #7a4a35;
+  border: 1px solid #a6734f;
+  color: #f4e4c1;
+}
+
+[data-theme="australian-desert"] .calendar-definition-toggle:hover {
+  background: #8a5a45;
+  border-color: #b6896f;
+}
+
+[data-theme="australian-desert"] .calendar-definition-drawer {
+  background: #6a4030;
+  border: 1px solid #a6734f;
+  color: #f4e4c1;
+}
+
+/* Calendar View */
+[data-theme="australian-desert"] .calendar-loading {
+  background: #4a2820;
+  color: #f4e4c1;
+}
+
+[data-theme="australian-desert"] .calendar-grid {
+  background: #4a2820;
+  border: 2px solid #a6734f;
+}
+
+[data-theme="australian-desert"] .calendar-cell {
+  background: #6a4030;
+  border: 1px solid #a6734f;
+  color: #f4e4c1;
+}
+
+[data-theme="australian-desert"] .calendar-cell:hover {
+  background: #7a5040;
+  border-color: #b6896f;
+}
+
+[data-theme="australian-desert"] .calendar-cell.empty-cell {
+  background: #4a2820;
+  border: 1px solid #6a4030;
+  cursor: default;
+}
+
+[data-theme="australian-desert"] .calendar-cell.today {
+  background: #d48728;
+  color: #ffffff;
+  border: 2px solid #e49d38;
+}
+
+[data-theme="australian-desert"] .calendar-cell.selected {
+  background: #d48728;
+  color: #ffffff;
+  border: 2px solid #e49d38;
+}
+
+[data-theme="australian-desert"] .calendar-cell.has-entry {
+  background: #6a4030;
+  border: 2px solid #e49d38;
+}
+
+[data-theme="australian-desert"] .calendar-cell.has-entry.today {
+  background: #d48728;
+  color: #ffffff;
+}
+
+[data-theme="australian-desert"] .cell-content {
+  color: inherit;
+}
+
+[data-theme="australian-desert"] .cell-label {
+  color: inherit;
+}
+
+[data-theme="australian-desert"] .entry-indicator {
+  background: #e49d38;
+  border: 1px solid #d48728;
+}
+
+[data-theme="australian-desert"] .weekday-header {
+  background: #7a4a35;
+  border-bottom: 2px solid #a6734f;
+  color: #f4e4c1;
+}
+
+[data-theme="australian-desert"] .day-header h2 {
+  color: #f4e4c1;
+}
+
+[data-theme="australian-desert"] .weekday-cell {
+  background: #7a4a35;
+  border: 1px solid #a6734f;
+  color: #f4e4c1;
+}
+
+[data-theme="australian-desert"] .day-number {
+  color: inherit;
+}
+
+[data-theme="australian-desert"] .day-name {
+  color: inherit;
+}
+
+[data-theme="australian-desert"] .day-month {
+  color: inherit;
+}
+
+/* Timeline View - Additional */
+[data-theme="australian-desert"] .timeline-loading {
+  background: #4a2820;
+  color: #f4e4c1;
+}
+
+[data-theme="australian-desert"] .timeline-month-view,
+[data-theme="australian-desert"] .timeline-week-view {
+  background: #4a2820;
+}
+
+[data-theme="australian-desert"] .month-view-content {
+  background: #4a2820;
+}
+
+[data-theme="australian-desert"] .month-calendar-section {
+  background: #4a2820;
+}
+
+[data-theme="australian-desert"] .month-week-entries-section {
+  background: #4a2820;
+  border-left: 2px solid #a6734f;
+}
+
+[data-theme="australian-desert"] .timeline-grid {
+  background: #4a2820;
+  border: 2px solid #a6734f;
+}
+
+[data-theme="australian-desert"] .week-entries-header {
+  background: #7a4a35;
+  border-bottom: 2px solid #a6734f;
+  color: #f4e4c1;
+}
+
+[data-theme="australian-desert"] .week-entries-list {
+  background: #4a2820;
+}
+
+[data-theme="australian-desert"] .week-entry-group-header {
+  background: #6a4030;
+  border-bottom: 1px solid #a6734f;
+}
+
+[data-theme="australian-desert"] .week-label {
+  color: #f4e4c1;
+}
+
+[data-theme="australian-desert"] .week-entry-count {
+  background: #d48728;
+  color: #ffffff;
+  border: 1px solid #e49d38;
+}
+
+[data-theme="australian-desert"] .week-entry-items {
+  background: transparent;
+}
+
+[data-theme="australian-desert"] .week-entry-item {
+  background: #6a4030;
+  border: 1px solid #a6734f;
+  color: #f4e4c1;
+}
+
+[data-theme="australian-desert"] .week-entry-item:hover {
+  background: #7a5040;
+  border-color: #b6896f;
+}
+
+[data-theme="australian-desert"] .week-entry-title {
+  color: inherit;
+}
+
+[data-theme="australian-desert"] .week-entry-empty {
+  color: #b6896f;
+  font-style: italic;
+}
+
+/* Entry Viewer - Additional */
+[data-theme="australian-desert"] .entry-viewer {
+  background: #4a2820;
+  color: #f4e4c1;
+}
+
+[data-theme="australian-desert"] .viewer-header {
+  background: #7a4a35;
+  border-bottom: 2px solid #a6734f;
+}
+
+[data-theme="australian-desert"] .header-top {
+  background: transparent;
+}
+
+[data-theme="australian-desert"] .viewer-header h3,
+[data-theme="australian-desert"] .editor-header h3 {
+  color: #f4e4c1;
+}
+
+[data-theme="australian-desert"] .header-actions {
+  background: transparent;
+}
+
+[data-theme="australian-desert"] .edit-button,
+[data-theme="australian-desert"] .duplicate-button {
+  background: #7a4a35;
+  border: 1px solid #a6734f;
+  color: #f4e4c1;
+}
+
+[data-theme="australian-desert"] .edit-button:hover,
+[data-theme="australian-desert"] .duplicate-button:hover {
+  background: #8a5a45;
+  border-color: #b6896f;
+}
+
+[data-theme="australian-desert"] .new-entry-button-header {
+  background: #d48728;
+  border: 1px solid #e49d38;
+  color: #ffffff;
+}
+
+[data-theme="australian-desert"] .new-entry-button-header:hover {
+  background: #e49d38;
+  border-color: #f0b048;
+}
+
+[data-theme="australian-desert"] .time-range-badge-viewer {
+  background: #6a4030;
+  border: 1px solid #a6734f;
+  color: #f4e4c1;
+}
+
+[data-theme="australian-desert"] .entry-date-display {
+  color: #f4e4c1;
+}
+
+[data-theme="australian-desert"] .viewer-content {
+  background: #6a4030;
+  color: #f4e4c1;
+}
+
+[data-theme="australian-desert"] .viewer-title {
+  color: #f4e4c1;
+  border-bottom: 2px solid #a6734f;
+}
+
+[data-theme="australian-desert"] .viewer-text {
+  color: #f4e4c1;
+}
+
+[data-theme="australian-desert"] .viewer-tags {
+  background: transparent;
+  border-top: 1px solid #a6734f;
+}
+
+[data-theme="australian-desert"] .viewer-tag {
+  background: #7a4a35;
+  border: 1px solid #a6734f;
+  color: #f4e4c1;
+}
+
+[data-theme="australian-desert"] .viewer-linked-entries {
+  background: transparent;
+  border-top: 1px solid #a6734f;
+}
+
+[data-theme="australian-desert"] .viewer-linked-entries h4 {
+  color: #f4e4c1;
+}
+
+[data-theme="australian-desert"] .linked-entries-list {
+  background: transparent;
+}
+
+[data-theme="australian-desert"] .linked-entry-item {
+  background: #6a4030;
+  border: 1px solid #a6734f;
+  color: #f4e4c1;
+}
+
+[data-theme="australian-desert"] .linked-entry-item:hover {
+  background: #7a5040;
+  border-color: #b6896f;
+}
+
+[data-theme="australian-desert"] .linked-entry-title {
+  color: inherit;
+}
+
+[data-theme="australian-desert"] .linked-entry-meta {
+  color: inherit;
+}
+
+[data-theme="australian-desert"] .linked-entry-date {
+  color: inherit;
+}
+
+[data-theme="australian-desert"] .linked-entry-time-range {
+  background: #6a4030;
+  border: 1px solid #a6734f;
+  color: #f4e4c1;
+}
+
+[data-theme="australian-desert"] .viewer-empty {
+  background: #4a2820;
+  color: #b6896f;
+  font-style: italic;
+}
+
+[data-theme="australian-desert"] .viewer-loading {
+  background: #4a2820;
+  color: #f4e4c1;
+}
+
+[data-theme="australian-desert"] .period-entries-controls {
+  background: #7a4a35;
+  border-bottom: 2px solid #a6734f;
+}
+
+[data-theme="australian-desert"] .period-entries-filter,
+[data-theme="australian-desert"] .period-entries-sort {
+  background: transparent;
+}
+
+[data-theme="australian-desert"] .period-entries-filter label,
+[data-theme="australian-desert"] .period-entries-sort label {
+  color: #f4e4c1;
+}
+
+[data-theme="australian-desert"] .period-entries-tags {
+  background: transparent;
+}
+
+[data-theme="australian-desert"] .period-entry-filter-tag {
+  background: #6a4030;
+  border: 1px solid #a6734f;
+  color: #f4e4c1;
+}
+
+[data-theme="australian-desert"] .period-entry-filter-tag:hover {
+  background: #7a5040;
+  border-color: #b6896f;
+}
+
+[data-theme="australian-desert"] .period-entry-filter-tag.active {
+  background: #d48728;
+  color: #ffffff;
+  border-color: #e49d38;
+}
+
+[data-theme="australian-desert"] .period-entry-clear-filters {
+  background: #7a4a35;
+  border: 1px solid #a6734f;
+  color: #f4e4c1;
+}
+
+[data-theme="australian-desert"] .period-entry-clear-filters:hover {
+  background: #8a5a45;
+  border-color: #b6896f;
+}
+
+[data-theme="australian-desert"] .period-entries-sort select {
+  background: #6a4030;
+  border: 1px solid #a6734f;
+  color: #f4e4c1;
+}
+
+[data-theme="australian-desert"] .period-entries-sort select:focus {
+  border-color: #e49d38;
+  outline: 2px solid #e49d38;
+}
+
+[data-theme="australian-desert"] .period-entries-list {
+  background: transparent;
+}
+
+[data-theme="australian-desert"] .month-entry-item {
+  background: #6a4030 !important;
+  border: 1px solid #a6734f;
+  color: #f4e4c1;
+}
+
+[data-theme="australian-desert"] .month-entry-item:hover {
+  background: #7a5040 !important;
+  border-color: #b6896f;
+}
+
+[data-theme="australian-desert"] .period-entry-item {
+  background: #6a4030;
+  border: 1px solid #a6734f;
+  color: #f4e4c1;
+}
+
+[data-theme="australian-desert"] .period-entry-item:hover {
+  background: #7a5040;
+  border-color: #b6896f;
+}
+
+[data-theme="australian-desert"] .period-entry-header {
+  background: transparent;
+}
+
+[data-theme="australian-desert"] .period-entry-title-row {
+  background: transparent;
+}
+
+[data-theme="australian-desert"] .period-entry-title {
+  color: inherit;
+}
+
+[data-theme="australian-desert"] .period-entry-actions {
+  background: transparent;
+}
+
+[data-theme="australian-desert"] .period-entry-edit-button {
+  background: #7a4a35;
+  border: 1px solid #a6734f;
+  color: #f4e4c1;
+}
+
+[data-theme="australian-desert"] .period-entry-edit-button:hover {
+  background: #8a5a45;
+  border-color: #b6896f;
+}
+
+[data-theme="australian-desert"] .period-entry-badge {
+  background: #d48728;
+  color: #ffffff;
+  border: 1px solid #e49d38;
+}
+
+[data-theme="australian-desert"] .period-entry-meta {
+  background: transparent;
+}
+
+[data-theme="australian-desert"] .period-entry-date {
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-color: #e49d38;
+}
+
+[data-theme="australian-desert"] .period-entry-content {
+  color: inherit;
+}
+
+[data-theme="australian-desert"] .period-entry-content-wrapper {
+  background: transparent;
+}
+
+[data-theme="australian-desert"] .period-entry-tags {
+  background: transparent;
+  border-top: 1px solid #a6734f;
+}
+
+[data-theme="australian-desert"] .period-entry-tag {
+  background: #7a4a35;
+  border: 1px solid #a6734f;
+  color: #f4e4c1;
+}
+
+/* Journal Editor - Additional */
+[data-theme="australian-desert"] .journal-editor-inline {
+  background: #4a2820;
+}
+
+[data-theme="australian-desert"] .journal-editor {
+  background: #4a2820;
+  color: #f4e4c1;
+}
+
+[data-theme="australian-desert"] .editor-loading {
+  background: #4a2820;
+  color: #f4e4c1;
+}
+
+[data-theme="australian-desert"] .editor-header {
+  background: #7a4a35;
+  border-bottom: 2px solid #a6734f;
+}
+
+[data-theme="australian-desert"] .editor-content {
+  background: #6a4030;
+  color: #f4e4c1;
+}
+
+[data-theme="australian-desert"] .view-mode-message {
+  background: #4a2820;
+  color: #b6896f;
+  font-style: italic;
+}
+
+[data-theme="australian-desert"] .title-input {
+  background: #6a4030;
+  border: 1px solid #a6734f;
+  color: #f4e4c1;
+}
+
+[data-theme="australian-desert"] .title-input:focus {
+  border-color: #e49d38;
+  outline: 2px solid #e49d38;
+}
+
+[data-theme="australian-desert"] .content-input {
+  background: #6a4030;
+  border: 1px solid #a6734f;
+  color: #f4e4c1;
+}
+
+[data-theme="australian-desert"] .content-input:focus {
+  border-color: #e49d38;
+  outline: 2px solid #e49d38;
+}
+
+[data-theme="australian-desert"] .tags-section {
+  background: transparent;
+}
+
+[data-theme="australian-desert"] .tags-input-container {
+  background: transparent;
+}
+
+[data-theme="australian-desert"] .tag-input {
+  background: #6a4030;
+  border: 1px solid #a6734f;
+  color: #f4e4c1;
+}
+
+[data-theme="australian-desert"] .tag-input:focus {
+  border-color: #e49d38;
+  outline: 2px solid #e49d38;
+}
+
+[data-theme="australian-desert"] .add-tag-button {
+  background: #d48728;
+  border: 1px solid #e49d38;
+  color: #ffffff;
+}
+
+[data-theme="australian-desert"] .add-tag-button:hover {
+  background: #e49d38;
+  border-color: #f0b048;
+}
+
+[data-theme="australian-desert"] .tags-list {
+  background: transparent;
+}
+
+[data-theme="australian-desert"] .tag {
+  background: #7a4a35;
+  border: 1px solid #a6734f;
+  color: #f4e4c1;
+}
+
+[data-theme="australian-desert"] .tag-remove {
+  background: transparent;
+  border: none;
+  color: #f4e4c1;
+}
+
+[data-theme="australian-desert"] .tag-remove:hover {
+  background: #8a5a45;
+  color: #f4e4c1;
+}
+
+[data-theme="australian-desert"] .editor-footer {
+  background: #7a4a35;
+  border-top: 2px solid #a6734f;
+}
+
+[data-theme="australian-desert"] .footer-actions {
+  background: transparent;
+}
+
+[data-theme="australian-desert"] .cancel-button {
+  background: #7a4a35;
+  border: 1px solid #a6734f;
+  color: #f4e4c1;
+}
+
+[data-theme="australian-desert"] .cancel-button:hover {
+  background: #8a5a45;
+  border-color: #b6896f;
+}
+
+[data-theme="australian-desert"] .delete-button {
+  background: #8a4f45;
+  border: 1px solid #b87d6f;
+  color: #f5c5a8;
+}
+
+[data-theme="australian-desert"] .delete-button:hover {
+  background: #9a5f55;
+  border-color: #ce8d7f;
+}
+
+[data-theme="australian-desert"] .save-button {
+  background: #d48728;
+  border: 1px solid #e49d38;
+  color: #ffffff;
+}
+
+[data-theme="australian-desert"] .save-button:hover:not(:disabled) {
+  background: #e49d38;
+  border-color: #f0b048;
+}
+
+[data-theme="australian-desert"] .save-button:disabled {
+  background: #6a4030;
+  color: #b6896f;
+  border: 1px solid #a6734f;
+  cursor: not-allowed;
+}
+
+[data-theme="australian-desert"] .confirm-dialog-overlay {
+  background: rgba(62, 39, 35, 0.9);
+}
+
+[data-theme="australian-desert"] .confirm-dialog {
+  background: #6a4030;
+  border: 2px solid #a6734f;
+  color: #f4e4c1;
+}
+
+[data-theme="australian-desert"] .confirm-dialog-buttons {
+  background: transparent;
+}
+
+/* Journal List - Additional */
+[data-theme="australian-desert"] .journal-list {
+  background: #4a2820;
+  border-right: 2px solid #a6734f;
+}
+
+[data-theme="australian-desert"] .journal-list-loading {
+  background: #4a2820;
+  color: #f4e4c1;
+}
+
+[data-theme="australian-desert"] .journal-list-header {
+  background: #7a4a35;
+  border-bottom: 2px solid #a6734f;
+}
+
+[data-theme="australian-desert"] .journal-list-header h3 {
+  color: #f4e4c1;
+}
+
+[data-theme="australian-desert"] .journal-list-header-actions {
+  background: transparent;
+}
+
+[data-theme="australian-desert"] .new-entry-button {
+  background: #d48728;
+  border: 1px solid #e49d38;
+  color: #ffffff;
+}
+
+[data-theme="australian-desert"] .new-entry-button:hover {
+  background: #e49d38;
+  border-color: #f0b048;
+}
+
+[data-theme="australian-desert"] .bulk-edit-toggle-button {
+  background: #7a4a35;
+  border: 1px solid #a6734f;
+  color: #f4e4c1;
+}
+
+[data-theme="australian-desert"] .bulk-edit-toggle-button:hover {
+  background: #8a5a45;
+  border-color: #b6896f;
+}
+
+[data-theme="australian-desert"] .bulk-edit-toggle-button.active {
+  background: #e49d38;
+  color: #4a2820;
+  border-color: #f0b048;
+}
+
+[data-theme="australian-desert"] .journal-list-content {
+  background: #4a2820;
+}
+
+[data-theme="australian-desert"] .journal-list-controls {
+  background: #7a4a35;
+  border-bottom: 2px solid #a6734f;
+}
+
+[data-theme="australian-desert"] .journal-list-filter,
+[data-theme="australian-desert"] .journal-list-sort {
+  background: transparent;
+}
+
+[data-theme="australian-desert"] .journal-list-filter label,
+[data-theme="australian-desert"] .journal-list-sort label {
+  color: #f4e4c1;
+}
+
+[data-theme="australian-desert"] .journal-list-tags {
+  background: transparent;
+}
+
+[data-theme="australian-desert"] .journal-entry-filter-tag {
+  background: #6a4030;
+  border: 1px solid #a6734f;
+  color: #f4e4c1;
+}
+
+[data-theme="australian-desert"] .journal-entry-filter-tag:hover {
+  background: #7a5040;
+  border-color: #b6896f;
+}
+
+[data-theme="australian-desert"] .journal-entry-filter-tag.active {
+  background: #d48728;
+  color: #ffffff;
+  border-color: #e49d38;
+}
+
+[data-theme="australian-desert"] .journal-entry-clear-filters {
+  background: #7a4a35;
+  border: 1px solid #a6734f;
+  color: #f4e4c1;
+}
+
+[data-theme="australian-desert"] .journal-entry-clear-filters:hover {
+  background: #8a5a45;
+  border-color: #b6896f;
+}
+
+[data-theme="australian-desert"] .journal-list-sort select {
+  background: #6a4030;
+  border: 1px solid #a6734f;
+  color: #f4e4c1;
+}
+
+[data-theme="australian-desert"] .journal-list-sort select:focus {
+  border-color: #e49d38;
+  outline: 2px solid #e49d38;
+}
+
+[data-theme="australian-desert"] .journal-list-empty {
+  background: #4a2820;
+  color: #b6896f;
+  font-style: italic;
+}
+
+[data-theme="australian-desert"] .journal-entries {
+  background: transparent;
+}
+
+[data-theme="australian-desert"] .journal-entry-item {
+  background: #6a4030;
+  border: 1px solid #a6734f;
+  color: #f4e4c1;
+}
+
+[data-theme="australian-desert"] .journal-entry-item:hover {
+  background: #7a5040;
+  border-color: #b6896f;
+}
+
+[data-theme="australian-desert"] .journal-entry-item.selected {
+  background: #d48728;
+  color: #ffffff;
+  border-color: #e49d38;
+}
+
+[data-theme="australian-desert"] .journal-entry-item.bulk-edit-mode {
+  background: #6a4030;
+}
+
+[data-theme="australian-desert"] .journal-entry-item.bulk-selected {
+  background: #e49d38;
+  color: #4a2820;
+  border-color: #f0b048;
+}
+
+[data-theme="australian-desert"] .entry-item-header {
+  background: transparent;
+}
+
+[data-theme="australian-desert"] .entry-item-title {
+  color: inherit;
+}
+
+[data-theme="australian-desert"] .entry-item-meta {
+  background: transparent;
+}
+
+[data-theme="australian-desert"] .entry-time-range {
+  background: #6a4030;
+  border: 1px solid #a6734f;
+  color: #f4e4c1;
+}
+
+[data-theme="australian-desert"] .entry-date {
+  color: inherit;
+}
+
+[data-theme="australian-desert"] .entry-item-preview {
+  color: inherit;
+}
+
+[data-theme="australian-desert"] .entry-item-tags {
+  background: transparent;
+}
+
+[data-theme="australian-desert"] .entry-tag {
+  background: #7a4a35;
+  border: 1px solid #a6734f;
+  color: #f4e4c1;
+}
+
+[data-theme="australian-desert"] .entry-item-content {
+  background: transparent;
+}
+
+[data-theme="australian-desert"] .entry-checkbox-wrapper {
+  background: transparent;
+}
+
+[data-theme="australian-desert"] .entry-checkbox-wrapper input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  border: 1px solid #a6734f;
+  background: #6a4030;
+  accent-color: #d48728;
+}
+
+[data-theme="australian-desert"] .bulk-edit-actions {
+  background: #e49d38;
+  border-bottom: 2px solid #f0b048;
+}
+
+[data-theme="australian-desert"] .bulk-edit-selected-count {
+  color: #4a2820;
+}
+
+[data-theme="australian-desert"] .bulk-delete-button {
+  background: #8a4f45;
+  border: 1px solid #b87d6f;
+  color: #f5c5a8;
+}
+
+[data-theme="australian-desert"] .bulk-delete-button:hover {
+  background: #9a5f55;
+  border-color: #ce8d7f;
+}
+
+[data-theme="australian-desert"] .bulk-edit-select-all {
+  background: #7a4a35;
+  border-bottom: 2px solid #a6734f;
+}
+
+[data-theme="australian-desert"] .bulk-edit-checkbox-label {
+  color: #f4e4c1;
+}
+
+/* Entry Edit Modal */
+[data-theme="australian-desert"] .entry-edit-modal-overlay {
+  background: rgba(62, 39, 35, 0.9);
+}
+
+[data-theme="australian-desert"] .entry-edit-modal {
+  background: #6a4030;
+  border: 2px solid #a6734f;
+  color: #f4e4c1;
+}
+
+[data-theme="australian-desert"] .modal-header {
+  background: #7a4a35;
+  border-bottom: 2px solid #a6734f;
+}
+
+[data-theme="australian-desert"] .modal-header-top {
+  background: transparent;
+}
+
+[data-theme="australian-desert"] .modal-header-top h3 {
+  color: #f4e4c1;
+}
+
+[data-theme="australian-desert"] .modal-close-button {
+  background: #7a4a35;
+  border: 1px solid #a6734f;
+  color: #f4e4c1;
+}
+
+[data-theme="australian-desert"] .modal-close-button:hover {
+  background: #8a5a45;
+  border-color: #b6896f;
+}
+
+[data-theme="australian-desert"] .modal-entry-meta {
+  background: transparent;
+}
+
+[data-theme="australian-desert"] .modal-entry-meta small {
+  color: #b6896f;
+}
+
+[data-theme="australian-desert"] .modal-content {
+  background: #6a4030;
+  color: #f4e4c1;
+}
+
+[data-theme="australian-desert"] .modal-title-input {
+  background: #6a4030;
+  border: 1px solid #a6734f;
+  color: #f4e4c1;
+}
+
+[data-theme="australian-desert"] .modal-title-input:focus {
+  border-color: #e49d38;
+  outline: 2px solid #e49d38;
+}
+
+[data-theme="australian-desert"] .modal-content-input {
+  background: #6a4030;
+  border: 1px solid #a6734f;
+  color: #f4e4c1;
+}
+
+[data-theme="australian-desert"] .modal-content-input:focus {
+  border-color: #e49d38;
+  outline: 2px solid #e49d38;
+}
+
+[data-theme="australian-desert"] .modal-tags-section {
+  background: transparent;
+}
+
+[data-theme="australian-desert"] .modal-tags-input-container {
+  background: transparent;
+}
+
+[data-theme="australian-desert"] .modal-tag-input {
+  background: #6a4030;
+  border: 1px solid #a6734f;
+  color: #f4e4c1;
+}
+
+[data-theme="australian-desert"] .modal-tag-input:focus {
+  border-color: #e49d38;
+  outline: 2px solid #e49d38;
+}
+
+[data-theme="australian-desert"] .modal-add-tag-button {
+  background: #d48728;
+  border: 1px solid #e49d38;
+  color: #ffffff;
+}
+
+[data-theme="australian-desert"] .modal-add-tag-button:hover {
+  background: #e49d38;
+  border-color: #f0b048;
+}
+
+[data-theme="australian-desert"] .modal-tags-list {
+  background: transparent;
+}
+
+[data-theme="australian-desert"] .modal-tag {
+  background: #7a4a35;
+  border: 1px solid #a6734f;
+  color: #f4e4c1;
+}
+
+[data-theme="australian-desert"] .modal-tag-remove {
+  background: transparent;
+  border: none;
+  color: #f4e4c1;
+}
+
+[data-theme="australian-desert"] .modal-tag-remove:hover {
+  background: #8a5a45;
+  color: #f4e4c1;
+}
+
+[data-theme="australian-desert"] .modal-footer {
+  background: #7a4a35;
+  border-top: 2px solid #a6734f;
+}
+
+[data-theme="australian-desert"] .modal-duplicate-button {
+  background: #7a4a35;
+  border: 1px solid #a6734f;
+  color: #f4e4c1;
+}
+
+[data-theme="australian-desert"] .modal-duplicate-button:hover {
+  background: #8a5a45;
+  border-color: #b6896f;
+}
+
+[data-theme="australian-desert"] .modal-delete-button {
+  background: #8a4f45;
+  border: 1px solid #b87d6f;
+  color: #f5c5a8;
+}
+
+[data-theme="australian-desert"] .modal-delete-button:hover {
+  background: #9a5f55;
+  border-color: #ce8d7f;
+}
+
+[data-theme="australian-desert"] .modal-footer-actions {
+  background: transparent;
+}
+
+[data-theme="australian-desert"] .modal-cancel-button {
+  background: #7a4a35;
+  border: 1px solid #a6734f;
+  color: #f4e4c1;
+}
+
+[data-theme="australian-desert"] .modal-cancel-button:hover {
+  background: #8a5a45;
+  border-color: #b6896f;
+}
+
+[data-theme="australian-desert"] .modal-save-button {
+  background: #d48728;
+  border: 1px solid #e49d38;
+  color: #ffffff;
+}
+
+[data-theme="australian-desert"] .modal-save-button:hover:not(:disabled) {
+  background: #e49d38;
+  border-color: #f0b048;
+}
+
+[data-theme="australian-desert"] .modal-save-button:disabled {
+  background: #6a4030;
+  color: #b6896f;
+  border: 1px solid #a6734f;
+  cursor: not-allowed;
+}
+
+/* Search View */
+[data-theme="australian-desert"] .search-view {
+  background: #4a2820;
+  color: #f4e4c1;
+}
+
+[data-theme="australian-desert"] .search-header {
+  background: #7a4a35;
+  border-bottom: 2px solid #a6734f;
+}
+
+[data-theme="australian-desert"] .search-input-container {
+  background: transparent;
+}
+
+[data-theme="australian-desert"] .search-input {
+  background: #6a4030;
+  border: 1px solid #a6734f;
+  color: #f4e4c1;
+}
+
+[data-theme="australian-desert"] .search-input:focus {
+  border-color: #e49d38;
+  outline: 2px solid #e49d38;
+}
+
+[data-theme="australian-desert"] .search-filters-toggle {
+  background: #7a4a35;
+  border: 1px solid #a6734f;
+  color: #f4e4c1;
+}
+
+[data-theme="australian-desert"] .search-filters-toggle:hover {
+  background: #8a5a45;
+  border-color: #b6896f;
+}
+
+[data-theme="australian-desert"] .search-close-button {
+  background: #7a4a35;
+  border: 1px solid #a6734f;
+  color: #f4e4c1;
+}
+
+[data-theme="australian-desert"] .search-close-button:hover {
+  background: #8a5a45;
+  border-color: #b6896f;
+}
+
+[data-theme="australian-desert"] .search-filters {
+  background: #7a4a35;
+  border-bottom: 2px solid #a6734f;
+}
+
+[data-theme="australian-desert"] .filter-group {
+  background: transparent;
+}
+
+[data-theme="australian-desert"] .filter-group label {
+  color: #f4e4c1;
+}
+
+[data-theme="australian-desert"] .filter-tags {
+  background: transparent;
+}
+
+[data-theme="australian-desert"] .filter-tag {
+  background: #6a4030;
+  border: 1px solid #a6734f;
+  color: #f4e4c1;
+}
+
+[data-theme="australian-desert"] .filter-tag:hover {
+  background: #7a5040;
+  border-color: #b6896f;
+}
+
+[data-theme="australian-desert"] .filter-tag.active {
+  background: #d48728;
+  color: #ffffff;
+  border-color: #e49d38;
+}
+
+[data-theme="australian-desert"] .filter-empty {
+  color: #b6896f;
+  font-style: italic;
+}
+
+[data-theme="australian-desert"] .filter-time-ranges {
+  background: transparent;
+}
+
+[data-theme="australian-desert"] .filter-time-range {
+  background: #6a4030;
+  border: 1px solid #a6734f;
+  color: #f4e4c1;
+}
+
+[data-theme="australian-desert"] .filter-time-range:hover {
+  background: #7a5040;
+  border-color: #b6896f;
+}
+
+[data-theme="australian-desert"] .filter-time-range.active {
+  background: #d48728;
+  color: #ffffff;
+  border-color: #e49d38;
+}
+
+[data-theme="australian-desert"] .filter-date-range {
+  background: transparent;
+}
+
+[data-theme="australian-desert"] .filter-date-range input {
+  background: #6a4030;
+  border: 1px solid #a6734f;
+  color: #f4e4c1;
+}
+
+[data-theme="australian-desert"] .filter-date-range input:focus {
+  border-color: #e49d38;
+  outline: 2px solid #e49d38;
+}
+
+[data-theme="australian-desert"] .filter-sort {
+  background: transparent;
+}
+
+[data-theme="australian-desert"] .filter-sort select {
+  background: #6a4030;
+  border: 1px solid #a6734f;
+  color: #f4e4c1;
+}
+
+[data-theme="australian-desert"] .filter-sort select:focus {
+  border-color: #e49d38;
+  outline: 2px solid #e49d38;
+}
+
+[data-theme="australian-desert"] .clear-filters-button {
+  background: #7a4a35;
+  border: 1px solid #a6734f;
+  color: #f4e4c1;
+}
+
+[data-theme="australian-desert"] .clear-filters-button:hover {
+  background: #8a5a45;
+  border-color: #b6896f;
+}
+
+[data-theme="australian-desert"] .search-results {
+  background: #4a2820;
+  color: #f4e4c1;
+}
+
+[data-theme="australian-desert"] .search-loading,
+[data-theme="australian-desert"] .search-empty {
+  background: #4a2820;
+  color: #b6896f;
+  font-style: italic;
+}
+
+[data-theme="australian-desert"] .search-results-count {
+  color: #f4e4c1;
+}
+
+[data-theme="australian-desert"] .search-results-list {
+  background: transparent;
+}
+
+[data-theme="australian-desert"] .search-result-item {
+  background: #6a4030;
+  border: 1px solid #a6734f;
+  color: #f4e4c1;
+}
+
+[data-theme="australian-desert"] .search-result-item:hover {
+  background: #7a5040;
+  border-color: #b6896f;
+}
+
+[data-theme="australian-desert"] .result-item-header {
+  background: transparent;
+}
+
+[data-theme="australian-desert"] .result-item-title {
+  color: inherit;
+}
+
+[data-theme="australian-desert"] .result-item-meta {
+  background: transparent;
+}
+
+[data-theme="australian-desert"] .result-time-range-badge {
+  background: #d48728;
+  color: #ffffff;
+  border: 1px solid #e49d38;
+}
+
+[data-theme="australian-desert"] .result-date {
+  color: inherit;
+}
+
+[data-theme="australian-desert"] .result-item-content {
+  color: inherit;
+}
+
+[data-theme="australian-desert"] .result-item-tags {
+  background: transparent;
+}
+
+[data-theme="australian-desert"] .result-tag {
+  background: #7a4a35;
+  border: 1px solid #a6734f;
+  color: #f4e4c1;
+}
+
+/* Preferences */
+[data-theme="australian-desert"] .preferences-container {
+  background: #4a2820;
+  color: #f4e4c1;
+}
+
+[data-theme="australian-desert"] .preferences-loading {
+  background: #4a2820;
+  color: #f4e4c1;
+}
+
+[data-theme="australian-desert"] .preferences-header {
+  background: #7a4a35;
+  border-bottom: 2px solid #a6734f;
+}
+
+[data-theme="australian-desert"] .preferences-header h1 {
+  color: #f4e4c1;
+}
+
+[data-theme="australian-desert"] .preferences-actions {
+  background: transparent;
+}
+
+[data-theme="australian-desert"] .preferences-button {
+  background: #7a4a35;
+  border: 1px solid #a6734f;
+  color: #f4e4c1;
+}
+
+[data-theme="australian-desert"] .preferences-button:hover {
+  background: #8a5a45;
+  border-color: #b6896f;
+}
+
+[data-theme="australian-desert"] .preferences-content {
+  background: #4a2820;
+}
+
+[data-theme="australian-desert"] .preferences-section {
+  background: #6a4030;
+  border: 2px solid #a6734f;
+}
+
+[data-theme="australian-desert"] .preferences-section h2 {
+  color: #f4e4c1;
+  border-bottom: 2px solid #a6734f;
+}
+
+[data-theme="australian-desert"] .preference-item {
+  background: transparent;
+}
+
+[data-theme="australian-desert"] .preference-item label {
+  color: #f4e4c1;
+}
+
+[data-theme="australian-desert"] .preference-item input[type="text"],
+[data-theme="australian-desert"] .preference-item input[type="number"],
+[data-theme="australian-desert"] .preference-item select {
+  background: #6a4030;
+  border: 1px solid #a6734f;
+  color: #f4e4c1;
+}
+
+[data-theme="australian-desert"] .preference-item input[type="text"]:focus,
+[data-theme="australian-desert"] .preference-item input[type="number"]:focus,
+[data-theme="australian-desert"] .preference-item select:focus {
+  border-color: #e49d38;
+  outline: 2px solid #e49d38;
+}
+
+[data-theme="australian-desert"] .preference-item input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  border: 1px solid #a6734f;
+  background: #6a4030;
+  accent-color: #d48728;
+}
+
+[data-theme="australian-desert"] .preference-item small {
+  color: #b6896f;
+}
+
+[data-theme="australian-desert"] .preference-note {
+  background: #7a5040;
+  border-left: 3px solid #e49d38;
+  color: #f4e4c1;
+}
+
+[data-theme="australian-desert"] .auto-save-indicator {
+  color: #e49d38;
+}
+
+[data-theme="australian-desert"] .export-toolbar {
+  background: transparent;
+}
+
+[data-theme="australian-desert"] .export-controls {
+  background: transparent;
+}
+
+[data-theme="australian-desert"] .export-controls select {
+  background: #6a4030;
+  border: 1px solid #a6734f;
+  color: #f4e4c1;
+}
+
+[data-theme="australian-desert"] .export-controls select:focus {
+  border-color: #e49d38;
+  outline: 2px solid #e49d38;
+}
+
+[data-theme="australian-desert"] .about-section {
+  background: #6a4030;
+  border: 1px solid #a6734f;
+  color: #f4e4c1;
+}
+
+[data-theme="australian-desert"] .about-section a {
+  color: #e49d38;
+  text-decoration: underline;
+}
+
+[data-theme="australian-desert"] .about-section a:hover {
+  color: #f0b048;
+}
+
+/* About Page */
+[data-theme="australian-desert"] .about-container {
+  background: #4a2820;
+  color: #f4e4c1;
+}
+
+[data-theme="australian-desert"] .about-content {
+  background: #6a4030;
+  border: 2px solid #a6734f;
+  color: #f4e4c1;
+}
+
+[data-theme="australian-desert"] .about-header {
+  background: transparent;
+  border-bottom: 2px solid #a6734f;
+}
+
+[data-theme="australian-desert"] .about-icon {
+  border: 2px solid #a6734f;
+}
+
+[data-theme="australian-desert"] .about-title-section h1 {
+  color: #f4e4c1;
+}
+
+[data-theme="australian-desert"] .about-description {
+  color: #f4e4c1;
+}
+
+[data-theme="australian-desert"] .about-section {
+  background: transparent;
+  border-top: 1px solid #a6734f;
+}
+
+[data-theme="australian-desert"] .about-version {
+  color: #f4e4c1;
+}
+
+[data-theme="australian-desert"] .about-note {
+  color: #b6896f;
+}
+
+[data-theme="australian-desert"] .about-credits h2 {
+  color: #f4e4c1;
+}
+
+[data-theme="australian-desert"] .about-credits p {
+  color: #f4e4c1;
+}
+
+[data-theme="australian-desert"] .about-link {
+  color: #e49d38;
+  text-decoration: underline;
+}
+
+[data-theme="australian-desert"] .about-link:hover {
+  color: #f0b048;
+}
+
+[data-theme="australian-desert"] .about-credits-detailed {
+  background: transparent;
+}
+
+[data-theme="australian-desert"] .about-credits-detailed h2 {
+  color: #f4e4c1;
+}
+
+[data-theme="australian-desert"] .credits-category {
+  background: transparent;
+}
+
+[data-theme="australian-desert"] .credits-category h3 {
+  color: #e49d38;
+}
+
+[data-theme="australian-desert"] .credits-category ul {
+  background: transparent;
+}
+
+[data-theme="australian-desert"] .credits-category li {
+  color: #f4e4c1;
+}
+
+[data-theme="australian-desert"] .credits-category li strong {
+  color: #f4e4c1;
+}
+
+[data-theme="australian-desert"] .credits-category li em {
+  color: #b6896f;
+}
+
+[data-theme="australian-desert"] .credits-category p {
+  color: #f4e4c1;
+}
+
+[data-theme="australian-desert"] .credits-note {
+  color: #b6896f;
+  font-style: italic;
+}
+
+/* Loading Screen */
+[data-theme="australian-desert"] .loading-screen {
+  background: #4a2820;
+  color: #f4e4c1;
+}
+
+[data-theme="australian-desert"] .space-background {
+  background: #2f1e18;
+}
+
+[data-theme="australian-desert"] .loading-content {
+  background: transparent;
+  color: #f4e4c1;
+}
+
+[data-theme="australian-desert"] .loading-title {
+  color: #f4e4c1;
+}
+
+[data-theme="australian-desert"] .loading-message {
+  color: #f4e4c1;
+}
+
+[data-theme="australian-desert"] .loading-progress {
+  background: transparent;
+}
+
+[data-theme="australian-desert"] .loading-progress-bar {
+  background: #6a4030;
+  border: 2px solid #a6734f;
+}
+
+[data-theme="australian-desert"] .loading-progress-fill {
+  background: #d48728;
+  border: 1px solid #e49d38;
+}
+
+[data-theme="australian-desert"] .loading-progress-text {
+  color: #f4e4c1;
+}
+
+/* Global Timeline Minimap */
+[data-theme="australian-desert"] .global-timeline-minimap {
+  background: #7a4a35;
+  border-bottom: 2px solid #a6734f;
+}
+
+[data-theme="australian-desert"] .minimap-container {
+  background: #4a2820;
+  border: 2px solid #a6734f;
+}
+
+[data-theme="australian-desert"] .radial-dial-center {
+  background: #d48728;
+  border: 2px solid #e49d38;
+}
+
+[data-theme="australian-desert"] .radial-arrow {
+  color: #d48728;
+}
+
+[data-theme="australian-desert"] .radial-label {
+  background: #6a4030;
+  border: 1px solid #a6734f;
+  color: #f4e4c1;
+}
+
+[data-theme="australian-desert"] .timeline-path {
+  stroke: #d48728;
+  stroke-width: 2px;
+}
+
+[data-theme="australian-desert"] .segment-indicator {
+  background: #a6734f;
+  border: 1px solid #e49d38;
+}
+
+[data-theme="australian-desert"] .timeline-segment.current .segment-indicator {
+  background: #d48728;
+  border: 2px solid #e49d38;
+}
+
+[data-theme="australian-desert"] .segment-label {
+  background: #d48728;
+  color: #ffffff;
+  border: 1px solid #e49d38;
+}
+
+[data-theme="australian-desert"] .entry-indicator {
+  background: #e49d38;
+  border: 1px solid #d48728;
+}
+
+[data-theme="australian-desert"] .scale-label {
+  color: #f4e4c1;
+}
+
+/* Entry badges and cards - preserve time range colors, adapt backgrounds/text */
+[data-theme="australian-desert"] .entry-decade {
+  background: rgba(156, 39, 176, 0.25);
+  color: #e1bee7;
+}
+
+[data-theme="australian-desert"] .entry-year {
+  background: rgba(2, 119, 189, 0.25);
+  color: #90caf9;
+}
+
+[data-theme="australian-desert"] .entry-month {
+  background: rgba(239, 108, 0, 0.3);
+  color: #f0b048;
+}
+
+[data-theme="australian-desert"] .entry-week {
+  background: rgba(46, 125, 50, 0.25);
+  color: #a5d6a7;
+}
+
+[data-theme="australian-desert"] .entry-day {
+  background: rgba(194, 24, 91, 0.25);
+  color: #f48fb1;
+}
+
+[data-theme="australian-desert"] .entry-card {
+  background: #4a2820 !important;
+  border-color: #7a4a35;
+}
+
+[data-theme="australian-desert"] .entry-card-full {
+  background: #4a2820 !important;
+  border-color: #7a4a35;
+}
+
+[data-theme="australian-desert"] .card-title,
+[data-theme="australian-desert"] .card-title-full,
+[data-theme="australian-desert"] .badge-title {
+  color: #f4e4c1;
+}
+
+[data-theme="australian-desert"] .entry-item-title {
+  color: #f4e4c1;
+}
+
+[data-theme="australian-desert"] .card-tag-full {
+  background: #7a4a35;
+  color: #ffffff;
+}
+
+[data-theme="australian-desert"] .card-content-full {
+  color: #f4e4c1;
+}
+
+[data-theme="australian-desert"] .card-date {
+  color: #ffcc80;
+}
+
+[data-theme="australian-desert"] .time-range-badge {
+  background: #7a4a35;
+  color: #ffffff;
+}
+

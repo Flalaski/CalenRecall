@@ -56,6 +56,18 @@ const BUILT_IN_THEME_METADATA: Record<string, Omit<ThemeInfo, 'name'>> = {
     displayName: 'Sunset',
     description: 'Warm sunset orange theme'
   },
+  'red-rock': {
+    displayName: 'Red Rock',
+    description: 'Warm red rock depth layers inspired by Grand Canyon sedimentary layers'
+  },
+  'australian-desert': {
+    displayName: 'Australian Desert',
+    description: 'Warm Australian desert tones with reds, oranges, and golds'
+  },
+  'hot-spring': {
+    displayName: 'Hot Spring',
+    description: 'Warm nighttime hot spring theme with steamy blues and purples'
+  },
   'retro80s': {
     displayName: 'Retro 80s',
     description: 'Vibrant 1980s retro theme'
