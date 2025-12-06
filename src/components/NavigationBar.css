@@ -218,16 +218,27 @@
 .calendar-definition-drawer {
   max-height: 0;
   overflow: hidden;
-  transition: max-height 0.3s ease-out;
+  padding: 0;
+  margin: 0;
+  opacity: 0;
+  transition: max-height 0.3s ease-out, padding 0.3s ease-out, opacity 0.2s ease-out;
 }
 
 .calendar-definition-drawer.expanded {
   max-height: 500px;
-  transition: max-height 0.3s ease-in;
+  padding-top: 0.5rem;
+  opacity: 1;
+  transition: max-height 0.3s ease-in, padding 0.3s ease-in, opacity 0.3s ease-in;
 }
 
 .calendar-info-section {
   margin-bottom: 0.35rem;
+  margin-top: 0;
+}
+
+.calendar-definition-drawer:not(.expanded) .calendar-info-section:first-child {
+  margin-top: 0;
+  padding-top: 0;
 }
 
 .calendar-info-section:last-of-type {

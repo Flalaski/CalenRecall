@@ -260,6 +260,9 @@ export default function NavigationBar({
               </button>
               <div className={`calendar-definition-drawer ${isDefinitionExpanded ? 'expanded' : ''}`}>
                 <div className="calendar-info-section">
+                  <strong>Native Name:</strong> {calendarInfo.nativeName}
+                </div>
+                <div className="calendar-info-section">
                   <strong>Definition:</strong> {description.definition}
                 </div>
                 <div className="calendar-info-section">
@@ -270,17 +273,17 @@ export default function NavigationBar({
                     <strong>Notes:</strong> {description.notes}
                   </div>
                 )}
-              </div>
-              <div className="calendar-info-details">
-                <span>Type: {calendarInfo.type}</span>
-                <span>Months: {calendarInfo.months}</span>
-                <span>Days per year: {daysInYear}</span>
-                {calendarInfo.eraName && (
-                  <span>Era: {calendarInfo.eraName} (begins {calendarInfo.eraStart > 0 ? calendarInfo.eraStart + ' CE' : Math.abs(calendarInfo.eraStart) + ' BCE'})</span>
-                )}
-                {calendarInfo.leapYearRule && (
-                  <span>Leap year: {calendarInfo.leapYearRule}</span>
-                )}
+                <div className="calendar-info-details">
+                  <span>Type: {calendarInfo.type}</span>
+                  <span>Months: {calendarInfo.months}</span>
+                  <span>Days per year: {daysInYear}</span>
+                  {calendarInfo.eraName && (
+                    <span>Era: {calendarInfo.eraName} (begins {calendarInfo.eraStart > 0 ? calendarInfo.eraStart + ' CE' : Math.abs(calendarInfo.eraStart) + ' BCE'})</span>
+                  )}
+                  {calendarInfo.leapYearRule && (
+                    <span>Leap year: {calendarInfo.leapYearRule}</span>
+                  )}
+                </div>
               </div>
             </div>
           );
