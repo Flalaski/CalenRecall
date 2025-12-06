@@ -160,7 +160,11 @@ function App() {
             const bgResult = await window.electronAPI.getBackgroundImagePath();
             if (bgResult.success && bgResult.path) {
               setBackgroundImagePath(bgResult.path);
+            } else {
+              setBackgroundImagePath(null);
             }
+          } else {
+            setBackgroundImagePath(null);
           }
         }
       } catch (error) {
@@ -211,9 +215,10 @@ function App() {
 
     // Check for preference updates periodically (when preferences window closes)
     // NOTE: Do NOT reset viewMode to default - default view mode only applies on initial load
+    // Reduced frequency to 5 seconds to avoid excessive polling
     const interval = setInterval(() => {
       refreshPreferences();
-    }, 1000);
+    }, 5000);
     
     return () => {
       clearInterval(interval);
@@ -420,11 +425,13 @@ function App() {
   }
 
   return (
-    <div className="app">
+    <>
       <BackgroundArt 
         backgroundImage={backgroundImagePath || undefined}
         enableProceduralArt={preferences.enableProceduralArt !== false}
+        theme={preferences.theme}
       />
+      <div className="app">
       <NavigationBar
         viewMode={viewMode}
         onViewModeChange={handleViewModeChange}
@@ -500,7 +507,8 @@ function App() {
           />
         </div>
       )}
-    </div>
+      </div>
+    </>
   );
 }
 

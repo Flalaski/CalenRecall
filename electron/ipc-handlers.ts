@@ -590,11 +590,27 @@ export function setupIpcHandlers() {
       const destPath = path.join(backgroundsDir, destFileName);
 
       // Copy file
+      console.log('[IPC] Copying background image from:', sourcePath);
+      console.log('[IPC] To:', destPath);
       fs.copyFileSync(sourcePath, destPath);
+      console.log('[IPC] File copied successfully');
+
+      // Verify file was copied
+      if (!fs.existsSync(destPath)) {
+        console.error('[IPC] File copy verification failed - file does not exist at destination');
+        return {
+          success: false,
+          canceled: false,
+          error: 'copy_verification_failed',
+          message: 'File was copied but verification failed',
+        };
+      }
 
       // Save path as preference (store relative path from userData)
       const relativePath = path.relative(userDataPath, destPath);
+      console.log('[IPC] Relative path:', relativePath);
       setPreference('backgroundImage', relativePath);
+      console.log('[IPC] Preference saved');
 
       return {
         success: true,
@@ -630,21 +646,64 @@ export function setupIpcHandlers() {
   });
 
   /**
-   * Get the full path to the background image.
+   * Get the background image as a data URL (base64 encoded).
+   * This avoids security restrictions with file:// URLs in Electron's renderer process.
    */
   ipcMain.handle('get-background-image-path', async () => {
     try {
       const bgImage = getPreference('backgroundImage');
-      if (!bgImage || typeof bgImage !== 'string') {
+      console.log('[IPC] get-background-image-path - preference value:', bgImage);
+      if (!bgImage || typeof bgImage !== 'string' || bgImage.trim() === '') {
+        console.log('[IPC] No background image preference set');
         return { success: true, path: null };
       }
       const userDataPath = app.getPath('userData');
+      console.log('[IPC] User data path:', userDataPath);
       const fullPath = path.join(userDataPath, bgImage);
-      // Return as file:// URL for use in renderer
-      const fileUrl = `file:///${fullPath.replace(/\\/g, '/')}`;
-      return { success: true, path: fileUrl };
+      console.log('[IPC] Full path:', fullPath);
+      
+      // Check if file exists
+      if (!fs.existsSync(fullPath)) {
+        console.error('[IPC] Background image file does not exist:', fullPath);
+        return {
+          success: false,
+          error: 'file_not_found',
+          message: `Background image file not found: ${fullPath}`,
+        };
+      }
+      
+      // Read the file and convert to base64 data URL
+      try {
+        const fileBuffer = fs.readFileSync(fullPath);
+        const fileExt = path.extname(fullPath).toLowerCase();
+        
+        // Determine MIME type from extension
+        const mimeTypes: Record<string, string> = {
+          '.jpg': 'image/jpeg',
+          '.jpeg': 'image/jpeg',
+          '.png': 'image/png',
+          '.gif': 'image/gif',
+          '.webp': 'image/webp',
+          '.bmp': 'image/bmp',
+          '.svg': 'image/svg+xml',
+        };
+        
+        const mimeType = mimeTypes[fileExt] || 'image/jpeg';
+        const base64 = fileBuffer.toString('base64');
+        const dataUrl = `data:${mimeType};base64,${base64}`;
+        
+        console.log('[IPC] Converted image to data URL, size:', dataUrl.length, 'chars');
+        return { success: true, path: dataUrl };
+      } catch (readError: any) {
+        console.error('[IPC] Error reading image file:', readError);
+        return {
+          success: false,
+          error: 'read_failed',
+          message: `Failed to read image file: ${readError.message || 'Unknown error'}`,
+        };
+      }
     } catch (error: any) {
-      console.error('Error getting background image path:', error);
+      console.error('[IPC] Error getting background image path:', error);
       return {
         success: false,
         error: 'get_path_failed',

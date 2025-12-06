@@ -11,6 +11,7 @@ interface Shape {
   size: number;
   targetSize: number;
   color: string;
+  targetColor: string; // For smooth color transitions
   opacity: number;
   targetOpacity: number;
   type: 'circle' | 'blob';
@@ -20,6 +21,7 @@ interface Shape {
 
 /**
  * Extract color values from CSS computed styles
+ * Derives colors from the actual theme by analyzing body background and UI elements
  */
 function getThemeColors(): {
   primary: string;
@@ -36,22 +38,71 @@ function getThemeColors(): {
     };
   }
 
+  const bodyStyle = getComputedStyle(document.body);
+  let bodyBg = bodyStyle.backgroundColor || '#ffffff';
+  
+  // Handle transparent backgrounds by checking html element
+  if (bodyBg === 'transparent' || bodyBg === 'rgba(0, 0, 0, 0)') {
+    const htmlStyle = getComputedStyle(document.documentElement);
+    bodyBg = htmlStyle.backgroundColor || '#ffffff';
+  }
+  
+  const bgRgb = parseColor(bodyBg);
+  const brightness = (bgRgb[0] + bgRgb[1] + bgRgb[2]) / 3;
+  const isLightTheme = brightness > 200;
+  
+  // Try to get colors from CSS variables first
   const root = document.documentElement;
   const computedStyle = getComputedStyle(root);
-  const bodyStyle = window.getComputedStyle(document.body);
+  let primaryColor = computedStyle.getPropertyValue('--primary-color')?.trim();
+  let accentColor = computedStyle.getPropertyValue('--accent-color')?.trim();
   
-  const bodyBg = bodyStyle.backgroundColor || '#ffffff';
-  const bgRgb = parseColor(bodyBg);
-  const isLightTheme = (bgRgb[0] + bgRgb[1] + bgRgb[2]) / 3 > 200;
-  
-  const primary = computedStyle.getPropertyValue('--primary-color')?.trim() || 
-                  (isLightTheme ? '#4a90e2' : '#6ba3e8');
-  const accent = computedStyle.getPropertyValue('--accent-color')?.trim() ||
-                 (isLightTheme ? '#ff9800' : '#ffb74d');
+  // If CSS variables don't exist, derive colors from theme
+  if (!primaryColor || !accentColor) {
+    // Sample colors from common UI elements to match theme
+    // Try to find a button or interactive element to sample
+    const sampleSelectors = ['.nav-button', '.view-mode-button.active', '.save-button', '.timeline-cell.today'];
+    let sampledColor: string | null = null;
+    
+    for (const selector of sampleSelectors) {
+      const sampleElement = document.querySelector(selector) as HTMLElement;
+      if (sampleElement) {
+        const sampleStyle = getComputedStyle(sampleElement);
+        const sampleBg = sampleStyle.backgroundColor;
+        if (sampleBg && sampleBg !== 'transparent' && sampleBg !== 'rgba(0, 0, 0, 0)') {
+          const sampleRgb = parseColor(sampleBg);
+          // Use sampled color as primary if it's not too close to background
+          const sampleBrightness = (sampleRgb[0] + sampleRgb[1] + sampleRgb[2]) / 3;
+          if (Math.abs(sampleBrightness - brightness) > 30) {
+            sampledColor = `rgb(${sampleRgb[0]}, ${sampleRgb[1]}, ${sampleRgb[2]})`;
+            break;
+          }
+        }
+      }
+    }
+    
+    // Use sampled color or fallback to theme-appropriate defaults
+    if (!primaryColor) {
+      primaryColor = sampledColor || (isLightTheme ? '#4a90e2' : '#6ba3e8');
+    }
+    if (!accentColor) {
+      // For accent, use a complementary color based on primary
+      if (primaryColor && primaryColor !== sampledColor) {
+        const primaryRgb = parseColor(primaryColor);
+        // Create a warm accent color (shift towards orange/yellow)
+        accentColor = isLightTheme 
+          ? `rgb(${Math.min(255, primaryRgb[0] + 50)}, ${Math.min(255, primaryRgb[1] + 30)}, ${Math.max(0, primaryRgb[2] - 50)})`
+          : `rgb(${Math.min(255, primaryRgb[0] + 40)}, ${Math.min(255, primaryRgb[1] + 20)}, ${Math.max(0, primaryRgb[2] - 40)})`;
+      } else {
+        accentColor = isLightTheme ? '#ff9800' : '#ffb74d';
+      }
+    }
+  }
 
-  const primaryRgb = parseColor(primary);
-  const accentRgb = parseColor(accent);
+  const primaryRgb = parseColor(primaryColor);
+  const accentRgb = parseColor(accentColor);
   
+  // Adjust opacity based on theme brightness for better visibility
   const primaryOpacity = isLightTheme ? 0.15 : 0.25;
   const secondaryOpacity = isLightTheme ? 0.1 : 0.2;
   const accentOpacity = isLightTheme ? 0.12 : 0.2;
@@ -65,19 +116,35 @@ function getThemeColors(): {
 }
 
 function parseColor(color: string): [number, number, number] {
+  if (!color) return [74, 144, 226];
+  
+  // Handle hex colors
   if (color.startsWith('#')) {
     const hex = color.slice(1);
-    const r = parseInt(hex.slice(0, 2), 16);
-    const g = parseInt(hex.slice(2, 4), 16);
-    const b = parseInt(hex.slice(4, 6), 16);
-    return [r, g, b];
+    if (hex.length === 3) {
+      // Short hex format (#fff)
+      const r = parseInt(hex[0] + hex[0], 16);
+      const g = parseInt(hex[1] + hex[1], 16);
+      const b = parseInt(hex[2] + hex[2], 16);
+      return [r, g, b];
+    } else if (hex.length === 6) {
+      // Full hex format (#ffffff)
+      const r = parseInt(hex.slice(0, 2), 16);
+      const g = parseInt(hex.slice(2, 4), 16);
+      const b = parseInt(hex.slice(4, 6), 16);
+      return [r, g, b];
+    }
   }
+  
+  // Handle rgb/rgba colors (with or without spaces)
   if (color.startsWith('rgb')) {
     const matches = color.match(/\d+/g);
     if (matches && matches.length >= 3) {
       return [parseInt(matches[0]), parseInt(matches[1]), parseInt(matches[2])];
     }
   }
+  
+  // Fallback to default blue
   return [74, 144, 226];
 }
 
@@ -97,46 +164,102 @@ export function createLavaLampCanvas(
   canvas.width = width;
   canvas.height = height;
 
-  const colors = getThemeColors();
-  const bgRgb = colors.background.match(/\d+/g)?.map(Number) || [255, 255, 255];
-  const isLightTheme = (bgRgb[0] + bgRgb[1] + bgRgb[2]) / 3 > 200;
+  // Get initial colors
+  let currentColors = getThemeColors();
+  let lastColorUpdate = performance.now();
+  const colorUpdateInterval = 100; // Check for color changes every 100ms
 
   // Create shapes that will morph continuously
   const shapes: Shape[] = [];
   const numShapes = 8 + Math.floor(Math.random() * 6);
-  const colorOptions = [colors.primary, colors.secondary, colors.accent];
-
-  for (let i = 0; i < numShapes; i++) {
-    const size = 80 + Math.random() * 180;
-    const shape: Shape = {
-      x: Math.random() * width,
-      y: Math.random() * height,
-      vx: (Math.random() - 0.5) * 0.3,
-      vy: (Math.random() - 0.5) * 0.3,
-      size: size,
-      targetSize: size * (0.8 + Math.random() * 0.4),
-      color: colorOptions[Math.floor(Math.random() * colorOptions.length)],
-      opacity: (isLightTheme ? 0.05 : 0.15) + Math.random() * (isLightTheme ? 0.1 : 0.15),
-      targetOpacity: (isLightTheme ? 0.05 : 0.15) + Math.random() * (isLightTheme ? 0.1 : 0.15),
-      type: Math.random() > 0.5 ? 'blob' : 'circle',
-      timeOffset: Math.random() * Math.PI * 2,
-    };
-    shapes.push(shape);
-  }
+  
+  // Initialize shapes with current colors
+  const initializeShapes = () => {
+    const bgRgb = currentColors.background.match(/\d+/g)?.map(Number) || [255, 255, 255];
+    const isLightTheme = (bgRgb[0] + bgRgb[1] + bgRgb[2]) / 3 > 200;
+    const colorOptions = [currentColors.primary, currentColors.secondary, currentColors.accent];
+    
+    for (let i = 0; i < numShapes; i++) {
+      const size = 80 + Math.random() * 180;
+      const initialColor = colorOptions[Math.floor(Math.random() * colorOptions.length)];
+      const shape: Shape = {
+        x: Math.random() * width,
+        y: Math.random() * height,
+        vx: (Math.random() - 0.5) * 0.3,
+        vy: (Math.random() - 0.5) * 0.3,
+        size: size,
+        targetSize: size * (0.8 + Math.random() * 0.4),
+        color: initialColor,
+        targetColor: initialColor,
+        opacity: (isLightTheme ? 0.05 : 0.15) + Math.random() * (isLightTheme ? 0.1 : 0.15),
+        targetOpacity: (isLightTheme ? 0.05 : 0.15) + Math.random() * (isLightTheme ? 0.1 : 0.15),
+        type: Math.random() > 0.5 ? 'blob' : 'circle',
+        timeOffset: Math.random() * Math.PI * 2,
+      };
+      shapes.push(shape);
+    }
+  };
+  
+  initializeShapes();
 
   let animationFrame: number;
   let lastTime = performance.now();
   const targetFPS = 30;
   const frameInterval = 1000 / targetFPS;
 
+  // Helper function to interpolate between two rgba colors
+  function interpolateColor(color1: string, color2: string, factor: number): string {
+    const rgba1 = color1.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([\d.]+))?\)/);
+    const rgba2 = color2.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([\d.]+))?\)/);
+    
+    if (!rgba1 || !rgba2) return color1;
+    
+    const r1 = parseInt(rgba1[1]);
+    const g1 = parseInt(rgba1[2]);
+    const b1 = parseInt(rgba1[3]);
+    const a1 = rgba1[4] ? parseFloat(rgba1[4]) : 1;
+    
+    const r2 = parseInt(rgba2[1]);
+    const g2 = parseInt(rgba2[2]);
+    const b2 = parseInt(rgba2[3]);
+    const a2 = rgba2[4] ? parseFloat(rgba2[4]) : 1;
+    
+    const r = Math.round(r1 + (r2 - r1) * factor);
+    const g = Math.round(g1 + (g2 - g1) * factor);
+    const b = Math.round(b1 + (b2 - b1) * factor);
+    const a = a1 + (a2 - a1) * factor;
+    
+    return `rgba(${r}, ${g}, ${b}, ${a})`;
+  }
+
   function animate(currentTime: number) {
     const deltaTime = currentTime - lastTime;
+    
+    // Check for theme color changes periodically
+    if (currentTime - lastColorUpdate >= colorUpdateInterval) {
+      const newColors = getThemeColors();
+      // Compare colors by converting to comparable format
+      const bgChanged = newColors.background !== currentColors.background;
+      const primaryChanged = newColors.primary !== currentColors.primary;
+      const accentChanged = newColors.accent !== currentColors.accent;
+      
+      if (bgChanged || primaryChanged || accentChanged) {
+        // Colors changed - smoothly transition
+        const colorOptions = [newColors.primary, newColors.secondary, newColors.accent];
+        shapes.forEach((shape, index) => {
+          // Assign new target color based on shape index to maintain variety
+          shape.targetColor = colorOptions[index % colorOptions.length];
+        });
+        currentColors = newColors;
+      }
+      lastColorUpdate = currentTime;
+    }
     
     if (deltaTime >= frameInterval) {
       lastTime = currentTime - (deltaTime % frameInterval);
 
-      // Clear canvas
-      ctx.fillStyle = colors.background;
+      // Clear canvas with current background color
+      ctx.fillStyle = currentColors.background;
       ctx.globalCompositeOperation = 'source-over';
       ctx.fillRect(0, 0, width, height);
 
@@ -144,6 +267,10 @@ export function createLavaLampCanvas(
       const time = currentTime * 0.001; // Convert to seconds
 
       shapes.forEach((shape, index) => {
+        // Smoothly transition color if target changed
+        if (shape.color !== shape.targetColor) {
+          shape.color = interpolateColor(shape.color, shape.targetColor, 0.05);
+        }
         // Smooth movement with multiple sine waves for organic, fluid motion
         const waveX1 = Math.sin(time * 0.25 + shape.timeOffset) * 0.8;
         const waveX2 = Math.cos(time * 0.18 + shape.timeOffset * 1.7) * 0.4;

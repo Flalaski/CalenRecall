@@ -1153,6 +1153,8 @@ const DEFAULT_PREFERENCES: Preferences = {
   minimapPosition: 'top',
   minimapSize: 'medium',
   restoreLastView: false,
+  backgroundImage: undefined,
+  enableProceduralArt: true,
 };
 
 export function getPreference<K extends keyof Preferences>(key: K): Preferences[K] {
@@ -1189,20 +1191,30 @@ export function getAllPreferences(): Preferences {
   
   for (const row of rows) {
     const key = row.key as keyof Preferences;
-    if (key in DEFAULT_PREFERENCES) {
-      try {
-        const parsedValue = JSON.parse(row.value);
-        (prefs as any)[key] = parsedValue;
-      } catch {
-        // If JSON parsing fails, try to use the raw value
-        // This handles cases where the value might be stored as a plain string
-        const rawValue = row.value;
-        // Try to infer the correct type based on the default value
-        const defaultValue = DEFAULT_PREFERENCES[key];
+    // Include all keys from the database, not just those in DEFAULT_PREFERENCES
+    // This allows for new preferences to be added without updating DEFAULT_PREFERENCES immediately
+    try {
+      const parsedValue = JSON.parse(row.value);
+      (prefs as any)[key] = parsedValue;
+    } catch {
+      // If JSON parsing fails, try to use the raw value
+      // This handles cases where the value might be stored as a plain string
+      const rawValue = row.value;
+      // Try to infer the correct type based on the default value (if it exists)
+      const defaultValue = DEFAULT_PREFERENCES[key];
+      if (defaultValue !== undefined) {
         if (typeof defaultValue === 'number') {
           (prefs as any)[key] = parseFloat(rawValue) || defaultValue;
         } else if (typeof defaultValue === 'boolean') {
           (prefs as any)[key] = rawValue === 'true';
+        } else {
+          (prefs as any)[key] = rawValue;
+        }
+      } else {
+        // If no default exists, try to infer type from the value itself
+        // For strings, use as-is; for empty strings, use undefined
+        if (rawValue === '' || rawValue === 'null') {
+          (prefs as any)[key] = undefined;
         } else {
           (prefs as any)[key] = rawValue;
         }

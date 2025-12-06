@@ -5,6 +5,9 @@
   width: 100vw;
   overflow: hidden;
   position: relative;
+  background: transparent; /* Allow background art to show through */
+  z-index: 1; /* Ensure app content is above background */
+  isolation: isolate; /* Create new stacking context */
 }
 
 .export-bar {
@@ -73,7 +76,7 @@
   flex: 1;
   overflow: hidden;
   gap: 2px;
-  background: #d0d0d0;
+  background: transparent; /* Changed from #d0d0d0 to transparent */
   position: relative;
   z-index: 0;
 }
@@ -82,7 +85,7 @@
   flex: 1;
   min-width: 0;
   overflow: hidden;
-  background: #fafafa;
+  background: transparent; /* Changed from #fafafa to transparent */
   display: flex;
   flex-direction: column;
   position: relative;
@@ -94,7 +97,7 @@
   min-width: 400px;
   max-width: 600px;
   overflow-y: auto;
-  background: white;
+  background: transparent; /* Changed from white to transparent */
   border-left: 2px solid #4a90e2;
   box-shadow: -2px 0 8px rgba(0, 0, 0, 0.1);
   position: relative;

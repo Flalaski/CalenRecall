@@ -7,6 +7,14 @@
   box-sizing: border-box;
 }
 
+html {
+  background: transparent; /* Allow background art to show through */
+}
+
+#root {
+  background: transparent; /* Allow background art to show through */
+}
+
 /* Paper-like noise texture - ever-shifting, more visible in shadows */
 @keyframes paperNoise {
   0% {
@@ -331,7 +339,7 @@ body {
     'Microsoft YaHei', 'SimHei', 'PingFang SC', 'Hiragino Sans GB', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background: #f5f5f5;
+  background: transparent; /* Changed from #f5f5f5 to transparent to allow background art to show */
   color: #333;
   overflow: hidden;
 }
@@ -371,30 +379,74 @@ body {
 
 /* Theme support */
 [data-theme="dark"] {
-  background: #1e1e1e;
+  background: transparent; /* Allow background art to show through */
   color: #e0e0e0;
 }
 
+/* Apply extracted background colors to transparent panels (light theme only) */
+[data-theme="light"] .month-entry-item {
+  background: var(--bg-extracted-panel, transparent);
+  border-color: var(--bg-extracted-border, transparent);
+  color: var(--bg-extracted-text, inherit);
+}
+
+[data-theme="light"] .week-entry-item {
+  background: var(--bg-extracted-panel, #f5f5f5);
+  border-left-color: var(--bg-extracted-accent, #4caf50);
+}
+
+[data-theme="light"] .timeline-cell {
+  background: var(--bg-extracted-panel, transparent);
+  border-color: var(--bg-extracted-border, #e0e0e0);
+}
+
+[data-theme="light"] .timeline-cell:hover {
+  border-color: var(--bg-extracted-accent, #4a90e2);
+}
+
+[data-theme="light"] .week-entry-group {
+  background: var(--bg-extracted-panel, transparent);
+  border-color: var(--bg-extracted-border, #e0e0e0);
+}
+
+[data-theme="light"] .entry-viewer {
+  background: var(--bg-extracted-panel, transparent);
+}
+
+[data-theme="light"] .viewer-header {
+  background: var(--bg-extracted-panel, transparent);
+  border-bottom-color: var(--bg-extracted-border, #e0e0e0);
+}
+
+[data-theme="light"] .journal-editor-inline {
+  background: var(--bg-extracted-panel, white);
+}
+
+[data-theme="light"] .editor-header {
+  background: var(--bg-extracted-panel, linear-gradient(to bottom, #ffffff, #f5f5f5));
+  border-bottom-color: var(--bg-extracted-border, #e0e0e0);
+}
+
 [data-theme="dark"] body {
-  background: #1e1e1e;
+  background: transparent; /* Allow background art to show through */
   color: #e0e0e0;
 }
 
 [data-theme="dark"] .app {
-  background: #1e1e1e;
+  background: transparent; /* Allow background art to show through */
   color: #e0e0e0;
 }
 
 [data-theme="dark"] .app-content {
-  background: #2d2d2d;
+  background: transparent; /* Allow background art to show through */
 }
 
 [data-theme="dark"] .timeline-section {
-  background: #252525;
+  background: transparent; /* Allow background art to show through */
 }
 
 [data-theme="dark"] .editor-section {
-  background: #2d2d2d;
+  background: transparent; /* Allow background art to show through */
   border-left-color: #4a90e2;
 }
 

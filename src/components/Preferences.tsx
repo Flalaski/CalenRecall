@@ -17,6 +17,7 @@ export default function PreferencesComponent() {
   const [isImporting, setIsImporting] = useState(false);
   const [isBackingUp, setIsBackingUp] = useState(false);
   const [isRestoring, setIsRestoring] = useState(false);
+  const [backgroundImagePreview, setBackgroundImagePreview] = useState<string | null>(null);
   const [importProgress, setImportProgress] = useState({
     isOpen: false,
     progress: 0,
@@ -86,7 +87,31 @@ export default function PreferencesComponent() {
         throw new Error('Electron API not available');
       }
       const prefs = await window.electronAPI.getAllPreferences();
+      console.log('[Preferences] Loaded all preferences:', prefs);
+      console.log('[Preferences] backgroundImage value:', prefs.backgroundImage);
       setPreferences(prefs);
+
+      // Load background image preview
+      if (prefs.backgroundImage) {
+        console.log('[Preferences] Loading background image preview for:', prefs.backgroundImage);
+        try {
+          const bgResult = await window.electronAPI.getBackgroundImagePath();
+          console.log('[Preferences] Background image path result:', bgResult);
+          if (bgResult.success && bgResult.path) {
+            setBackgroundImagePreview(bgResult.path);
+            console.log('[Preferences] Background image preview set to:', bgResult.path);
+          } else {
+            setBackgroundImagePreview(null);
+            console.warn('[Preferences] Failed to get background image path:', bgResult.error || bgResult.message);
+          }
+        } catch (error) {
+          console.error('[Preferences] Error loading background image preview:', error);
+          setBackgroundImagePreview(null);
+        }
+      } else {
+        console.log('[Preferences] No backgroundImage preference found');
+        setBackgroundImagePreview(null);
+      }
 
       // Initialize export format from any stored preference in future (for now default)
     } catch (error) {
@@ -325,7 +350,9 @@ export default function PreferencesComponent() {
                     className="preferences-button"
                     onClick={async () => {
                       if (window.electronAPI) {
+                        console.log('[Preferences] Clearing background image...');
                         const result = await window.electronAPI.clearBackgroundImage();
+                        console.log('[Preferences] Clear result:', result);
                         if (result.success) {
                           await loadPreferences();
                           // Trigger a preference update event so App.tsx picks up the change
@@ -348,13 +375,24 @@ export default function PreferencesComponent() {
                 className="preferences-button"
                 onClick={async () => {
                   if (window.electronAPI) {
+                    console.log('[Preferences] Selecting background image...');
                     const result = await window.electronAPI.selectBackgroundImage();
+                    console.log('[Preferences] Select result:', result);
                     if (result.success) {
+                      console.log('[Preferences] Image selection successful, reloading preferences...');
+                      // Small delay to ensure preference is saved to database
+                      await new Promise(resolve => setTimeout(resolve, 200));
                       await loadPreferences();
+                      console.log('[Preferences] Preferences reloaded after image selection');
                       // Trigger a preference update event so App.tsx picks up the change
-                      window.dispatchEvent(new CustomEvent('preferences-updated'));
+                      // Use a small delay to ensure database write is complete
+                      setTimeout(() => {
+                        window.dispatchEvent(new CustomEvent('preferences-updated'));
+                      }, 100);
                     } else if (!result.canceled) {
                       alert(`Failed to set background image: ${result.message || result.error}`);
+                    } else {
+                      console.log('[Preferences] Image selection was canceled');
                     }
                   }
                 }}
@@ -362,6 +400,41 @@ export default function PreferencesComponent() {
                 {preferences.backgroundImage ? 'Change Image' : 'Select Image'}
               </button>
             </div>
+            {backgroundImagePreview && (
+              <div style={{ 
+                marginTop: '12px', 
+                padding: '8px', 
+                border: '1px solid #e0e0e0', 
+                borderRadius: '4px',
+                backgroundColor: '#f9f9f9',
+                display: 'inline-block'
+              }}>
+                <div style={{ fontSize: '0.85rem', color: '#666', marginBottom: '8px' }}>Preview:</div>
+                <img 
+                  src={backgroundImagePreview} 
+                  alt="Background preview" 
+                  style={{ 
+                    maxWidth: '200px', 
+                    maxHeight: '150px', 
+                    objectFit: 'contain',
+                    border: '1px solid #ddd',
+                    borderRadius: '4px',
+                    display: 'block'
+                  }}
+                  onError={(e) => {
+                    console.error('[Preferences] Failed to load background image preview:', backgroundImagePreview);
+                    console.error('[Preferences] Image error:', e);
+                    (e.target as HTMLImageElement).style.display = 'none';
+                  }}
+                  onLoad={() => {
+                    console.log('[Preferences] Background image preview loaded successfully:', backgroundImagePreview);
+                  }}
+                />
+                <div style={{ fontSize: '0.75rem', color: '#999', marginTop: '4px', wordBreak: 'break-all' }}>
+                  {preferences.backgroundImage}
+                </div>
+              </div>
+            )}
             <small>
               {preferences.backgroundImage
                 ? 'A custom background image is set. Clear it to use procedural artwork based on your theme.'
