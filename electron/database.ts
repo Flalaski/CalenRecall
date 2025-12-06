@@ -1189,34 +1189,72 @@ export function getAllPreferences(): Preferences {
   
   const prefs: Preferences = { ...DEFAULT_PREFERENCES };
   
+  // Valid size values (for fontSize and minimapSize)
+  const validSizes: Array<Preferences['fontSize']> = [
+    'xxxSmall', 'xxSmall', 'xSmall', 'small', 'medium', 
+    'large', 'xLarge', 'xxLarge', 'xxxLarge'
+  ];
+  
+  // Helper function to validate and fix size values
+  const validateSize = (key: string, value: any, defaultValue: Preferences['fontSize']): Preferences['fontSize'] => {
+    if (value === undefined || value === null || value === '') {
+      return defaultValue;
+    }
+    const sizeStr = String(value).trim();
+    if (validSizes.includes(sizeStr as Preferences['fontSize'])) {
+      return sizeStr as Preferences['fontSize'];
+    } else {
+      // Invalid size - reset to default and update database
+      console.warn(`Invalid ${key} value found: "${value}". Resetting to default.`);
+      setPreference(key as 'fontSize' | 'minimapSize', defaultValue);
+      return defaultValue;
+    }
+  };
+  
   for (const row of rows) {
     const key = row.key as keyof Preferences;
     // Include all keys from the database, not just those in DEFAULT_PREFERENCES
     // This allows for new preferences to be added without updating DEFAULT_PREFERENCES immediately
     try {
       const parsedValue = JSON.parse(row.value);
-      (prefs as any)[key] = parsedValue;
+      
+      // Validate size values if they're being set
+      if (key === 'fontSize') {
+        (prefs as any)[key] = validateSize('fontSize', parsedValue, DEFAULT_PREFERENCES.fontSize!);
+      } else if (key === 'minimapSize') {
+        (prefs as any)[key] = validateSize('minimapSize', parsedValue, DEFAULT_PREFERENCES.minimapSize!);
+      } else {
+        (prefs as any)[key] = parsedValue;
+      }
     } catch {
       // If JSON parsing fails, try to use the raw value
       // This handles cases where the value might be stored as a plain string
       const rawValue = row.value;
-      // Try to infer the correct type based on the default value (if it exists)
-      const defaultValue = DEFAULT_PREFERENCES[key];
-      if (defaultValue !== undefined) {
-        if (typeof defaultValue === 'number') {
-          (prefs as any)[key] = parseFloat(rawValue) || defaultValue;
-        } else if (typeof defaultValue === 'boolean') {
-          (prefs as any)[key] = rawValue === 'true';
-        } else {
-          (prefs as any)[key] = rawValue;
-        }
+      
+      // Special handling for size values - validate them
+      if (key === 'fontSize') {
+        (prefs as any)[key] = validateSize('fontSize', rawValue, DEFAULT_PREFERENCES.fontSize!);
+      } else if (key === 'minimapSize') {
+        (prefs as any)[key] = validateSize('minimapSize', rawValue, DEFAULT_PREFERENCES.minimapSize!);
       } else {
-        // If no default exists, try to infer type from the value itself
-        // For strings, use as-is; for empty strings, use undefined
-        if (rawValue === '' || rawValue === 'null') {
-          (prefs as any)[key] = undefined;
+        // Try to infer the correct type based on the default value (if it exists)
+        const defaultValue = DEFAULT_PREFERENCES[key];
+        if (defaultValue !== undefined) {
+          if (typeof defaultValue === 'number') {
+            (prefs as any)[key] = parseFloat(rawValue) || defaultValue;
+          } else if (typeof defaultValue === 'boolean') {
+            (prefs as any)[key] = rawValue === 'true';
+          } else {
+            (prefs as any)[key] = rawValue;
+          }
         } else {
-          (prefs as any)[key] = rawValue;
+          // If no default exists, try to infer type from the value itself
+          // For strings, use as-is; for empty strings, use undefined
+          if (rawValue === '' || rawValue === 'null') {
+            (prefs as any)[key] = undefined;
+          } else {
+            (prefs as any)[key] = rawValue;
+          }
         }
       }
     }

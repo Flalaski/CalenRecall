@@ -238,3 +238,39 @@ export function initializeTheme(theme: ThemeName, callback?: (newTheme: string) 
   return () => {}; // No cleanup needed
 }
 
+/**
+ * Valid font size values
+ */
+export type FontSize = 'xxxSmall' | 'xxSmall' | 'xSmall' | 'small' | 'medium' | 'large' | 'xLarge' | 'xxLarge' | 'xxxLarge';
+
+const VALID_FONT_SIZES: FontSize[] = [
+  'xxxSmall', 'xxSmall', 'xSmall', 'small', 'medium', 
+  'large', 'xLarge', 'xxLarge', 'xxxLarge'
+];
+
+/**
+ * Validate and normalize a font size value
+ * Returns the value if valid, or 'medium' as default
+ */
+export function validateFontSize(value: any): FontSize {
+  if (!value || typeof value !== 'string') {
+    return 'medium';
+  }
+  const normalized = value.trim();
+  if (VALID_FONT_SIZES.includes(normalized as FontSize)) {
+    return normalized as FontSize;
+  }
+  console.warn(`Invalid font size value: "${value}". Using default 'medium'.`);
+  return 'medium';
+}
+
+/**
+ * Apply font size to document
+ */
+export function applyFontSize(fontSize: FontSize | string | undefined) {
+  if (typeof document === 'undefined') return;
+  
+  const validSize = validateFontSize(fontSize);
+  document.documentElement.setAttribute('data-font-size', validSize);
+}
+

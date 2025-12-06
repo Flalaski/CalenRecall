@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Preferences, ExportFormat } from '../types';
 import { playResetSound, playExportSound } from '../utils/audioUtils';
 import { CALENDAR_INFO } from '../utils/calendars/types';
-import { AVAILABLE_THEMES, applyTheme, initializeTheme } from '../utils/themes';
+import { AVAILABLE_THEMES, applyTheme, initializeTheme, applyFontSize } from '../utils/themes';
 import HotkeyDiagram from './HotkeyDiagram';
 import ImportProgressModal from './ImportProgressModal';
 import packageJson from '../../package.json';
@@ -40,9 +40,7 @@ export default function PreferencesComponent() {
         // Initialize theme with system preference listener for 'auto' theme
         const cleanup = initializeTheme(theme);
         
-        if (prefs.fontSize) {
-          document.documentElement.setAttribute('data-font-size', prefs.fontSize);
-        }
+        applyFontSize(prefs.fontSize);
         
         return cleanup;
       }
@@ -149,7 +147,11 @@ export default function PreferencesComponent() {
           applyTheme(theme);
         }
         if (key === 'fontSize') {
-          document.documentElement.setAttribute('data-font-size', value as string);
+          applyFontSize(value as string);
+        }
+        // Dispatch event for preferences that need to update other components
+        if (key === 'minimapCrystalUseDefaultColors' || key === 'backgroundImage') {
+          window.dispatchEvent(new CustomEvent('preferences-updated'));
         }
       }).catch(error => {
         console.error('Error auto-saving preference:', error);
@@ -440,6 +442,18 @@ export default function PreferencesComponent() {
                 ? 'A custom background image is set. Clear it to use the default theme background.'
                 : 'Select a custom background image, or leave empty to use the default theme background.'}
             </small>
+          </div>
+
+          <div className="preference-item">
+            <label>
+              <input
+                type="checkbox"
+                checked={preferences.minimapCrystalUseDefaultColors !== false}
+                onChange={(e) => updatePreference('minimapCrystalUseDefaultColors', e.target.checked)}
+              />
+              Use calculated numerological colors for minimap crystals
+            </label>
+            <small>When enabled, minimap crystals use calculated numerological colors (default behavior). When disabled, crystals use the theme's entry indicator color.</small>
           </div>
 
         </div>

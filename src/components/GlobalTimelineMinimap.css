@@ -1084,18 +1084,10 @@
     0 0 35px var(--gem-color);
   animation: gemGlow 3s ease-in-out infinite;
   will-change: transform, opacity, box-shadow;
-  /* Create faceted gem shape - randomized polygon based on entry properties */
-  clip-path: var(--polygon-clip, polygon(
-    30% 0%, 
-    70% 0%, 
-    100% 30%, 
-    100% 70%, 
-    70% 100%, 
-    30% 100%, 
-    0% 70%, 
-    0% 30%
-  ));
-  /* Enhanced 3D gradient for physical crystal depth - fully saturated with gem color */
+}
+
+/* Override theme background when using calculated colors */
+.entry-indicator.use-calculated-colors {
   background: 
     /* Noise texture overlay for active noise effect */
     url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.1'/%3E%3C/svg%3E"),
@@ -1109,8 +1101,24 @@
       var(--gem-color) 70%,
       var(--gem-color) 85%,
       color-mix(in srgb, var(--gem-color) 70%, white) 100%
-    );
-  background-blend-mode: overlay, normal;
+    ) !important;
+  background-blend-mode: overlay, normal !important;
+}
+
+.entry-indicator {
+  /* Create faceted gem shape - randomized polygon based on entry properties */
+  clip-path: var(--polygon-clip, polygon(
+    30% 0%, 
+    70% 0%, 
+    100% 30%, 
+    100% 70%, 
+    70% 100%, 
+    30% 100%, 
+    0% 70%, 
+    0% 30%
+  ));
+  /* Enhanced 3D gradient for physical crystal depth - only when using calculated colors */
+  /* When not using calculated colors, theme CSS will provide the background */
   /* Optimized: All glows use gem color, no white overlays */
   box-shadow: 
     /* Gradient fade glow border - all using gem color */

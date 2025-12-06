@@ -142,6 +142,74 @@ function lightenColor(hex: string, amount: number = 0.4): string {
   }).join('')}`;
 }
 
+// Convert HSL to hex
+function hslToHex(hsl: string): string {
+  const matches = hsl.match(/hsl\((\d+),\s*(\d+)%,\s*(\d+)%\)/);
+  if (!matches) return hsl; // Return as-is if not HSL format
+  
+  const h = parseInt(matches[1]) / 360;
+  const s = parseInt(matches[2]) / 100;
+  const l = parseInt(matches[3]) / 100;
+  
+  let r, g, b;
+  if (s === 0) {
+    r = g = b = l; // achromatic
+  } else {
+    const hue2rgb = (p: number, q: number, t: number) => {
+      if (t < 0) t += 1;
+      if (t > 1) t -= 1;
+      if (t < 1/6) return p + (q - p) * 6 * t;
+      if (t < 1/2) return q;
+      if (t < 2/3) return p + (q - p) * (2/3 - t) * 6;
+      return p;
+    };
+    const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+    const p = 2 * l - q;
+    r = hue2rgb(p, q, h + 1/3);
+    g = hue2rgb(p, q, h);
+    b = hue2rgb(p, q, h - 1/3);
+  }
+  
+  return `#${[r, g, b].map(x => {
+    const hex = Math.round(x * 255).toString(16);
+    return hex.length === 1 ? '0' + hex : hex;
+  }).join('')}`;
+}
+
+// Get theme's entry-indicator color from CSS
+function getThemeEntryIndicatorColor(theme: string = 'light'): string {
+  // Create a temporary element to get computed style
+  const tempEl = document.createElement('div');
+  tempEl.className = 'entry-indicator';
+  tempEl.setAttribute('data-theme', theme);
+  tempEl.style.position = 'absolute';
+  tempEl.style.visibility = 'hidden';
+  tempEl.style.pointerEvents = 'none';
+  document.body.appendChild(tempEl);
+  
+  const computedStyle = window.getComputedStyle(tempEl);
+  const bgColor = computedStyle.backgroundColor;
+  
+  document.body.removeChild(tempEl);
+  
+  // Convert rgb/rgba to hex if needed
+  if (bgColor.startsWith('rgb')) {
+    const matches = bgColor.match(/\d+/g);
+    if (matches && matches.length >= 3) {
+      const r = parseInt(matches[0]);
+      const g = parseInt(matches[1]);
+      const b = parseInt(matches[2]);
+      return `#${[r, g, b].map(x => {
+        const hex = x.toString(16);
+        return hex.length === 1 ? '0' + hex : hex;
+      }).join('')}`;
+    }
+  }
+  
+  // Return as-is if already hex or other format
+  return bgColor || '#4a90e2'; // Fallback to blue
+}
+
 export default function GlobalTimelineMinimap({
   selectedDate,
   viewMode,
@@ -153,6 +221,8 @@ export default function GlobalTimelineMinimap({
   const { entries } = useEntries();
   const tierNames = getCalendarTierNames(calendar);
   const [timelineRangeKey, setTimelineRangeKey] = useState(0); // Track timeline range changes to trigger entry reloading
+  const [minimapCrystalUseDefaultColors, setMinimapCrystalUseDefaultColors] = useState(true); // Default to true (use calculated colors)
+  const [currentTheme, setCurrentTheme] = useState<string>('light');
   const [isDragging, setIsDragging] = useState(false);
   const [mechanicalClick, setMechanicalClick] = useState<{ scale: TimeRange; direction: 'up' | 'down' } | null>(null);
   const [horizontalLocked, setHorizontalLocked] = useState(false);
@@ -181,6 +251,36 @@ export default function GlobalTimelineMinimap({
   const throttledIndicatorPositionRef = useRef<number>(50); // Default to center
   const lastThrottleUpdateRef = useRef<number>(0);
   
+  // Load minimap crystal color preference and theme
+  useEffect(() => {
+    const loadPreference = async () => {
+      if (window.electronAPI) {
+        const prefs = await window.electronAPI.getAllPreferences();
+        // Default to true (use calculated colors) if not set
+        // When checkbox is checked, minimapCrystalUseDefaultColors is true (use calculated)
+        // When checkbox is unchecked, minimapCrystalUseDefaultColors is false (use theme)
+        const useDefaultColors = prefs.minimapCrystalUseDefaultColors !== false;
+        const theme = prefs.theme || 'light';
+        setMinimapCrystalUseDefaultColors(useDefaultColors);
+        setCurrentTheme(theme);
+        // Force cache recalculation by updating timelineRangeKey
+        setTimelineRangeKey(prev => prev + 1);
+      }
+    };
+    
+    loadPreference();
+    
+    // Listen for preference updates
+    const handlePreferenceUpdate = () => {
+      loadPreference();
+    };
+    window.addEventListener('preferences-updated', handlePreferenceUpdate);
+    
+    return () => {
+      window.removeEventListener('preferences-updated', handlePreferenceUpdate);
+    };
+  }, []);
+
   // SUPREME OPTIMIZATION: Entries are now preloaded globally via EntriesContext
   // No need to load entries here - they're already available in memory!
   // Just listen for entry updates to refresh the view
@@ -1763,13 +1863,17 @@ export default function GlobalTimelineMinimap({
       }
       
       // Cache entry colors (moderate calculation)
-      if (entry.id && !entryColorCache.has(entry.id)) {
-        entryColorCache.set(entry.id, calculateEntryColor(entry));
+      // Always recalculate when preference or theme changes (cache is rebuilt on dependency change)
+      if (entry.id) {
+        const color = minimapCrystalUseDefaultColors 
+          ? calculateEntryColor(entry)
+          : getThemeEntryIndicatorColor(currentTheme);
+        entryColorCache.set(entry.id, color);
       }
     }
     
     return { dateCache, crystalSidesCache, entryColorCache };
-  }, [entries]);
+  }, [entries, minimapCrystalUseDefaultColors, currentTheme]);
   
   // Extract caches for easier access
   const dateCache = entryMetadataCache.dateCache;
@@ -1917,12 +2021,25 @@ export default function GlobalTimelineMinimap({
       if (!clusterGroups.has(clusterKey)) {
         clusterGroups.set(clusterKey, []);
       }
-      // Use cached color instead of recalculating
-      const cachedColor = entry.id ? entryColorCache.get(entry.id) : calculateEntryColor(entry);
+      // Get color for entry
+      // Priority: 1) Use cache if available (cache is rebuilt when preference changes)
+      //           2) Calculate on the fly for entries without IDs
+      const getColorForEntry = (e: JournalEntry) => {
+        if (minimapCrystalUseDefaultColors) {
+          return calculateEntryColor(e);
+        } else {
+          return getThemeEntryIndicatorColor(currentTheme);
+        }
+      };
+      // Always prefer cache if entry has ID (cache is rebuilt with correct colors when preference changes)
+      // For entries without ID, calculate on the fly
+      const finalColor = entry.id 
+        ? (entryColorCache.get(entry.id) ?? getColorForEntry(entry))
+        : getColorForEntry(entry);
       clusterGroups.get(clusterKey)!.push({
         entry,
         position: clampedPosition,
-        color: cachedColor || calculateEntryColor(entry),
+        color: finalColor,
       });
     }
     
@@ -2171,7 +2288,7 @@ export default function GlobalTimelineMinimap({
     });
     
     return result;
-  }, [entries, timelineData, sectionHeights, entriesByYear, dateCache, entryColorCache, crystalSidesCache, viewMode, timelineRangeKey]);
+  }, [entries, timelineData, sectionHeights, entriesByYear, dateCache, entryColorCache, crystalSidesCache, viewMode, timelineRangeKey, minimapCrystalUseDefaultColors, currentTheme]);
 
   // OPTIMIZATION: Separate viewport filtering from base entry processing
   // This allows stable memoization of base processing while filtering by viewport separately
@@ -3843,8 +3960,15 @@ export default function GlobalTimelineMinimap({
               if (connectionType === 'entry-to-entry' && targetEntry) {
                 // Blend colors for entry-to-entry connections
                 // Use cached colors instead of recalculating
-                const sourceColor = entry.id ? (entryColorCache.get(entry.id) || calculateEntryColor(entry)) : calculateEntryColor(entry);
-                const targetColor = targetEntry.id ? (entryColorCache.get(targetEntry.id) || calculateEntryColor(targetEntry)) : calculateEntryColor(targetEntry);
+                const getEntryColor = (e: JournalEntry) => {
+                  if (minimapCrystalUseDefaultColors) {
+                    return e.id ? (entryColorCache.get(e.id) || calculateEntryColor(e)) : calculateEntryColor(e);
+                  } else {
+                    return getThemeEntryIndicatorColor(currentTheme);
+                  }
+                };
+                const sourceColor = getEntryColor(entry);
+                const targetColor = getEntryColor(targetEntry);
                 // Convert hex to RGB, blend, and convert back
                 const hexToRgb = (hex: string) => {
                   const r = parseInt(hex.slice(1, 3), 16);
@@ -3855,8 +3979,11 @@ export default function GlobalTimelineMinimap({
                 const rgbToHex = (r: number, g: number, b: number) => {
                   return `#${Math.round(r).toString(16).padStart(2, '0')}${Math.round(g).toString(16).padStart(2, '0')}${Math.round(b).toString(16).padStart(2, '0')}`;
                 };
-                const sourceRgb = hexToRgb(sourceColor);
-                const targetRgb = hexToRgb(targetColor);
+                // Convert HSL to hex if needed
+                const sourceHex = sourceColor.startsWith('hsl') ? hslToHex(sourceColor) : sourceColor;
+                const targetHex = targetColor.startsWith('hsl') ? hslToHex(targetColor) : targetColor;
+                const sourceRgb = hexToRgb(sourceHex);
+                const targetRgb = hexToRgb(targetHex);
                 connectionColor = rgbToHex(
                   (sourceRgb.r + targetRgb.r) / 2,
                   (sourceRgb.g + targetRgb.g) / 2,
@@ -3865,7 +3992,9 @@ export default function GlobalTimelineMinimap({
               } else if (connectionType === 'focus') {
                 // Focus connections use a vibrant blend with the active color
                 // Use cached color instead of recalculating
-                const entryColor = entry.id ? (entryColorCache.get(entry.id) || calculateEntryColor(entry)) : calculateEntryColor(entry);
+                const entryColor = minimapCrystalUseDefaultColors
+                  ? (entry.id ? (entryColorCache.get(entry.id) || calculateEntryColor(entry)) : calculateEntryColor(entry))
+                  : getThemeEntryIndicatorColor(currentTheme);
                 const hexToRgb = (hex: string) => {
                   const r = parseInt(hex.slice(1, 3), 16);
                   const g = parseInt(hex.slice(3, 5), 16);
@@ -3875,7 +4004,9 @@ export default function GlobalTimelineMinimap({
                 const rgbToHex = (r: number, g: number, b: number) => {
                   return `#${Math.round(r).toString(16).padStart(2, '0')}${Math.round(g).toString(16).padStart(2, '0')}${Math.round(b).toString(16).padStart(2, '0')}`;
                 };
-                const entryRgb = hexToRgb(entryColor);
+                // Convert HSL to hex if needed
+                const entryHex = entryColor.startsWith('hsl') ? hslToHex(entryColor) : entryColor;
+                const entryRgb = hexToRgb(entryHex);
                 // Blend with active color (blue-ish for focus)
                 const focusRgb = { r: 74, g: 144, b: 226 }; // #4a90e2
                 connectionColor = rgbToHex(
@@ -3885,7 +4016,9 @@ export default function GlobalTimelineMinimap({
                 );
               } else {
                 // Web connections use entry color - use cached color instead of recalculating
-                connectionColor = entry.id ? (entryColorCache.get(entry.id) || calculateEntryColor(entry)) : calculateEntryColor(entry);
+                connectionColor = minimapCrystalUseDefaultColors
+                  ? (entry.id ? (entryColorCache.get(entry.id) || calculateEntryColor(entry)) : calculateEntryColor(entry))
+                  : getThemeEntryIndicatorColor(currentTheme);
               }
               
               // Determine connection class based on strategy
@@ -4654,7 +4787,7 @@ export default function GlobalTimelineMinimap({
                 }}
               >
                 <div
-                  className="entry-indicator"
+                  className={`entry-indicator ${minimapCrystalUseDefaultColors ? 'use-calculated-colors' : ''}`}
                   style={{
                     '--gem-color': color,
                     '--polygon-clip': polygonClipPath,

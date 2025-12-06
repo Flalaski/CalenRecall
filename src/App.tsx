@@ -12,7 +12,7 @@ import { TimeRange, JournalEntry, Preferences } from './types';
 import { getEntryForDate } from './services/journalService';
 import { playNewEntrySound } from './utils/audioUtils';
 import { formatDateToISO, parseISODate } from './utils/dateUtils';
-import { applyTheme, initializeTheme } from './utils/themes';
+import { applyTheme, initializeTheme, applyFontSize } from './utils/themes';
 import { useEntries } from './contexts/EntriesContext';
 import './App.css';
 
@@ -150,10 +150,8 @@ function App() {
           // Initialize theme with system preference listener for 'auto' theme
           initializeTheme(theme);
           
-          // Apply font size
-          if (prefs.fontSize) {
-            document.documentElement.setAttribute('data-font-size', prefs.fontSize);
-          }
+          // Apply font size (with validation)
+          applyFontSize(prefs.fontSize);
 
           // Load background image path
           if (window.electronAPI && prefs.backgroundImage) {
@@ -187,9 +185,7 @@ function App() {
           // Default view mode is ONLY applied on the very first load, never after
           const theme = (prefs.theme || 'light') as any;
           applyTheme(theme);
-          if (prefs.fontSize) {
-            document.documentElement.setAttribute('data-font-size', prefs.fontSize);
-          }
+          applyFontSize(prefs.fontSize);
           // Update background image if changed
           if (prefs.backgroundImage) {
             const bgResult = await window.electronAPI.getBackgroundImagePath();
