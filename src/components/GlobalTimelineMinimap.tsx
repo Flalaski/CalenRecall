@@ -14,7 +14,7 @@ interface GlobalTimelineMinimapProps {
   viewMode: TimeRange;
   onTimePeriodSelect: (date: Date, viewMode: TimeRange) => void;
   onEntrySelect?: (entry: JournalEntry) => void;
-  minimapSize?: 'small' | 'medium' | 'large';
+  minimapSize?: 'xxxSmall' | 'xxSmall' | 'xSmall' | 'small' | 'medium' | 'large' | 'xLarge' | 'xxLarge' | 'xxxLarge';
 }
 
 // Generate a polygon clip-path based on number of sides
@@ -743,10 +743,16 @@ export default function GlobalTimelineMinimap({
   // Calculate container height and scale factor based on minimap size
   const minimapDimensions = useMemo(() => {
     const baseHeight = 200; // Medium size
-    const heights = {
+    const heights: Record<string, number> = {
+      xxxSmall: 60,
+      xxSmall: 80,
+      xSmall: 100,
       small: 120,
       medium: 200,
       large: 280,
+      xLarge: 360,
+      xxLarge: 440,
+      xxxLarge: 520,
     };
     const height = heights[minimapSize] || baseHeight;
     const scaleFactor = height / baseHeight;

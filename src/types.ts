@@ -61,10 +61,10 @@ export interface Preferences {
   autoSave?: boolean;
   autoSaveInterval?: number;
   theme?: string; // Theme name - dynamically discovered from themes folder
-  fontSize?: 'small' | 'medium' | 'large';
+  fontSize?: 'xxxSmall' | 'xxSmall' | 'xSmall' | 'small' | 'medium' | 'large' | 'xLarge' | 'xxLarge' | 'xxxLarge';
   showMinimap?: boolean;
   minimapPosition?: 'left' | 'right' | 'top' | 'bottom';
-  minimapSize?: 'small' | 'medium' | 'large';
+  minimapSize?: 'xxxSmall' | 'xxSmall' | 'xSmall' | 'small' | 'medium' | 'large' | 'xLarge' | 'xxLarge' | 'xxxLarge';
   restoreLastView?: boolean;
   lastViewedDate?: string;
   lastViewedMode?: 'decade' | 'year' | 'month' | 'week' | 'day';

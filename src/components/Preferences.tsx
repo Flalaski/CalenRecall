@@ -301,9 +301,15 @@ export default function PreferencesComponent() {
               value={preferences.fontSize || 'medium'}
               onChange={(e) => updatePreference('fontSize', e.target.value as Preferences['fontSize'])}
             >
+              <option value="xxxSmall">XXX Small</option>
+              <option value="xxSmall">XX Small</option>
+              <option value="xSmall">X Small</option>
               <option value="small">Small</option>
               <option value="medium">Medium</option>
               <option value="large">Large</option>
+              <option value="xLarge">X Large</option>
+              <option value="xxLarge">XX Large</option>
+              <option value="xxxLarge">XXX Large</option>
             </select>
           </div>
         </div>
@@ -411,9 +417,15 @@ export default function PreferencesComponent() {
                   value={preferences.minimapSize || 'medium'}
                   onChange={(e) => updatePreference('minimapSize', e.target.value as Preferences['minimapSize'])}
                 >
+                  <option value="xxxSmall">XXX Small</option>
+                  <option value="xxSmall">XX Small</option>
+                  <option value="xSmall">X Small</option>
                   <option value="small">Small</option>
                   <option value="medium">Medium</option>
                   <option value="large">Large</option>
+                  <option value="xLarge">X Large</option>
+                  <option value="xxLarge">XX Large</option>
+                  <option value="xxxLarge">XXX Large</option>
                 </select>
               </div>
             </>

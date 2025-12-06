@@ -279,6 +279,18 @@
 }
 
 /* Minimap size variants */
+.minimap-container.minimap-size-xxxSmall {
+  height: 60px;
+}
+
+.minimap-container.minimap-size-xxSmall {
+  height: 80px;
+}
+
+.minimap-container.minimap-size-xSmall {
+  height: 100px;
+}
+
 .minimap-container.minimap-size-small {
   height: 120px;
 }
@@ -289,6 +301,18 @@
 
 .minimap-container.minimap-size-large {
   height: 280px;
+}
+
+.minimap-container.minimap-size-xLarge {
+  height: 360px;
+}
+
+.minimap-container.minimap-size-xxLarge {
+  height: 440px;
+}
+
+.minimap-container.minimap-size-xxxLarge {
+  height: 520px;
 }
 
 .minimap-container.dragging {
