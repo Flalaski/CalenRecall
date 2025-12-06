@@ -71,6 +71,10 @@ const BUILT_IN_THEME_METADATA: Record<string, Omit<ThemeInfo, 'name'>> = {
   'auto': {
     displayName: 'Auto (System)',
     description: 'Follows your system theme preference'
+  },
+  'on-screen': {
+    displayName: 'ON SCREEN',
+    description: 'Futuristic LCARS-inspired interface design with amber/orange active elements'
   }
 };
 

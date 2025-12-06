@@ -29,9 +29,9 @@
 }
 
 .month-week-entries-section {
-  width: 250px;
-  min-width: 200px;
-  max-width: 300px;
+  width: 400px;
+  min-width: 350px;
+  max-width: 500px;
   display: flex;
   flex-direction: column;
   background: #f9f9f9;
@@ -153,6 +153,111 @@
 }
 
 .week-entry-empty {
+  font-size: 0.8rem;
+  color: #999;
+  font-style: italic;
+  text-align: center;
+  padding: 0.5rem;
+}
+
+.month-entries-section {
+  display: flex;
+  flex-direction: column;
+  border-bottom: 2px solid #e0e0e0;
+  margin-bottom: 0.5rem;
+}
+
+.month-entries-header {
+  padding: 0.75rem 1rem;
+  background: #f0f0f0;
+  border-bottom: 2px solid #e0e0e0;
+  font-weight: 400;
+  font-size: 0.9rem;
+  color: #333;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  font-family: 'Bebas Neue', 'Impact', 'Arial Black', 'Franklin Gothic Heavy', 'Arial Narrow', sans-serif;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  text-shadow: 
+    1px 1px 0px rgba(0, 0, 0, 0.15),
+    2px 2px 0px rgba(0, 0, 0, 0.1),
+    3px 3px 4px rgba(0, 0, 0, 0.08);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.month-entries-list {
+  padding: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.month-entry-item {
+  padding: 0.75rem;
+  background: white;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+  border-left: 4px solid #ff9800;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.month-entry-item:hover {
+  background: #fff8e1;
+  border-color: #ff9800;
+  transform: translateX(2px);
+  box-shadow: 0 2px 4px rgba(255, 152, 0, 0.1);
+}
+
+.month-entry-title {
+  font-size: 0.9rem;
+  color: #333;
+  font-weight: 400;
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+  word-break: break-word;
+  font-family: 'Bebas Neue', 'Impact', 'Arial Black', 'Franklin Gothic Heavy', 'Arial Narrow', sans-serif;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  text-shadow: 
+    1px 1px 0px rgba(0, 0, 0, 0.15),
+    2px 2px 0px rgba(0, 0, 0, 0.1),
+    3px 3px 4px rgba(0, 0, 0, 0.08);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.month-entry-preview {
+  font-size: 0.75rem;
+  color: #666;
+  line-height: 1.4;
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+  word-break: break-word;
+}
+
+.month-entry-tags {
+  display: flex;
+  gap: 0.25rem;
+  flex-wrap: wrap;
+}
+
+.month-entry-tag {
+  font-size: 0.65rem;
+  padding: 0.15rem 0.4rem;
+  background: #e3f2fd;
+  color: #1976d2;
+  border-radius: 12px;
+  font-weight: 500;
+}
+
+.month-entry-empty {
   font-size: 0.8rem;
   color: #999;
   font-style: italic;

@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { JournalEntry, TimeRange } from '../types';
-import { formatDate, getDaysInMonth, getDaysInWeek, isToday, getWeekStart, getWeekEnd, getZodiacColor, getZodiacGradientColor, getZodiacGradientColorForYear, getZodiacColorForDecade, parseISODate } from '../utils/dateUtils';
+import { formatDate, getDaysInMonth, getDaysInWeek, isToday, getWeekStart, getWeekEnd, getZodiacColor, getZodiacGradientColor, getZodiacGradientColorForYear, parseISODate } from '../utils/dateUtils';
 import { isSameDay, isSameMonth, isSameYear } from 'date-fns';
 import { playCalendarSelectionSound, playEntrySelectionSound, playEditSound } from '../utils/audioUtils';
 import { calculateEntryColor } from '../utils/entryColorUtils';
@@ -173,7 +173,6 @@ export default function TimelineView({
       const entryDate = parseISODate(entry.date);
       const entryYear = entryDate.getFullYear();
       const entryMonth = entryDate.getMonth();
-      const entryDay = entryDate.getDate();
       
       // Check if entry falls within this month
       if (entry.timeRange === 'day') {
@@ -261,6 +260,19 @@ export default function TimelineView({
     const firstDay = days[0].getDay();
     const adjustedFirstDay = firstDay === 0 ? 6 : firstDay - 1;
     
+    // Get month entries for the current month
+    const monthEntries: JournalEntry[] = [];
+    const monthStart = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1);
+    const monthEnd = new Date(selectedDate.getFullYear(), selectedDate.getMonth() + 1, 0);
+    entries.forEach(entry => {
+      if (entry.timeRange === 'month') {
+        const entryDate = parseISODate(entry.date);
+        if (entryDate >= monthStart && entryDate <= monthEnd) {
+          monthEntries.push(entry);
+        }
+      }
+    });
+    
     // Get week entries for the month and group them by week
     const weekEntriesByWeek = new Map<string, JournalEntry[]>();
     entries.forEach(entry => {
@@ -271,8 +283,6 @@ export default function TimelineView({
         const weekKey = formatDate(weekStart);
         
         // Check if this week is within the current month
-        const monthStart = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1);
-        const monthEnd = new Date(selectedDate.getFullYear(), selectedDate.getMonth() + 1, 0);
         const weekEnd = new Date(weekStart);
         weekEnd.setDate(weekEnd.getDate() + 6);
         
@@ -369,55 +379,94 @@ export default function TimelineView({
             </div>
           </div>
           
-          {weeksInMonth.length > 0 && (
-            <div className="month-week-entries-section">
-              <div className="week-entries-header">Week Entries</div>
-              <div className="week-entries-list">
-                {weeksInMonth.map((weekStart, weekIdx) => {
-                  const weekKey = formatDate(weekStart);
-                  const weekEntries = weekEntriesByWeek.get(weekKey) || [];
-                  const weekEnd = new Date(weekStart);
-                  weekEnd.setDate(weekEnd.getDate() + 6);
-                  
-                  return (
-                    <div key={weekIdx} className="week-entry-group">
-                      <div className="week-entry-group-header">
-                        <span className="week-label">
-                          Week of {formatDate(weekStart, 'MMM d')}
-                        </span>
-                        {weekEntries.length > 0 && (
-                          <span className="week-entry-count">{weekEntries.length}</span>
+          <div className="month-week-entries-section">
+            <div className="month-entries-section">
+              <div className="month-entries-header">Month Entries</div>
+              <div className="month-entries-list">
+                {monthEntries.length > 0 ? (
+                  monthEntries.map((entry, eIdx) => {
+                    const entryColor = calculateEntryColor(entry);
+                    return (
+                      <div
+                        key={eIdx}
+                        className="month-entry-item"
+                        onClick={() => {
+                          playEntrySelectionSound();
+                          onEntrySelect(entry);
+                        }}
+                        title={entry.title}
+                        style={{ borderLeftColor: entryColor }}
+                      >
+                        <span className="month-entry-title">{entry.title}</span>
+                        {entry.content && entry.content.length > 0 && (
+                          <span className="month-entry-preview">{entry.content.substring(0, 80)}...</span>
+                        )}
+                        {entry.tags && entry.tags.length > 0 && (
+                          <div className="month-entry-tags">
+                            {entry.tags.slice(0, 3).map((tag, tIdx) => (
+                              <span key={tIdx} className="month-entry-tag">{tag}</span>
+                            ))}
+                          </div>
                         )}
                       </div>
-                      {weekEntries.length > 0 ? (
-                        <div className="week-entry-items">
-                          {weekEntries.map((entry, eIdx) => {
-                            const entryColor = calculateEntryColor(entry);
-                            return (
-                              <div
-                                key={eIdx}
-                                className="week-entry-item"
-                                onClick={() => {
-                                  playEntrySelectionSound();
-                                  onEntrySelect(entry);
-                                }}
-                                title={entry.title}
-                                style={{ borderLeftColor: entryColor }}
-                              >
-                                <span className="week-entry-title">{entry.title}</span>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      ) : (
-                        <div className="week-entry-empty">No week entries</div>
-                      )}
-                    </div>
-                  );
-                })}
+                    );
+                  })
+                ) : (
+                  <div className="month-entry-empty">No month entries</div>
+                )}
               </div>
             </div>
-          )}
+            
+            {weeksInMonth.length > 0 && (
+              <>
+                <div className="week-entries-header">Week Entries</div>
+                <div className="week-entries-list">
+                  {weeksInMonth.map((weekStart, weekIdx) => {
+                    const weekKey = formatDate(weekStart);
+                    const weekEntries = weekEntriesByWeek.get(weekKey) || [];
+                    const weekEnd = new Date(weekStart);
+                    weekEnd.setDate(weekEnd.getDate() + 6);
+                    
+                    return (
+                      <div key={weekIdx} className="week-entry-group">
+                        <div className="week-entry-group-header">
+                          <span className="week-label">
+                            Week of {formatDate(weekStart, 'MMM d')}
+                          </span>
+                          {weekEntries.length > 0 && (
+                            <span className="week-entry-count">{weekEntries.length}</span>
+                          )}
+                        </div>
+                        {weekEntries.length > 0 ? (
+                          <div className="week-entry-items">
+                            {weekEntries.map((entry, eIdx) => {
+                              const entryColor = calculateEntryColor(entry);
+                              return (
+                                <div
+                                  key={eIdx}
+                                  className="week-entry-item"
+                                  onClick={() => {
+                                    playEntrySelectionSound();
+                                    onEntrySelect(entry);
+                                  }}
+                                  title={entry.title}
+                                  style={{ borderLeftColor: entryColor }}
+                                >
+                                  <span className="week-entry-title">{entry.title}</span>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        ) : (
+                          <div className="week-entry-empty">No week entries</div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </>
+            )}
+          </div>
         </div>
       </div>
     );
@@ -552,7 +601,7 @@ export default function TimelineView({
       
       setSelectedEntryIds(new Set());
       setBulkEditMode(false);
-      loadEntries();
+      // Entries are automatically refreshed via EntriesContext
       window.dispatchEvent(new CustomEvent('journalEntrySaved'));
     } catch (error) {
       console.error('Error deleting entries:', error);

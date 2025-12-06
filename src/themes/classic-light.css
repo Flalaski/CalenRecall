@@ -34,7 +34,10 @@
 /* Navigation Bar */
 [data-theme="classic-light"] .navigation-bar {
   background: #c0c0c0;
-  border-bottom: 2px outset #c0c0c0;
+  border-top: 2px solid #ffffff;
+  border-left: 2px solid #ffffff;
+  border-bottom: 2px solid #808080;
+  border-right: 2px solid #808080;
   box-shadow: none;
 }
 
@@ -94,7 +97,10 @@
 
 [data-theme="classic-light"] .weekday-header {
   background: #c0c0c0;
-  border-bottom: 2px inset #c0c0c0;
+  border-top: 2px solid #808080;
+  border-left: 2px solid #808080;
+  border-bottom: 2px solid #ffffff;
+  border-right: 2px solid #ffffff;
   color: #000000;
   font-family: 'MS Sans Serif', sans-serif;
   text-shadow: none;
@@ -131,7 +137,10 @@
 [data-theme="classic-light"] .editor-header,
 [data-theme="classic-light"] .viewer-header {
   background: #c0c0c0;
-  border-bottom: 2px inset #c0c0c0;
+  border-top: 2px solid #808080;
+  border-left: 2px solid #808080;
+  border-bottom: 2px solid #ffffff;
+  border-right: 2px solid #ffffff;
 }
 
 [data-theme="classic-light"] .editor-form input,
@@ -360,7 +369,10 @@
 
 [data-theme="classic-light"] .week-entries-header {
   background: #c0c0c0;
-  border-bottom: 2px inset #c0c0c0;
+  border-top: 2px solid #808080;
+  border-left: 2px solid #808080;
+  border-bottom: 2px solid #ffffff;
+  border-right: 2px solid #ffffff;
   color: #000000;
   font-family: 'MS Sans Serif', sans-serif;
   text-shadow: none;
@@ -574,7 +586,10 @@
 
 [data-theme="classic-light"] .period-entries-controls {
   background: #c0c0c0;
-  border-bottom: 2px inset #c0c0c0;
+  border-top: 2px solid #808080;
+  border-left: 2px solid #808080;
+  border-bottom: 2px solid #ffffff;
+  border-right: 2px solid #ffffff;
 }
 
 [data-theme="classic-light"] .period-entries-filter,
@@ -906,7 +921,10 @@
 
 [data-theme="classic-light"] .journal-list-header {
   background: #c0c0c0;
-  border-bottom: 2px inset #c0c0c0;
+  border-top: 2px solid #808080;
+  border-left: 2px solid #808080;
+  border-bottom: 2px solid #ffffff;
+  border-right: 2px solid #ffffff;
 }
 
 [data-theme="classic-light"] .journal-list-header h3 {
@@ -927,7 +945,10 @@
 
 [data-theme="classic-light"] .journal-list-controls {
   background: #c0c0c0;
-  border-bottom: 2px inset #c0c0c0;
+  border-top: 2px solid #808080;
+  border-left: 2px solid #808080;
+  border-bottom: 2px solid #ffffff;
+  border-right: 2px solid #ffffff;
 }
 
 [data-theme="classic-light"] .journal-list-filter,
@@ -1095,7 +1116,10 @@
 
 [data-theme="classic-light"] .bulk-edit-actions {
   background: #ffff00;
-  border-bottom: 2px inset #c0c0c0;
+  border-top: 2px solid #808080;
+  border-left: 2px solid #808080;
+  border-bottom: 2px solid #ffffff;
+  border-right: 2px solid #ffffff;
 }
 
 [data-theme="classic-light"] .bulk-edit-selected-count {
@@ -1123,7 +1147,10 @@
 
 [data-theme="classic-light"] .bulk-edit-select-all {
   background: #c0c0c0;
-  border-bottom: 2px inset #c0c0c0;
+  border-top: 2px solid #808080;
+  border-left: 2px solid #808080;
+  border-bottom: 2px solid #ffffff;
+  border-right: 2px solid #ffffff;
 }
 
 [data-theme="classic-light"] .bulk-edit-checkbox-label {
@@ -1147,7 +1174,10 @@
 
 [data-theme="classic-light"] .modal-header {
   background: #c0c0c0;
-  border-bottom: 2px inset #c0c0c0;
+  border-top: 2px solid #808080;
+  border-left: 2px solid #808080;
+  border-bottom: 2px solid #ffffff;
+  border-right: 2px solid #ffffff;
 }
 
 [data-theme="classic-light"] .modal-header-top {
@@ -1357,7 +1387,10 @@
 
 [data-theme="classic-light"] .search-header {
   background: #c0c0c0;
-  border-bottom: 2px inset #c0c0c0;
+  border-top: 2px solid #808080;
+  border-left: 2px solid #808080;
+  border-bottom: 2px solid #ffffff;
+  border-right: 2px solid #ffffff;
 }
 
 [data-theme="classic-light"] .search-input-container {
@@ -1406,7 +1439,10 @@
 
 [data-theme="classic-light"] .search-filters {
   background: #c0c0c0;
-  border-bottom: 2px inset #c0c0c0;
+  border-top: 2px solid #808080;
+  border-left: 2px solid #808080;
+  border-bottom: 2px solid #ffffff;
+  border-right: 2px solid #ffffff;
 }
 
 [data-theme="classic-light"] .filter-group {
@@ -1617,7 +1653,10 @@
 
 [data-theme="classic-light"] .preferences-header {
   background: #c0c0c0;
-  border-bottom: 2px inset #c0c0c0;
+  border-top: 2px solid #808080;
+  border-left: 2px solid #808080;
+  border-bottom: 2px solid #ffffff;
+  border-right: 2px solid #ffffff;
 }
 
 [data-theme="classic-light"] .preferences-header h1 {
@@ -1964,7 +2003,10 @@
 /* Global Timeline Minimap - Windows 95 style (simplified) */
 [data-theme="classic-light"] .global-timeline-minimap {
   background: #c0c0c0;
-  border-bottom: 2px inset #c0c0c0;
+  border-top: 2px solid #808080;
+  border-left: 2px solid #808080;
+  border-bottom: 2px solid #ffffff;
+  border-right: 2px solid #ffffff;
 }
 
 [data-theme="classic-light"] .minimap-container {
