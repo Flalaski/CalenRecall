@@ -3,18 +3,41 @@
  * Warm nighttime hot spring sauna with steamy warm purples, indigos, and warm teals
  */
 
+
+/* Ambient Warm Lamp Lighting Effects */
+/* Subtle golden lamp light from above, as if from palm tree lamps illuminating hot springs */
+
+[data-theme="hot-spring"] body::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 200px;
+  background: radial-gradient(ellipse at center top, rgba(255, 220, 177, 0.08) 0%, rgba(255, 200, 150, 0.04) 30%, transparent 70%);
+  pointer-events: none;
+  z-index: 1;
+}
+
 [data-theme="hot-spring"] body {
-  background: #1a1824;
+  position: relative;
+  background: radial-gradient(ellipse at top, rgba(255, 220, 177, 0.04) 0%, #1a1824 40%), #1a1824;
   color: #f0e8e8;
+  box-shadow: inset 0 0 150px rgba(255, 220, 177, 0.06),
+              inset 0 -100px 150px rgba(255, 200, 150, 0.04);
 }
 
 [data-theme="hot-spring"] .app {
-  background: #1a1824;
+  position: relative;
+  background: radial-gradient(ellipse at top, rgba(255, 220, 177, 0.03) 0%, #1a1824 50%), #1a1824;
+  box-shadow: inset 0 0 100px rgba(255, 220, 177, 0.05);
 }
+
 
 [data-theme="hot-spring"] .navigation-bar {
   background: #2d2535;
   border-bottom: 2px solid #5a4a6a;
+  box-shadow: inset 0 2px 20px rgba(255, 220, 177, 0.15), 0 1px 3px rgba(255, 200, 150, 0.1);
 }
 
 [data-theme="hot-spring"] .nav-button {
@@ -26,12 +49,14 @@
 [data-theme="hot-spring"] .nav-button:hover {
   background: #4d3559;
   border-color: #7a6a85;
+  box-shadow: 0 2px 8px rgba(255, 220, 177, 0.2), inset 0 1px 3px rgba(255, 200, 150, 0.15);
 }
 
 [data-theme="hot-spring"] .timeline-cell {
   background: #2d2535;
   border: 1px solid #5a4a6a;
   color: #f0e8e8;
+  box-shadow: inset 0 1px 2px rgba(255, 220, 177, 0.08);
 }
 
 [data-theme="hot-spring"] .timeline-cell:hover {
@@ -108,6 +133,7 @@
   background: #5db8a8;
   color: #ffffff;
   border-color: #6dc8b8;
+  box-shadow: 0 2px 12px rgba(255, 220, 177, 0.3), inset 0 1px 4px rgba(255, 200, 150, 0.2);
 }
 
 [data-theme="hot-spring"] .date-label {
@@ -127,6 +153,7 @@
 [data-theme="hot-spring"] .calendar-select:focus {
   border-color: #6dc8b8;
   outline: 2px solid #6dc8b8;
+  box-shadow: 0 0 8px rgba(255, 220, 177, 0.3), inset 0 1px 3px rgba(255, 200, 150, 0.15);
 }
 
 [data-theme="hot-spring"] .calendar-info-panel {
@@ -184,6 +211,7 @@
   background: #5db8a8;
   color: #ffffff;
   border: 2px solid #6dc8b8;
+  box-shadow: 0 2px 8px rgba(255, 220, 177, 0.25), inset 0 1px 3px rgba(255, 200, 150, 0.2);
 }
 
 [data-theme="hot-spring"] .calendar-cell.selected {
@@ -367,6 +395,7 @@
 [data-theme="hot-spring"] .new-entry-button-header:hover {
   background: #6dc8b8;
   border-color: #7dd8c8;
+  box-shadow: 0 2px 12px rgba(255, 220, 177, 0.3), inset 0 1px 4px rgba(255, 200, 150, 0.2);
 }
 
 [data-theme="hot-spring"] .time-range-badge-viewer {
@@ -382,6 +411,7 @@
 [data-theme="hot-spring"] .viewer-content {
   background: #2d2535;
   color: #f0e8e8;
+  box-shadow: inset 0 1px 4px rgba(255, 220, 177, 0.1);
 }
 
 [data-theme="hot-spring"] .viewer-title {
@@ -626,6 +656,7 @@
 [data-theme="hot-spring"] .editor-content {
   background: #2d2535;
   color: #f0e8e8;
+  box-shadow: inset 0 1px 4px rgba(255, 220, 177, 0.1);
 }
 
 [data-theme="hot-spring"] .view-mode-message {
@@ -638,22 +669,26 @@
   background: #2d2535;
   border: 1px solid #5a4a6a;
   color: #f0e8e8;
+  box-shadow: inset 0 1px 3px rgba(255, 220, 177, 0.1);
 }
 
 [data-theme="hot-spring"] .title-input:focus {
   border-color: #6dc8b8;
   outline: 2px solid #6dc8b8;
+  box-shadow: 0 0 8px rgba(255, 220, 177, 0.3), inset 0 1px 3px rgba(255, 200, 150, 0.15);
 }
 
 [data-theme="hot-spring"] .content-input {
   background: #2d2535;
   border: 1px solid #5a4a6a;
   color: #f0e8e8;
+  box-shadow: inset 0 1px 3px rgba(255, 220, 177, 0.1);
 }
 
 [data-theme="hot-spring"] .content-input:focus {
   border-color: #6dc8b8;
   outline: 2px solid #6dc8b8;
+  box-shadow: 0 0 8px rgba(255, 220, 177, 0.3), inset 0 1px 3px rgba(255, 200, 150, 0.15);
 }
 
 [data-theme="hot-spring"] .tags-section {
@@ -668,11 +703,13 @@
   background: #2d2535;
   border: 1px solid #5a4a6a;
   color: #f0e8e8;
+  box-shadow: inset 0 1px 3px rgba(255, 220, 177, 0.1);
 }
 
 [data-theme="hot-spring"] .tag-input:focus {
   border-color: #6dc8b8;
   outline: 2px solid #6dc8b8;
+  box-shadow: 0 0 8px rgba(255, 220, 177, 0.3), inset 0 1px 3px rgba(255, 200, 150, 0.15);
 }
 
 [data-theme="hot-spring"] .add-tag-button {
@@ -684,6 +721,7 @@
 [data-theme="hot-spring"] .add-tag-button:hover {
   background: #6dc8b8;
   border-color: #7dd8c8;
+  box-shadow: 0 2px 12px rgba(255, 220, 177, 0.3), inset 0 1px 4px rgba(255, 200, 150, 0.2);
 }
 
 [data-theme="hot-spring"] .tags-list {
@@ -742,11 +780,13 @@
   background: #5db8a8;
   border: 1px solid #6dc8b8;
   color: #ffffff;
+  box-shadow: 0 2px 8px rgba(255, 220, 177, 0.25), inset 0 1px 3px rgba(255, 200, 150, 0.15);
 }
 
 [data-theme="hot-spring"] .save-button:hover:not(:disabled) {
   background: #6dc8b8;
   border-color: #7dd8c8;
+  box-shadow: 0 2px 12px rgba(255, 220, 177, 0.35), inset 0 1px 4px rgba(255, 200, 150, 0.25);
 }
 
 [data-theme="hot-spring"] .save-button:disabled {
@@ -803,6 +843,7 @@
 [data-theme="hot-spring"] .new-entry-button:hover {
   background: #6dc8b8;
   border-color: #7dd8c8;
+  box-shadow: 0 2px 12px rgba(255, 220, 177, 0.3), inset 0 1px 4px rgba(255, 200, 150, 0.2);
 }
 
 [data-theme="hot-spring"] .bulk-edit-toggle-button {
@@ -898,11 +939,13 @@
   background: #2d2535;
   border: 1px solid #5a4a6a;
   color: #f0e8e8;
+  box-shadow: inset 0 1px 2px rgba(255, 220, 177, 0.1);
 }
 
 [data-theme="hot-spring"] .journal-entry-item:hover {
   background: #3d2f4a;
   border-color: #7a6a85;
+  box-shadow: 0 2px 8px rgba(255, 220, 177, 0.2), inset 0 1px 3px rgba(255, 200, 150, 0.15);
 }
 
 [data-theme="hot-spring"] .journal-entry-item.selected {
@@ -1441,6 +1484,7 @@
 [data-theme="hot-spring"] .preferences-section {
   background: #2d2535;
   border: 2px solid #5a4a6a;
+  box-shadow: 0 2px 12px rgba(255, 220, 177, 0.12), inset 0 1px 2px rgba(255, 200, 150, 0.08);
 }
 
 [data-theme="hot-spring"] .preferences-section h2 {
@@ -1722,6 +1766,20 @@
 
 [data-theme="hot-spring"] .scale-label {
   color: #f0e8e8;
+}
+
+
+/* Warm text glow effects */
+[data-theme="hot-spring"] h1,
+[data-theme="hot-spring"] h2,
+[data-theme="hot-spring"] h3 {
+  text-shadow: 0 1px 2px rgba(255, 220, 177, 0.15), 0 0 8px rgba(255, 200, 150, 0.1);
+}
+
+[data-theme="hot-spring"] .card-title,
+[data-theme="hot-spring"] .entry-item-title,
+[data-theme="hot-spring"] .viewer-title {
+  text-shadow: 0 1px 2px rgba(255, 220, 177, 0.12);
 }
 
 /* Entry badges and cards - preserve time range colors, adapt backgrounds/text */
