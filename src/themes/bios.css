@@ -753,6 +753,18 @@
   background: #606060;
 }
 
+[data-theme="bios"] .month-entry-item {
+  background: #000080;
+  border: 1px solid #c0c0c0;
+  color: #ffffff;
+  font-family: 'Fixedsys', 'Terminal', 'MS Sans Serif', system-ui, monospace;
+}
+
+[data-theme="bios"] .month-entry-item:hover {
+  background: #0000aa;
+  box-shadow: none;
+}
+
 [data-theme="bios"] .period-entry-item {
   background: #000080;
   border: 1px solid #c0c0c0;

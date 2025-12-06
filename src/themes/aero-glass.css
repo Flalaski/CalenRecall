@@ -621,6 +621,21 @@
   background: transparent;
 }
 
+[data-theme="aero-glass"] .month-entry-item {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(173, 216, 230, 0.5);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  color: #1565c0;
+}
+
+[data-theme="aero-glass"] .month-entry-item:hover {
+  background: rgba(255, 255, 255, 0.85);
+  border-color: rgba(100, 181, 246, 0.8);
+  box-shadow: 0 4px 12px rgba(21, 101, 192, 0.25);
+}
+
 [data-theme="aero-glass"] .period-entry-item {
   background: #ffffff;
   border: 1px solid #f0f0f0;

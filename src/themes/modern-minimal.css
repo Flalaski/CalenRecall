@@ -329,6 +329,18 @@
   text-shadow: none;
 }
 
+[data-theme="modern-minimal"] .month-entry-item {
+  background: #ffffff;
+  border: 1px solid #f0f0f0;
+  color: #424242;
+  text-shadow: none;
+}
+
+[data-theme="modern-minimal"] .month-entry-item:hover {
+  background: #f5f5f5;
+  border-color: #e0e0e0;
+}
+
 [data-theme="modern-minimal"] .week-entry-item:hover {
   background: #f5f5f5;
   border-color: #e0e0e0;

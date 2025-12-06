@@ -971,6 +971,20 @@
   padding: 1rem;
 }
 
+[data-theme="on-screen"] .month-entry-item {
+  background: #004488;
+  border: none;
+  border-left: 4px solid #FF9900;
+  border-radius: 20px 20px 0 0;
+  color: #FFFFFF;
+  font-family: 'Antonio', 'Arial Narrow', 'Helvetica Condensed', sans-serif;
+}
+
+[data-theme="on-screen"] .month-entry-item:hover {
+  background: #0055AA;
+  transform: translateX(4px);
+}
+
 [data-theme="on-screen"] .period-entry {
   background: #004488;
   border: none;

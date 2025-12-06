@@ -519,6 +519,17 @@
   background: transparent;
 }
 
+[data-theme="forest"] .month-entry-item {
+  background: #2d4a2d;
+  border: 1px solid #4a6a4a;
+  color: #c8e6c9;
+}
+
+[data-theme="forest"] .month-entry-item:hover {
+  background: #3d5a3d;
+  border-color: #5a8c5a;
+}
+
 [data-theme="forest"] .period-entry-item {
   background: #2d4a2d;
   border: 1px solid #4a6a4a;

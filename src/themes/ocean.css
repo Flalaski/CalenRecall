@@ -519,6 +519,17 @@
   background: transparent;
 }
 
+[data-theme="ocean"] .month-entry-item {
+  background: #003355;
+  border: 1px solid #005a9e;
+  color: #b3e5fc;
+}
+
+[data-theme="ocean"] .month-entry-item:hover {
+  background: #004365;
+  border-color: #006aae;
+}
+
 [data-theme="ocean"] .period-entry-item {
   background: #003355;
   border: 1px solid #005a9e;

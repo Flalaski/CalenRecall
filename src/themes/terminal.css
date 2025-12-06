@@ -679,6 +679,18 @@
   background: transparent;
 }
 
+[data-theme="terminal"] .month-entry-item {
+  background: #000000;
+  border: 1px solid #00ff00;
+  color: #00ff00;
+  font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
+}
+
+[data-theme="terminal"] .month-entry-item:hover {
+  background: #003300;
+  box-shadow: 0 0 5px #00ff00;
+}
+
 [data-theme="terminal"] .period-entry-item {
   background: #000000;
   border: 1px solid #00ff00;

@@ -781,6 +781,18 @@
   background: transparent;
 }
 
+[data-theme="the-real-world"] .month-entry-item {
+  background: #1a1a1a;
+  border: 1px solid #7fbf7f;
+  color: #7fbf7f;
+  font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
+}
+
+[data-theme="the-real-world"] .month-entry-item:hover {
+  background: #333333;
+  border-color: #9fdf9f;
+}
+
 [data-theme="the-real-world"] .period-entry-item {
   background: #1a1a1a;
   border: 1px solid #7fbf7f;

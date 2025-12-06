@@ -578,6 +578,18 @@
   background: transparent;
 }
 
+[data-theme="high-contrast"] .month-entry-item {
+  background: #000000;
+  border: 2px solid #ffffff;
+  color: #ffffff;
+}
+
+[data-theme="high-contrast"] .month-entry-item:hover {
+  background: #ffffff;
+  color: #000000;
+  border: 3px solid #ffff00;
+}
+
 [data-theme="high-contrast"] .period-entry-item {
   background: #000000;
   border: 2px solid #ffffff;

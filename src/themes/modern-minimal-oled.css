@@ -560,6 +560,18 @@
   background: transparent;
 }
 
+[data-theme="modern-minimal-oled"] .month-entry-item {
+  background: #0a0a0a;
+  border: 1px solid #0f0f0f;
+  color: #b0b0b0;
+  text-shadow: none;
+}
+
+[data-theme="modern-minimal-oled"] .month-entry-item:hover {
+  background: #151515;
+  border-color: #1a1a1a;
+}
+
 [data-theme="modern-minimal-oled"] .period-entry-item {
   background: #0a0a0a;
   border: 1px solid #0f0f0f;

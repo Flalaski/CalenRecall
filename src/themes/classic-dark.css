@@ -655,6 +655,18 @@
   background: transparent;
 }
 
+[data-theme="classic-dark"] .month-entry-item {
+  background: #1e1e1e;
+  border: 2px inset #606060;
+  border-radius: 0;
+  color: #e0e0e0;
+}
+
+[data-theme="classic-dark"] .month-entry-item:hover {
+  background: #505050;
+  border: 2px solid #000000;
+}
+
 [data-theme="classic-dark"] .period-entry-item {
   background: #1e1e1e;
   border: 2px inset #606060;
