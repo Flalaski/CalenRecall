@@ -428,7 +428,6 @@ function App() {
     <>
       <BackgroundArt 
         backgroundImage={backgroundImagePath || undefined}
-        enableProceduralArt={preferences.enableProceduralArt !== false}
         theme={preferences.theme}
       />
       <div className="app">

@@ -437,25 +437,11 @@ export default function PreferencesComponent() {
             )}
             <small>
               {preferences.backgroundImage
-                ? 'A custom background image is set. Clear it to use procedural artwork based on your theme.'
-                : 'Select a custom background image, or leave empty to use procedural abstract artwork that matches your active theme.'}
+                ? 'A custom background image is set. Clear it to use the default theme background.'
+                : 'Select a custom background image, or leave empty to use the default theme background.'}
             </small>
           </div>
 
-          <div className="preference-item">
-            <label>
-              <input
-                type="checkbox"
-                checked={preferences.enableProceduralArt !== false}
-                onChange={(e) => updatePreference('enableProceduralArt', e.target.checked)}
-              />
-              Enable Procedural Background Art
-            </label>
-            <small>
-              When enabled, generates abstract artwork based on your active theme. Disable to show a plain background.
-              This only applies when no custom background image is set.
-            </small>
-          </div>
         </div>
 
         <div className="preferences-section">

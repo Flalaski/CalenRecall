@@ -383,6 +383,16 @@ body {
   color: #e0e0e0;
 }
 
+/* When custom background image is present, make all theme backgrounds transparent */
+/* Use html element selector for higher specificity to override theme rules */
+html[data-custom-background="true"][data-theme] body,
+html[data-custom-background="true"][data-theme] .app,
+html[data-custom-background="true"][data-theme] .app-content,
+html[data-custom-background="true"][data-theme] .timeline-section,
+html[data-custom-background="true"][data-theme] .editor-section {
+  background: transparent !important; /* Custom image takes priority */
+}
+
 /* Apply extracted background colors to transparent panels (light theme only) */
 [data-theme="light"] .month-entry-item {
   background: var(--bg-extracted-panel, transparent);
