@@ -24,6 +24,8 @@
 .year-view {
   grid-template-columns: repeat(4, 1fr);
   grid-template-rows: repeat(3, 1fr);
+  padding: 0.5rem;
+  gap: 2px;
 }
 
 .month-view {
@@ -141,6 +143,12 @@
   word-wrap: break-word;
 }
 
+.month-cell .cell-content {
+  justify-content: flex-start;
+  padding-top: 0.75rem;
+  padding-bottom: 0.75rem;
+}
+
 .cell-label {
   font-size: 1rem;
   font-weight: 400;
@@ -248,9 +256,39 @@
   line-height: 1.2;
 }
 
-.year-cell,
-.month-cell {
+.year-cell {
   min-height: 120px;
+}
+
+.month-cell {
+  min-height: 140px;
+}
+
+.month-details {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  margin-top: 0.5rem;
+  font-size: 0.75rem;
+  color: #666;
+  font-weight: 400;
+}
+
+.month-days {
+  font-family: 'Bebas Neue', 'Impact', 'Arial Black', 'Franklin Gothic Heavy', 'Arial Narrow', sans-serif;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  opacity: 0.7;
+}
+
+.month-entry-count {
+  font-family: 'Bebas Neue', 'Impact', 'Arial Black', 'Franklin Gothic Heavy', 'Arial Narrow', sans-serif;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: #4caf50;
+  font-weight: 500;
+  opacity: 0.9;
 }
 
 .calendar-cell.year-cell {

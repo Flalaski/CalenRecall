@@ -169,6 +169,23 @@ export default function CalendarView({
           const monthMidpoint = new Date(month.getFullYear(), month.getMonth(), 15);
           const zodiacColor = getZodiacColor(monthMidpoint);
           const entryColor = hasEntry(month) ? getEntryColorForDate(entries, month, 'month') : null;
+          
+          // Get number of days in this month
+          const daysInMonth = getDaysInMonth(month).length;
+          
+          // Count entries for this month (including day, week, and month entries)
+          const monthStart = new Date(month.getFullYear(), month.getMonth(), 1);
+          const monthEnd = new Date(month.getFullYear(), month.getMonth() + 1, 0, 23, 59, 59, 999);
+          const monthEntries = entries.filter(entry => {
+            try {
+              const entryDate = parseISODate(entry.date);
+              return entryDate >= monthStart && entryDate <= monthEnd;
+            } catch {
+              return false;
+            }
+          });
+          const entryCount = monthEntries.length;
+          
           return (
             <div
               key={idx}
@@ -181,6 +198,12 @@ export default function CalendarView({
             >
               <div className="cell-content">
                 <div className="cell-label month-title">{monthNames[idx]}</div>
+                <div className="month-details">
+                  <div className="month-days">{daysInMonth} days</div>
+                  {entryCount > 0 && (
+                    <div className="month-entry-count">{entryCount} {entryCount === 1 ? 'entry' : 'entries'}</div>
+                  )}
+                </div>
                 {hasEntry(month) && entryColor && (
                   <div 
                     className="entry-indicator"

@@ -1887,7 +1887,15 @@ export default function GlobalTimelineMinimap({
       const entryDate = cached.canonical.get(entry.timeRange);
       if (!entryDate) continue;
       
-      const entryTime = entryDate.getTime() - timelineStartTime;
+      // For day entries, position them at the center of the day (noon) rather than at midnight
+      // This ensures they appear in the correct day zone instead of at the left edge
+      let entryTimeOffset = 0;
+      if (entry.timeRange === 'day') {
+        // Add half a day (12 hours) to center the entry in its day zone
+        entryTimeOffset = 12 * 60 * 60 * 1000; // 12 hours in milliseconds
+      }
+      
+      const entryTime = entryDate.getTime() + entryTimeOffset - timelineStartTime;
       
       // Final range check: ensure entry is actually within timeline after canonical date calculation
       if (entryTime < 0 || entryTime > totalTime) {
