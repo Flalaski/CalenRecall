@@ -729,9 +729,31 @@
 }
 
 .day-entries-list {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: 1rem;
+  max-width: 100%;
+}
+
+/* On larger screens, use 3 columns */
+@media (min-width: 1000px) {
+  .day-entries-list {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* On medium screens, use 2 columns */
+@media (min-width: 600px) and (max-width: 999px) {
+  .day-entries-list {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* On smaller screens, single column with auto-fit */
+@media (max-width: 599px) {
+  .day-entries-list {
+    grid-template-columns: 1fr;
+  }
 }
 
 .entry-card-full {
