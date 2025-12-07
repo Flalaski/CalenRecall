@@ -292,6 +292,9 @@ export default function AboutComponent() {
               <li>Iroquois Calendar (13-moon lunar calendar)</li>
               <li>Aztec Xiuhpohualli Calendar (365-day solar calendar)</li>
             </ul>
+            <p className="credits-note">
+              Any and all feedback is welcome for helping ensure accuracy for cross-cultural interfacing.
+            </p>
           </div>
 
           <div className="credits-category">

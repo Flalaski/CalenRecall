@@ -1,5 +1,5 @@
 import { contextBridge, ipcRenderer } from 'electron';
-import { JournalEntry, TimeRange, ExportFormat, EntryVersion, EntryAttachment } from './types';
+import { JournalEntry, TimeRange, ExportFormat, EntryVersion, EntryAttachment, ExportMetadata } from './types';
 import { EntryTemplate } from './database';
 
 export interface Preferences {
@@ -25,6 +25,8 @@ export interface Preferences {
   backgroundImage?: string; // Path to custom background image, or empty for procedural art
   enableProceduralArt?: boolean; // Enable procedural background art (default: true)
   timeFormat?: '12h' | '24h'; // Time format: 12-hour (AM/PM) or 24-hour
+  defaultExportFormat?: ExportFormat; // Default export format to use when exporting entries
+  defaultExportMetadata?: ExportMetadata; // Default export metadata to use for all exports
 }
 
 contextBridge.exposeInMainWorld('electronAPI', {
@@ -104,8 +106,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.invoke('get-all-entries'),
 
   // Export operations
-  exportEntries: (format: ExportFormat): Promise<{ success: boolean; canceled?: boolean; error?: string; path?: string }> =>
-    ipcRenderer.invoke('export-entries', format),
+  exportEntries: (format: ExportFormat, metadata?: ExportMetadata): Promise<{ success: boolean; canceled?: boolean; error?: string; path?: string }> =>
+    ipcRenderer.invoke('export-entries', format, metadata),
   
   // Import operations
   importEntries: (format: 'json' | 'markdown'): Promise<{ success: boolean; canceled?: boolean; error?: string; message?: string; imported?: number; skipped?: number; total?: number }> =>

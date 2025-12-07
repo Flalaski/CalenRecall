@@ -2,6 +2,26 @@ import { ipcMain, dialog, app, BrowserWindow, shell } from 'electron';
 import * as fs from 'fs';
 import * as path from 'path';
 import PDFDocument from 'pdfkit';
+
+interface ThemeColors {
+  background: string;
+  text: string;
+  accent: string;
+  border: string;
+  secondary: string;
+}
+
+interface ThemeStyles {
+  colors: ThemeColors;
+  fontFamily: string;
+  fontSize: string;
+  fontWeight: string;
+  letterSpacing: string;
+  lineHeight: string;
+  textShadow: string;
+  borderRadius: string;
+  boxShadow: string;
+}
 import {
   getEntries,
   getEntry,
@@ -28,11 +48,186 @@ import {
   getPinnedEntries,
 } from './database';
 import { EntryVersion } from './types';
-import { JournalEntry, TimeRange, ExportFormat, EntryAttachment } from './types';
+import { JournalEntry, TimeRange, ExportFormat, EntryAttachment, ExportMetadata } from './types';
 import { EntryTemplate, getAllTemplates, getTemplate, saveTemplate, deleteTemplate } from './database';
 
 let mainWindowRef: Electron.BrowserWindow | null = null;
 let menuUpdateCallback: (() => void) | null = null;
+
+/**
+ * Extract full styling from a theme CSS file
+ * Returns comprehensive theme styling for use in exports
+ */
+function extractThemeStyles(themeName: string): ThemeStyles {
+  const isDev = process.env.NODE_ENV === 'development' || !app.isPackaged;
+  
+  // Try to find theme CSS file
+  let themePath: string | null = null;
+  
+  // First try built-in themes
+  const builtInPaths = [
+    path.join(__dirname, '../../src/themes', `${themeName}.css`),
+    path.join(process.cwd(), 'src/themes', `${themeName}.css`),
+  ];
+  
+  for (const testPath of builtInPaths) {
+    if (fs.existsSync(testPath)) {
+      themePath = testPath;
+      break;
+    }
+  }
+  
+  // If not found, try custom themes in userData
+  if (!themePath) {
+    const userDataPath = app.getPath('userData');
+    const customThemePath = path.join(userDataPath, 'themes', `${themeName}.css`);
+    if (fs.existsSync(customThemePath)) {
+      themePath = customThemePath;
+    }
+  }
+  
+  // Default styling (light theme)
+  const defaultColors: ThemeColors = {
+    background: '#ffffff',
+    text: '#000000',
+    accent: '#007bff',
+    border: '#e0e0e0',
+    secondary: '#666666',
+  };
+  
+  const defaultStyles: ThemeStyles = {
+    colors: defaultColors,
+    fontFamily: 'Helvetica, Arial, sans-serif',
+    fontSize: '14px',
+    fontWeight: '400',
+    letterSpacing: 'normal',
+    lineHeight: '1.6',
+    textShadow: 'none',
+    borderRadius: '0',
+    boxShadow: 'none',
+  };
+  
+  if (!themePath || !fs.existsSync(themePath)) {
+    console.log(`[Export] Theme file not found for ${themeName}, using defaults`);
+    return defaultStyles;
+  }
+  
+  try {
+    const cssContent = fs.readFileSync(themePath, 'utf-8');
+    
+    // Extract colors using regex patterns
+    // Look for body background and color
+    const bodyBgMatch = cssContent.match(/\[data-theme=["']?[^"']*["']?\]\s*body\s*\{[^}]*background:\s*([^;]+);/i);
+    const bodyColorMatch = cssContent.match(/\[data-theme=["']?[^"']*["']?\]\s*body\s*\{[^}]*color:\s*([^;]+);/i);
+    
+    // Look for accent colors (nav-button active, date-input focus, etc.)
+    const accentMatch = cssContent.match(/(?:nav-button\.active|\.active|accent|primary)[^}]*color:\s*([^;]+);/i) ||
+                       cssContent.match(/(?:border.*color|border-color):\s*([^;]+);/i);
+    
+    // Look for border colors
+    const borderMatch = cssContent.match(/border(?:-bottom)?:\s*\d+px\s+(?:solid|dashed)\s+([^;]+);/i);
+    
+    // Helper to extract hex/rgb from CSS value
+    const extractColor = (value: string): string | null => {
+      if (!value) return null;
+      value = value.trim();
+      
+      // Hex color
+      const hexMatch = value.match(/#[0-9a-fA-F]{3,6}/);
+      if (hexMatch) return hexMatch[0];
+      
+      // RGB/RGBA
+      const rgbMatch = value.match(/rgba?\([^)]+\)/);
+      if (rgbMatch) {
+        // Convert rgba to hex if possible (simplified)
+        const rgba = rgbMatch[0].match(/\d+/g);
+        if (rgba && rgba.length >= 3) {
+          const r = parseInt(rgba[0]);
+          const g = parseInt(rgba[1]);
+          const b = parseInt(rgba[2]);
+          return `#${[r, g, b].map(x => {
+            const hex = x.toString(16);
+            return hex.length === 1 ? '0' + hex : hex;
+          }).join('')}`;
+        }
+      }
+      
+      return null;
+    };
+    
+    const background = extractColor(bodyBgMatch?.[1] || '') || defaultColors.background;
+    const text = extractColor(bodyColorMatch?.[1] || '') || defaultColors.text;
+    const accent = extractColor(accentMatch?.[1] || '') || defaultColors.accent;
+    const border = extractColor(borderMatch?.[1] || '') || defaultColors.border;
+    const secondary = defaultColors.secondary;
+    
+    // Extract font family from body or root theme selector
+    const fontFamilyMatch = cssContent.match(/\[data-theme=["']?[^"']*["']?\]\s*(?:body|)\s*\{[^}]*font-family:\s*([^;]+);/i) ||
+                            cssContent.match(/\[data-theme=["']?[^"']*["']?\]\s*\{[^}]*font-family:\s*([^;]+);/i);
+    const fontFamily = fontFamilyMatch?.[1]?.trim().replace(/['"]/g, '') || defaultStyles.fontFamily;
+    
+    // Extract font size
+    const fontSizeMatch = cssContent.match(/\[data-theme=["']?[^"']*["']?\]\s*(?:body|)\s*\{[^}]*font-size:\s*([^;]+);/i) ||
+                         cssContent.match(/\[data-theme=["']?[^"']*["']?\]\s*\{[^}]*font-size:\s*([^;]+);/i);
+    const fontSize = fontSizeMatch?.[1]?.trim() || defaultStyles.fontSize;
+    
+    // Extract font weight
+    const fontWeightMatch = cssContent.match(/\[data-theme=["']?[^"']*["']?\]\s*(?:body|)\s*\{[^}]*font-weight:\s*([^;]+);/i) ||
+                           cssContent.match(/\[data-theme=["']?[^"']*["']?\]\s*\{[^}]*font-weight:\s*([^;]+);/i);
+    const fontWeight = fontWeightMatch?.[1]?.trim() || defaultStyles.fontWeight;
+    
+    // Extract letter spacing
+    const letterSpacingMatch = cssContent.match(/\[data-theme=["']?[^"']*["']?\]\s*(?:body|)\s*\{[^}]*letter-spacing:\s*([^;]+);/i) ||
+                              cssContent.match(/\[data-theme=["']?[^"']*["']?\]\s*\{[^}]*letter-spacing:\s*([^;]+);/i);
+    const letterSpacing = letterSpacingMatch?.[1]?.trim() || defaultStyles.letterSpacing;
+    
+    // Extract line height
+    const lineHeightMatch = cssContent.match(/\[data-theme=["']?[^"']*["']?\]\s*(?:body|)\s*\{[^}]*line-height:\s*([^;]+);/i) ||
+                           cssContent.match(/\[data-theme=["']?[^"']*["']?\]\s*\{[^}]*line-height:\s*([^;]+);/i);
+    const lineHeight = lineHeightMatch?.[1]?.trim() || defaultStyles.lineHeight;
+    
+    // Extract text shadow (from h1, h2, or headings)
+    const textShadowMatch = cssContent.match(/(?:h1|h2|h3|\.date-label|\.viewer-title)[^}]*text-shadow:\s*([^;]+);/i);
+    const textShadow = textShadowMatch?.[1]?.trim() || defaultStyles.textShadow;
+    
+    // Extract border radius
+    const borderRadiusMatch = cssContent.match(/\[data-theme=["']?[^"']*["']?\]\s*\*\s*\{[^}]*border-radius:\s*([^;]+);/i);
+    const borderRadius = borderRadiusMatch?.[1]?.trim() || defaultStyles.borderRadius;
+    
+    // Extract box shadow (from navigation or key elements)
+    const boxShadowMatch = cssContent.match(/(?:\.navigation-bar|\.nav-button)[^}]*box-shadow:\s*([^;]+);/i);
+    const boxShadow = boxShadowMatch?.[1]?.trim() || defaultStyles.boxShadow;
+    
+    return {
+      colors: {
+        background,
+        text,
+        accent,
+        border,
+        secondary,
+      },
+      fontFamily,
+      fontSize,
+      fontWeight,
+      letterSpacing,
+      lineHeight,
+      textShadow,
+      borderRadius,
+      boxShadow,
+    };
+  } catch (error) {
+    console.error(`[Export] Error extracting styles from theme ${themeName}:`, error);
+    return defaultStyles;
+  }
+}
+
+/**
+ * Extract colors from a theme CSS file (backward compatibility)
+ * Returns a color palette for use in exports
+ */
+function extractThemeColors(themeName: string): ThemeColors {
+  return extractThemeStyles(themeName).colors;
+}
 
 export function setMainWindow(window: Electron.BrowserWindow | null) {
   mainWindowRef = window;
@@ -278,20 +473,27 @@ export function setupIpcHandlers() {
 
   /**
    * Export all journal entries to a user-selected document file.
-   * The renderer passes an export format; this handler opens a save dialog,
-   * formats the content, and writes it to disk.
+   * The renderer passes an export format and optional metadata; this handler opens a save dialog,
+   * formats the content with metadata, and writes it to disk.
    */
-  ipcMain.handle('export-entries', async (_event, format: ExportFormat) => {
+  ipcMain.handle('export-entries', async (_event, format: ExportFormat, metadata?: ExportMetadata) => {
     const entries = getAllEntries();
 
     if (!entries.length) {
       return { success: false, canceled: false, error: 'no_entries' };
     }
 
-    // Suggest filename based on current date/time and format
-    const now = new Date();
-    const timestamp = now.toISOString().replace(/[:.]/g, '-');
-    const defaultBaseName = `CalenRecall-Storybook-${timestamp}`;
+    // Suggest filename based on metadata or default to current date/time
+    let defaultBaseName: string;
+    if (metadata?.exportName) {
+      defaultBaseName = metadata.exportName;
+    } else if (metadata?.projectTitle) {
+      defaultBaseName = metadata.projectTitle;
+    } else {
+      const now = new Date();
+      const timestamp = now.toISOString().replace(/[:.]/g, '-');
+      defaultBaseName = `CalenRecall-Storybook-${timestamp}`;
+    }
 
     const filters =
       format === 'markdown'
@@ -325,10 +527,16 @@ export function setupIpcHandlers() {
     }
 
     try {
+      // Set export date if not provided
+      const finalMetadata: ExportMetadata = {
+        ...metadata,
+        exportDate: metadata?.exportDate || new Date().toISOString(),
+      };
+
       if (format === 'pdf') {
-        await exportEntriesAsPdf(entries, filePath);
+        await exportEntriesAsPdf(entries, filePath, finalMetadata);
       } else {
-        const content = formatExportContent(entries, format);
+        const content = formatExportContent(entries, format, finalMetadata);
         fs.writeFileSync(filePath, content, { encoding: 'utf-8' });
       }
       
@@ -1150,31 +1358,192 @@ function parseMarkdownImport(content: string): JournalEntry[] {
  * Render all entries into a single string according to the chosen export format.
  * For binary formats like PDF, see exportEntriesAsPdf instead.
  */
-function formatExportContent(entries: JournalEntry[], format: ExportFormat): string {
+function formatExportContent(entries: JournalEntry[], format: ExportFormat, metadata?: ExportMetadata): string {
   switch (format) {
     case 'json':
-      return JSON.stringify(entries, null, 2);
+      return formatAsJson(entries, metadata);
     case 'text':
-      return formatAsPlainText(entries);
+      return formatAsPlainText(entries, metadata);
     case 'rtf':
-      return formatAsRtf(entries);
+      return formatAsRtf(entries, metadata);
     case 'dec':
-      return formatAsDecades(entries);
+      return formatAsDecades(entries, metadata);
     case 'csv':
-      return formatAsCsv(entries);
+      return formatAsCsv(entries, metadata);
     case 'markdown':
     default:
-      return formatAsMarkdown(entries);
+      return formatAsMarkdown(entries, metadata);
   }
 }
 
-function formatAsMarkdown(entries: JournalEntry[]): string {
-  const lines: string[] = [];
-  lines.push('# CalenRecall Storybook Export');
-  lines.push('');
-  lines.push(`Exported at: ${new Date().toISOString()}`);
-  lines.push('');
+function formatAsJson(entries: JournalEntry[], metadata?: ExportMetadata): string {
+  const exportData = {
+    metadata: metadata || {},
+    exportedAt: metadata?.exportDate || new Date().toISOString(),
+    entryCount: entries.length,
+    entries: entries,
+  };
+  return JSON.stringify(exportData, null, 2);
+}
 
+function formatAsMarkdown(entries: JournalEntry[], metadata?: ExportMetadata): string {
+  const lines: string[] = [];
+  
+  // Get theme styles if theme is specified
+  const themeName = metadata?.exportTheme || getPreference('theme') || 'light';
+  const themeStyles = extractThemeStyles(themeName);
+  const colors = themeStyles.colors;
+  
+  // Add HTML/CSS styling for theme (many markdown renderers support embedded HTML)
+  if (metadata?.exportTheme) {
+    lines.push('<!DOCTYPE html>');
+    lines.push('<html>');
+    lines.push('<head>');
+    lines.push('<meta charset="UTF-8">');
+    lines.push('<style>');
+    lines.push(`body {`);
+    lines.push(`  background-color: ${colors.background};`);
+    lines.push(`  color: ${colors.text};`);
+    lines.push(`  font-family: ${themeStyles.fontFamily};`);
+    lines.push(`  font-size: ${themeStyles.fontSize};`);
+    lines.push(`  font-weight: ${themeStyles.fontWeight};`);
+    lines.push(`  letter-spacing: ${themeStyles.letterSpacing};`);
+    lines.push(`  line-height: ${themeStyles.lineHeight};`);
+    lines.push(`  max-width: 800px;`);
+    lines.push(`  margin: 0 auto;`);
+    lines.push(`  padding: 2rem;`);
+    if (themeStyles.boxShadow !== 'none') {
+      lines.push(`  box-shadow: ${themeStyles.boxShadow};`);
+    }
+    lines.push(`}`);
+    lines.push(`h1, h2, h3 {`);
+    lines.push(`  color: ${colors.text};`);
+    lines.push(`  font-family: ${themeStyles.fontFamily};`);
+    if (themeStyles.textShadow !== 'none') {
+      lines.push(`  text-shadow: ${themeStyles.textShadow};`);
+    }
+    lines.push(`}`);
+    lines.push(`h1 { border-bottom: 2px solid ${colors.accent}; padding-bottom: 0.5rem; }`);
+    lines.push(`h2 { border-bottom: 1px solid ${colors.border}; padding-bottom: 0.3rem; margin-top: 2rem; }`);
+    lines.push(`code { background-color: ${colors.border}; padding: 0.2rem 0.4rem; border-radius: ${themeStyles.borderRadius === '0' ? '3px' : themeStyles.borderRadius}; }`);
+    lines.push(`pre { background-color: ${colors.border}; padding: 1rem; border-radius: ${themeStyles.borderRadius === '0' ? '5px' : themeStyles.borderRadius}; overflow-x: auto; }`);
+    lines.push(`blockquote { border-left: 4px solid ${colors.accent}; padding-left: 1rem; margin-left: 0; color: ${colors.secondary}; }`);
+    lines.push(`a { color: ${colors.accent}; }`);
+    lines.push(`hr { border: none; border-top: 1px solid ${colors.border}; margin: 2rem 0; }`);
+    lines.push(`strong { color: ${colors.text}; font-weight: ${themeStyles.fontWeight === '400' ? '600' : themeStyles.fontWeight}; }`);
+    lines.push(`.entry-separator { border-top: 1px solid ${colors.border}; margin: 2rem 0; }`);
+    lines.push(`p { line-height: ${themeStyles.lineHeight}; }`);
+    lines.push(`</style>`);
+    lines.push(`</head>`);
+    lines.push(`<body>`);
+    lines.push('');
+  }
+  
+  // Title
+  const title = metadata?.projectTitle || metadata?.exportName || 'CalenRecall Storybook Export';
+  lines.push(`# ${title}`);
+  lines.push('');
+  
+  // Metadata section
+  if (metadata) {
+    if (metadata.description) {
+      lines.push(metadata.description);
+      lines.push('');
+    }
+    
+    if (metadata.author || metadata.organization) {
+      lines.push('## Metadata');
+      lines.push('');
+      if (metadata.author) lines.push(`**Author:** ${metadata.author}`);
+      if (metadata.organization) lines.push(`**Organization:** ${metadata.organization}`);
+      if (metadata.department) lines.push(`**Department:** ${metadata.department}`);
+      if (metadata.contactEmail) lines.push(`**Email:** ${metadata.contactEmail}`);
+      if (metadata.contactPhone) lines.push(`**Phone:** ${metadata.contactPhone}`);
+      if (metadata.website) lines.push(`**Website:** ${metadata.website}`);
+      if (metadata.version) lines.push(`**Version:** ${metadata.version}`);
+      if (metadata.versionDate) lines.push(`**Version Date:** ${metadata.versionDate}`);
+      if (metadata.purpose) lines.push(`**Purpose:** ${metadata.purpose}`);
+      if (metadata.exportPurpose) lines.push(`**Export Purpose:** ${metadata.exportPurpose}`);
+      if (metadata.classification) lines.push(`**Classification:** ${metadata.classification}`);
+      if (metadata.subject) lines.push(`**Subject:** ${metadata.subject}`);
+      if (metadata.keywords && metadata.keywords.length > 0) {
+        lines.push(`**Keywords:** ${metadata.keywords.join(', ')}`);
+      }
+      if (metadata.dateRangeStart || metadata.dateRangeEnd) {
+        const range = [metadata.dateRangeStart, metadata.dateRangeEnd].filter(Boolean).join(' to ');
+        lines.push(`**Date Range:** ${range}`);
+      }
+      lines.push('');
+    }
+    
+    if (metadata.context || metadata.background) {
+      lines.push('## Context');
+      lines.push('');
+      if (metadata.context) {
+        lines.push(metadata.context);
+        lines.push('');
+      }
+      if (metadata.background) {
+        lines.push(metadata.background);
+        lines.push('');
+      }
+    }
+    
+    if (metadata.copyright || metadata.license || metadata.rights) {
+      lines.push('## Legal & Rights');
+      lines.push('');
+      if (metadata.copyright) lines.push(`**Copyright:** ${metadata.copyright}`);
+      if (metadata.license) lines.push(`**License:** ${metadata.license}`);
+      if (metadata.rights) {
+        lines.push('');
+        lines.push(metadata.rights);
+      }
+      lines.push('');
+    }
+    
+    if (metadata.relatedDocuments || metadata.citation || metadata.source) {
+      lines.push('## References');
+      lines.push('');
+      if (metadata.relatedDocuments) lines.push(metadata.relatedDocuments);
+      if (metadata.citation) lines.push(`**Citation:** ${metadata.citation}`);
+      if (metadata.source) lines.push(`**Source:** ${metadata.source}`);
+      lines.push('');
+    }
+    
+    if (metadata.notes || metadata.instructions || metadata.acknowledgments) {
+      if (metadata.notes) {
+        lines.push('## Notes');
+        lines.push('');
+        lines.push(metadata.notes);
+        lines.push('');
+      }
+      if (metadata.instructions) {
+        lines.push('## Instructions');
+        lines.push('');
+        lines.push(metadata.instructions);
+        lines.push('');
+      }
+      if (metadata.acknowledgments) {
+        lines.push('## Acknowledgments');
+        lines.push('');
+        lines.push(metadata.acknowledgments);
+        lines.push('');
+      }
+    }
+  }
+  
+  // Export info
+  lines.push('---');
+  lines.push('');
+  lines.push(`**Exported at:** ${metadata?.exportDate || new Date().toISOString()}`);
+  if (entries.length > 0) {
+    lines.push(`**Entries:** ${entries.length}`);
+  }
+  lines.push('');
+  lines.push('---');
+  lines.push('');
+  
+  // Entries
   for (const entry of entries) {
     lines.push(`## ${entry.date} (${entry.timeRange}) — ${entry.title}`);
     if (entry.tags && entry.tags.length > 0) {
@@ -1186,16 +1555,120 @@ function formatAsMarkdown(entries: JournalEntry[]): string {
     lines.push('---');
     lines.push('');
   }
+  
+  // Close HTML tags if theme styling was added
+  if (metadata?.exportTheme) {
+    lines.push('');
+    lines.push('</body>');
+    lines.push('</html>');
+  }
 
   return lines.join('\n');
 }
 
-function formatAsPlainText(entries: JournalEntry[]): string {
+function formatAsPlainText(entries: JournalEntry[], metadata?: ExportMetadata): string {
   const lines: string[] = [];
-  lines.push('CalenRecall Storybook Export');
-  lines.push(`Exported at: ${new Date().toISOString()}`);
+  
+  const title = metadata?.projectTitle || metadata?.exportName || 'CalenRecall Storybook Export';
+  lines.push('='.repeat(title.length + 4));
+  lines.push(`  ${title}`);
+  lines.push('='.repeat(title.length + 4));
   lines.push('');
-
+  
+  // Metadata
+  if (metadata) {
+    if (metadata.description) {
+      lines.push(metadata.description);
+      lines.push('');
+    }
+    
+    lines.push('METADATA');
+    lines.push('-'.repeat(50));
+    if (metadata.author) lines.push(`Author: ${metadata.author}`);
+    if (metadata.organization) lines.push(`Organization: ${metadata.organization}`);
+    if (metadata.department) lines.push(`Department: ${metadata.department}`);
+    if (metadata.contactEmail) lines.push(`Email: ${metadata.contactEmail}`);
+    if (metadata.contactPhone) lines.push(`Phone: ${metadata.contactPhone}`);
+    if (metadata.website) lines.push(`Website: ${metadata.website}`);
+    if (metadata.version) lines.push(`Version: ${metadata.version}`);
+    if (metadata.versionDate) lines.push(`Version Date: ${metadata.versionDate}`);
+    if (metadata.purpose) lines.push(`Purpose: ${metadata.purpose}`);
+    if (metadata.exportPurpose) lines.push(`Export Purpose: ${metadata.exportPurpose}`);
+    if (metadata.classification) lines.push(`Classification: ${metadata.classification}`);
+    if (metadata.subject) lines.push(`Subject: ${metadata.subject}`);
+    if (metadata.keywords && metadata.keywords.length > 0) {
+      lines.push(`Keywords: ${metadata.keywords.join(', ')}`);
+    }
+    if (metadata.dateRangeStart || metadata.dateRangeEnd) {
+      const range = [metadata.dateRangeStart, metadata.dateRangeEnd].filter(Boolean).join(' to ');
+      lines.push(`Date Range: ${range}`);
+    }
+    if (metadata.copyright) lines.push(`Copyright: ${metadata.copyright}`);
+    if (metadata.license) lines.push(`License: ${metadata.license}`);
+    if (metadata.citation) lines.push(`Citation: ${metadata.citation}`);
+    if (metadata.source) lines.push(`Source: ${metadata.source}`);
+    lines.push('');
+    
+    if (metadata.context || metadata.background) {
+      lines.push('CONTEXT');
+      lines.push('-'.repeat(50));
+      if (metadata.context) {
+        lines.push(metadata.context);
+        lines.push('');
+      }
+      if (metadata.background) {
+        lines.push(metadata.background);
+        lines.push('');
+      }
+    }
+    
+    if (metadata.rights) {
+      lines.push('RIGHTS');
+      lines.push('-'.repeat(50));
+      lines.push(metadata.rights);
+      lines.push('');
+    }
+    
+    if (metadata.relatedDocuments) {
+      lines.push('RELATED DOCUMENTS');
+      lines.push('-'.repeat(50));
+      lines.push(metadata.relatedDocuments);
+      lines.push('');
+    }
+    
+    if (metadata.notes || metadata.instructions || metadata.acknowledgments) {
+      if (metadata.notes) {
+        lines.push('NOTES');
+        lines.push('-'.repeat(50));
+        lines.push(metadata.notes);
+        lines.push('');
+      }
+      if (metadata.instructions) {
+        lines.push('INSTRUCTIONS');
+        lines.push('-'.repeat(50));
+        lines.push(metadata.instructions);
+        lines.push('');
+      }
+      if (metadata.acknowledgments) {
+        lines.push('ACKNOWLEDGMENTS');
+        lines.push('-'.repeat(50));
+        lines.push(metadata.acknowledgments);
+        lines.push('');
+      }
+    }
+  }
+  
+  lines.push('EXPORT INFORMATION');
+  lines.push('-'.repeat(50));
+  lines.push(`Exported at: ${metadata?.exportDate || new Date().toISOString()}`);
+  if (entries.length > 0) {
+    lines.push(`Entries: ${entries.length}`);
+  }
+  lines.push('');
+  lines.push('='.repeat(50));
+  lines.push('');
+  
+  // Entries
   for (const entry of entries) {
     lines.push(`${entry.date} [${entry.timeRange}] - ${entry.title}`);
     if (entry.tags && entry.tags.length > 0) {
@@ -1212,19 +1685,145 @@ function formatAsPlainText(entries: JournalEntry[]): string {
 }
 
 /**
+ * Convert hex color to RTF color format (RGB values 0-255)
+ */
+function hexToRtfColor(hex: string): string {
+  const match = hex.match(/#([0-9a-fA-F]{2})([0-9a-fA-F]{2})([0-9a-fA-F]{2})/);
+  if (!match) return '0 0 0'; // Default to black
+  const r = parseInt(match[1], 16);
+  const g = parseInt(match[2], 16);
+  const b = parseInt(match[3], 16);
+  return `${r} ${g} ${b}`;
+}
+
+/**
  * Very simple RTF export aimed at a typewriter-style, monospaced look.
  * We keep formatting minimal for broad compatibility.
  */
-function formatAsRtf(entries: JournalEntry[]): string {
+function formatAsRtf(entries: JournalEntry[], metadata?: ExportMetadata): string {
+  // Get theme colors if theme is specified
+  const themeName = metadata?.exportTheme || getPreference('theme') || 'light';
+  const colors = extractThemeColors(themeName);
+  
+  // RTF color table format: {\colortbl;\redR\greenG\blueB;...}
+  // Index 0 is auto/default, index 1+ are our colors
+  const textColor = hexToRtfColor(colors.text).split(' ');
+  const accentColor = hexToRtfColor(colors.accent).split(' ');
+  const secondaryColor = hexToRtfColor(colors.secondary).split(' ');
+  
   const header = [
     '{\\rtf1\\ansi',
     '{\\fonttbl{\\f0\\fmodern Courier New;}}',
+    `{\\colortbl;\\red${textColor[0]}\\green${textColor[1]}\\blue${textColor[2]};\\red${accentColor[0]}\\green${accentColor[1]}\\blue${accentColor[2]};\\red${secondaryColor[0]}\\green${secondaryColor[1]}\\blue${secondaryColor[2]};}`,
     '\\f0\\fs22',
+    '\\cf1', // Use text color (index 1, 0 is default/auto)
   ];
 
   const body: string[] = [];
-  body.push('\\b CalenRecall Storybook Export \\b0\\par');
-  body.push(`Exported at: ${escapeRtf(new Date().toISOString())}\\par`);
+  const title = metadata?.projectTitle || metadata?.exportName || 'CalenRecall Storybook Export';
+  body.push(`\\cf1\\b ${escapeRtf(title)} \\b0\\par`); // Use text color
+  body.push('\\par');
+  
+  // Metadata
+  if (metadata) {
+    if (metadata.description) {
+      body.push(`${escapeRtf(metadata.description)}\\par`);
+      body.push('\\par');
+    }
+    
+    body.push('\\b METADATA \\b0\\par');
+    if (metadata.author) body.push(`Author: ${escapeRtf(metadata.author)}\\par`);
+    if (metadata.organization) body.push(`Organization: ${escapeRtf(metadata.organization)}\\par`);
+    if (metadata.department) body.push(`Department: ${escapeRtf(metadata.department)}\\par`);
+    if (metadata.contactEmail) body.push(`Email: ${escapeRtf(metadata.contactEmail)}\\par`);
+    if (metadata.contactPhone) body.push(`Phone: ${escapeRtf(metadata.contactPhone)}\\par`);
+    if (metadata.website) body.push(`Website: ${escapeRtf(metadata.website)}\\par`);
+    if (metadata.version) body.push(`Version: ${escapeRtf(metadata.version)}\\par`);
+    if (metadata.versionDate) body.push(`Version Date: ${escapeRtf(metadata.versionDate)}\\par`);
+    if (metadata.purpose) body.push(`Purpose: ${escapeRtf(metadata.purpose)}\\par`);
+    if (metadata.exportPurpose) body.push(`Export Purpose: ${escapeRtf(metadata.exportPurpose)}\\par`);
+    if (metadata.classification) body.push(`Classification: ${escapeRtf(metadata.classification)}\\par`);
+    if (metadata.subject) body.push(`Subject: ${escapeRtf(metadata.subject)}\\par`);
+    if (metadata.keywords && metadata.keywords.length > 0) {
+      body.push(`Keywords: ${escapeRtf(metadata.keywords.join(', '))}\\par`);
+    }
+    if (metadata.dateRangeStart || metadata.dateRangeEnd) {
+      const range = [metadata.dateRangeStart, metadata.dateRangeEnd].filter(Boolean).join(' to ');
+      body.push(`Date Range: ${escapeRtf(range)}\\par`);
+    }
+    if (metadata.copyright) body.push(`Copyright: ${escapeRtf(metadata.copyright)}\\par`);
+    if (metadata.license) body.push(`License: ${escapeRtf(metadata.license)}\\par`);
+    body.push('\\par');
+    
+    if (metadata.context || metadata.background) {
+      body.push('\\b CONTEXT \\b0\\par');
+      if (metadata.context) {
+        const contextLines = metadata.context.split(/\r?\n/);
+        for (const line of contextLines) {
+          body.push(`${escapeRtf(line)}\\par`);
+        }
+        body.push('\\par');
+      }
+      if (metadata.background) {
+        const bgLines = metadata.background.split(/\r?\n/);
+        for (const line of bgLines) {
+          body.push(`${escapeRtf(line)}\\par`);
+        }
+        body.push('\\par');
+      }
+    }
+    
+    if (metadata.rights) {
+      body.push('\\b RIGHTS \\b0\\par');
+      const rightsLines = metadata.rights.split(/\r?\n/);
+      for (const line of rightsLines) {
+        body.push(`${escapeRtf(line)}\\par`);
+      }
+      body.push('\\par');
+    }
+    
+    if (metadata.relatedDocuments) {
+      body.push('\\b RELATED DOCUMENTS \\b0\\par');
+      const docLines = metadata.relatedDocuments.split(/\r?\n/);
+      for (const line of docLines) {
+        body.push(`${escapeRtf(line)}\\par`);
+      }
+      body.push('\\par');
+    }
+    
+    if (metadata.notes || metadata.instructions || metadata.acknowledgments) {
+      if (metadata.notes) {
+        body.push('\\b NOTES \\b0\\par');
+        const notesLines = metadata.notes.split(/\r?\n/);
+        for (const line of notesLines) {
+          body.push(`${escapeRtf(line)}\\par`);
+        }
+        body.push('\\par');
+      }
+      if (metadata.instructions) {
+        body.push('\\b INSTRUCTIONS \\b0\\par');
+        const instLines = metadata.instructions.split(/\r?\n/);
+        for (const line of instLines) {
+          body.push(`${escapeRtf(line)}\\par`);
+        }
+        body.push('\\par');
+      }
+      if (metadata.acknowledgments) {
+        body.push('\\b ACKNOWLEDGMENTS \\b0\\par');
+        const ackLines = metadata.acknowledgments.split(/\r?\n/);
+        for (const line of ackLines) {
+          body.push(`${escapeRtf(line)}\\par`);
+        }
+        body.push('\\par');
+      }
+    }
+  }
+  
+  body.push('\\b EXPORT INFORMATION \\b0\\par');
+  body.push(`Exported at: ${escapeRtf(metadata?.exportDate || new Date().toISOString())}\\par`);
+  if (entries.length > 0) {
+    body.push(`Entries: ${entries.length}\\par`);
+  }
   body.push('\\par');
 
   for (const entry of entries) {
@@ -1263,10 +1862,16 @@ function escapeRtf(text: string): string {
 /**
  * Compact .dec (\"decades\") export – groups entries by decade and year.
  */
-function formatAsDecades(entries: JournalEntry[]): string {
+function formatAsDecades(entries: JournalEntry[], metadata?: ExportMetadata): string {
   const lines: string[] = [];
-  lines.push('CalenRecall Decades Export');
-  lines.push(`Exported at: ${new Date().toISOString()}`);
+  const title = metadata?.projectTitle || metadata?.exportName || 'CalenRecall Decades Export';
+  lines.push(title);
+  lines.push(`Exported at: ${metadata?.exportDate || new Date().toISOString()}`);
+  if (metadata?.author) lines.push(`Author: ${metadata.author}`);
+  if (metadata?.organization) lines.push(`Organization: ${metadata.organization}`);
+  if (metadata?.version) lines.push(`Version: ${metadata.version}`);
+  if (metadata?.purpose) lines.push(`Purpose: ${metadata.purpose}`);
+  if (metadata?.classification) lines.push(`Classification: ${metadata.classification}`);
   lines.push('');
 
   // Group by decade and year
@@ -1316,9 +1921,31 @@ function formatAsDecades(entries: JournalEntry[]): string {
  * Format entries as CSV (Comma-Separated Values).
  * Escapes commas, quotes, and newlines in content.
  */
-function formatAsCsv(entries: JournalEntry[]): string {
-  // CSV header
+function formatAsCsv(entries: JournalEntry[], metadata?: ExportMetadata): string {
   const lines: string[] = [];
+  
+  // Metadata comments at top
+  if (metadata) {
+    const escapeCsvField = (field: string): string => {
+      if (field.includes(',') || field.includes('"') || field.includes('\n') || field.includes('\r')) {
+        return `"${field.replace(/"/g, '""')}"`;
+      }
+      return field;
+    };
+    
+    lines.push('# Export Metadata');
+    const title = metadata.projectTitle || metadata.exportName || 'CalenRecall Storybook Export';
+    lines.push(`# Title: ${escapeCsvField(title)}`);
+    if (metadata.author) lines.push(`# Author: ${escapeCsvField(metadata.author)}`);
+    if (metadata.organization) lines.push(`# Organization: ${escapeCsvField(metadata.organization)}`);
+    if (metadata.version) lines.push(`# Version: ${escapeCsvField(metadata.version)}`);
+    if (metadata.exportDate) lines.push(`# Export Date: ${escapeCsvField(metadata.exportDate)}`);
+    if (metadata.purpose) lines.push(`# Purpose: ${escapeCsvField(metadata.purpose)}`);
+    if (metadata.classification) lines.push(`# Classification: ${escapeCsvField(metadata.classification)}`);
+    lines.push('#');
+  }
+  
+  // CSV header
   lines.push('Date,Time Range,Title,Content,Tags,Created At,Updated At');
   
   // Helper function to escape CSV fields
@@ -1348,36 +1975,139 @@ function formatAsCsv(entries: JournalEntry[]): string {
 /**
  * Generate a PDF storybook using pdfkit.
  */
-async function exportEntriesAsPdf(entries: JournalEntry[], filePath: string): Promise<void> {
+async function exportEntriesAsPdf(entries: JournalEntry[], filePath: string, metadata?: ExportMetadata): Promise<void> {
   return new Promise((resolve, reject) => {
     try {
-      const doc = new PDFDocument({ margin: 50 });
+      // Get theme styles if theme is specified
+      const themeName = metadata?.exportTheme || getPreference('theme') || 'light';
+      const themeStyles = extractThemeStyles(themeName);
+      const colors = themeStyles.colors;
+      
+      const doc = new PDFDocument({ 
+        margin: 50,
+        size: 'LETTER',
+      });
       const stream = fs.createWriteStream(filePath);
 
       doc.pipe(stream);
+      
+      // Set font family from theme (PDFKit supports limited fonts, so we'll map common ones)
+      const fontFamily = themeStyles.fontFamily.toLowerCase();
+      let pdfFont = 'Helvetica'; // Default
+      if (fontFamily.includes('courier') || fontFamily.includes('mono')) {
+        pdfFont = 'Courier';
+      } else if (fontFamily.includes('times')) {
+        pdfFont = 'Times-Roman';
+      }
+      // Note: PDFKit doesn't support custom fonts like 'Antonio' directly, but we can use Helvetica-Bold for emphasis
+      
+      // Helper function to draw background on each page
+      const drawPageBackground = () => {
+        // Draw a rectangle covering the entire page as background
+        (doc as any).fillColor(colors.background);
+        (doc as any).rect(0, 0, doc.page.width, doc.page.height);
+        (doc as any).fill();
+        // Reset fill color to text color for subsequent content
+        (doc as any).fillColor(colors.text);
+      };
+      
+      // Draw background on first page
+      drawPageBackground();
 
-      doc.fontSize(20).text('CalenRecall Storybook Export', { align: 'center' });
+      const title = metadata?.projectTitle || metadata?.exportName || 'CalenRecall Storybook Export';
+      doc.fontSize(20);
+      doc.font(`${pdfFont}-Bold`);
+      (doc as any).fillColor(colors.text);
+      doc.text(title, { align: 'center' });
       doc.moveDown();
-      doc.fontSize(10).text(`Exported at: ${new Date().toISOString()}`, { align: 'center' });
+      doc.fontSize(10);
+      (doc as any).fillColor(colors.secondary);
+      doc.text(`Exported at: ${metadata?.exportDate || new Date().toISOString()}`, { align: 'center' });
+      
+      // Add metadata section
+      if (metadata) {
+        doc.moveDown();
+        let metadataLines: string[] = [];
+        if (metadata.author) metadataLines.push(`Author: ${metadata.author}`);
+        if (metadata.organization) metadataLines.push(`Organization: ${metadata.organization}`);
+        if (metadata.department) metadataLines.push(`Department: ${metadata.department}`);
+        if (metadata.version) metadataLines.push(`Version: ${metadata.version}`);
+        if (metadata.purpose) metadataLines.push(`Purpose: ${metadata.purpose}`);
+        if (metadata.exportPurpose) metadataLines.push(`Export Purpose: ${metadata.exportPurpose}`);
+        if (metadata.classification) metadataLines.push(`Classification: ${metadata.classification}`);
+        if (metadata.keywords && metadata.keywords.length > 0) {
+          metadataLines.push(`Keywords: ${metadata.keywords.join(', ')}`);
+        }
+        if (metadata.copyright) metadataLines.push(`Copyright: ${metadata.copyright}`);
+        if (metadata.license) metadataLines.push(`License: ${metadata.license}`);
+        
+        if (metadataLines.length > 0) {
+          doc.fontSize(9);
+          (doc as any).fillColor(colors.secondary);
+          doc.text(metadataLines.join(' | '), { align: 'center' });
+        }
+        
+        if (metadata.description) {
+          doc.moveDown();
+          doc.fontSize(10);
+          doc.font(pdfFont);
+          (doc as any).fillColor(colors.text);
+          doc.text(metadata.description, { align: 'left' });
+        }
+        
+        if (metadata.context || metadata.background) {
+          doc.moveDown();
+          if (metadata.context) {
+            doc.fontSize(9);
+            doc.font(`${pdfFont}-Oblique`);
+            (doc as any).fillColor(colors.accent);
+            doc.text('Context:', { align: 'left' });
+            doc.fontSize(9);
+            doc.font(pdfFont);
+            (doc as any).fillColor(colors.text);
+            doc.text(metadata.context, { align: 'left' });
+          }
+          if (metadata.background) {
+            doc.moveDown(0.5);
+            doc.fontSize(9);
+            doc.font(`${pdfFont}-Oblique`);
+            (doc as any).fillColor(colors.accent);
+            doc.text('Background:', { align: 'left' });
+            doc.fontSize(9);
+            doc.font(pdfFont);
+            (doc as any).fillColor(colors.text);
+            doc.text(metadata.background, { align: 'left' });
+          }
+        }
+      }
+      
       doc.moveDown(2);
 
       for (const entry of entries) {
         const titleLine = `${entry.date} (${entry.timeRange}) — ${entry.title}`;
-        doc.fontSize(14).font('Helvetica-Bold').text(titleLine);
+        doc.fontSize(14).font('Helvetica-Bold');
+        (doc as any).fillColor(colors.text);
+        doc.text(titleLine);
 
         if (entry.tags && entry.tags.length > 0) {
           doc.moveDown(0.3);
-          doc.fontSize(10).font('Helvetica-Oblique').text(`Tags: ${entry.tags.join(', ')}`);
+          doc.fontSize(10);
+          doc.font(`${pdfFont}-Oblique`);
+          (doc as any).fillColor(colors.accent);
+          doc.text(`Tags: ${entry.tags.join(', ')}`);
         }
 
         doc.moveDown(0.5);
-        doc.fontSize(12).font('Helvetica').text(entry.content, { align: 'left' });
+        doc.fontSize(12);
+        doc.font(pdfFont); // Use theme font
+        (doc as any).fillColor(colors.text);
+        doc.text(entry.content, { align: 'left' });
         doc.moveDown(1);
 
-        // Add a subtle separator
+        // Add a separator using theme border color
         doc.moveTo(doc.page.margins.left, doc.y)
           .lineTo(doc.page.width - doc.page.margins.right, doc.y)
-          .strokeColor('#cccccc')
+          .strokeColor(colors.border)
           .stroke();
 
         doc.moveDown(1);
@@ -1385,6 +2115,8 @@ async function exportEntriesAsPdf(entries: JournalEntry[], filePath: string): Pr
         // Start a new page if we're near the bottom
         if (doc.y > doc.page.height - doc.page.margins.bottom - 100) {
           doc.addPage();
+          // Draw background on new page
+          drawPageBackground();
         }
       }
 

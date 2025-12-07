@@ -340,27 +340,45 @@ export default function JournalEditor({
         entryTimeRange = viewMode;
       }
       
-      // Convert hour to 24-hour format if needed (only for day entries)
-      const hour24 = entryTimeRange === 'day' && hour !== undefined && hour !== null 
-        ? convertTo24Hour(hour, amPm) 
-        : undefined;
+      // Convert hour to 24-hour format if needed (treat time fields like other form fields)
+      // If state has a value (including 0), use it; otherwise preserve from currentEntry
+      const hour24 = (hour !== undefined && hour !== null)
+        ? convertTo24Hour(hour, amPm)
+        : currentEntry?.hour;
       
       const entry: JournalEntry = {
-        id: currentEntry?.id, // Preserve ID if editing existing entry
+        id: currentEntry?.id,
         date: entryDate,
         timeRange: entryTimeRange,
-        // Only include time fields for day entries
-        hour: entryTimeRange === 'day' ? hour24 : undefined,
-        minute: entryTimeRange === 'day' ? (minute !== undefined && minute !== null ? minute : undefined) : undefined,
-        second: entryTimeRange === 'day' ? (second !== undefined && second !== null ? second : undefined) : undefined,
+        // Save time fields exactly like title/content/tags - use state or preserve existing
+        hour: hour24,
+        minute: (minute !== undefined && minute !== null) ? minute : currentEntry?.minute,
+        second: (second !== undefined && second !== null) ? second : currentEntry?.second,
         title: title.trim() || defaultTitle,
         content: content.trim(),
         tags: tags,
         createdAt: currentEntry?.createdAt || new Date().toISOString(),
         updatedAt: new Date().toISOString(),
+        // Preserve other fields that might exist on the entry
+        linkedEntries: currentEntry?.linkedEntries,
+        archived: currentEntry?.archived,
+        pinned: currentEntry?.pinned,
+        attachments: currentEntry?.attachments,
       };
 
-      console.log('Saving entry:', entry);
+      console.log('Saving entry:', {
+        id: entry.id,
+        date: entry.date,
+        timeRange: entry.timeRange,
+        hour: entry.hour,
+        minute: entry.minute,
+        second: entry.second,
+        title: entry.title,
+        stateHour: hour,
+        stateMinute: minute,
+        stateSecond: second,
+        currentEntryHour: currentEntry?.hour,
+      });
       await saveJournalEntry(entry);
       console.log('Entry saved successfully');
       

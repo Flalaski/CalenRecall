@@ -5,10 +5,11 @@ import EntryViewer from './components/EntryViewer';
 import NavigationBar from './components/NavigationBar';
 import GlobalTimelineMinimap from './components/GlobalTimelineMinimap';
 import EntryEditModal from './components/EntryEditModal';
+import ExportMetadataModal from './components/ExportMetadataModal';
 import SearchView from './components/SearchView';
 import LoadingScreen from './components/LoadingScreen';
 import BackgroundArt from './components/BackgroundArt';
-import { TimeRange, JournalEntry, Preferences } from './types';
+import { TimeRange, JournalEntry, Preferences, ExportFormat, ExportMetadata } from './types';
 import { getEntryForDate } from './services/journalService';
 import { playNewEntrySound } from './utils/audioUtils';
 import { formatDateToISO, parseISODate } from './utils/dateUtils';
@@ -30,6 +31,9 @@ function App() {
   const [loadingProgress, setLoadingProgress] = useState(0);
   const [loadingMessage, setLoadingMessage] = useState('Initializing...');
   const [backgroundImagePath, setBackgroundImagePath] = useState<string | null>(null);
+  const [showExportModal, setShowExportModal] = useState(false);
+  const [pendingExportFormat, setPendingExportFormat] = useState<ExportFormat | null>(null);
+  const [entryCount, setEntryCount] = useState(0);
   
   // Track if initial load has completed - after this, default view mode should NEVER be applied
   const initialLoadCompleteRef = useRef(false);
@@ -527,6 +531,30 @@ function App() {
     };
   }, [updateSpecificPreference]);
 
+  // Export handlers - defined outside useEffect so they're accessible in render
+  const handleExportConfirm = useCallback(async (metadata: ExportMetadata, format: ExportFormat) => {
+    try {
+      setShowExportModal(false);
+      if (window.electronAPI) {
+        const result = await window.electronAPI.exportEntries(format, metadata);
+        if (result.success) {
+          console.log('Export successful:', result.path);
+        } else if (!result.canceled) {
+          console.error('Export failed:', result.error);
+        }
+      }
+      setPendingExportFormat(null);
+    } catch (error) {
+      console.error('Error exporting:', error);
+      setPendingExportFormat(null);
+    }
+  }, []);
+
+  const handleExportCancel = useCallback(() => {
+    setShowExportModal(false);
+    setPendingExportFormat(null);
+  }, []);
+
   // Listen for menu messages from main process
   useEffect(() => {
     if (!window.electronAPI) return;
@@ -555,15 +583,21 @@ function App() {
       }
     };
 
-    const handleMenuExport = async (format: 'markdown' | 'text' | 'json' | 'rtf' | 'pdf' | 'dec' | 'csv') => {
+    const handleMenuExport = async (format: ExportFormat) => {
       try {
         if (window.electronAPI) {
-          const result = await window.electronAPI.exportEntries(format);
-          if (result.success) {
-            console.log('Export successful:', result.path);
-          } else if (!result.canceled) {
-            console.error('Export failed:', result.error);
+          // Get entry count for the modal
+          const allEntries = await window.electronAPI.getAllEntries();
+          setEntryCount(allEntries.length);
+          
+          if (allEntries.length === 0) {
+            console.log('No entries to export');
+            return;
           }
+          
+          // Show metadata modal first
+          setPendingExportFormat(format);
+          setShowExportModal(true);
         }
       } catch (error) {
         console.error('Error handling export:', error);
@@ -877,6 +911,15 @@ function App() {
             onClose={() => setShowSearch(false)}
           />
         </div>
+      )}
+      {showExportModal && pendingExportFormat && (
+        <ExportMetadataModal
+          isOpen={showExportModal}
+          format={pendingExportFormat}
+          onClose={handleExportCancel}
+          onConfirm={handleExportConfirm}
+          entryCount={entryCount}
+        />
       )}
       </div>
     </>

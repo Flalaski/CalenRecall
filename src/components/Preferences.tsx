@@ -123,7 +123,10 @@ export default function PreferencesComponent() {
         setBackgroundImagePreview(null);
       }
 
-      // Initialize export format from any stored preference in future (for now default)
+      // Initialize export format from stored preference or default to markdown
+      if (prefs.defaultExportFormat) {
+        setExportFormat(prefs.defaultExportFormat);
+      }
     } catch (error) {
       console.error('Error loading preferences:', error);
     } finally {
@@ -656,6 +659,26 @@ export default function PreferencesComponent() {
 
         <div className="preferences-section">
           <h2>Export / Storybook</h2>
+          <div className="preference-item">
+            <label htmlFor="defaultExportFormat">Default Export Format</label>
+            <select
+              id="defaultExportFormat"
+              value={preferences.defaultExportFormat || 'markdown'}
+              onChange={(e) => updatePreference('defaultExportFormat', e.target.value as ExportFormat)}
+            >
+              <option value="markdown">Markdown (.md)</option>
+              <option value="text">Plain text (.txt)</option>
+              <option value="json">JSON (.json)</option>
+              <option value="csv">CSV (.csv)</option>
+              <option value="rtf">Rich Text (.rtf)</option>
+              <option value="pdf">PDF (.pdf)</option>
+              <option value="dec">Decades summary (.dec)</option>
+            </select>
+            <small>
+              This format will be used as the default when exporting entries from the menu or other export actions.
+              You can still change the format in the export metadata dialog.
+            </small>
+          </div>
           <div className="preference-item export-toolbar">
             <label>Export all entries as</label>
             <div className="export-controls">

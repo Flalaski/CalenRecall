@@ -1,7 +1,7 @@
 import Database from 'better-sqlite3';
 import * as path from 'path';
 import { app } from 'electron';
-import { JournalEntry, TimeRange } from './types';
+import { JournalEntry, TimeRange, ExportFormat, ExportMetadata } from './types';
 
 /**
  * Safely formats a date to ISO date string (YYYY-MM-DD) that works with negative years.
@@ -1222,6 +1222,9 @@ export interface Preferences {
   backgroundImage?: string; // Path to custom background image, or empty for procedural art
   enableProceduralArt?: boolean; // Enable procedural background art (default: true)
   minimapCrystalUseDefaultColors?: boolean; // Override minimap crystal theming to always use default colors
+  timeFormat?: '12h' | '24h'; // Time format: 12-hour (AM/PM) or 24-hour
+  defaultExportFormat?: ExportFormat; // Default export format to use when exporting entries
+  defaultExportMetadata?: ExportMetadata; // Default export metadata to use for all exports
 }
 
 const DEFAULT_PREFERENCES: Preferences = {

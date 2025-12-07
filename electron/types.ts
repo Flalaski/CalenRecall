@@ -30,6 +30,59 @@ export type TimeRange = 'decade' | 'year' | 'month' | 'week' | 'day';
 // Supported export formats for storybook export
 export type ExportFormat = 'markdown' | 'text' | 'json' | 'rtf' | 'pdf' | 'dec' | 'csv';
 
+export interface ExportMetadata {
+  // Project/Export Identity
+  projectTitle?: string;
+  exportName?: string;
+  
+  // Identity
+  author?: string;
+  organization?: string;
+  department?: string;
+  contactEmail?: string;
+  contactPhone?: string;
+  website?: string;
+  
+  // Context
+  description?: string;
+  purpose?: string;
+  exportPurpose?: 'personal' | 'academic' | 'professional' | 'publication' | 'backup' | 'archive' | 'research' | 'legal' | 'other';
+  context?: string;
+  background?: string;
+  
+  // Versioning
+  version?: string;
+  versionDate?: string;
+  
+  // Classification
+  classification?: 'public' | 'internal' | 'confidential' | 'private' | 'restricted';
+  keywords?: string[];
+  subject?: string;
+  
+  // Legal/Copyright
+  copyright?: string;
+  license?: string;
+  rights?: string;
+  
+  // Dates
+  dateRangeStart?: string;
+  dateRangeEnd?: string;
+  exportDate?: string;
+  
+  // References
+  relatedDocuments?: string;
+  citation?: string;
+  source?: string;
+  
+  // Notes
+  notes?: string;
+  instructions?: string;
+  acknowledgments?: string;
+  
+  // Thematic Construct
+  exportTheme?: string; // Theme name to use as a thematic construct for the export
+}
+
 export interface EntryVersion {
   id: number;
   entryId: number;

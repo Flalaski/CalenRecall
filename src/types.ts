@@ -29,6 +29,59 @@ export type TimeRange = 'decade' | 'year' | 'month' | 'week' | 'day';
 
 export type ExportFormat = 'markdown' | 'text' | 'json' | 'rtf' | 'pdf' | 'dec' | 'csv';
 
+export interface ExportMetadata {
+  // Project/Export Identity
+  projectTitle?: string; // Title of the export/project
+  exportName?: string; // Name for this specific export
+  
+  // Identity
+  author?: string; // Author/creator name
+  organization?: string; // Organization or institution
+  department?: string; // Department or division
+  contactEmail?: string; // Contact email address
+  contactPhone?: string; // Contact phone number
+  website?: string; // Website URL
+  
+  // Context
+  description?: string; // Description of the export/project
+  purpose?: string; // Purpose of the export
+  exportPurpose?: 'personal' | 'academic' | 'professional' | 'publication' | 'backup' | 'archive' | 'research' | 'legal' | 'other'; // Type of purpose
+  context?: string; // Additional context information
+  background?: string; // Background information
+  
+  // Versioning
+  version?: string; // Version number
+  versionDate?: string; // Version date
+  
+  // Classification
+  classification?: 'public' | 'internal' | 'confidential' | 'private' | 'restricted'; // Sensitivity/classification level
+  keywords?: string[]; // Keywords/tags for the export
+  subject?: string; // Subject category
+  
+  // Legal/Copyright
+  copyright?: string; // Copyright notice
+  license?: string; // License information
+  rights?: string; // Rights statement
+  
+  // Dates
+  dateRangeStart?: string; // Start date of exported content (ISO date)
+  dateRangeEnd?: string; // End date of exported content (ISO date)
+  exportDate?: string; // Export creation date (ISO datetime)
+  
+  // References
+  relatedDocuments?: string; // Related documents or references
+  citation?: string; // Citation information
+  source?: string; // Source information
+  
+  // Notes
+  notes?: string; // Additional notes about the export
+  instructions?: string; // Instructions for use
+  acknowledgments?: string; // Acknowledgments
+  
+  // Thematic Construct
+  exportTheme?: string; // Theme name to use as a thematic construct for the export
+}
+
 export interface EntryVersion {
   id: number;
   entryId: number;
@@ -76,6 +129,8 @@ export interface Preferences {
   showMultipleCalendars?: boolean; // Show date in multiple calendars simultaneously
   backgroundImage?: string; // Path to custom background image, or empty for procedural art
   timeFormat?: '12h' | '24h'; // Time format: 12-hour (AM/PM) or 24-hour
+  defaultExportFormat?: ExportFormat; // Default export format to use when exporting entries
+  defaultExportMetadata?: ExportMetadata; // Default export metadata to use for all exports
 }
 
 declare global {
@@ -106,7 +161,8 @@ declare global {
       getEntriesByRange: (range: TimeRange, value: number) => Promise<JournalEntry[]>;
       getAllEntries: () => Promise<JournalEntry[]>;
       exportEntries: (
-        format: ExportFormat
+        format: ExportFormat,
+        metadata?: ExportMetadata
       ) => Promise<{ success: boolean; canceled?: boolean; error?: string; path?: string }>;
       importEntries: (
         format: 'json' | 'markdown'
