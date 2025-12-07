@@ -227,6 +227,11 @@ function App() {
       // This triggers a re-render which will show/hide the minimap
       console.log('[App] Updating show minimap:', value);
       setPreferences(prev => ({ ...prev, showMinimap: value }));
+    } else if (key === 'weekStartsOn') {
+      // Update preferences state immediately for week starts on
+      // This triggers a re-render which will update all calendar views
+      console.log('[App] Updating week starts on:', value);
+      setPreferences(prev => ({ ...prev, weekStartsOn: value }));
     } else {
       // For all other preferences, update state (they may not need immediate UI updates)
       setPreferences(prev => ({ ...prev, [key]: value }));
@@ -718,6 +723,7 @@ function App() {
           onTimePeriodSelect={handleTimePeriodSelect}
           onEntrySelect={handleEntrySelect}
           minimapSize={preferences.minimapSize || 'medium'}
+          weekStartsOn={preferences.weekStartsOn ?? 1}
         />
       )}
       <div className="app-content">
@@ -728,6 +734,7 @@ function App() {
             onTimePeriodSelect={handleTimePeriodSelect}
             onEntrySelect={handleEntrySelect}
             onEditEntry={handleEditEntry}
+            weekStartsOn={preferences.weekStartsOn ?? 1}
           />
         </div>
         <div className="editor-section">
@@ -753,6 +760,7 @@ function App() {
               onNewEntry={handleNewEntry}
               onEntrySelect={handleEntrySelect}
               onEditEntry={handleEditEntry}
+              weekStartsOn={preferences.weekStartsOn ?? 1}
             />
           )}
         </div>

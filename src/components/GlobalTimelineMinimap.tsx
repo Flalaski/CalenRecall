@@ -17,6 +17,7 @@ interface GlobalTimelineMinimapProps {
   onTimePeriodSelect: (date: Date, viewMode: TimeRange) => void;
   onEntrySelect?: (entry: JournalEntry) => void;
   minimapSize?: 'xxxSmall' | 'xxSmall' | 'xSmall' | 'small' | 'medium' | 'large' | 'xLarge' | 'xxLarge' | 'xxxLarge';
+  weekStartsOn?: 0 | 1 | 2 | 3 | 4 | 5 | 6;
 }
 
 // Generate a polygon clip-path based on number of sides
@@ -266,6 +267,7 @@ export default function GlobalTimelineMinimap({
   onTimePeriodSelect,
   onEntrySelect,
   minimapSize = 'medium',
+  weekStartsOn = 1,
 }: GlobalTimelineMinimapProps) {
   const { formatDate, calendar } = useCalendar();
   const { entries } = useEntries();
@@ -439,7 +441,7 @@ export default function GlobalTimelineMinimap({
         break;
       }
       case 'week': {
-        const weekStart = getWeekStart(date);
+        const weekStart = getWeekStart(date, weekStartsOn);
         startDate = addWeeks(weekStart, -8);
         endDate = addWeeks(weekStart, 9);
         break;
@@ -463,7 +465,7 @@ export default function GlobalTimelineMinimap({
     
     // Check if selectedDate is outside the current timeline range (only if range exists)
     if (!shouldRecalculate && timelineRangeRef.current) {
-      const canonicalSelectedDate = getCanonicalDate(selectedDate, viewMode);
+      const canonicalSelectedDate = getCanonicalDate(selectedDate, viewMode, weekStartsOn);
       const { startDate, endDate } = timelineRangeRef.current;
       
       // For decade view, compare decade boundaries
@@ -649,7 +651,7 @@ export default function GlobalTimelineMinimap({
         periodEndDate = getMonthEnd(selectedDate);
         break;
       case 'week':
-        periodEndDate = getWeekEnd(selectedDate);
+        periodEndDate = getWeekEnd(selectedDate, weekStartsOn);
         break;
       case 'day':
         // For a day, the period is from start of day to end of day (23:59:59.999)
@@ -862,7 +864,7 @@ export default function GlobalTimelineMinimap({
         periodEndDate = getMonthEnd(selectedDate);
         break;
       case 'week':
-        periodEndDate = getWeekEnd(selectedDate);
+        periodEndDate = getWeekEnd(selectedDate, weekStartsOn);
         break;
       case 'day':
         periodEndDate = new Date(periodStartDate);
@@ -2020,7 +2022,7 @@ export default function GlobalTimelineMinimap({
           // Pre-calculate canonical dates for all timeRanges
           const timeRanges: TimeRange[] = ['day', 'week', 'month', 'year', 'decade'];
           for (const tr of timeRanges) {
-            canonicalMap.set(tr, getCanonicalDate(rawDate, tr));
+            canonicalMap.set(tr, getCanonicalDate(rawDate, tr, weekStartsOn));
           }
           
           dateCache.set(entry.date, { raw: rawDate, canonical: canonicalMap });

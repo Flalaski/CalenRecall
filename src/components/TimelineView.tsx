@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { JournalEntry, TimeRange } from '../types';
-import { formatDate, getDaysInMonth, getDaysInWeek, isToday, getWeekStart, getWeekEnd, getZodiacColor, getZodiacGradientColor, getZodiacGradientColorForYear, parseISODate, getMonthStart, getMonthEnd, createDate } from '../utils/dateUtils';
+import { formatDate, getDaysInMonth, getDaysInWeek, isToday, getWeekStart, getWeekEnd, getZodiacColor, getZodiacGradientColor, getZodiacGradientColorForYear, parseISODate, getMonthStart, getMonthEnd, createDate, getWeekdayLabels } from '../utils/dateUtils';
 import { isSameDay, isSameMonth, isSameYear } from 'date-fns';
 import { playCalendarSelectionSound, playEntrySelectionSound, playEditSound } from '../utils/audioUtils';
 import { calculateEntryColor } from '../utils/entryColorUtils';
@@ -18,6 +18,7 @@ interface TimelineViewProps {
   onTimePeriodSelect: (date: Date, viewMode: TimeRange) => void;
   onEntrySelect: (entry: JournalEntry) => void;
   onEditEntry?: (entry: JournalEntry) => void;
+  weekStartsOn?: 0 | 1 | 2 | 3 | 4 | 5 | 6;
 }
 
 export default function TimelineView({
@@ -26,6 +27,7 @@ export default function TimelineView({
   onTimePeriodSelect,
   onEntrySelect,
   onEditEntry,
+  weekStartsOn = 1,
 }: TimelineViewProps) {
   const { calendar } = useCalendar();
   const { entries: allEntries } = useEntries();
@@ -56,8 +58,8 @@ export default function TimelineView({
         break;
       }
       case 'week': {
-        startDate = getWeekStart(selectedDate);
-        endDate = getWeekEnd(selectedDate);
+        startDate = getWeekStart(selectedDate, weekStartsOn);
+        endDate = getWeekEnd(selectedDate, weekStartsOn);
         // Expand to include full month(s) to catch month entries
         const weekStartMonth = getMonthStart(startDate);
         const weekEndMonth = getMonthEnd(endDate);
@@ -180,7 +182,7 @@ export default function TimelineView({
         return entryYear === year && entryMonth === month;
       } else if (entry.timeRange === 'week') {
         // Check if week overlaps with this month
-        const weekStart = getWeekStart(entryDate);
+        const weekStart = getWeekStart(entryDate, weekStartsOn);
         const weekEnd = new Date(weekStart);
         weekEnd.setDate(weekEnd.getDate() + 6);
         const monthStart = new Date(year, month, 1);
@@ -257,9 +259,11 @@ export default function TimelineView({
 
   const renderMonthView = () => {
     const days = getDaysInMonth(selectedDate);
-    const weekDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    const weekDays = getWeekdayLabels(weekStartsOn);
     const firstDay = days[0].getDay();
-    const adjustedFirstDay = firstDay === 0 ? 6 : firstDay - 1;
+    // Adjust first day based on weekStartsOn: if weekStartsOn is 1 (Monday), Sunday (0) becomes 6
+    // General formula: (firstDay - weekStartsOn + 7) % 7
+    const adjustedFirstDay = (firstDay - weekStartsOn + 7) % 7;
     
     // Get month entries for the current month
     const monthEntries: JournalEntry[] = [];
@@ -280,7 +284,7 @@ export default function TimelineView({
       if (entry.timeRange === 'week') {
         // Parse entry date to get the week start
         const entryDate = parseISODate(entry.date);
-        const weekStart = getWeekStart(entryDate);
+        const weekStart = getWeekStart(entryDate, weekStartsOn);
         const weekKey = formatDate(weekStart);
         
         // Check if this week is within the current month
@@ -301,7 +305,7 @@ export default function TimelineView({
     const weeksInMonth: Date[] = [];
     const seenWeeks = new Set<string>();
     days.forEach(day => {
-      const weekStart = getWeekStart(day);
+      const weekStart = getWeekStart(day, weekStartsOn);
       const weekKey = formatDate(weekStart);
       if (!seenWeeks.has(weekKey)) {
         seenWeeks.add(weekKey);
@@ -474,8 +478,8 @@ export default function TimelineView({
   };
 
   const renderWeekView = () => {
-    const days = getDaysInWeek(selectedDate);
-    const weekDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    const days = getDaysInWeek(selectedDate, weekStartsOn);
+    const weekDays = getWeekdayLabels(weekStartsOn);
     const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     
     return (

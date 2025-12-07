@@ -345,8 +345,8 @@ export function setupIpcHandlers() {
     // This allows the main window to update immediately without waiting for window events
     // Use type assertion to check string keys since TypeScript can't narrow keyof types
     const keyStr = key as string;
-    // Send notification for theme, fontSize, minimapCrystalUseDefaultColors, backgroundImage, minimapSize, and showMinimap
-    if (keyStr === 'theme' || keyStr === 'fontSize' || keyStr === 'minimapCrystalUseDefaultColors' || keyStr === 'backgroundImage' || keyStr === 'minimapSize' || keyStr === 'showMinimap') {
+    // Send notification for theme, fontSize, minimapCrystalUseDefaultColors, backgroundImage, minimapSize, showMinimap, and weekStartsOn
+    if (keyStr === 'theme' || keyStr === 'fontSize' || keyStr === 'minimapCrystalUseDefaultColors' || keyStr === 'backgroundImage' || keyStr === 'minimapSize' || keyStr === 'showMinimap' || keyStr === 'weekStartsOn') {
       // Send to main window if it exists and is not the sender
       if (mainWindowRef && !mainWindowRef.isDestroyed()) {
         const senderWindow = BrowserWindow.fromWebContents(event.sender);

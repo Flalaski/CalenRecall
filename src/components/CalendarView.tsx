@@ -16,6 +16,7 @@ import {
   createDate,
   getMonthStart,
   getMonthEnd,
+  getWeekdayLabels,
 } from '../utils/dateUtils';
 import { isSameDay, isSameMonth, isSameYear } from 'date-fns';
 import { JournalEntry } from '../types';
@@ -32,12 +33,14 @@ interface CalendarViewProps {
   selectedDate: Date;
   viewMode: TimeRange;
   onTimePeriodSelect: (date: Date, viewMode: TimeRange) => void;
+  weekStartsOn?: 0 | 1 | 2 | 3 | 4 | 5 | 6;
 }
 
 export default function CalendarView({
   selectedDate,
   viewMode,
   onTimePeriodSelect,
+  weekStartsOn = 1,
 }: CalendarViewProps) {
   const { calendar } = useCalendar();
   const { entries: allEntries } = useEntries();
@@ -65,8 +68,8 @@ export default function CalendarView({
         break;
       }
       case 'week': {
-        startDate = getWeekStart(selectedDate);
-        endDate = getWeekEnd(selectedDate);
+        startDate = getWeekStart(selectedDate, weekStartsOn);
+        endDate = getWeekEnd(selectedDate, weekStartsOn);
         // For week view, we also need to load month entries that could apply
         // So expand the range to include the full month(s) that contain this week
         const weekStartMonth = getMonthStart(startDate);
@@ -224,11 +227,12 @@ export default function CalendarView({
 
   const renderMonthView = () => {
     const days = getDaysInMonth(selectedDate);
-    const weekDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    const weekDays = getWeekdayLabels(weekStartsOn);
     
     // Get first day of month and pad with empty cells
     const firstDay = days[0].getDay();
-    const adjustedFirstDay = firstDay === 0 ? 6 : firstDay - 1; // Convert Sunday (0) to 6
+    // Adjust first day based on weekStartsOn: (firstDay - weekStartsOn + 7) % 7
+    const adjustedFirstDay = (firstDay - weekStartsOn + 7) % 7;
     
     return (
       <div className="calendar-month-view">
@@ -272,8 +276,8 @@ export default function CalendarView({
   };
 
   const renderWeekView = () => {
-    const days = getDaysInWeek(selectedDate);
-    const weekDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    const days = getDaysInWeek(selectedDate, weekStartsOn);
+    const weekDays = getWeekdayLabels(weekStartsOn);
     const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     
     return (

@@ -80,12 +80,12 @@ export function formatDate(date: Date, formatStr: string = 'yyyy-MM-dd'): string
   return format(date, formatStr);
 }
 
-export function getWeekStart(date: Date): Date {
-  return startOfWeek(date, { weekStartsOn: 1 }); // Monday
+export function getWeekStart(date: Date, weekStartsOn: 0 | 1 | 2 | 3 | 4 | 5 | 6 = 0): Date {
+  return startOfWeek(date, { weekStartsOn });
 }
 
-export function getWeekEnd(date: Date): Date {
-  return endOfWeek(date, { weekStartsOn: 1 });
+export function getWeekEnd(date: Date, weekStartsOn: 0 | 1 | 2 | 3 | 4 | 5 | 6 = 0): Date {
+  return endOfWeek(date, { weekStartsOn });
 }
 
 export function getMonthStart(date: Date): Date {
@@ -130,8 +130,8 @@ export function getDaysInMonth(date: Date): Date[] {
   return days;
 }
 
-export function getDaysInWeek(date: Date): Date[] {
-  const start = getWeekStart(date);
+export function getDaysInWeek(date: Date, weekStartsOn: 0 | 1 | 2 | 3 | 4 | 5 | 6 = 0): Date[] {
+  const start = getWeekStart(date, weekStartsOn);
   const days: Date[] = [];
   
   for (let i = 0; i < 7; i++) {
@@ -139,6 +139,39 @@ export function getDaysInWeek(date: Date): Date[] {
   }
   
   return days;
+}
+
+/**
+ * Get weekday labels based on weekStartsOn preference
+ * Returns an array of weekday abbreviations starting with the specified day
+ */
+export function getWeekdayLabels(weekStartsOn: 0 | 1 | 2 | 3 | 4 | 5 | 6 = 1): string[] {
+  const allDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  const labels: string[] = [];
+  
+  // Start from weekStartsOn and wrap around
+  for (let i = 0; i < 7; i++) {
+    const index = (weekStartsOn + i) % 7;
+    labels.push(allDays[index]);
+  }
+  
+  return labels;
+}
+
+/**
+ * Get full weekday names based on weekStartsOn preference
+ */
+export function getWeekdayNames(weekStartsOn: 0 | 1 | 2 | 3 | 4 | 5 | 6 = 1): string[] {
+  const allDays = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  const names: string[] = [];
+  
+  // Start from weekStartsOn and wrap around
+  for (let i = 0; i < 7; i++) {
+    const index = (weekStartsOn + i) % 7;
+    names.push(allDays[index]);
+  }
+  
+  return names;
 }
 
 export function getMonthsInYear(date: Date): Date[] {
@@ -168,7 +201,7 @@ export function isToday(date: Date): boolean {
 }
 
 // Get canonical date for a time range (the date used to store entries)
-export function getCanonicalDate(date: Date, timeRange: 'decade' | 'year' | 'month' | 'week' | 'day'): Date {
+export function getCanonicalDate(date: Date, timeRange: 'decade' | 'year' | 'month' | 'week' | 'day', weekStartsOn: 0 | 1 | 2 | 3 | 4 | 5 | 6 = 1): Date {
   switch (timeRange) {
     case 'decade':
       return getDecadeStart(date);
@@ -177,7 +210,7 @@ export function getCanonicalDate(date: Date, timeRange: 'decade' | 'year' | 'mon
     case 'month':
       return getMonthStart(date);
     case 'week':
-      return getWeekStart(date);
+      return getWeekStart(date, weekStartsOn);
     case 'day':
       return createDate(date.getFullYear(), date.getMonth(), date.getDate());
     default:
