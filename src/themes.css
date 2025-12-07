@@ -36,7 +36,6 @@
 @import './themes/manuscript-room.css';
 @import './themes/reading-room.css';
 @import './themes/temple-of-light.css';
-@import './themes/temple-of-darkness.css';
 
 /* Custom themes are automatically imported via themeLoader.ts */
 /* You can still manually add @import statements here if needed for explicit control */
