@@ -99,6 +99,30 @@ const BUILT_IN_THEME_METADATA: Record<string, Omit<ThemeInfo, 'name'>> = {
   'journeyman': {
     displayName: 'Journeyman',
     description: 'Mid-1990s industrial/futuristic interface inspired by The Journeyman Project: Pegasus Prime with purple-blue gradients and gold accents'
+  },
+  'scholar': {
+    displayName: 'Scholar',
+    description: 'Warm parchment aesthetic inspired by medieval manuscripts and ancient libraries, perfect for academic work and historical research'
+  },
+  'archive': {
+    displayName: 'Archive',
+    description: '19th-century libraries aesthetic with aged cream paper, deep burgundy accents, and ink blue highlights - elegant design for formal academic work'
+  },
+  'librarians-study': {
+    displayName: 'Librarian\'s Study',
+    description: 'Modern academic library aesthetic with soft beige backgrounds, deep green accents, and academic blue highlights - clean organized design for scholarly research'
+  },
+  'research': {
+    displayName: 'Research',
+    description: 'Historical archive aesthetic with neutral tan backgrounds, archive brown accents, and dusty blue highlights - professional design for archival research and documentation'
+  },
+  'manuscript-room': {
+    displayName: 'Manuscript Room',
+    description: 'Rare book room aesthetic with warm ivory backgrounds, deep purple-blue accents, and illuminated gold highlights - luxurious design for special collections'
+  },
+  'reading-room': {
+    displayName: 'Reading Room',
+    description: 'Traditional library reading room aesthetic with soft cream backgrounds, forest green accents, and quiet blue highlights - peaceful design for focused reading'
   }
 };
 

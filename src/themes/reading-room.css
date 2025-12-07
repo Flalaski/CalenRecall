@@ -1,0 +1,82 @@
+/**
+ * Reading Room Theme
+ * Traditional library reading room, quiet study space
+ * Peaceful design perfect for focused reading and quiet research
+ */
+
+/* ============================================
+   COLOR PALETTE - CSS Custom Properties
+   ============================================ */
+[data-theme="reading-room"] {
+  /* Backgrounds */
+  --reading-bg: #fefcf8;
+  --reading-bg-secondary: #f9f7f3;
+  --reading-bg-tertiary: #f5f3ef;
+  --reading-bg-hover: #f0ede7;
+  
+  /* Text */
+  --text-primary: #2a2a2a;
+  --text-secondary: #3a3a3a;
+  --text-muted: #5a5a5a;
+  
+  /* Accents */
+  --accent-green: #2d5016;
+  --accent-blue: #5a7a9a;
+  --accent-green-light: #3d6026;
+  
+  /* Borders */
+  --border-warm: #8b8380;
+  --border-warm-light: #9b9390;
+  --border-warm-very-light: #b0a8a5;
+  
+  /* Highlights */
+  --highlight-blue: #6a8aaa;
+  --highlight-blue-dark: #5a7a9a;
+  
+  /* Base Typography */
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+/* ============================================
+   BASE STYLES
+   ============================================ */
+[data-theme="reading-room"] html,
+[data-theme="reading-room"] body {
+  background: var(--reading-bg);
+  color: var(--text-primary);
+  --theme-body-bg: var(--reading-bg);
+  /* Peaceful reading room texture via gradient */
+  background-image: 
+    radial-gradient(circle at 20% 50%, rgba(45, 80, 22, 0.008) 0%, transparent 50%),
+    radial-gradient(circle at 80% 80%, rgba(90, 122, 154, 0.01) 0%, transparent 50%),
+    linear-gradient(135deg, #fefcf8 0%, #f9f7f3 50%, #f5f3ef 100%);
+}
+
+[data-theme="reading-room"] #root {
+  background: var(--reading-bg);
+}
+
+[data-theme="reading-room"] .app {
+  background: var(--reading-bg);
+}
+
+[data-theme="reading-room"] .app-content {
+  background: var(--reading-bg);
+  gap: 2px;
+}
+
+[data-theme="reading-room"] .timeline-section {
+  background: var(--reading-bg);
+}
+
+[data-theme="reading-room"] .editor-section {
+  background: var(--reading-bg);
+  border-left: 2px solid var(--border-warm);
+}
+
+/* NOTE: This theme file continues with comprehensive component styling.
+   Additional components will be added following the same pattern as 
+   Parchment Scholar theme, adapted to Reading Room color palette. */
+

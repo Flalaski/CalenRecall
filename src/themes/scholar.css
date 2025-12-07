@@ -1,0 +1,2118 @@
+/**
+ * Scholar Theme
+ * Warm parchment aesthetic inspired by medieval manuscripts and ancient libraries
+ * Academic-friendly design with aged paper textures and scholarly colors
+ */
+
+/* ============================================
+   COLOR PALETTE - CSS Custom Properties
+   ============================================ */
+[data-theme="scholar"] {
+  /* Backgrounds */
+  --parchment-bg: #f4f1e8;
+  --parchment-bg-light: #faf8f3;
+  --parchment-bg-dark: #ebe6d3;
+  --parchment-bg-hover: #e8dfd1;
+  
+  /* Text */
+  --text-primary: #2c1810;
+  --text-secondary: #4a3424;
+  --text-muted: #6b5a4a;
+  
+  /* Accents */
+  --accent-sepia: #8b6914;
+  --accent-gold: #c9a96b;
+  --accent-tan: #b8956a;
+  
+  /* Borders */
+  --border-aged: #7d6b5d;
+  --border-light: #9b8a7a;
+  --border-very-light: #b8a898;
+  
+  /* Highlights */
+  --highlight-gold: #c9a96b;
+  --highlight-gold-dark: #a0824d;
+  
+  /* Base Typography */
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+/* ============================================
+   BASE STYLES
+   ============================================ */
+[data-theme="scholar"] html,
+[data-theme="scholar"] body {
+  background: var(--parchment-bg);
+  color: var(--text-primary);
+  --theme-body-bg: var(--parchment-bg);
+  /* Subtle aged paper texture via gradient */
+  background-image: 
+    radial-gradient(circle at 20% 50%, rgba(139, 105, 20, 0.02) 0%, transparent 50%),
+    radial-gradient(circle at 80% 80%, rgba(201, 169, 107, 0.015) 0%, transparent 50%),
+    linear-gradient(135deg, #faf8f3 0%, #f4f1e8 50%, #f0ede7 100%);
+}
+
+[data-theme="scholar"] #root {
+  background: var(--parchment-bg);
+}
+
+[data-theme="scholar"] .app {
+  background: var(--parchment-bg);
+}
+
+[data-theme="scholar"] .app-content {
+  background: var(--parchment-bg);
+  gap: 2px;
+}
+
+[data-theme="scholar"] .timeline-section {
+  background: var(--parchment-bg);
+}
+
+[data-theme="scholar"] .editor-section {
+  background: var(--parchment-bg);
+  border-left: 2px solid var(--border-aged);
+}
+
+/* ============================================
+   NAVIGATION BAR
+   ============================================ */
+[data-theme="scholar"] .navigation-bar {
+  background: var(--parchment-bg-light);
+  border-bottom: 2px solid var(--border-aged);
+  box-shadow: 0 2px 4px rgba(125, 107, 93, 0.1);
+}
+
+[data-theme="scholar"] .navigation-bar-top-row {
+  background: var(--parchment-bg-light);
+  border-bottom: 1px solid var(--border-light);
+}
+
+[data-theme="scholar"] .nav-controls {
+  background: transparent;
+}
+
+[data-theme="scholar"] .nav-button,
+[data-theme="scholar"] .view-mode-button {
+  background: var(--parchment-bg);
+  border: 1px solid var(--border-aged);
+  border-radius: 3px;
+  color: var(--text-primary);
+  padding: 6px 12px;
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 13px;
+  text-shadow: 0 1px 1px rgba(255, 255, 255, 0.5);
+  transition: all 0.2s ease;
+}
+
+[data-theme="scholar"] .nav-button:hover,
+[data-theme="scholar"] .view-mode-button:hover {
+  background: var(--parchment-bg-hover);
+  border-color: var(--accent-sepia);
+  box-shadow: 0 2px 4px rgba(139, 105, 20, 0.2);
+}
+
+[data-theme="scholar"] .nav-button:active,
+[data-theme="scholar"] .view-mode-button:active {
+  background: var(--parchment-bg-dark);
+  box-shadow: inset 0 2px 4px rgba(125, 107, 93, 0.2);
+}
+
+[data-theme="scholar"] .view-mode-button.active {
+  background: var(--accent-sepia);
+  color: var(--parchment-bg-light);
+  border-color: var(--highlight-gold-dark);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+[data-theme="scholar"] .today-button {
+  background: var(--parchment-bg);
+  border: 1px solid var(--border-aged);
+  border-radius: 3px;
+  color: var(--text-primary);
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 13px;
+  text-shadow: 0 1px 1px rgba(255, 255, 255, 0.5);
+}
+
+[data-theme="scholar"] .today-button:hover {
+  background: var(--parchment-bg-hover);
+  border-color: var(--accent-sepia);
+}
+
+[data-theme="scholar"] .date-label {
+  font-family: 'Georgia', 'Times New Roman', serif;
+  color: var(--text-primary);
+  text-shadow: 0 1px 1px rgba(255, 255, 255, 0.3);
+  font-weight: 600;
+}
+
+[data-theme="scholar"] .view-mode-selector {
+  background: transparent;
+}
+
+[data-theme="scholar"] .calendar-selector {
+  background: var(--parchment-bg-light);
+}
+
+[data-theme="scholar"] .calendar-select {
+  background: var(--parchment-bg);
+  border: 1px solid var(--border-aged);
+  border-radius: 3px;
+  color: var(--text-primary);
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 13px;
+  padding: 4px 8px;
+}
+
+[data-theme="scholar"] .calendar-select:focus {
+  border-color: var(--accent-sepia);
+  outline: 2px solid var(--accent-sepia);
+  outline-offset: 2px;
+}
+
+[data-theme="scholar"] .calendar-info-panel {
+  background: var(--parchment-bg-light);
+  border: 1px solid var(--border-aged);
+  border-radius: 3px;
+  box-shadow: 0 2px 4px rgba(125, 107, 93, 0.1);
+}
+
+[data-theme="scholar"] .calendar-definition-toggle {
+  background: var(--parchment-bg);
+  border: 1px solid var(--border-aged);
+  border-radius: 3px;
+  color: var(--text-primary);
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 12px;
+  padding: 4px 8px;
+}
+
+[data-theme="scholar"] .calendar-definition-toggle:hover {
+  background: var(--parchment-bg-hover);
+  border-color: var(--accent-sepia);
+}
+
+[data-theme="scholar"] .calendar-definition-drawer {
+  background: var(--parchment-bg-light);
+  border: 1px solid var(--border-aged);
+  border-radius: 3px;
+  box-shadow: 0 2px 4px rgba(125, 107, 93, 0.15);
+}
+
+/* ============================================
+   CALENDAR VIEW
+   ============================================ */
+[data-theme="scholar"] .calendar-loading {
+  background: var(--parchment-bg);
+  color: var(--text-secondary);
+}
+
+[data-theme="scholar"] .calendar-grid {
+  background: var(--parchment-bg-light);
+  border: 2px solid var(--border-aged);
+  border-radius: 4px;
+  box-shadow: 0 2px 6px rgba(125, 107, 93, 0.15);
+}
+
+[data-theme="scholar"] .calendar-cell {
+  background: var(--parchment-bg-light);
+  border: 1px solid var(--border-light);
+  border-radius: 2px;
+  color: var(--text-primary);
+  transition: all 0.2s ease;
+}
+
+[data-theme="scholar"] .calendar-cell:hover {
+  background: var(--parchment-bg-hover);
+  border-color: var(--accent-sepia);
+  box-shadow: 0 2px 4px rgba(139, 105, 20, 0.2);
+}
+
+[data-theme="scholar"] .calendar-cell.empty-cell {
+  background: var(--parchment-bg);
+  cursor: default;
+  opacity: 0.6;
+}
+
+[data-theme="scholar"] .calendar-cell.today {
+  background: var(--highlight-gold);
+  color: var(--text-primary);
+  border: 2px solid var(--accent-sepia);
+  font-weight: 600;
+  box-shadow: 0 2px 4px rgba(139, 105, 20, 0.3);
+}
+
+[data-theme="scholar"] .calendar-cell.selected {
+  background: var(--accent-sepia);
+  color: var(--parchment-bg-light);
+  border-color: var(--highlight-gold-dark);
+  box-shadow: 0 2px 6px rgba(139, 105, 20, 0.4);
+}
+
+[data-theme="scholar"] .calendar-cell.has-entry {
+  background: var(--parchment-bg-light);
+  border: 2px solid var(--accent-gold);
+  box-shadow: 0 1px 3px rgba(201, 169, 107, 0.3);
+}
+
+[data-theme="scholar"] .calendar-cell.has-entry.today {
+  background: var(--highlight-gold);
+  border-color: var(--accent-sepia);
+  color: var(--text-primary);
+}
+
+[data-theme="scholar"] .cell-content {
+  color: inherit;
+}
+
+[data-theme="scholar"] .cell-label {
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 13px;
+  color: inherit;
+}
+
+[data-theme="scholar"] .entry-indicator {
+  background: var(--accent-sepia);
+  border-radius: 50%;
+  box-shadow: 0 1px 2px rgba(139, 105, 20, 0.4);
+}
+
+[data-theme="scholar"] .weekday-header {
+  background: var(--parchment-bg-dark);
+  border-bottom: 2px solid var(--border-aged);
+  color: var(--text-primary);
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-weight: 600;
+  text-shadow: 0 1px 1px rgba(255, 255, 255, 0.3);
+}
+
+[data-theme="scholar"] .weekday-cell {
+  background: var(--parchment-bg-dark);
+  border: 1px solid var(--border-aged);
+  color: var(--text-primary);
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-weight: 600;
+}
+
+[data-theme="scholar"] .day-number {
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 13px;
+  color: inherit;
+}
+
+[data-theme="scholar"] .day-name {
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+
+[data-theme="scholar"] .day-month {
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 10px;
+  color: var(--text-muted);
+}
+
+[data-theme="scholar"] .day-header h2 {
+  color: var(--text-primary);
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-weight: 600;
+  text-shadow: 0 1px 2px rgba(255, 255, 255, 0.3);
+}
+
+/* ============================================
+   TIMELINE VIEW
+   ============================================ */
+[data-theme="scholar"] .timeline-loading {
+  background: var(--parchment-bg);
+  color: var(--text-secondary);
+}
+
+[data-theme="scholar"] .timeline-grid {
+  background: var(--parchment-bg-light);
+  border: 2px solid var(--border-aged);
+  border-radius: 4px;
+  box-shadow: 0 2px 6px rgba(125, 107, 93, 0.15);
+}
+
+[data-theme="scholar"] .timeline-cell {
+  background: var(--parchment-bg-light);
+  border: 1px solid var(--border-light);
+  border-radius: 2px;
+  color: var(--text-primary);
+  transition: all 0.2s ease;
+}
+
+[data-theme="scholar"] .timeline-cell:hover {
+  background: var(--parchment-bg-hover);
+  border-color: var(--accent-sepia);
+  box-shadow: 0 2px 4px rgba(139, 105, 20, 0.2);
+}
+
+[data-theme="scholar"] .timeline-cell.today {
+  background: var(--highlight-gold);
+  color: var(--text-primary);
+  border: 2px solid var(--accent-sepia);
+  font-weight: 600;
+  box-shadow: 0 2px 4px rgba(139, 105, 20, 0.3);
+}
+
+[data-theme="scholar"] .timeline-month-view,
+[data-theme="scholar"] .timeline-week-view {
+  background: var(--parchment-bg);
+}
+
+[data-theme="scholar"] .month-view-content {
+  background: var(--parchment-bg);
+}
+
+[data-theme="scholar"] .month-calendar-section {
+  background: var(--parchment-bg);
+}
+
+[data-theme="scholar"] .month-week-entries-section {
+  background: var(--parchment-bg);
+  border-left: 2px solid var(--border-aged);
+}
+
+[data-theme="scholar"] .month-entries-section {
+  border-bottom: 2px solid var(--border-aged);
+}
+
+[data-theme="scholar"] .month-entries-header {
+  background: var(--parchment-bg-dark);
+  border-top: 2px solid var(--border-aged);
+  border-left: 2px solid var(--border-aged);
+  border-bottom: 1px solid var(--border-light);
+  border-right: 1px solid var(--border-light);
+  color: var(--text-primary);
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-weight: 600;
+}
+
+[data-theme="scholar"] .month-entries-list {
+  background: var(--parchment-bg);
+}
+
+[data-theme="scholar"] .month-entry-item {
+  background: var(--parchment-bg-light) !important;
+  border: 1px solid var(--border-aged);
+  border-radius: 3px;
+  color: var(--text-primary);
+  box-shadow: 0 1px 3px rgba(125, 107, 93, 0.1);
+  transition: all 0.2s ease;
+}
+
+[data-theme="scholar"] .month-entry-item:hover {
+  background: var(--parchment-bg-hover) !important;
+  border-color: var(--accent-sepia);
+  box-shadow: 0 2px 4px rgba(139, 105, 20, 0.2);
+}
+
+[data-theme="scholar"] .month-entry-title {
+  color: var(--text-primary);
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-weight: 600;
+}
+
+[data-theme="scholar"] .month-entry-preview {
+  color: var(--text-secondary);
+  font-family: 'Georgia', 'Times New Roman', serif;
+}
+
+[data-theme="scholar"] .month-entry-empty {
+  color: var(--text-muted);
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-style: italic;
+}
+
+[data-theme="scholar"] .week-entries-header {
+  background: var(--parchment-bg-dark);
+  border-top: 2px solid var(--border-aged);
+  border-left: 2px solid var(--border-aged);
+  border-bottom: 1px solid var(--border-light);
+  border-right: 1px solid var(--border-light);
+  color: var(--text-primary);
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-weight: 600;
+}
+
+[data-theme="scholar"] .week-entries-list {
+  background: var(--parchment-bg);
+}
+
+[data-theme="scholar"] .week-entry-group {
+  background: var(--parchment-bg-light);
+  border: 1px solid var(--border-aged);
+  border-radius: 3px;
+  box-shadow: 0 2px 4px rgba(125, 107, 93, 0.1);
+}
+
+[data-theme="scholar"] .week-entry-group-header {
+  background: var(--parchment-bg-dark);
+  border-bottom: 1px solid var(--border-light);
+}
+
+[data-theme="scholar"] .week-label {
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 13px;
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+[data-theme="scholar"] .week-entry-count {
+  background: var(--accent-sepia);
+  color: var(--parchment-bg-light);
+  border: 1px solid var(--highlight-gold-dark);
+  border-radius: 3px;
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+[data-theme="scholar"] .week-entry-items {
+  background: transparent;
+}
+
+[data-theme="scholar"] .week-entry-item {
+  background: var(--parchment-bg);
+  border: 1px solid var(--border-light);
+  border-radius: 3px;
+  border-left: 3px solid var(--accent-gold);
+  transition: all 0.2s ease;
+}
+
+[data-theme="scholar"] .week-entry-item:hover {
+  background: var(--parchment-bg-hover);
+  border-color: var(--accent-sepia);
+  box-shadow: 0 2px 4px rgba(139, 105, 20, 0.15);
+}
+
+[data-theme="scholar"] .week-entry-title {
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 13px;
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+[data-theme="scholar"] .week-entry-empty {
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 12px;
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+/* ============================================
+   ENTRY VIEWER
+   ============================================ */
+[data-theme="scholar"] .entry-viewer {
+  background: var(--parchment-bg);
+}
+
+[data-theme="scholar"] .viewer-header {
+  background: var(--parchment-bg-light);
+  border-bottom: 2px solid var(--border-aged);
+  box-shadow: 0 2px 4px rgba(125, 107, 93, 0.1);
+}
+
+[data-theme="scholar"] .header-top {
+  background: transparent;
+}
+
+[data-theme="scholar"] .viewer-header h3,
+[data-theme="scholar"] .editor-header h3 {
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 16px;
+  color: var(--text-primary);
+  font-weight: 600;
+  text-shadow: 0 1px 2px rgba(255, 255, 255, 0.3);
+}
+
+[data-theme="scholar"] .header-actions {
+  background: transparent;
+}
+
+[data-theme="scholar"] .edit-button,
+[data-theme="scholar"] .duplicate-button,
+[data-theme="scholar"] .new-entry-button-header {
+  background: var(--parchment-bg);
+  border: 1px solid var(--border-aged);
+  border-radius: 3px;
+  color: var(--text-primary);
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 13px;
+  padding: 6px 12px;
+  transition: all 0.2s ease;
+}
+
+[data-theme="scholar"] .edit-button:hover,
+[data-theme="scholar"] .duplicate-button:hover,
+[data-theme="scholar"] .new-entry-button-header:hover {
+  background: var(--parchment-bg-hover);
+  border-color: var(--accent-sepia);
+  box-shadow: 0 2px 4px rgba(139, 105, 20, 0.2);
+}
+
+[data-theme="scholar"] .time-range-badge-viewer {
+  background: var(--accent-sepia);
+  border: 1px solid var(--highlight-gold-dark);
+  border-radius: 3px;
+  color: var(--parchment-bg-light);
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+[data-theme="scholar"] .entry-date-display {
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+[data-theme="scholar"] .viewer-content {
+  background: var(--parchment-bg-light);
+  color: var(--text-primary);
+  box-shadow: 0 2px 4px rgba(125, 107, 93, 0.1);
+}
+
+[data-theme="scholar"] .viewer-title {
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary);
+  border-bottom: 2px solid var(--border-aged);
+  padding-bottom: 8px;
+  margin-bottom: 12px;
+}
+
+[data-theme="scholar"] .viewer-text {
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 14px;
+  color: var(--text-primary);
+  line-height: 1.7;
+}
+
+[data-theme="scholar"] .viewer-tags {
+  background: transparent;
+  border-top: 1px solid var(--border-light);
+  padding-top: 12px;
+}
+
+[data-theme="scholar"] .viewer-tag {
+  background: var(--parchment-bg-dark);
+  border: 1px solid var(--border-aged);
+  border-radius: 3px;
+  color: var(--text-primary);
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 12px;
+  padding: 4px 8px;
+}
+
+[data-theme="scholar"] .viewer-linked-entries {
+  background: transparent;
+  border-top: 1px solid var(--border-light);
+  padding-top: 12px;
+}
+
+[data-theme="scholar"] .viewer-linked-entries h4 {
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 8px;
+}
+
+[data-theme="scholar"] .linked-entries-list {
+  background: transparent;
+}
+
+[data-theme="scholar"] .linked-entry-item {
+  background: var(--parchment-bg-light);
+  border: 1px solid var(--border-aged);
+  border-radius: 3px;
+  color: var(--text-primary);
+  padding: 8px;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 3px rgba(125, 107, 93, 0.1);
+}
+
+[data-theme="scholar"] .linked-entry-item:hover {
+  background: var(--parchment-bg-hover);
+  border-color: var(--accent-sepia);
+  box-shadow: 0 2px 4px rgba(139, 105, 20, 0.2);
+}
+
+[data-theme="scholar"] .linked-entry-title {
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+[data-theme="scholar"] .linked-entry-meta {
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+[data-theme="scholar"] .linked-entry-date {
+  color: var(--text-secondary);
+}
+
+[data-theme="scholar"] .linked-entry-time-range {
+  background: var(--accent-sepia);
+  border: 1px solid var(--highlight-gold-dark);
+  border-radius: 3px;
+  color: var(--parchment-bg-light);
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 10px;
+  font-weight: 600;
+}
+
+[data-theme="scholar"] .viewer-empty {
+  background: var(--parchment-bg);
+  color: var(--text-muted);
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 14px;
+  font-style: italic;
+}
+
+[data-theme="scholar"] .viewer-loading {
+  background: var(--parchment-bg);
+  color: var(--text-secondary);
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 14px;
+}
+
+[data-theme="scholar"] .period-entries-controls {
+  background: var(--parchment-bg-dark);
+  border-top: 2px solid var(--border-aged);
+  border-left: 2px solid var(--border-aged);
+  border-bottom: 1px solid var(--border-light);
+  border-right: 1px solid var(--border-light);
+}
+
+[data-theme="scholar"] .period-entries-filter,
+[data-theme="scholar"] .period-entries-sort {
+  background: transparent;
+}
+
+[data-theme="scholar"] .period-entries-filter label,
+[data-theme="scholar"] .period-entries-sort label {
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 13px;
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+[data-theme="scholar"] .period-entries-tags {
+  background: transparent;
+}
+
+[data-theme="scholar"] .period-entry-filter-tag {
+  background: var(--parchment-bg-light);
+  border: 1px solid var(--border-aged);
+  border-radius: 3px;
+  color: var(--text-primary);
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 12px;
+  padding: 4px 8px;
+  transition: all 0.2s ease;
+}
+
+[data-theme="scholar"] .period-entry-filter-tag:hover {
+  background: var(--parchment-bg-hover);
+  border-color: var(--accent-sepia);
+}
+
+[data-theme="scholar"] .period-entry-filter-tag.active {
+  background: var(--accent-sepia);
+  color: var(--parchment-bg-light);
+  border-color: var(--highlight-gold-dark);
+}
+
+[data-theme="scholar"] .period-entry-clear-filters {
+  background: var(--parchment-bg);
+  border: 1px solid var(--border-aged);
+  border-radius: 3px;
+  color: var(--text-primary);
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 13px;
+  padding: 6px 12px;
+}
+
+[data-theme="scholar"] .period-entry-clear-filters:hover {
+  background: var(--parchment-bg-hover);
+  border-color: var(--accent-sepia);
+}
+
+[data-theme="scholar"] .period-entries-sort select {
+  background: var(--parchment-bg-light);
+  border: 1px solid var(--border-aged);
+  border-radius: 3px;
+  color: var(--text-primary);
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 13px;
+  padding: 4px 8px;
+}
+
+[data-theme="scholar"] .period-entries-sort select:focus {
+  border-color: var(--accent-sepia);
+  outline: 2px solid var(--accent-sepia);
+  outline-offset: 2px;
+}
+
+[data-theme="scholar"] .period-entries-list {
+  background: transparent;
+}
+
+[data-theme="scholar"] .period-entry-item {
+  background: var(--parchment-bg-light);
+  border: 1px solid var(--border-aged);
+  border-radius: 3px;
+  color: var(--text-primary);
+  box-shadow: 0 1px 3px rgba(125, 107, 93, 0.1);
+  transition: all 0.2s ease;
+}
+
+[data-theme="scholar"] .period-entry-item:hover {
+  background: var(--parchment-bg-hover);
+  border-color: var(--accent-sepia);
+  box-shadow: 0 2px 4px rgba(139, 105, 20, 0.2);
+}
+
+[data-theme="scholar"] .period-entry-header {
+  background: transparent;
+}
+
+[data-theme="scholar"] .period-entry-title-row {
+  background: transparent;
+}
+
+[data-theme="scholar"] .period-entry-title {
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+[data-theme="scholar"] .period-entry-actions {
+  background: transparent;
+}
+
+[data-theme="scholar"] .period-entry-edit-button {
+  background: var(--parchment-bg);
+  border: 1px solid var(--border-aged);
+  border-radius: 3px;
+  color: var(--text-primary);
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 12px;
+  padding: 4px 8px;
+}
+
+[data-theme="scholar"] .period-entry-edit-button:hover {
+  background: var(--parchment-bg-hover);
+  border-color: var(--accent-sepia);
+}
+
+[data-theme="scholar"] .period-entry-badge {
+  background: var(--accent-sepia);
+  color: var(--parchment-bg-light);
+  border: 1px solid var(--highlight-gold-dark);
+  border-radius: 3px;
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 10px;
+  font-weight: 600;
+}
+
+[data-theme="scholar"] .period-entry-meta {
+  background: transparent;
+}
+
+[data-theme="scholar"] .period-entry-date {
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 12px;
+  color: var(--text-secondary);
+  text-decoration: underline;
+}
+
+[data-theme="scholar"] .period-entry-content {
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 13px;
+  color: var(--text-primary);
+  line-height: 1.6;
+}
+
+[data-theme="scholar"] .period-entry-content-wrapper {
+  background: transparent;
+}
+
+[data-theme="scholar"] .period-entry-tags {
+  background: transparent;
+  border-top: 1px solid var(--border-light);
+  padding-top: 8px;
+}
+
+[data-theme="scholar"] .period-entry-tag {
+  background: var(--parchment-bg-dark);
+  border: 1px solid var(--border-aged);
+  border-radius: 3px;
+  color: var(--text-primary);
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 11px;
+  padding: 3px 6px;
+}
+
+/* ============================================
+   JOURNAL EDITOR
+   ============================================ */
+[data-theme="scholar"] .journal-editor,
+[data-theme="scholar"] .journal-editor-inline {
+  background: var(--parchment-bg);
+}
+
+[data-theme="scholar"] .editor-loading {
+  background: var(--parchment-bg);
+  color: var(--text-secondary);
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 14px;
+}
+
+[data-theme="scholar"] .editor-header {
+  background: var(--parchment-bg-light);
+  border-bottom: 2px solid var(--border-aged);
+  box-shadow: 0 2px 4px rgba(125, 107, 93, 0.1);
+}
+
+[data-theme="scholar"] .editor-content {
+  background: var(--parchment-bg-light);
+  color: var(--text-primary);
+  box-shadow: 0 2px 4px rgba(125, 107, 93, 0.1);
+}
+
+[data-theme="scholar"] .view-mode-message {
+  background: var(--parchment-bg);
+  color: var(--text-muted);
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 13px;
+  font-style: italic;
+}
+
+[data-theme="scholar"] .title-input,
+[data-theme="scholar"] .content-input,
+[data-theme="scholar"] .tag-input {
+  background: var(--parchment-bg);
+  border: 1px solid var(--border-aged);
+  border-radius: 3px;
+  color: var(--text-primary);
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 14px;
+  padding: 8px;
+  transition: all 0.2s ease;
+}
+
+[data-theme="scholar"] .title-input:focus,
+[data-theme="scholar"] .content-input:focus,
+[data-theme="scholar"] .tag-input:focus {
+  border-color: var(--accent-sepia);
+  outline: 2px solid var(--accent-sepia);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 3px rgba(139, 105, 20, 0.1);
+}
+
+[data-theme="scholar"] .tags-section {
+  background: transparent;
+}
+
+[data-theme="scholar"] .tags-input-container {
+  background: transparent;
+}
+
+[data-theme="scholar"] .add-tag-button {
+  background: var(--parchment-bg);
+  border: 1px solid var(--border-aged);
+  border-radius: 3px;
+  color: var(--text-primary);
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 13px;
+  padding: 6px 12px;
+}
+
+[data-theme="scholar"] .add-tag-button:hover {
+  background: var(--parchment-bg-hover);
+  border-color: var(--accent-sepia);
+}
+
+[data-theme="scholar"] .tags-list {
+  background: transparent;
+}
+
+[data-theme="scholar"] .tag {
+  background: var(--parchment-bg-dark);
+  border: 1px solid var(--border-aged);
+  border-radius: 3px;
+  color: var(--text-primary);
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 12px;
+  padding: 4px 8px;
+}
+
+[data-theme="scholar"] .tag-remove {
+  background: transparent;
+  border: none;
+  color: var(--text-primary);
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 12px;
+  margin-left: 4px;
+  padding: 2px 4px;
+  border-radius: 2px;
+}
+
+[data-theme="scholar"] .tag-remove:hover {
+  background: var(--accent-sepia);
+  color: var(--parchment-bg-light);
+}
+
+[data-theme="scholar"] .editor-footer {
+  background: var(--parchment-bg-light);
+  border-top: 2px solid var(--border-aged);
+}
+
+[data-theme="scholar"] .footer-actions {
+  background: transparent;
+}
+
+[data-theme="scholar"] .save-button {
+  background: var(--accent-sepia);
+  border: 1px solid var(--highlight-gold-dark);
+  border-radius: 3px;
+  color: var(--parchment-bg-light);
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 8px 16px;
+  transition: all 0.2s ease;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+[data-theme="scholar"] .save-button:hover:not(:disabled) {
+  background: var(--highlight-gold-dark);
+  box-shadow: 0 2px 4px rgba(139, 105, 20, 0.3);
+}
+
+[data-theme="scholar"] .save-button:disabled {
+  background: var(--border-light);
+  color: var(--text-muted);
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+[data-theme="scholar"] .cancel-button {
+  background: var(--parchment-bg);
+  border: 1px solid var(--border-aged);
+  border-radius: 3px;
+  color: var(--text-primary);
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 13px;
+  padding: 8px 16px;
+}
+
+[data-theme="scholar"] .cancel-button:hover {
+  background: var(--parchment-bg-hover);
+  border-color: var(--accent-sepia);
+}
+
+[data-theme="scholar"] .delete-button {
+  background: var(--parchment-bg);
+  border: 1px solid var(--border-aged);
+  border-radius: 3px;
+  color: var(--text-primary);
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 13px;
+  padding: 8px 16px;
+  transition: all 0.2s ease;
+}
+
+[data-theme="scholar"] .delete-button:hover {
+  background: #8b4a3a;
+  border-color: #6b2a1a;
+  color: var(--parchment-bg-light);
+}
+
+[data-theme="scholar"] .new-entry-button {
+  background: var(--accent-sepia);
+  border: 1px solid var(--highlight-gold-dark);
+  border-radius: 3px;
+  color: var(--parchment-bg-light);
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 8px 16px;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+[data-theme="scholar"] .new-entry-button:hover {
+  background: var(--highlight-gold-dark);
+  box-shadow: 0 2px 4px rgba(139, 105, 20, 0.3);
+}
+
+[data-theme="scholar"] .confirm-dialog-overlay {
+  background: rgba(44, 24, 16, 0.6);
+}
+
+[data-theme="scholar"] .confirm-dialog {
+  background: var(--parchment-bg-light);
+  border: 2px solid var(--border-aged);
+  border-radius: 4px;
+  color: var(--text-primary);
+  font-family: 'Georgia', 'Times New Roman', serif;
+  box-shadow: 0 4px 12px rgba(44, 24, 16, 0.3);
+}
+
+[data-theme="scholar"] .confirm-dialog-buttons {
+  background: transparent;
+}
+
+/* ============================================
+   JOURNAL LIST
+   ============================================ */
+[data-theme="scholar"] .journal-list {
+  background: var(--parchment-bg);
+  border-right: 2px solid var(--border-aged);
+}
+
+[data-theme="scholar"] .journal-list-loading {
+  background: var(--parchment-bg);
+  color: var(--text-secondary);
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 14px;
+}
+
+[data-theme="scholar"] .journal-list-header {
+  background: var(--parchment-bg-dark);
+  border-top: 2px solid var(--border-aged);
+  border-left: 2px solid var(--border-aged);
+  border-bottom: 1px solid var(--border-light);
+  border-right: 1px solid var(--border-light);
+}
+
+[data-theme="scholar"] .journal-list-header h3 {
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+[data-theme="scholar"] .journal-list-header-actions {
+  background: transparent;
+}
+
+[data-theme="scholar"] .journal-list-content {
+  background: var(--parchment-bg);
+}
+
+[data-theme="scholar"] .journal-list-controls {
+  background: var(--parchment-bg-dark);
+  border-top: 2px solid var(--border-aged);
+  border-left: 2px solid var(--border-aged);
+  border-bottom: 1px solid var(--border-light);
+  border-right: 1px solid var(--border-light);
+}
+
+[data-theme="scholar"] .journal-list-filter,
+[data-theme="scholar"] .journal-list-sort {
+  background: transparent;
+}
+
+[data-theme="scholar"] .journal-list-filter label,
+[data-theme="scholar"] .journal-list-sort label {
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 13px;
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+[data-theme="scholar"] .journal-list-tags {
+  background: transparent;
+}
+
+[data-theme="scholar"] .journal-entry-filter-tag {
+  background: var(--parchment-bg-light);
+  border: 1px solid var(--border-aged);
+  border-radius: 3px;
+  color: var(--text-primary);
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 12px;
+  padding: 4px 8px;
+  transition: all 0.2s ease;
+}
+
+[data-theme="scholar"] .journal-entry-filter-tag:hover {
+  background: var(--parchment-bg-hover);
+  border-color: var(--accent-sepia);
+}
+
+[data-theme="scholar"] .journal-entry-filter-tag.active {
+  background: var(--accent-sepia);
+  color: var(--parchment-bg-light);
+  border-color: var(--highlight-gold-dark);
+}
+
+[data-theme="scholar"] .journal-entry-clear-filters {
+  background: var(--parchment-bg);
+  border: 1px solid var(--border-aged);
+  border-radius: 3px;
+  color: var(--text-primary);
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 13px;
+  padding: 6px 12px;
+}
+
+[data-theme="scholar"] .journal-entry-clear-filters:hover {
+  background: var(--parchment-bg-hover);
+  border-color: var(--accent-sepia);
+}
+
+[data-theme="scholar"] .journal-list-sort select {
+  background: var(--parchment-bg-light);
+  border: 1px solid var(--border-aged);
+  border-radius: 3px;
+  color: var(--text-primary);
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 13px;
+  padding: 4px 8px;
+}
+
+[data-theme="scholar"] .journal-list-empty {
+  background: var(--parchment-bg);
+  color: var(--text-muted);
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 14px;
+  font-style: italic;
+}
+
+[data-theme="scholar"] .journal-entries {
+  background: transparent;
+}
+
+[data-theme="scholar"] .journal-entry-item {
+  background: var(--parchment-bg-light);
+  border: 1px solid var(--border-aged);
+  border-radius: 3px;
+  color: var(--text-primary);
+  box-shadow: 0 1px 3px rgba(125, 107, 93, 0.1);
+  transition: all 0.2s ease;
+}
+
+[data-theme="scholar"] .journal-entry-item:hover {
+  background: var(--parchment-bg-hover);
+  border-color: var(--accent-sepia);
+  box-shadow: 0 2px 4px rgba(139, 105, 20, 0.2);
+}
+
+[data-theme="scholar"] .journal-entry-item.selected {
+  background: var(--accent-sepia);
+  color: var(--parchment-bg-light);
+  border-color: var(--highlight-gold-dark);
+  box-shadow: 0 2px 6px rgba(139, 105, 20, 0.4);
+}
+
+[data-theme="scholar"] .journal-entry-item.bulk-edit-mode {
+  background: var(--parchment-bg-light);
+}
+
+[data-theme="scholar"] .journal-entry-item.bulk-selected {
+  background: var(--highlight-gold);
+  border: 2px solid var(--accent-sepia);
+}
+
+[data-theme="scholar"] .entry-item-header {
+  background: transparent;
+}
+
+[data-theme="scholar"] .entry-item-title {
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 14px;
+  font-weight: 600;
+  color: inherit;
+}
+
+[data-theme="scholar"] .entry-item-meta {
+  background: transparent;
+}
+
+[data-theme="scholar"] .entry-time-range {
+  background: var(--accent-sepia);
+  border: 1px solid var(--highlight-gold-dark);
+  border-radius: 3px;
+  color: var(--parchment-bg-light);
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 10px;
+  font-weight: 600;
+}
+
+[data-theme="scholar"] .entry-date {
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 12px;
+  color: inherit;
+}
+
+[data-theme="scholar"] .entry-item-preview {
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 13px;
+  color: inherit;
+  line-height: 1.6;
+}
+
+[data-theme="scholar"] .entry-item-tags {
+  background: transparent;
+}
+
+[data-theme="scholar"] .entry-tag {
+  background: var(--parchment-bg-dark);
+  border: 1px solid var(--border-aged);
+  border-radius: 3px;
+  color: var(--text-primary);
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 11px;
+  padding: 3px 6px;
+}
+
+[data-theme="scholar"] .entry-item-content {
+  background: transparent;
+}
+
+[data-theme="scholar"] .entry-checkbox-wrapper {
+  background: transparent;
+}
+
+[data-theme="scholar"] .entry-checkbox-wrapper input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  border: 2px solid var(--border-aged);
+  background: var(--parchment-bg-light);
+  border-radius: 3px;
+  accent-color: var(--accent-sepia);
+}
+
+[data-theme="scholar"] .bulk-edit-actions {
+  background: var(--highlight-gold);
+  border-top: 2px solid var(--border-aged);
+  border-left: 2px solid var(--border-aged);
+  border-bottom: 1px solid var(--border-light);
+  border-right: 1px solid var(--border-light);
+}
+
+[data-theme="scholar"] .bulk-edit-selected-count {
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+[data-theme="scholar"] .bulk-delete-button {
+  background: var(--parchment-bg);
+  border: 1px solid var(--border-aged);
+  border-radius: 3px;
+  color: var(--text-primary);
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 13px;
+  padding: 6px 12px;
+}
+
+[data-theme="scholar"] .bulk-delete-button:hover {
+  background: #8b4a3a;
+  border-color: #6b2a1a;
+  color: var(--parchment-bg-light);
+}
+
+[data-theme="scholar"] .bulk-edit-select-all {
+  background: var(--parchment-bg-dark);
+  border-top: 2px solid var(--border-aged);
+  border-left: 2px solid var(--border-aged);
+  border-bottom: 1px solid var(--border-light);
+  border-right: 1px solid var(--border-light);
+}
+
+[data-theme="scholar"] .bulk-edit-checkbox-label {
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 13px;
+  color: var(--text-primary);
+}
+
+/* ============================================
+   ENTRY EDIT MODAL
+   ============================================ */
+[data-theme="scholar"] .entry-edit-modal-overlay {
+  background: rgba(44, 24, 16, 0.6);
+}
+
+[data-theme="scholar"] .entry-edit-modal {
+  background: var(--parchment-bg-light);
+  border: 2px solid var(--border-aged);
+  border-radius: 4px;
+  box-shadow: 0 4px 16px rgba(44, 24, 16, 0.4);
+}
+
+[data-theme="scholar"] .modal-header {
+  background: var(--parchment-bg-dark);
+  border-top: 2px solid var(--border-aged);
+  border-left: 2px solid var(--border-aged);
+  border-bottom: 1px solid var(--border-light);
+  border-right: 1px solid var(--border-light);
+}
+
+[data-theme="scholar"] .modal-header-top {
+  background: transparent;
+}
+
+[data-theme="scholar"] .modal-header-top h3 {
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+[data-theme="scholar"] .modal-close-button {
+  background: var(--parchment-bg);
+  border: 1px solid var(--border-aged);
+  border-radius: 3px;
+  color: var(--text-primary);
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 13px;
+  padding: 6px 12px;
+}
+
+[data-theme="scholar"] .modal-close-button:hover {
+  background: var(--parchment-bg-hover);
+  border-color: var(--accent-sepia);
+}
+
+[data-theme="scholar"] .modal-entry-meta {
+  background: transparent;
+}
+
+[data-theme="scholar"] .modal-entry-meta small {
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+[data-theme="scholar"] .modal-content {
+  background: var(--parchment-bg-light);
+  color: var(--text-primary);
+}
+
+[data-theme="scholar"] .modal-title-input,
+[data-theme="scholar"] .modal-content-input,
+[data-theme="scholar"] .modal-tag-input {
+  background: var(--parchment-bg);
+  border: 1px solid var(--border-aged);
+  border-radius: 3px;
+  color: var(--text-primary);
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 14px;
+  padding: 8px;
+}
+
+[data-theme="scholar"] .modal-title-input:focus,
+[data-theme="scholar"] .modal-content-input:focus,
+[data-theme="scholar"] .modal-tag-input:focus {
+  border-color: var(--accent-sepia);
+  outline: 2px solid var(--accent-sepia);
+  outline-offset: 2px;
+}
+
+[data-theme="scholar"] .modal-tags-section {
+  background: transparent;
+}
+
+[data-theme="scholar"] .modal-tags-input-container {
+  background: transparent;
+}
+
+[data-theme="scholar"] .modal-add-tag-button {
+  background: var(--parchment-bg);
+  border: 1px solid var(--border-aged);
+  border-radius: 3px;
+  color: var(--text-primary);
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 13px;
+  padding: 6px 12px;
+}
+
+[data-theme="scholar"] .modal-add-tag-button:hover {
+  background: var(--parchment-bg-hover);
+  border-color: var(--accent-sepia);
+}
+
+[data-theme="scholar"] .modal-tags-list {
+  background: transparent;
+}
+
+[data-theme="scholar"] .modal-tag {
+  background: var(--parchment-bg-dark);
+  border: 1px solid var(--border-aged);
+  border-radius: 3px;
+  color: var(--text-primary);
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 12px;
+  padding: 4px 8px;
+}
+
+[data-theme="scholar"] .modal-tag-remove {
+  background: transparent;
+  border: none;
+  color: var(--text-primary);
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 12px;
+  margin-left: 4px;
+  padding: 2px 4px;
+  border-radius: 2px;
+}
+
+[data-theme="scholar"] .modal-tag-remove:hover {
+  background: var(--accent-sepia);
+  color: var(--parchment-bg-light);
+}
+
+[data-theme="scholar"] .modal-footer {
+  background: var(--parchment-bg-light);
+  border-top: 2px solid var(--border-aged);
+}
+
+[data-theme="scholar"] .modal-duplicate-button,
+[data-theme="scholar"] .modal-delete-button,
+[data-theme="scholar"] .modal-cancel-button,
+[data-theme="scholar"] .modal-save-button {
+  background: var(--parchment-bg);
+  border: 1px solid var(--border-aged);
+  border-radius: 3px;
+  color: var(--text-primary);
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 13px;
+  padding: 8px 16px;
+}
+
+[data-theme="scholar"] .modal-duplicate-button:hover,
+[data-theme="scholar"] .modal-cancel-button:hover {
+  background: var(--parchment-bg-hover);
+  border-color: var(--accent-sepia);
+}
+
+[data-theme="scholar"] .modal-delete-button:hover {
+  background: #8b4a3a;
+  border-color: #6b2a1a;
+  color: var(--parchment-bg-light);
+}
+
+[data-theme="scholar"] .modal-save-button {
+  background: var(--accent-sepia);
+  border: 1px solid var(--highlight-gold-dark);
+  color: var(--parchment-bg-light);
+  font-weight: 600;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+[data-theme="scholar"] .modal-save-button:hover:not(:disabled) {
+  background: var(--highlight-gold-dark);
+  box-shadow: 0 2px 4px rgba(139, 105, 20, 0.3);
+}
+
+[data-theme="scholar"] .modal-save-button:disabled {
+  background: var(--border-light);
+  color: var(--text-muted);
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+[data-theme="scholar"] .modal-footer-actions {
+  background: transparent;
+}
+
+/* ============================================
+   SEARCH VIEW
+   ============================================ */
+[data-theme="scholar"] .search-view {
+  background: var(--parchment-bg);
+  color: var(--text-primary);
+}
+
+[data-theme="scholar"] .search-header {
+  background: var(--parchment-bg-dark);
+  border-top: 2px solid var(--border-aged);
+  border-left: 2px solid var(--border-aged);
+  border-bottom: 1px solid var(--border-light);
+  border-right: 1px solid var(--border-light);
+}
+
+[data-theme="scholar"] .search-input-container {
+  background: transparent;
+}
+
+[data-theme="scholar"] .search-input {
+  background: var(--parchment-bg-light);
+  border: 1px solid var(--border-aged);
+  border-radius: 3px;
+  color: var(--text-primary);
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 14px;
+  padding: 8px 12px;
+}
+
+[data-theme="scholar"] .search-input:focus {
+  border-color: var(--accent-sepia);
+  outline: 2px solid var(--accent-sepia);
+  outline-offset: 2px;
+}
+
+[data-theme="scholar"] .search-filters-toggle,
+[data-theme="scholar"] .search-close-button {
+  background: var(--parchment-bg);
+  border: 1px solid var(--border-aged);
+  border-radius: 3px;
+  color: var(--text-primary);
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 13px;
+  padding: 6px 12px;
+}
+
+[data-theme="scholar"] .search-filters-toggle:hover,
+[data-theme="scholar"] .search-close-button:hover {
+  background: var(--parchment-bg-hover);
+  border-color: var(--accent-sepia);
+}
+
+[data-theme="scholar"] .search-filters {
+  background: var(--parchment-bg-dark);
+  border-top: 2px solid var(--border-aged);
+  border-left: 2px solid var(--border-aged);
+  border-bottom: 1px solid var(--border-light);
+  border-right: 1px solid var(--border-light);
+}
+
+[data-theme="scholar"] .filter-group {
+  background: transparent;
+}
+
+[data-theme="scholar"] .filter-group label {
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+[data-theme="scholar"] .filter-tags {
+  background: transparent;
+}
+
+[data-theme="scholar"] .filter-tag,
+[data-theme="scholar"] .filter-time-range {
+  background: var(--parchment-bg-light);
+  border: 1px solid var(--border-aged);
+  border-radius: 3px;
+  color: var(--text-primary);
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 12px;
+  padding: 4px 8px;
+  transition: all 0.2s ease;
+}
+
+[data-theme="scholar"] .filter-tag:hover,
+[data-theme="scholar"] .filter-time-range:hover {
+  background: var(--parchment-bg-hover);
+  border-color: var(--accent-sepia);
+}
+
+[data-theme="scholar"] .filter-tag.active,
+[data-theme="scholar"] .filter-time-range.active {
+  background: var(--accent-sepia);
+  color: var(--parchment-bg-light);
+  border-color: var(--highlight-gold-dark);
+}
+
+[data-theme="scholar"] .filter-empty {
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 12px;
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+[data-theme="scholar"] .filter-time-ranges {
+  background: transparent;
+}
+
+[data-theme="scholar"] .filter-date-range {
+  background: transparent;
+}
+
+[data-theme="scholar"] .filter-date-range input {
+  background: var(--parchment-bg-light);
+  border: 1px solid var(--border-aged);
+  border-radius: 3px;
+  color: var(--text-primary);
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 13px;
+  padding: 4px 8px;
+}
+
+[data-theme="scholar"] .filter-sort {
+  background: transparent;
+}
+
+[data-theme="scholar"] .filter-sort select {
+  background: var(--parchment-bg-light);
+  border: 1px solid var(--border-aged);
+  border-radius: 3px;
+  color: var(--text-primary);
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 13px;
+  padding: 4px 8px;
+}
+
+[data-theme="scholar"] .clear-filters-button {
+  background: var(--parchment-bg);
+  border: 1px solid var(--border-aged);
+  border-radius: 3px;
+  color: var(--text-primary);
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 13px;
+  padding: 6px 12px;
+}
+
+[data-theme="scholar"] .clear-filters-button:hover {
+  background: var(--parchment-bg-hover);
+  border-color: var(--accent-sepia);
+}
+
+[data-theme="scholar"] .search-results {
+  background: var(--parchment-bg);
+  color: var(--text-primary);
+}
+
+[data-theme="scholar"] .search-loading,
+[data-theme="scholar"] .search-empty {
+  background: var(--parchment-bg);
+  color: var(--text-muted);
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 14px;
+  font-style: italic;
+}
+
+[data-theme="scholar"] .search-results-count {
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+[data-theme="scholar"] .search-results-list {
+  background: transparent;
+}
+
+[data-theme="scholar"] .search-result-item {
+  background: var(--parchment-bg-light);
+  border: 1px solid var(--border-aged);
+  border-radius: 3px;
+  color: var(--text-primary);
+  box-shadow: 0 1px 3px rgba(125, 107, 93, 0.1);
+  transition: all 0.2s ease;
+}
+
+[data-theme="scholar"] .search-result-item:hover {
+  background: var(--parchment-bg-hover);
+  border-color: var(--accent-sepia);
+  box-shadow: 0 2px 4px rgba(139, 105, 20, 0.2);
+}
+
+[data-theme="scholar"] .result-item-header {
+  background: transparent;
+}
+
+[data-theme="scholar"] .result-item-title {
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+[data-theme="scholar"] .result-item-meta {
+  background: transparent;
+}
+
+[data-theme="scholar"] .result-time-range-badge {
+  background: var(--accent-sepia);
+  color: var(--parchment-bg-light);
+  border: 1px solid var(--highlight-gold-dark);
+  border-radius: 3px;
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 10px;
+  font-weight: 600;
+}
+
+[data-theme="scholar"] .result-date {
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+[data-theme="scholar"] .result-item-content {
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 13px;
+  color: var(--text-primary);
+  line-height: 1.6;
+}
+
+[data-theme="scholar"] .result-item-tags {
+  background: transparent;
+}
+
+[data-theme="scholar"] .result-tag {
+  background: var(--parchment-bg-dark);
+  border: 1px solid var(--border-aged);
+  border-radius: 3px;
+  color: var(--text-primary);
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 11px;
+  padding: 3px 6px;
+}
+
+/* ============================================
+   PREFERENCES
+   ============================================ */
+[data-theme="scholar"] .preferences-container {
+  background: var(--parchment-bg);
+  color: var(--text-primary);
+}
+
+[data-theme="scholar"] .preferences-loading {
+  background: var(--parchment-bg);
+  color: var(--text-secondary);
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 14px;
+}
+
+[data-theme="scholar"] .preferences-header {
+  background: var(--parchment-bg-dark);
+  border-top: 2px solid var(--border-aged);
+  border-left: 2px solid var(--border-aged);
+  border-bottom: 1px solid var(--border-light);
+  border-right: 1px solid var(--border-light);
+}
+
+[data-theme="scholar"] .preferences-header h1 {
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+[data-theme="scholar"] .preferences-actions {
+  background: transparent;
+}
+
+[data-theme="scholar"] .preferences-button {
+  background: var(--parchment-bg);
+  border: 1px solid var(--border-aged);
+  border-radius: 3px;
+  color: var(--text-primary);
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 13px;
+  padding: 6px 12px;
+}
+
+[data-theme="scholar"] .preferences-button:hover {
+  background: var(--parchment-bg-hover);
+  border-color: var(--accent-sepia);
+}
+
+[data-theme="scholar"] .preferences-content {
+  background: var(--parchment-bg);
+}
+
+[data-theme="scholar"] .preferences-section {
+  background: var(--parchment-bg-light);
+  border: 1px solid var(--border-aged);
+  border-radius: 4px;
+  box-shadow: 0 2px 4px rgba(125, 107, 93, 0.1);
+}
+
+[data-theme="scholar"] .preferences-section h2 {
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+  border-bottom: 2px solid var(--border-aged);
+  padding-bottom: 8px;
+}
+
+[data-theme="scholar"] .preference-item {
+  background: transparent;
+}
+
+[data-theme="scholar"] .preference-item label {
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 14px;
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+[data-theme="scholar"] .preference-item input[type="text"],
+[data-theme="scholar"] .preference-item input[type="number"],
+[data-theme="scholar"] .preference-item select {
+  background: var(--parchment-bg);
+  border: 1px solid var(--border-aged);
+  border-radius: 3px;
+  color: var(--text-primary);
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 14px;
+  padding: 6px 10px;
+}
+
+[data-theme="scholar"] .preference-item input[type="text"]:focus,
+[data-theme="scholar"] .preference-item input[type="number"]:focus,
+[data-theme="scholar"] .preference-item select:focus {
+  border-color: var(--accent-sepia);
+  outline: 2px solid var(--accent-sepia);
+  outline-offset: 2px;
+}
+
+[data-theme="scholar"] .preference-item input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  border: 2px solid var(--border-aged);
+  background: var(--parchment-bg-light);
+  border-radius: 3px;
+  accent-color: var(--accent-sepia);
+}
+
+[data-theme="scholar"] .preference-item small {
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+[data-theme="scholar"] .preference-note {
+  background: var(--highlight-gold);
+  border-left: 3px solid var(--accent-sepia);
+  color: var(--text-primary);
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 13px;
+  padding: 8px 12px;
+}
+
+[data-theme="scholar"] .auto-save-indicator {
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 13px;
+  color: var(--accent-sepia);
+}
+
+[data-theme="scholar"] .export-toolbar {
+  background: transparent;
+}
+
+[data-theme="scholar"] .export-controls {
+  background: transparent;
+}
+
+[data-theme="scholar"] .export-controls select {
+  background: var(--parchment-bg-light);
+  border: 1px solid var(--border-aged);
+  border-radius: 3px;
+  color: var(--text-primary);
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 13px;
+  padding: 6px 10px;
+}
+
+[data-theme="scholar"] .about-section {
+  background: var(--parchment-bg-light);
+  border: 1px solid var(--border-aged);
+  border-radius: 4px;
+  box-shadow: 0 2px 4px rgba(125, 107, 93, 0.1);
+}
+
+[data-theme="scholar"] .about-section a {
+  color: var(--accent-sepia);
+  text-decoration: underline;
+}
+
+[data-theme="scholar"] .about-section a:hover {
+  color: var(--highlight-gold-dark);
+}
+
+/* ============================================
+   ABOUT PAGE
+   ============================================ */
+[data-theme="scholar"] .about-container {
+  background: var(--parchment-bg);
+  color: var(--text-primary);
+}
+
+[data-theme="scholar"] .about-content {
+  background: var(--parchment-bg-light);
+  border: 2px solid var(--border-aged);
+  border-radius: 4px;
+  color: var(--text-primary);
+  box-shadow: 0 4px 12px rgba(125, 107, 93, 0.2);
+}
+
+[data-theme="scholar"] .about-header {
+  background: transparent;
+  border-bottom: 2px solid var(--border-aged);
+}
+
+[data-theme="scholar"] .about-icon {
+  border: 2px solid var(--border-aged);
+  border-radius: 4px;
+}
+
+[data-theme="scholar"] .about-title-section h1 {
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+[data-theme="scholar"] .about-description {
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 14px;
+  color: var(--text-primary);
+}
+
+[data-theme="scholar"] .about-section {
+  background: transparent;
+  border-top: 1px solid var(--border-light);
+}
+
+[data-theme="scholar"] .about-version {
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 13px;
+  color: var(--text-primary);
+}
+
+[data-theme="scholar"] .about-note {
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+[data-theme="scholar"] .about-credits h2 {
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+[data-theme="scholar"] .about-credits p {
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 14px;
+  color: var(--text-primary);
+}
+
+[data-theme="scholar"] .about-link {
+  color: var(--accent-sepia);
+  text-decoration: underline;
+}
+
+[data-theme="scholar"] .about-link:hover {
+  color: var(--highlight-gold-dark);
+}
+
+[data-theme="scholar"] .about-credits-detailed {
+  background: transparent;
+}
+
+[data-theme="scholar"] .credits-category {
+  background: transparent;
+}
+
+[data-theme="scholar"] .credits-category h3 {
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--accent-sepia);
+}
+
+[data-theme="scholar"] .credits-category ul {
+  background: transparent;
+}
+
+[data-theme="scholar"] .credits-category li {
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 13px;
+  color: var(--text-primary);
+}
+
+[data-theme="scholar"] .credits-category li strong {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+[data-theme="scholar"] .credits-category li em {
+  font-style: italic;
+  color: var(--text-muted);
+}
+
+[data-theme="scholar"] .credits-category p {
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 13px;
+  color: var(--text-primary);
+}
+
+[data-theme="scholar"] .credits-note {
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 12px;
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+/* ============================================
+   TIME RANGE BADGES
+   ============================================ */
+[data-theme="scholar"] .entry-decade {
+  background: rgba(139, 105, 20, 0.15);
+  color: #6a4a14;
+  border: 1px solid var(--accent-sepia);
+}
+
+[data-theme="scholar"] .entry-year {
+  background: rgba(201, 169, 107, 0.2);
+  color: #5a4a24;
+  border: 1px solid var(--accent-gold);
+}
+
+[data-theme="scholar"] .entry-month {
+  background: rgba(184, 149, 106, 0.2);
+  color: #4a3a24;
+  border: 1px solid var(--accent-tan);
+}
+
+[data-theme="scholar"] .entry-week {
+  background: rgba(201, 169, 107, 0.15);
+  color: #5a4a24;
+  border: 1px solid var(--accent-gold);
+}
+
+[data-theme="scholar"] .entry-day {
+  background: rgba(139, 105, 20, 0.2);
+  color: #6a4a14;
+  border: 1px solid var(--accent-sepia);
+}
+
+[data-theme="scholar"] .entry-card,
+[data-theme="scholar"] .entry-card-full {
+  background: var(--parchment-bg-light) !important;
+  border-color: var(--border-aged);
+  box-shadow: 0 2px 4px rgba(125, 107, 93, 0.1);
+}
+
+[data-theme="scholar"] .card-title,
+[data-theme="scholar"] .card-title-full,
+[data-theme="scholar"] .badge-title {
+  color: var(--text-primary);
+  font-family: 'Georgia', 'Times New Roman', serif;
+}
+

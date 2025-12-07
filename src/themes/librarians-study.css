@@ -1,0 +1,209 @@
+/**
+ * Librarian's Study Theme
+ * Modern academic library, research setting, organized scholarly space
+ * Clean professional design perfect for organized academic work
+ */
+
+/* ============================================
+   COLOR PALETTE - CSS Custom Properties
+   ============================================ */
+[data-theme="librarians-study"] {
+  /* Backgrounds */
+  --library-bg: #f9f7f4;
+  --library-bg-secondary: #f5f3f0;
+  --library-bg-tertiary: #f0ede7;
+  --library-bg-hover: #ebe8e0;
+  
+  /* Text */
+  --text-primary: #2d2d2d;
+  --text-secondary: #3a3a3a;
+  --text-muted: #5a5a5a;
+  
+  /* Accents */
+  --accent-green: #2d5016;
+  --accent-blue: #2c5282;
+  --accent-green-light: #4a6b2f;
+  
+  /* Borders */
+  --border-gray: #8b8680;
+  --border-gray-light: #9b9690;
+  --border-gray-very-light: #b0aba5;
+  
+  /* Highlights */
+  --highlight-blue: #3a6ba3;
+  --highlight-blue-dark: #2c5282;
+  
+  /* Base Typography */
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+/* ============================================
+   BASE STYLES
+   ============================================ */
+[data-theme="librarians-study"] html,
+[data-theme="librarians-study"] body {
+  background: var(--library-bg);
+  color: var(--text-primary);
+  --theme-body-bg: var(--library-bg);
+  /* Clean organized library texture via gradient */
+  background-image: 
+    radial-gradient(circle at 20% 50%, rgba(45, 80, 22, 0.01) 0%, transparent 50%),
+    radial-gradient(circle at 80% 80%, rgba(44, 82, 130, 0.01) 0%, transparent 50%),
+    linear-gradient(135deg, #f9f7f4 0%, #f5f3f0 50%, #f0ede7 100%);
+}
+
+[data-theme="librarians-study"] #root {
+  background: var(--library-bg);
+}
+
+[data-theme="librarians-study"] .app {
+  background: var(--library-bg);
+}
+
+[data-theme="librarians-study"] .app-content {
+  background: var(--library-bg);
+  gap: 2px;
+}
+
+[data-theme="librarians-study"] .timeline-section {
+  background: var(--library-bg);
+}
+
+[data-theme="librarians-study"] .editor-section {
+  background: var(--library-bg);
+  border-left: 2px solid var(--border-gray);
+}
+
+/* ============================================
+   NAVIGATION BAR
+   ============================================ */
+[data-theme="librarians-study"] .navigation-bar {
+  background: var(--library-bg-secondary);
+  border-bottom: 2px solid var(--border-gray);
+  box-shadow: 0 2px 6px rgba(139, 134, 128, 0.15);
+}
+
+[data-theme="librarians-study"] .navigation-bar-top-row {
+  background: var(--library-bg-secondary);
+  border-bottom: 1px solid var(--border-gray-light);
+}
+
+[data-theme="librarians-study"] .nav-controls {
+  background: transparent;
+}
+
+[data-theme="librarians-study"] .nav-button,
+[data-theme="librarians-study"] .view-mode-button {
+  background: var(--library-bg);
+  border: 1px solid var(--border-gray);
+  border-radius: 3px;
+  color: var(--text-primary);
+  padding: 6px 12px;
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 13px;
+  text-shadow: 0 1px 1px rgba(255, 255, 255, 0.4);
+  transition: all 0.2s ease;
+}
+
+[data-theme="librarians-study"] .nav-button:hover,
+[data-theme="librarians-study"] .view-mode-button:hover {
+  background: var(--library-bg-hover);
+  border-color: var(--accent-green);
+  box-shadow: 0 2px 4px rgba(45, 80, 22, 0.25);
+}
+
+[data-theme="librarians-study"] .nav-button:active,
+[data-theme="librarians-study"] .view-mode-button:active {
+  background: var(--library-bg-tertiary);
+  box-shadow: inset 0 2px 4px rgba(139, 134, 128, 0.2);
+}
+
+[data-theme="librarians-study"] .view-mode-button.active {
+  background: var(--accent-green);
+  color: var(--library-bg);
+  border-color: var(--accent-green-light);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+[data-theme="librarians-study"] .today-button {
+  background: var(--library-bg);
+  border: 1px solid var(--border-gray);
+  border-radius: 3px;
+  color: var(--text-primary);
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 13px;
+  text-shadow: 0 1px 1px rgba(255, 255, 255, 0.4);
+}
+
+[data-theme="librarians-study"] .today-button:hover {
+  background: var(--library-bg-hover);
+  border-color: var(--accent-green);
+}
+
+[data-theme="librarians-study"] .date-label {
+  font-family: 'Georgia', 'Times New Roman', serif;
+  color: var(--text-primary);
+  text-shadow: 0 1px 1px rgba(255, 255, 255, 0.3);
+  font-weight: 600;
+}
+
+[data-theme="librarians-study"] .view-mode-selector {
+  background: transparent;
+}
+
+[data-theme="librarians-study"] .calendar-selector {
+  background: var(--library-bg-secondary);
+}
+
+[data-theme="librarians-study"] .calendar-select {
+  background: var(--library-bg);
+  border: 1px solid var(--border-gray);
+  border-radius: 3px;
+  color: var(--text-primary);
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 13px;
+  padding: 4px 8px;
+}
+
+[data-theme="librarians-study"] .calendar-select:focus {
+  border-color: var(--accent-blue);
+  outline: 2px solid var(--accent-blue);
+  outline-offset: 2px;
+}
+
+[data-theme="librarians-study"] .calendar-info-panel {
+  background: var(--library-bg-secondary);
+  border: 1px solid var(--border-gray);
+  border-radius: 3px;
+  box-shadow: 0 2px 6px rgba(139, 134, 128, 0.15);
+}
+
+[data-theme="librarians-study"] .calendar-definition-toggle {
+  background: var(--library-bg);
+  border: 1px solid var(--border-gray);
+  border-radius: 3px;
+  color: var(--text-primary);
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 12px;
+  padding: 4px 8px;
+}
+
+[data-theme="librarians-study"] .calendar-definition-toggle:hover {
+  background: var(--library-bg-hover);
+  border-color: var(--accent-green);
+}
+
+[data-theme="librarians-study"] .calendar-definition-drawer {
+  background: var(--library-bg-secondary);
+  border: 1px solid var(--border-gray);
+  border-radius: 3px;
+  box-shadow: 0 2px 6px rgba(139, 134, 128, 0.2);
+}
+
+/* NOTE: This theme file continues with comprehensive component styling.
+   Additional components (Timeline, Editor, Viewer, Modals, etc.) will be 
+   added following the same pattern as Parchment Scholar theme, adapted
+   to Librarian's Study color palette. */
+

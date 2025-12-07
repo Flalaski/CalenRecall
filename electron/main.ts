@@ -41,6 +41,12 @@ const THEME_METADATA: Record<string, { displayName: string }> = {
   'aero-glass': { displayName: 'Aero Glass' },
   'galactic-basic': { displayName: 'Galactic Basic' },
   'the-real-world': { displayName: 'The Real World' },
+  'scholar': { displayName: 'Scholar' },
+  'archive': { displayName: 'Archive' },
+  'librarians-study': { displayName: 'Librarian\'s Study' },
+  'research': { displayName: 'Research' },
+  'manuscript-room': { displayName: 'Manuscript Room' },
+  'reading-room': { displayName: 'Reading Room' },
 };
 
 /**
@@ -73,6 +79,7 @@ function discoverThemes(): ThemeInfo[] {
   // All available theme files (excluding templates/examples)
   const knownThemes = [
     'aero-glass',
+    'archive',
     'australian-desert',
     'bios',
     'classic-dark',
@@ -83,12 +90,17 @@ function discoverThemes(): ThemeInfo[] {
     'high-contrast',
     'hot-spring',
     'journeyman',
+    'librarians-study',
+    'manuscript-room',
     'modern-minimal',
     'modern-minimal-oled',
     'NEON',
     'ocean',
     'on-screen',
+    'reading-room',
     'red-rock',
+    'research',
+    'scholar',
     'sunset',
     'terminal',
     'the-real-world',

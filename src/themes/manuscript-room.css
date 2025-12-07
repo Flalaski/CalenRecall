@@ -1,0 +1,82 @@
+/**
+ * Manuscript Room Theme
+ * Rare book room, special collections, illuminated manuscripts
+ * Luxurious design perfect for special collections and rare document viewing
+ */
+
+/* ============================================
+   COLOR PALETTE - CSS Custom Properties
+   ============================================ */
+[data-theme="manuscript-room"] {
+  /* Backgrounds */
+  --manuscript-bg: #fffef9;
+  --manuscript-bg-secondary: #faf9f4;
+  --manuscript-bg-tertiary: #f5f4ef;
+  --manuscript-bg-hover: #f0efe8;
+  
+  /* Text */
+  --text-primary: #3d2f1f;
+  --text-secondary: #4a3a2a;
+  --text-muted: #6b5a4a;
+  
+  /* Accents */
+  --accent-purple: #2d1b4e;
+  --accent-gold: #c9a96b;
+  --accent-purple-light: #3d2b5e;
+  
+  /* Borders */
+  --border-gold: #8b7a4a;
+  --border-gold-light: #9b8a5a;
+  --border-gold-very-light: #b8a876;
+  
+  /* Highlights */
+  --highlight-gold: #d4b97f;
+  --highlight-gold-dark: #c9a96b;
+  
+  /* Base Typography */
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+/* ============================================
+   BASE STYLES
+   ============================================ */
+[data-theme="manuscript-room"] html,
+[data-theme="manuscript-room"] body {
+  background: var(--manuscript-bg);
+  color: var(--text-primary);
+  --theme-body-bg: var(--manuscript-bg);
+  /* Luxurious illuminated manuscript texture via gradient */
+  background-image: 
+    radial-gradient(circle at 20% 50%, rgba(45, 27, 78, 0.008) 0%, transparent 50%),
+    radial-gradient(circle at 80% 80%, rgba(201, 169, 107, 0.01) 0%, transparent 50%),
+    linear-gradient(135deg, #fffef9 0%, #faf9f4 50%, #f5f4ef 100%);
+}
+
+[data-theme="manuscript-room"] #root {
+  background: var(--manuscript-bg);
+}
+
+[data-theme="manuscript-room"] .app {
+  background: var(--manuscript-bg);
+}
+
+[data-theme="manuscript-room"] .app-content {
+  background: var(--manuscript-bg);
+  gap: 2px;
+}
+
+[data-theme="manuscript-room"] .timeline-section {
+  background: var(--manuscript-bg);
+}
+
+[data-theme="manuscript-room"] .editor-section {
+  background: var(--manuscript-bg);
+  border-left: 2px solid var(--border-gold);
+}
+
+/* NOTE: This theme file continues with comprehensive component styling.
+   Additional components will be added following the same pattern as 
+   Parchment Scholar theme, adapted to Manuscript Room color palette. */
+

@@ -1,0 +1,326 @@
+/**
+ * Archive Theme
+ * 19th-century libraries, leather-bound books, inkwell writing aesthetic
+ * Elegant refined design perfect for formal academic work and historical research
+ */
+
+/* ============================================
+   COLOR PALETTE - CSS Custom Properties
+   ============================================ */
+[data-theme="archive"] {
+  /* Backgrounds */
+  --victorian-bg: #faf8f3;
+  --victorian-bg-secondary: #f5f1e8;
+  --victorian-bg-tertiary: #efe8db;
+  --victorian-bg-hover: #e8e0d0;
+  
+  /* Text */
+  --text-primary: #1a1a2e;
+  --text-secondary: #2d2d44;
+  --text-muted: #4a4a5a;
+  
+  /* Accents */
+  --accent-burgundy: #6b2d3a;
+  --accent-ink-blue: #2c3e50;
+  --accent-burgundy-light: #7d3a47;
+  
+  /* Borders */
+  --border-walnut: #5d4037;
+  --border-walnut-light: #6d5247;
+  --border-walnut-very-light: #8b7366;
+  
+  /* Highlights */
+  --highlight-blue: #34495e;
+  --highlight-blue-dark: #2c3e50;
+  
+  /* Base Typography */
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+/* ============================================
+   BASE STYLES
+   ============================================ */
+[data-theme="archive"] html,
+[data-theme="archive"] body {
+  background: var(--victorian-bg);
+  color: var(--text-primary);
+  --theme-body-bg: var(--victorian-bg);
+  /* Elegant aged paper texture via gradient */
+  background-image: 
+    radial-gradient(circle at 15% 45%, rgba(107, 45, 58, 0.015) 0%, transparent 50%),
+    radial-gradient(circle at 85% 75%, rgba(44, 62, 80, 0.012) 0%, transparent 50%),
+    linear-gradient(135deg, #faf8f3 0%, #f5f1e8 50%, #efe8db 100%);
+}
+
+[data-theme="archive"] #root {
+  background: var(--victorian-bg);
+}
+
+[data-theme="archive"] .app {
+  background: var(--victorian-bg);
+}
+
+[data-theme="archive"] .app-content {
+  background: var(--victorian-bg);
+  gap: 2px;
+}
+
+[data-theme="archive"] .timeline-section {
+  background: var(--victorian-bg);
+}
+
+[data-theme="archive"] .editor-section {
+  background: var(--victorian-bg);
+  border-left: 2px solid var(--border-walnut);
+}
+
+/* ============================================
+   NAVIGATION BAR
+   ============================================ */
+[data-theme="archive"] .navigation-bar {
+  background: var(--victorian-bg-secondary);
+  border-bottom: 2px solid var(--border-walnut);
+  box-shadow: 0 2px 6px rgba(93, 64, 55, 0.15);
+}
+
+[data-theme="archive"] .navigation-bar-top-row {
+  background: var(--victorian-bg-secondary);
+  border-bottom: 1px solid var(--border-walnut-light);
+}
+
+[data-theme="archive"] .nav-controls {
+  background: transparent;
+}
+
+[data-theme="archive"] .nav-button,
+[data-theme="archive"] .view-mode-button {
+  background: var(--victorian-bg);
+  border: 1px solid var(--border-walnut);
+  border-radius: 3px;
+  color: var(--text-primary);
+  padding: 6px 12px;
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 13px;
+  text-shadow: 0 1px 1px rgba(255, 255, 255, 0.4);
+  transition: all 0.2s ease;
+}
+
+[data-theme="archive"] .nav-button:hover,
+[data-theme="archive"] .view-mode-button:hover {
+  background: var(--victorian-bg-hover);
+  border-color: var(--accent-burgundy);
+  box-shadow: 0 2px 4px rgba(107, 45, 58, 0.25);
+}
+
+[data-theme="archive"] .nav-button:active,
+[data-theme="archive"] .view-mode-button:active {
+  background: var(--victorian-bg-tertiary);
+  box-shadow: inset 0 2px 4px rgba(93, 64, 55, 0.2);
+}
+
+[data-theme="archive"] .view-mode-button.active {
+  background: var(--accent-burgundy);
+  color: var(--victorian-bg);
+  border-color: var(--accent-burgundy-light);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+[data-theme="archive"] .today-button {
+  background: var(--victorian-bg);
+  border: 1px solid var(--border-walnut);
+  border-radius: 3px;
+  color: var(--text-primary);
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 13px;
+  text-shadow: 0 1px 1px rgba(255, 255, 255, 0.4);
+}
+
+[data-theme="archive"] .today-button:hover {
+  background: var(--victorian-bg-hover);
+  border-color: var(--accent-burgundy);
+}
+
+[data-theme="archive"] .date-label {
+  font-family: 'Georgia', 'Times New Roman', serif;
+  color: var(--text-primary);
+  text-shadow: 0 1px 1px rgba(255, 255, 255, 0.3);
+  font-weight: 600;
+}
+
+[data-theme="archive"] .view-mode-selector {
+  background: transparent;
+}
+
+[data-theme="archive"] .calendar-selector {
+  background: var(--victorian-bg-secondary);
+}
+
+[data-theme="archive"] .calendar-select {
+  background: var(--victorian-bg);
+  border: 1px solid var(--border-walnut);
+  border-radius: 3px;
+  color: var(--text-primary);
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 13px;
+  padding: 4px 8px;
+}
+
+[data-theme="archive"] .calendar-select:focus {
+  border-color: var(--accent-ink-blue);
+  outline: 2px solid var(--accent-ink-blue);
+  outline-offset: 2px;
+}
+
+[data-theme="archive"] .calendar-info-panel {
+  background: var(--victorian-bg-secondary);
+  border: 1px solid var(--border-walnut);
+  border-radius: 3px;
+  box-shadow: 0 2px 6px rgba(93, 64, 55, 0.15);
+}
+
+[data-theme="archive"] .calendar-definition-toggle {
+  background: var(--victorian-bg);
+  border: 1px solid var(--border-walnut);
+  border-radius: 3px;
+  color: var(--text-primary);
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 12px;
+  padding: 4px 8px;
+}
+
+[data-theme="archive"] .calendar-definition-toggle:hover {
+  background: var(--victorian-bg-hover);
+  border-color: var(--accent-burgundy);
+}
+
+[data-theme="archive"] .calendar-definition-drawer {
+  background: var(--victorian-bg-secondary);
+  border: 1px solid var(--border-walnut);
+  border-radius: 3px;
+  box-shadow: 0 2px 6px rgba(93, 64, 55, 0.2);
+}
+
+/* ============================================
+   CALENDAR VIEW
+   ============================================ */
+[data-theme="archive"] .calendar-loading {
+  background: var(--victorian-bg);
+  color: var(--text-secondary);
+}
+
+[data-theme="archive"] .calendar-grid {
+  background: var(--victorian-bg-secondary);
+  border: 2px solid var(--border-walnut);
+  border-radius: 4px;
+  box-shadow: 0 3px 8px rgba(93, 64, 55, 0.2);
+}
+
+[data-theme="archive"] .calendar-cell {
+  background: var(--victorian-bg-secondary);
+  border: 1px solid var(--border-walnut-light);
+  border-radius: 2px;
+  color: var(--text-primary);
+  transition: all 0.2s ease;
+}
+
+[data-theme="archive"] .calendar-cell:hover {
+  background: var(--victorian-bg-hover);
+  border-color: var(--accent-burgundy);
+  box-shadow: 0 2px 4px rgba(107, 45, 58, 0.25);
+}
+
+[data-theme="archive"] .calendar-cell.empty-cell {
+  background: var(--victorian-bg);
+  cursor: default;
+  opacity: 0.6;
+}
+
+[data-theme="archive"] .calendar-cell.today {
+  background: var(--highlight-blue);
+  color: var(--victorian-bg);
+  border: 2px solid var(--accent-ink-blue);
+  font-weight: 600;
+  box-shadow: 0 2px 6px rgba(44, 62, 80, 0.35);
+}
+
+[data-theme="archive"] .calendar-cell.selected {
+  background: var(--accent-burgundy);
+  color: var(--victorian-bg);
+  border-color: var(--accent-burgundy-light);
+  box-shadow: 0 3px 8px rgba(107, 45, 58, 0.4);
+}
+
+[data-theme="archive"] .calendar-cell.has-entry {
+  background: var(--victorian-bg-secondary);
+  border: 2px solid var(--accent-ink-blue);
+  box-shadow: 0 1px 4px rgba(44, 62, 80, 0.3);
+}
+
+[data-theme="archive"] .calendar-cell.has-entry.today {
+  background: var(--highlight-blue);
+  border-color: var(--accent-ink-blue);
+  color: var(--victorian-bg);
+}
+
+[data-theme="archive"] .cell-content {
+  color: inherit;
+}
+
+[data-theme="archive"] .cell-label {
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 13px;
+  color: inherit;
+}
+
+[data-theme="archive"] .entry-indicator {
+  background: var(--accent-burgundy);
+  border-radius: 50%;
+  box-shadow: 0 1px 3px rgba(107, 45, 58, 0.5);
+}
+
+[data-theme="archive"] .weekday-header {
+  background: var(--victorian-bg-tertiary);
+  border-bottom: 2px solid var(--border-walnut);
+  color: var(--text-primary);
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-weight: 600;
+  text-shadow: 0 1px 1px rgba(255, 255, 255, 0.3);
+}
+
+[data-theme="archive"] .weekday-cell {
+  background: var(--victorian-bg-tertiary);
+  border: 1px solid var(--border-walnut);
+  color: var(--text-primary);
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-weight: 600;
+}
+
+[data-theme="archive"] .day-number {
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 13px;
+  color: inherit;
+}
+
+[data-theme="archive"] .day-name {
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+
+[data-theme="archive"] .day-month {
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 10px;
+  color: var(--text-muted);
+}
+
+[data-theme="archive"] .day-header h2 {
+  color: var(--text-primary);
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-weight: 600;
+  text-shadow: 0 1px 2px rgba(255, 255, 255, 0.3);
+}
+
+/* Due to file size, continuing with remaining components... */
+

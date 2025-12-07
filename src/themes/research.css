@@ -1,0 +1,208 @@
+/**
+ * Research Theme
+ * Historical archive, document storage, cataloging systems
+ * Neutral professional design perfect for archival research and documentation
+ */
+
+/* ============================================
+   COLOR PALETTE - CSS Custom Properties
+   ============================================ */
+[data-theme="research"] {
+  /* Backgrounds */
+  --archive-bg: #f7f5f1;
+  --archive-bg-secondary: #f3f1ed;
+  --archive-bg-tertiary: #efece7;
+  --archive-bg-hover: #e8e5df;
+  
+  /* Text */
+  --text-primary: #1f1f1f;
+  --text-secondary: #2a2a2a;
+  --text-muted: #4a4a4a;
+  
+  /* Accents */
+  --accent-brown: #5a4a3a;
+  --accent-blue: #6b7a8a;
+  --accent-brown-light: #6b5a4a;
+  
+  /* Borders */
+  --border-aged: #8a7a6a;
+  --border-aged-light: #9a8a7a;
+  --border-aged-very-light: #b0a698;
+  
+  /* Highlights */
+  --highlight-blue: #7b8a9a;
+  --highlight-blue-dark: #6b7a8a;
+  
+  /* Base Typography */
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+/* ============================================
+   BASE STYLES
+   ============================================ */
+[data-theme="research"] html,
+[data-theme="research"] body {
+  background: var(--archive-bg);
+  color: var(--text-primary);
+  --theme-body-bg: var(--archive-bg);
+  /* Neutral archival texture via gradient */
+  background-image: 
+    radial-gradient(circle at 20% 50%, rgba(90, 74, 58, 0.01) 0%, transparent 50%),
+    radial-gradient(circle at 80% 80%, rgba(107, 122, 138, 0.01) 0%, transparent 50%),
+    linear-gradient(135deg, #f7f5f1 0%, #f3f1ed 50%, #efece7 100%);
+}
+
+[data-theme="research"] #root {
+  background: var(--archive-bg);
+}
+
+[data-theme="research"] .app {
+  background: var(--archive-bg);
+}
+
+[data-theme="research"] .app-content {
+  background: var(--archive-bg);
+  gap: 2px;
+}
+
+[data-theme="research"] .timeline-section {
+  background: var(--archive-bg);
+}
+
+[data-theme="research"] .editor-section {
+  background: var(--archive-bg);
+  border-left: 2px solid var(--border-aged);
+}
+
+/* ============================================
+   NAVIGATION BAR
+   ============================================ */
+[data-theme="research"] .navigation-bar {
+  background: var(--archive-bg-secondary);
+  border-bottom: 2px solid var(--border-aged);
+  box-shadow: 0 2px 6px rgba(138, 122, 106, 0.15);
+}
+
+[data-theme="research"] .navigation-bar-top-row {
+  background: var(--archive-bg-secondary);
+  border-bottom: 1px solid var(--border-aged-light);
+}
+
+[data-theme="research"] .nav-controls {
+  background: transparent;
+}
+
+[data-theme="research"] .nav-button,
+[data-theme="research"] .view-mode-button {
+  background: var(--archive-bg);
+  border: 1px solid var(--border-aged);
+  border-radius: 3px;
+  color: var(--text-primary);
+  padding: 6px 12px;
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 13px;
+  text-shadow: 0 1px 1px rgba(255, 255, 255, 0.4);
+  transition: all 0.2s ease;
+}
+
+[data-theme="research"] .nav-button:hover,
+[data-theme="research"] .view-mode-button:hover {
+  background: var(--archive-bg-hover);
+  border-color: var(--accent-brown);
+  box-shadow: 0 2px 4px rgba(90, 74, 58, 0.25);
+}
+
+[data-theme="research"] .nav-button:active,
+[data-theme="research"] .view-mode-button:active {
+  background: var(--archive-bg-tertiary);
+  box-shadow: inset 0 2px 4px rgba(138, 122, 106, 0.2);
+}
+
+[data-theme="research"] .view-mode-button.active {
+  background: var(--accent-brown);
+  color: var(--archive-bg);
+  border-color: var(--accent-brown-light);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+[data-theme="research"] .today-button {
+  background: var(--archive-bg);
+  border: 1px solid var(--border-aged);
+  border-radius: 3px;
+  color: var(--text-primary);
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 13px;
+  text-shadow: 0 1px 1px rgba(255, 255, 255, 0.4);
+}
+
+[data-theme="research"] .today-button:hover {
+  background: var(--archive-bg-hover);
+  border-color: var(--accent-brown);
+}
+
+[data-theme="research"] .date-label {
+  font-family: 'Georgia', 'Times New Roman', serif;
+  color: var(--text-primary);
+  text-shadow: 0 1px 1px rgba(255, 255, 255, 0.3);
+  font-weight: 600;
+}
+
+[data-theme="research"] .view-mode-selector {
+  background: transparent;
+}
+
+[data-theme="research"] .calendar-selector {
+  background: var(--archive-bg-secondary);
+}
+
+[data-theme="research"] .calendar-select {
+  background: var(--archive-bg);
+  border: 1px solid var(--border-aged);
+  border-radius: 3px;
+  color: var(--text-primary);
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 13px;
+  padding: 4px 8px;
+}
+
+[data-theme="research"] .calendar-select:focus {
+  border-color: var(--accent-blue);
+  outline: 2px solid var(--accent-blue);
+  outline-offset: 2px;
+}
+
+[data-theme="research"] .calendar-info-panel {
+  background: var(--archive-bg-secondary);
+  border: 1px solid var(--border-aged);
+  border-radius: 3px;
+  box-shadow: 0 2px 6px rgba(138, 122, 106, 0.15);
+}
+
+[data-theme="research"] .calendar-definition-toggle {
+  background: var(--archive-bg);
+  border: 1px solid var(--border-aged);
+  border-radius: 3px;
+  color: var(--text-primary);
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 12px;
+  padding: 4px 8px;
+}
+
+[data-theme="research"] .calendar-definition-toggle:hover {
+  background: var(--archive-bg-hover);
+  border-color: var(--accent-brown);
+}
+
+[data-theme="research"] .calendar-definition-drawer {
+  background: var(--archive-bg-secondary);
+  border: 1px solid var(--border-aged);
+  border-radius: 3px;
+  box-shadow: 0 2px 6px rgba(138, 122, 106, 0.2);
+}
+
+/* NOTE: This theme file continues with comprehensive component styling.
+   Additional components will be added following the same pattern as 
+   Parchment Scholar theme, adapted to Research Archive color palette. */
+

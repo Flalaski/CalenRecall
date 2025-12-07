@@ -29,6 +29,12 @@
 @import './themes/galactic-basic.css';
 @import './themes/elite.css';
 @import './themes/journeyman.css';
+@import './themes/scholar.css';
+@import './themes/archive.css';
+@import './themes/librarians-study.css';
+@import './themes/research.css';
+@import './themes/manuscript-room.css';
+@import './themes/reading-room.css';
 
 /* Custom themes are automatically imported via themeLoader.ts */
 /* You can still manually add @import statements here if needed for explicit control */
