@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { TimeRange } from '../types';
 import { format, addMonths, addYears, addWeeks, addDays, differenceInDays, differenceInMonths, differenceInYears } from 'date-fns';
-import { playNavigationSound, playModeSelectionSound, playSettingsSound, playTabSound, playDateSubmitSound, playNavigationJourneySound } from '../utils/audioUtils';
+import { playNavigationSound, playModeSelectionSound, playSettingsSound, playTabSound, playDateSubmitSound, playNavigationJourneySound, playTierNavigationSound } from '../utils/audioUtils';
 import { useCalendar } from '../contexts/CalendarContext';
 import { CalendarSystem, CALENDAR_INFO } from '../utils/calendars/types';
 import { getTimeRangeLabelInCalendar } from '../utils/calendars/timeRangeConverter';
@@ -61,26 +61,30 @@ export default function NavigationBar({
     }
   }, [selectedDate]);
 
-  const navigate = (direction: 'prev' | 'next') => {
-    playNavigationSound();
+  const navigate = (direction: 'prev' | 'next', shiftPressed: boolean = false) => {
+    // Play tier-aware navigation sound with direction and shift distinction
+    playTierNavigationSound(viewMode, direction, shiftPressed);
+    
     let newDate: Date;
     const multiplier = direction === 'next' ? 1 : -1;
+    // If shift is pressed, multiply the jump by 3 for faster navigation
+    const shiftMultiplier = shiftPressed ? 3 : 1;
 
     switch (viewMode) {
       case 'decade':
-        newDate = addYears(selectedDate, multiplier * 10);
+        newDate = addYears(selectedDate, multiplier * 10 * shiftMultiplier);
         break;
       case 'year':
-        newDate = addYears(selectedDate, multiplier);
+        newDate = addYears(selectedDate, multiplier * shiftMultiplier);
         break;
       case 'month':
-        newDate = addMonths(selectedDate, multiplier);
+        newDate = addMonths(selectedDate, multiplier * shiftMultiplier);
         break;
       case 'week':
-        newDate = addWeeks(selectedDate, multiplier);
+        newDate = addWeeks(selectedDate, multiplier * shiftMultiplier);
         break;
       case 'day':
-        newDate = addDays(selectedDate, multiplier);
+        newDate = addDays(selectedDate, multiplier * shiftMultiplier);
         break;
       default:
         newDate = selectedDate;
@@ -532,24 +536,60 @@ export default function NavigationBar({
         return;
       }
 
-      // Only handle T key (case-insensitive)
-      if (e.key.toLowerCase() !== 't') {
+      // Handle T key for Today button
+      if (e.key.toLowerCase() === 't') {
+        e.preventDefault();
+        playNavigationSound();
+        onDateChangeRef.current(new Date());
         return;
       }
 
-      // Prevent default behavior
-      e.preventDefault();
+      // Handle arrow keys for navigation (Left = prev, Right = next)
+      if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+        e.preventDefault();
+        const direction = e.key === 'ArrowLeft' ? 'prev' : 'next';
+        const shiftPressed = e.shiftKey;
+        
+        // Get current state from refs/closure
+        const currentViewMode = viewMode;
+        const currentSelectedDate = selectedDate;
+        
+        // Play tier-aware navigation sound with direction and shift distinction
+        playTierNavigationSound(currentViewMode, direction, shiftPressed);
+        
+        let newDate: Date;
+        const multiplier = direction === 'next' ? 1 : -1;
+        const shiftMultiplier = shiftPressed ? 3 : 1;
 
-      // Trigger Today button - use ref to get current onDateChange
-      playNavigationSound();
-      onDateChangeRef.current(new Date());
+        switch (currentViewMode) {
+          case 'decade':
+            newDate = addYears(currentSelectedDate, multiplier * 10 * shiftMultiplier);
+            break;
+          case 'year':
+            newDate = addYears(currentSelectedDate, multiplier * shiftMultiplier);
+            break;
+          case 'month':
+            newDate = addMonths(currentSelectedDate, multiplier * shiftMultiplier);
+            break;
+          case 'week':
+            newDate = addWeeks(currentSelectedDate, multiplier * shiftMultiplier);
+            break;
+          case 'day':
+            newDate = addDays(currentSelectedDate, multiplier * shiftMultiplier);
+            break;
+          default:
+            newDate = currentSelectedDate;
+        }
+        onDateChange(newDate);
+        return;
+      }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, []); // Empty deps - we use ref to access current values
+  }, [viewMode, selectedDate, onDateChange]); // Include dependencies for keyboard navigation
 
   return (
     <div className="navigation-bar">
@@ -561,13 +601,21 @@ export default function NavigationBar({
             className="app-icon"
             style={{ width: '32px', height: '32px', marginRight: '0.5rem' }}
           />
-          <button className="nav-button" onClick={() => navigate('prev')}>
+          <button 
+            className="nav-button" 
+            onClick={(e) => navigate('prev', e.shiftKey)}
+            onMouseDown={(e) => e.preventDefault()} // Prevent default to allow shift detection
+          >
             ←
           </button>
           <button className="nav-button today-button" onClick={goToToday}>
             Today
           </button>
-          <button className="nav-button" onClick={() => navigate('next')}>
+          <button 
+            className="nav-button" 
+            onClick={(e) => navigate('next', e.shiftKey)}
+            onMouseDown={(e) => e.preventDefault()} // Prevent default to allow shift detection
+          >
             →
           </button>
           <h2 className={`date-label date-label-${viewMode}`}>{renderDateLabel()}</h2>

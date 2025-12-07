@@ -3432,8 +3432,9 @@ export default function GlobalTimelineMinimap({
             return;
         }
 
-        // Play micro blip for date change
-        playMicroBlip();
+        // Play tier-aware micro blip for date change with direction
+        const blipDirection = direction === -1 ? 'prev' : 'next';
+        playMicroBlip(currentViewMode, blipDirection);
         currentOnTimePeriodSelect(newDate, currentViewMode);
       } else if (isUp || isDown) {
         // Change time scale (zoom in/out)
@@ -3892,7 +3893,7 @@ export default function GlobalTimelineMinimap({
       // Detect ALL date changes, even if we skip some updates due to throttling
       // If the date changed, play blip immediately (don't wait for throttle)
       if (!lastBlipDateDay || clampedDateDay.getTime() !== lastBlipDateDay.getTime()) {
-        // Date has changed - play micro blip immediately
+        // Date has changed - play tier-aware micro blip immediately
         // Try to resume audio context if suspended, but don't wait - play blip anyway
         const audioContext = getAudioContext();
         if (audioContext && audioContext.state === 'suspended') {
@@ -3900,7 +3901,15 @@ export default function GlobalTimelineMinimap({
             // Silently fail - we'll try to play anyway
           });
         }
-        playMicroBlip();
+        
+        // Determine direction by comparing old and new dates
+        let blipDirection: 'next' | 'prev' | null = null;
+        if (lastBlipDateDay) {
+          blipDirection = clampedDateDay.getTime() > lastBlipDateDay.getTime() ? 'next' : 'prev';
+        }
+        
+        // Play tier-aware micro blip with direction
+        playMicroBlip(viewMode, blipDirection);
         
         // Store normalized date (day level only) for accurate comparison
         lastBlipDateRef.current = new Date(clampedDateDay);

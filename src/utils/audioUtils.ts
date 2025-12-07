@@ -105,7 +105,11 @@ export function playMechanicalClick(direction: 'up' | 'down'): void {
 }
 
 // Generate micro mechanical blip sound for date changes during dragging
-export function playMicroBlip(): void {
+// Tier-aware version that reflects the time scale and direction of movement
+export function playMicroBlip(
+  tier: 'decade' | 'year' | 'month' | 'week' | 'day' = 'day',
+  direction: 'next' | 'prev' | null = null
+): void {
   const audioContext = getAudioContext();
   if (!audioContext) return;
   
@@ -118,16 +122,38 @@ export function playMicroBlip(): void {
     const oscillator = audioContext.createOscillator();
     const gainNode = audioContext.createGain();
     
-    // Create a very short, quiet mechanical blip - subtle tick sound
+    // Base frequencies for each tier (micro versions - higher and shorter than navigation sounds)
+    const tierBaseFreqs: Record<typeof tier, number> = {
+      decade: 800,  // Micro version of decade sound
+      year: 900,
+      month: 1000,
+      week: 1100,
+      day: 1200,    // Brightest, most precise
+    };
+    
+    // Direction modifier: forward slightly higher, backward slightly lower
+    const directionModifier = direction === 'next' ? 30 : direction === 'prev' ? -30 : 0;
+    const baseFreq = tierBaseFreqs[tier] + directionModifier;
+    
     oscillator.type = 'sine';
     const now = audioContext.currentTime;
-    oscillator.frequency.setValueAtTime(1000, now);
-    oscillator.frequency.exponentialRampToValueAtTime(600, now + 0.02);
+    
+    // Very quick frequency change based on direction
+    if (direction) {
+      oscillator.frequency.setValueAtTime(baseFreq, now);
+      oscillator.frequency.exponentialRampToValueAtTime(baseFreq + (direction === 'next' ? -200 : 200), now + 0.015);
+    } else {
+      // No direction - simple tick
+      oscillator.frequency.setValueAtTime(baseFreq, now);
+      oscillator.frequency.exponentialRampToValueAtTime(baseFreq - 300, now + 0.02);
+    }
     
     // Very short envelope for micro blip - quieter and shorter than main click
+    // Slightly quieter for larger tiers to maintain subtlety
+    const volumeMultiplier = tier === 'decade' ? 0.7 : tier === 'year' ? 0.8 : tier === 'month' ? 0.9 : 1.0;
     gainNode.gain.setValueAtTime(0, now);
-    gainNode.gain.linearRampToValueAtTime(0.08, now + 0.0005);
-    gainNode.gain.exponentialRampToValueAtTime(0.005, now + 0.02);
+    gainNode.gain.linearRampToValueAtTime(0.08 * volumeMultiplier, now + 0.0005);
+    gainNode.gain.exponentialRampToValueAtTime(0.005 * volumeMultiplier, now + 0.02);
     gainNode.gain.linearRampToValueAtTime(0, now + 0.04);
     
     oscillator.connect(gainNode);
@@ -237,6 +263,108 @@ export function playNavigationSound(): void {
     oscillator.stop(now + 0.18);
   } catch (error) {
     console.debug('Navigation sound error:', error);
+  }
+}
+
+// Tier navigation sound - for manual keyboard/button navigation
+// Distinguishes by tier level, direction (forward/backward), and shift state (large jumps)
+export function playTierNavigationSound(
+  tier: 'decade' | 'year' | 'month' | 'week' | 'day',
+  direction: 'next' | 'prev',
+  shiftPressed: boolean = false
+): void {
+  const audioContext = getAudioContext();
+  if (!audioContext) return;
+  
+  if (audioContext.state === 'closed') return;
+  
+  try {
+    const now = audioContext.currentTime;
+    
+    // Base frequencies for each tier (lower = larger time periods)
+    const tierBaseFreqs: Record<typeof tier, number> = {
+      decade: 150,
+      year: 250,
+      month: 400,
+      week: 550,
+      day: 700,
+    };
+    
+    // Shift modifier: adds resonance and slightly lowers pitch for larger jumps
+    const shiftModifier = shiftPressed ? -30 : 0;
+    const shiftResonance = shiftPressed ? 1.3 : 1.0;
+    
+    // Direction modifier: forward (next) slightly higher pitch, backward (prev) slightly lower
+    const directionModifier = direction === 'next' ? 20 : -20;
+    
+    const baseFreq = tierBaseFreqs[tier] + shiftModifier + directionModifier;
+    const endFreq = baseFreq + (direction === 'next' ? 50 : -50);
+    
+    // Duration varies by tier - larger tiers have longer sounds
+    const durations: Record<typeof tier, number> = {
+      decade: 0.2,
+      year: 0.15,
+      month: 0.12,
+      week: 0.1,
+      day: 0.08,
+    };
+    
+    const duration = durations[tier];
+    
+    const oscillator = audioContext.createOscillator();
+    const gainNode = audioContext.createGain();
+    
+    // Use different wave types for shift vs normal
+    oscillator.type = shiftPressed ? 'triangle' : 'sine';
+    
+    oscillator.frequency.setValueAtTime(baseFreq, now);
+    oscillator.frequency.linearRampToValueAtTime(endFreq, now + duration * 0.6);
+    oscillator.frequency.linearRampToValueAtTime(baseFreq + (direction === 'next' ? 30 : -30), now + duration);
+    
+    // Volume envelope with resonance for shift
+    const peakVolume = 0.25 * shiftResonance;
+    gainNode.gain.setValueAtTime(0, now);
+    gainNode.gain.linearRampToValueAtTime(peakVolume, now + 0.005);
+    gainNode.gain.exponentialRampToValueAtTime(peakVolume * 0.4, now + duration * 0.7);
+    gainNode.gain.linearRampToValueAtTime(0, now + duration);
+    
+    oscillator.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+    
+    oscillator.start(now);
+    oscillator.stop(now + duration);
+    
+    // For shift, add a second harmonic layer for resonance
+    if (shiftPressed) {
+      setTimeout(() => {
+        if (!audioContext || audioContext.state === 'closed') return;
+        
+        try {
+          const now2 = audioContext.currentTime;
+          const oscillator2 = audioContext.createOscillator();
+          const gainNode2 = audioContext.createGain();
+          
+          oscillator2.type = 'sine';
+          oscillator2.frequency.setValueAtTime(baseFreq * 2, now2);
+          oscillator2.frequency.linearRampToValueAtTime(endFreq * 2, now2 + duration * 0.5);
+          
+          gainNode2.gain.setValueAtTime(0, now2);
+          gainNode2.gain.linearRampToValueAtTime(0.1, now2 + 0.003);
+          gainNode2.gain.exponentialRampToValueAtTime(0.02, now2 + duration * 0.6);
+          gainNode2.gain.linearRampToValueAtTime(0, now2 + duration * 0.8);
+          
+          oscillator2.connect(gainNode2);
+          gainNode2.connect(audioContext.destination);
+          
+          oscillator2.start(now2);
+          oscillator2.stop(now2 + duration * 0.8);
+        } catch (error) {
+          console.debug('Shift harmonic sound error:', error);
+        }
+      }, 10);
+    }
+  } catch (error) {
+    console.debug('Tier navigation sound error:', error);
   }
 }
 
