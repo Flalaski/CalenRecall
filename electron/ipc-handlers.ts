@@ -853,6 +853,60 @@ export function setupIpcHandlers() {
   });
 
   /**
+   * Get all custom theme CSS files from AppData/themes directory.
+   * Returns an array of theme objects with name and CSS content.
+   */
+  ipcMain.handle('get-custom-themes', async () => {
+    try {
+      const userDataPath = app.getPath('userData');
+      const customThemesDir = path.join(userDataPath, 'themes');
+      
+      if (!fs.existsSync(customThemesDir)) {
+        return { success: true, themes: [] };
+      }
+      
+      const files = fs.readdirSync(customThemesDir);
+      const themes: Array<{ name: string; css: string }> = [];
+      
+      for (const file of files) {
+        // Only process .css files
+        if (!file.endsWith('.css')) {
+          continue;
+        }
+        
+        // Extract theme name from filename
+        const themeName = file.replace(/\.css$/, '');
+        
+        // Skip template/example files and core themes
+        if (themeName.includes('template') || 
+            themeName.includes('example') || 
+            themeName === 'README' ||
+            ['light', 'dark', 'auto'].includes(themeName)) {
+          continue;
+        }
+        
+        try {
+          const cssPath = path.join(customThemesDir, file);
+          const cssContent = fs.readFileSync(cssPath, 'utf-8');
+          themes.push({ name: themeName, css: cssContent });
+        } catch (error) {
+          console.error(`[IPC] Error reading custom theme file ${file}:`, error);
+        }
+      }
+      
+      return { success: true, themes };
+    } catch (error: any) {
+      console.error('[IPC] Error getting custom themes:', error);
+      return {
+        success: false,
+        error: 'get_failed',
+        message: error.message || 'Failed to get custom themes',
+        themes: [],
+      };
+    }
+  });
+
+  /**
    * Get the background image as a data URL (base64 encoded).
    * This avoids security restrictions with file:// URLs in Electron's renderer process.
    */

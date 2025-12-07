@@ -15,6 +15,110 @@ interface ThemeInfo {
   displayName: string;
 }
 
+/**
+ * Initialize the custom themes folder in AppData
+ * Creates the folder if it doesn't exist and copies template files
+ */
+function initializeCustomThemesFolder() {
+  try {
+    const userDataPath = app.getPath('userData');
+    const customThemesDir = path.join(userDataPath, 'themes');
+    
+    // Create directory if it doesn't exist
+    if (!fs.existsSync(customThemesDir)) {
+      fs.mkdirSync(customThemesDir, { recursive: true });
+      console.log(`[Main] Created custom themes directory: ${customThemesDir}`);
+    }
+    
+    // Get the path to the template file (in src/themes/theme-template.css)
+    let templateSourcePath: string | null = null;
+    const possibleTemplatePaths = [
+      path.join(__dirname, '../../src/themes/theme-template.css'),
+      path.join(process.cwd(), 'src/themes/theme-template.css'),
+      path.resolve(__dirname, '../../src/themes/theme-template.css'),
+    ];
+    
+    if (isDev) {
+      for (const testPath of possibleTemplatePaths) {
+        if (fs.existsSync(testPath)) {
+          templateSourcePath = testPath;
+          break;
+        }
+      }
+    } else {
+      // In production, try packaged locations
+      const prodPaths = [
+        path.join(process.resourcesPath || '', 'src/themes/theme-template.css'),
+        path.join(app.getAppPath(), 'src/themes/theme-template.css'),
+        path.join(__dirname, '../src/themes/theme-template.css'),
+        ...possibleTemplatePaths,
+      ];
+      for (const testPath of prodPaths) {
+        if (fs.existsSync(testPath)) {
+          templateSourcePath = testPath;
+          break;
+        }
+      }
+    }
+    
+    // Copy template if it doesn't exist in custom themes folder
+    const templateDestPath = path.join(customThemesDir, 'theme-template.css');
+    if (templateSourcePath && fs.existsSync(templateSourcePath) && !fs.existsSync(templateDestPath)) {
+      fs.copyFileSync(templateSourcePath, templateDestPath);
+      console.log(`[Main] Copied theme template to: ${templateDestPath}`);
+    }
+    
+    // Create README with instructions
+    const readmePath = path.join(customThemesDir, 'README.txt');
+    if (!fs.existsSync(readmePath)) {
+      const readmeContent = `CalenRecall Custom Themes
+==========================
+
+This folder is where you can add your own custom themes for CalenRecall.
+
+HOW TO CREATE A CUSTOM THEME:
+----------------------------
+
+1. Copy the file "theme-template.css" to create a new theme file.
+2. Rename it to something descriptive, like "my-custom-theme.css"
+3. Open the file in a text editor.
+4. Replace "your-theme-name" throughout the file with your theme identifier (use lowercase, hyphens for spaces, e.g., "my-custom-theme").
+5. Replace all the placeholder colors (e.g., #your-background-color) with your actual color values.
+6. Save the file.
+7. Restart CalenRecall - your theme will appear in the theme list!
+
+IMPORTANT NOTES:
+---------------
+
+- Theme filenames must end in .css
+- Theme identifiers (the "your-theme-name" part) must be lowercase and use hyphens, not spaces
+- Do not use these names: "light", "dark", "auto", "template", or "example"
+- Make sure to style all the component classes listed in the template to ensure your theme works correctly
+- Test your theme thoroughly before sharing it with others
+
+THEME STRUCTURE:
+--------------
+
+Each theme CSS file should target elements using:
+  [data-theme="your-theme-name"] .component-class { ... }
+
+Refer to the template file for all the component classes you need to style.
+
+If you have questions or want to share your themes, visit the CalenRecall community!
+
+Happy theming!
+`;
+      fs.writeFileSync(readmePath, readmeContent, 'utf-8');
+      console.log(`[Main] Created README.txt in custom themes directory`);
+    }
+    
+    return customThemesDir;
+  } catch (error) {
+    console.error('[Main] Error initializing custom themes folder:', error);
+    return null;
+  }
+}
+
 // Theme metadata matching src/utils/themes.ts
 const THEME_METADATA: Record<string, { displayName: string }> = {
   'light': { displayName: 'Light' },
@@ -177,6 +281,53 @@ function discoverThemes(): ThemeInfo[] {
     if (error instanceof Error) {
       console.error('[Main] Error stack:', error.stack);
     }
+  }
+  
+  // Also check custom themes folder in AppData
+  try {
+    const userDataPath = app.getPath('userData');
+    const customThemesDir = path.join(userDataPath, 'themes');
+    
+    if (fs.existsSync(customThemesDir)) {
+      const customFiles = fs.readdirSync(customThemesDir);
+      console.log(`[Main] Found ${customFiles.length} files in custom themes directory`);
+      
+      for (const file of customFiles) {
+        // Only process .css files
+        if (!file.endsWith('.css')) {
+          continue;
+        }
+        
+        // Extract theme name from filename
+        const themeName = file.replace(/\.css$/, '');
+        
+        // Skip template/example files and core themes
+        if (themeName.includes('template') || 
+            themeName.includes('example') || 
+            themeName === 'README' ||
+            ['light', 'dark', 'auto'].includes(themeName)) {
+          continue;
+        }
+        
+        // Avoid duplicates (built-in themes take precedence)
+        if (processedNames.has(themeName)) {
+          console.log(`[Main] Skipping duplicate custom theme (built-in exists): ${themeName}`);
+          continue;
+        }
+        processedNames.add(themeName);
+        
+        // Use metadata if available, otherwise format the name
+        const displayName = THEME_METADATA[themeName]?.displayName || formatDisplayName(themeName + '.css');
+        
+        console.log(`[Main] Discovered custom theme: ${themeName} -> ${displayName}`);
+        discoveredThemes.push({
+          name: themeName,
+          displayName: displayName,
+        });
+      }
+    }
+  } catch (error) {
+    console.error('[Main] Error reading custom themes directory:', error);
   }
   
   // Sort discovered themes alphabetically by display name
@@ -652,6 +803,9 @@ function createAboutWindow() {
 app.whenReady().then(() => {
   // Initialize database
   initDatabase();
+  
+  // Initialize custom themes folder (creates folder and copies template if needed)
+  initializeCustomThemesFolder();
   
   // Setup IPC handlers
   setupIpcHandlers();
