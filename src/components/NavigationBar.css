@@ -199,17 +199,17 @@
 .calendar-definition-toggle {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.4rem 0;
+  gap: 0.05rem;
+  padding: 0.02rem 0;
   background: none;
   border: none;
   cursor: pointer;
-  font-size: 0.7rem;
+  font-size: 0.432rem;
   font-weight: 600;
   color: #444;
   transition: color 0.2s;
   width: 100%;
-  text-align: left;
+  text-align: justify;
 }
 
 .calendar-definition-toggle:hover {
@@ -217,7 +217,7 @@
 }
 
 .calendar-definition-toggle .toggle-icon {
-  font-size: 0.6rem;
+  font-size: 0.36rem;
   transition: transform 0.2s;
   display: inline-block;
 }
