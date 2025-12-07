@@ -95,6 +95,10 @@ const BUILT_IN_THEME_METADATA: Record<string, Omit<ThemeInfo, 'name'>> = {
   'elite': {
     displayName: 'Elite',
     description: 'Elite: Dangerous ship HUD theme with orange highlights and cyan data displays'
+  },
+  'journeyman': {
+    displayName: 'Journeyman',
+    description: 'Mid-1990s industrial/futuristic interface inspired by The Journeyman Project: Pegasus Prime with purple-blue gradients and gold accents'
   }
 };
 
