@@ -112,6 +112,7 @@ function formatDisplayName(filename: string): string {
 function discoverThemes(): ThemeInfo[] {
   // Use Vite's import.meta.glob to discover all CSS files in themes directory
   // This works at build time and includes all .css files
+  // @ts-ignore - import.meta.glob is a Vite-specific feature
   const themeModules = import.meta.glob('../themes/*.css', { eager: true });
   
   const discoveredThemes: ThemeInfo[] = [];
@@ -195,12 +196,43 @@ export function getEffectiveTheme(theme: ThemeName): string {
 
 /**
  * Apply theme to document
+ * This function is safe to call multiple times and handles timing issues
  */
 export function applyTheme(theme: ThemeName) {
   if (typeof document === 'undefined') return;
   
+  // Ensure document.documentElement exists (may not be available during early initialization)
+  if (!document.documentElement) {
+    // If DOM isn't ready yet, wait for it
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', () => {
+        applyTheme(theme);
+      });
+      return;
+    }
+    // If document exists but documentElement doesn't, retry after a short delay
+    setTimeout(() => {
+      applyTheme(theme);
+    }, 10);
+    return;
+  }
+  
   const effectiveTheme = getEffectiveTheme(theme);
-  document.documentElement.setAttribute('data-theme', effectiveTheme);
+  try {
+    document.documentElement.setAttribute('data-theme', effectiveTheme);
+  } catch (error) {
+    console.error('Error applying theme:', error);
+    // Retry after a short delay in case of timing issues
+    setTimeout(() => {
+      try {
+        if (document.documentElement) {
+          document.documentElement.setAttribute('data-theme', effectiveTheme);
+        }
+      } catch (retryError) {
+        console.error('Error retrying theme application:', retryError);
+      }
+    }, 50);
+  }
 }
 
 /**
@@ -266,11 +298,42 @@ export function validateFontSize(value: any): FontSize {
 
 /**
  * Apply font size to document
+ * This function is safe to call multiple times and handles timing issues
  */
 export function applyFontSize(fontSize: FontSize | string | undefined) {
   if (typeof document === 'undefined') return;
   
+  // Ensure document.documentElement exists (may not be available during early initialization)
+  if (!document.documentElement) {
+    // If DOM isn't ready yet, wait for it
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', () => {
+        applyFontSize(fontSize);
+      });
+      return;
+    }
+    // If document exists but documentElement doesn't, retry after a short delay
+    setTimeout(() => {
+      applyFontSize(fontSize);
+    }, 10);
+    return;
+  }
+  
   const validSize = validateFontSize(fontSize);
-  document.documentElement.setAttribute('data-font-size', validSize);
+  try {
+    document.documentElement.setAttribute('data-font-size', validSize);
+  } catch (error) {
+    console.error('Error applying font size:', error);
+    // Retry after a short delay in case of timing issues
+    setTimeout(() => {
+      try {
+        if (document.documentElement) {
+          document.documentElement.setAttribute('data-font-size', validSize);
+        }
+      } catch (retryError) {
+        console.error('Error retrying font size application:', retryError);
+      }
+    }, 50);
+  }
 }
 

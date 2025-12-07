@@ -71,6 +71,29 @@ function createWindow() {
     mainWindow.loadFile(path.join(__dirname, '../dist/index.html'));
   }
 
+  // Apply preferences when window is fully loaded (especially important for built versions)
+  mainWindow.webContents.once('did-finish-load', () => {
+    // Send a message to the renderer to ensure preferences are applied
+    // This handles cases where preferences weren't applied during initial load
+    const currentPrefs = getAllPreferences();
+    console.log('[Main] Window finished loading, ensuring preferences are applied:', {
+      fontSize: currentPrefs.fontSize,
+      minimapSize: currentPrefs.minimapSize,
+      theme: currentPrefs.theme
+    });
+    
+    // Send preference update events to ensure they're applied
+    if (currentPrefs.fontSize) {
+      mainWindow?.webContents.send('preference-updated', { key: 'fontSize', value: currentPrefs.fontSize });
+    }
+    if (currentPrefs.minimapSize) {
+      mainWindow?.webContents.send('preference-updated', { key: 'minimapSize', value: currentPrefs.minimapSize });
+    }
+    if (currentPrefs.theme) {
+      mainWindow?.webContents.send('preference-updated', { key: 'theme', value: currentPrefs.theme });
+    }
+  });
+
   // Save window position/size on move/resize
   mainWindow.on('moved', () => {
     if (mainWindow) {

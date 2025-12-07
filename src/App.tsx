@@ -17,7 +17,7 @@ import { useEntries } from './contexts/EntriesContext';
 import './App.css';
 
 function App() {
-  const { entries, setEntries, addEntry, updateEntry, removeEntry, isLoading, setIsLoading } = useEntries();
+  const { setEntries, isLoading, setIsLoading } = useEntries();
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [viewMode, setViewMode] = useState<TimeRange>('month');
   const [selectedEntry, setSelectedEntry] = useState<JournalEntry | null>(null);
@@ -150,6 +150,13 @@ function App() {
     } else if (key === 'minimapCrystalUseDefaultColors') {
       // Update preferences state only
       setPreferences(prev => ({ ...prev, minimapCrystalUseDefaultColors: value }));
+    } else if (key === 'minimapSize' || key === 'showMinimap') {
+      // Update preferences state immediately for minimap settings
+      // These trigger re-renders which will apply the changes via props
+      setPreferences(prev => ({ ...prev, [key]: value }));
+    } else {
+      // For all other preferences, update state (they may not need immediate UI updates)
+      setPreferences(prev => ({ ...prev, [key]: value }));
     }
   }, [setBackgroundImagePath]);
 
@@ -199,15 +206,44 @@ function App() {
             }
           }
           
-          // Apply theme
+          // Apply theme and font size
+          // The applyTheme and applyFontSize functions have built-in retry logic for timing issues
           const theme = (prefs.theme || 'light') as any;
+          const fontSize = prefs.fontSize || 'medium';
+          const minimapSize = prefs.minimapSize || 'medium';
+          
+          console.log('[App] Loading preferences:', { theme, fontSize, minimapSize, showMinimap: prefs.showMinimap });
+          
+          // Apply immediately
           applyTheme(theme);
-          
-          // Initialize theme with system preference listener for 'auto' theme
           initializeTheme(theme);
+          applyFontSize(fontSize);
           
-          // Apply font size (with validation)
-          applyFontSize(prefs.fontSize);
+          // In built versions, sometimes the DOM isn't fully ready when React first renders
+          // Apply again after DOM is ready to ensure it takes effect
+          // The functions themselves have retry logic, but this ensures it works in built versions
+          const applyPreferences = () => {
+            console.log('[App] Applying preferences:', { theme, fontSize });
+            applyTheme(theme);
+            applyFontSize(fontSize);
+            
+            // Verify they were applied
+            const appliedFontSize = document.documentElement?.getAttribute('data-font-size');
+            const appliedTheme = document.documentElement?.getAttribute('data-theme');
+            console.log('[App] Preferences applied - fontSize:', appliedFontSize, 'theme:', appliedTheme);
+          };
+          
+          if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', applyPreferences);
+          } else {
+            // DOM is already ready, but apply again after a brief delay for built versions
+            // This ensures CSS is loaded and styles are applied
+            requestAnimationFrame(applyPreferences);
+            
+            // Additional retry for built versions where CSS might load asynchronously
+            setTimeout(applyPreferences, 100);
+            setTimeout(applyPreferences, 500);
+          }
 
           // Load background image path
           if (window.electronAPI && prefs.backgroundImage) {

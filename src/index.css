@@ -1032,41 +1032,41 @@ html[data-custom-background="true"][data-theme] .editor-section {
   }
 }
 
-/* Font size support */
-[data-font-size="xxxSmall"] {
-  font-size: 0.625rem;
+/* Font size support - apply to html element for proper inheritance */
+html[data-font-size="xxxSmall"] {
+  font-size: 0.625rem !important;
 }
 
-[data-font-size="xxSmall"] {
-  font-size: 0.75rem;
+html[data-font-size="xxSmall"] {
+  font-size: 0.75rem !important;
 }
 
-[data-font-size="xSmall"] {
-  font-size: 0.8125rem;
+html[data-font-size="xSmall"] {
+  font-size: 0.8125rem !important;
 }
 
-[data-font-size="small"] {
-  font-size: 0.875rem;
+html[data-font-size="small"] {
+  font-size: 0.875rem !important;
 }
 
-[data-font-size="medium"] {
-  font-size: 1rem;
+html[data-font-size="medium"] {
+  font-size: 1rem !important;
 }
 
-[data-font-size="large"] {
-  font-size: 1.125rem;
+html[data-font-size="large"] {
+  font-size: 1.125rem !important;
 }
 
-[data-font-size="xLarge"] {
-  font-size: 1.25rem;
+html[data-font-size="xLarge"] {
+  font-size: 1.25rem !important;
 }
 
-[data-font-size="xxLarge"] {
-  font-size: 1.375rem;
+html[data-font-size="xxLarge"] {
+  font-size: 1.375rem !important;
 }
 
-[data-font-size="xxxLarge"] {
-  font-size: 1.5rem;
+html[data-font-size="xxxLarge"] {
+  font-size: 1.5rem !important;
 }
 
 #root {

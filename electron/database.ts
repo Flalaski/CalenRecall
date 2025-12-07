@@ -1180,13 +1180,20 @@ export function setPreference<K extends keyof Preferences>(key: K, value: Prefer
     INSERT OR REPLACE INTO preferences (key, value)
     VALUES (?, ?)
   `);
-  stmt.run(key, JSON.stringify(value));
+  const jsonValue = JSON.stringify(value);
+  stmt.run(key, jsonValue);
+  console.log(`[Database] Set preference: ${key} = ${jsonValue}`);
 }
 
 export function getAllPreferences(): Preferences {
   const database = getDatabase();
   const stmt = database.prepare('SELECT key, value FROM preferences');
   const rows = stmt.all() as Array<{ key: string; value: string }>;
+  
+  console.log(`[Database] Loading preferences from database: ${rows.length} rows found`);
+  rows.forEach(row => {
+    console.log(`[Database] Preference: ${row.key} = ${row.value}`);
+  });
   
   const prefs: Preferences = { ...DEFAULT_PREFERENCES };
   
@@ -1260,6 +1267,13 @@ export function getAllPreferences(): Preferences {
       }
     }
   }
+  
+  console.log(`[Database] Final preferences object:`, {
+    fontSize: prefs.fontSize,
+    minimapSize: prefs.minimapSize,
+    theme: prefs.theme,
+    showMinimap: prefs.showMinimap
+  });
   
   return prefs;
 }
