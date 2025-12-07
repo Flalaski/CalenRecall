@@ -84,13 +84,15 @@
 }
 
 .calendar-cell.empty-cell {
-  background: #f9f9f9;
+  filter: brightness(0.5) !important;
   cursor: default;
+  pointer-events: none;
 }
 
 .calendar-cell.empty-cell:hover {
-  transform: none;
-  box-shadow: none;
+  transform: none !important;
+  box-shadow: none !important;
+  filter: brightness(0.5) !important;
 }
 
 .calendar-cell.today {

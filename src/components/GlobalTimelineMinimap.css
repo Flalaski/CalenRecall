@@ -585,18 +585,25 @@
   stroke-linecap: round;
   stroke-linejoin: bevel;
   stroke-dasharray: 6 5;
-  /* Optimized: Replaced drop-shadow with opacity for better performance */
-  opacity: 0.85;
+  /* Opacity is controlled inline based on current tier */
   animation: infinityBranchIdle 4s ease-in-out infinite;
   will-change: stroke-dashoffset, opacity;
+  opacity: var(--branch-opacity, 0.35) !important;
 }
 
 .infinity-tree-branch.secondary {
   stroke-dasharray: 3 7;
-  opacity: 0.8;
+  /* Opacity is controlled inline based on current tier */
+  animation: infinityBranchIdle 4s ease-in-out infinite;
+  will-change: stroke-dashoffset, opacity;
+  opacity: var(--branch-opacity, 0.35) !important;
 }
 
 .infinity-tree-branch.active {
+  animation: infinityBranchActive 1.2s ease-in-out infinite;
+}
+
+.infinity-tree-branch.secondary.active {
   animation: infinityBranchActive 1.2s ease-in-out infinite;
 }
 
@@ -854,37 +861,30 @@
 @keyframes infinityBranchIdle {
   0%, 100% {
     stroke-dashoffset: 0;
-    opacity: 0.6;
   }
   50% {
     stroke-dashoffset: -10;
-    opacity: 0.9;
   }
 }
 
 @keyframes infinityBranchActive {
   0%, 100% {
     stroke-dashoffset: 0;
-    opacity: 0.8;
   }
   50% {
     stroke-dashoffset: -18;
-    opacity: 1;
   }
 }
 
 @keyframes infinityBranchLightning {
   0% {
     stroke-dashoffset: 0;
-    opacity: 0.9;
   }
   50% {
     stroke-dashoffset: -26;
-    opacity: 1;
   }
   100% {
     stroke-dashoffset: -8;
-    opacity: 0.85;
   }
 }
 

@@ -4451,16 +4451,16 @@ export default function GlobalTimelineMinimap({
                     stroke={glowColorPrimary}
                     strokeWidth={thickness}
                     fill="none"
-                    opacity={baseOpacity}
                     className={`infinity-tree-branch ${isActiveScale ? 'active' : ''}`}
+                    style={{ opacity: baseOpacity, '--branch-opacity': baseOpacity } as React.CSSProperties}
                   />
                   <path
                     d={buildInfinityBranchPath(scale, 'right')}
                     stroke={glowColorSecondary}
                     strokeWidth={thickness - 0.4}
                     fill="none"
-                    opacity={baseOpacity * 0.8}
                     className={`infinity-tree-branch secondary ${isActiveScale ? 'active' : ''}`}
+                    style={{ opacity: baseOpacity, '--branch-opacity': baseOpacity } as React.CSSProperties}
                   />
 
                   {/* Subtle crystalline filaments hugging the scale band */}
