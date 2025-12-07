@@ -237,7 +237,7 @@
 .entry-item-title {
   font-weight: 400;
   font-size: 1rem;
-  color: #333;
+  color: #000;
   flex: 1;
   font-family: 'Bebas Neue', 'Impact', 'Arial Black', 'Franklin Gothic Heavy', 'Arial Narrow', sans-serif;
   letter-spacing: 0.05em;
@@ -260,20 +260,20 @@
 
 .entry-time-range {
   font-size: 0.75rem;
-  color: #666;
-  background: #e0e0e0;
+  color: rgba(102, 102, 102, 0.7);
+  background: rgba(224, 224, 224, 0.5);
   padding: 0.15rem 0.5rem;
   border-radius: 12px;
 }
 
 .entry-date {
   font-size: 0.8rem;
-  color: #999;
+  color: rgba(153, 153, 153, 0.7);
 }
 
 .entry-item-preview {
   font-size: 0.9rem;
-  color: #666;
+  color: #222;
   line-height: 1.4;
   margin-bottom: 0.5rem;
 }
@@ -288,8 +288,9 @@
 .entry-tag {
   font-size: 0.75rem;
   padding: 0.15rem 0.5rem;
-  background: #e3f2fd;
-  color: #1976d2;
+  background: rgba(74, 144, 226, 0.1);
+  color: rgba(74, 144, 226, 0.7);
+  border: 1px solid rgba(74, 144, 226, 0.2);
   border-radius: 12px;
 }
 

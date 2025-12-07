@@ -692,9 +692,9 @@ html[data-custom-background="true"][data-theme] .editor-section {
 }
 
 [data-theme="dark"] .month-entry-tag {
-  background: #3d4a5d;
-  color: #90caf9;
-  border-color: #555;
+  background: rgba(144, 202, 249, 0.1);
+  color: rgba(144, 202, 249, 0.6);
+  border: 1px solid rgba(144, 202, 249, 0.2);
 }
 
 /* Entry Viewer Dark Theme */
@@ -766,6 +766,21 @@ html[data-custom-background="true"][data-theme] .editor-section {
 [data-theme="dark"] .journal-entry-item .entry-item-content,
 [data-theme="dark"] .journal-entry-item .entry-item-meta {
   color: #e0e0e0;
+}
+
+[data-theme="dark"] .journal-entry-item .entry-tag {
+  background: rgba(144, 202, 249, 0.1);
+  color: rgba(144, 202, 249, 0.6);
+  border: 1px solid rgba(144, 202, 249, 0.2);
+}
+
+[data-theme="dark"] .journal-entry-item .entry-time-range {
+  background: rgba(224, 224, 224, 0.15);
+  color: rgba(224, 224, 224, 0.6);
+}
+
+[data-theme="dark"] .journal-entry-item .entry-date {
+  color: rgba(224, 224, 224, 0.5);
 }
 
 [data-theme="dark"] .entry-card-full .card-content-full,
@@ -907,6 +922,12 @@ html[data-custom-background="true"][data-theme] .editor-section {
 
 [data-theme="dark"] .period-entry-tags {
   border-top-color: #404040;
+}
+
+[data-theme="dark"] .period-entry-tag {
+  background: rgba(144, 202, 249, 0.1);
+  color: rgba(144, 202, 249, 0.6);
+  border: 1px solid rgba(144, 202, 249, 0.2);
 }
 
 /* Journal Editor Dark Theme */

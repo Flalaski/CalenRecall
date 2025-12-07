@@ -254,8 +254,9 @@
 .month-entry-tag {
   font-size: 0.65rem;
   padding: 0.15rem 0.4rem;
-  background: #e3f2fd;
-  color: #1976d2;
+  background: rgba(74, 144, 226, 0.1);
+  color: rgba(74, 144, 226, 0.7);
+  border: 1px solid rgba(74, 144, 226, 0.2);
   border-radius: 12px;
   font-weight: 500;
 }
