@@ -183,6 +183,23 @@ function discoverThemes(): ThemeInfo[] {
     { name: 'auto', displayName: THEME_METADATA['auto']?.displayName || 'Auto (System)' },
   ];
   
+  // Start with all built-in themes from metadata (since CSS files may be bundled)
+  const discoveredThemes: ThemeInfo[] = [];
+  const processedNames = new Set<string>(['light', 'dark', 'auto']); // Skip core themes
+  
+  // Add all themes from THEME_METADATA (these are the built-in themes we know about)
+  for (const [themeName, metadata] of Object.entries(THEME_METADATA)) {
+    if (!processedNames.has(themeName)) {
+      processedNames.add(themeName);
+      discoveredThemes.push({
+        name: themeName,
+        displayName: metadata.displayName,
+      });
+      console.log(`[Main] Added built-in theme from metadata: ${themeName} -> ${metadata.displayName}`);
+    }
+  }
+  
+  // Also try to discover themes from file system (for themes not in metadata)
   // Determine themes directory path
   // In dev: src/themes/ relative to project root
   // In production: check multiple possible locations
@@ -217,69 +234,56 @@ function discoverThemes(): ThemeInfo[] {
   }
   
   if (!themesDir) {
-    console.error(`[Main] Themes directory not found. Tried paths:`, possiblePaths);
-    console.error(`[Main] __dirname: ${__dirname}`);
-    console.error(`[Main] process.cwd(): ${process.cwd()}`);
-    console.error(`[Main] app.getAppPath(): ${app.getAppPath()}`);
-    return coreThemes; // Return only core themes if directory not found
-  }
+    console.log(`[Main] Themes directory not found in filesystem (using metadata only). Tried paths:`, possiblePaths);
+    // Don't return early - use metadata-based themes
+  } else {
   
-  const discoveredThemes: ThemeInfo[] = [];
-  const processedNames = new Set<string>();
-  
-  try {
-    // Read themes directory
-    const files = fs.readdirSync(themesDir);
-    console.log(`[Main] Found ${files.length} files in themes directory`);
-    
-    for (const file of files) {
-      // Only process .css files
-      if (!file.endsWith('.css')) {
-        console.log(`[Main] Skipping non-CSS file: ${file}`);
-        continue;
+    try {
+      // Read themes directory to find any additional themes not in metadata
+      const files = fs.readdirSync(themesDir);
+      console.log(`[Main] Found ${files.length} files in themes directory`);
+      
+      for (const file of files) {
+        // Only process .css files
+        if (!file.endsWith('.css')) {
+          continue;
+        }
+        
+        // Extract theme name from filename (e.g., "temple.css" -> "temple")
+        const themeName = file.replace(/\.css$/, '');
+        
+        // Skip template/example files
+        if (themeName.includes('template') || 
+            themeName.includes('example') || 
+            themeName === 'README' ||
+            themeName === 'COMPONENT_CLASSES' ||
+            themeName === 'THEME_EXPANSION_STATUS') {
+          continue;
+        }
+        
+        // Skip if already processed (from metadata)
+        if (processedNames.has(themeName)) {
+          continue;
+        }
+        
+        processedNames.add(themeName);
+        
+        // Use metadata if available, otherwise format the name
+        const displayName = THEME_METADATA[themeName]?.displayName || formatDisplayName(themeName + '.css');
+        
+        console.log(`[Main] Discovered additional theme from filesystem: ${themeName} -> ${displayName}`);
+        discoveredThemes.push({
+          name: themeName,
+          displayName: displayName,
+        });
       }
       
-      // Extract theme name from filename (e.g., "temple.css" -> "temple")
-      const themeName = file.replace(/\.css$/, '');
-      
-      // Skip template/example files
-      if (themeName.includes('template') || 
-          themeName.includes('example') || 
-          themeName === 'README' ||
-          themeName === 'COMPONENT_CLASSES' ||
-          themeName === 'THEME_EXPANSION_STATUS') {
-        console.log(`[Main] Skipping template/example file: ${file}`);
-        continue;
+      console.log(`[Main] Total themes from filesystem: ${discoveredThemes.filter(t => !THEME_METADATA[t.name]).length}`);
+    } catch (error) {
+      console.error('[Main] Error discovering themes from filesystem:', error);
+      if (error instanceof Error) {
+        console.error('[Main] Error stack:', error.stack);
       }
-      
-      // Skip core themes (already handled)
-      if (['light', 'dark', 'auto'].includes(themeName)) {
-        console.log(`[Main] Skipping core theme: ${themeName}`);
-        continue;
-      }
-      
-      // Avoid duplicates
-      if (processedNames.has(themeName)) {
-        console.log(`[Main] Skipping duplicate: ${themeName}`);
-        continue;
-      }
-      processedNames.add(themeName);
-      
-      // Use metadata if available, otherwise format the name
-      const displayName = THEME_METADATA[themeName]?.displayName || formatDisplayName(themeName + '.css');
-      
-      console.log(`[Main] Discovered theme: ${themeName} -> ${displayName}`);
-      discoveredThemes.push({
-        name: themeName,
-        displayName: displayName,
-      });
-    }
-    
-    console.log(`[Main] Total discovered themes: ${discoveredThemes.length}`);
-  } catch (error) {
-    console.error('[Main] Error discovering themes:', error);
-    if (error instanceof Error) {
-      console.error('[Main] Error stack:', error.stack);
     }
   }
   
