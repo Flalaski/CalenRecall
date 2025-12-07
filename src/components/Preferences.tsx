@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Preferences, ExportFormat } from '../types';
 import { playResetSound, playExportSound } from '../utils/audioUtils';
 import { CALENDAR_INFO } from '../utils/calendars/types';
-import { AVAILABLE_THEMES, applyTheme, initializeTheme, applyFontSize } from '../utils/themes';
+import { getAvailableThemes, loadAllThemes, applyTheme, initializeTheme, applyFontSize } from '../utils/themes';
 import HotkeyDiagram from './HotkeyDiagram';
 import ImportProgressModal from './ImportProgressModal';
 import packageJson from '../../package.json';
@@ -18,6 +18,8 @@ export default function PreferencesComponent() {
   const [isBackingUp, setIsBackingUp] = useState(false);
   const [isRestoring, setIsRestoring] = useState(false);
   const [backgroundImagePreview, setBackgroundImagePreview] = useState<string | null>(null);
+  const [themesLoaded, setThemesLoaded] = useState(false);
+  const [themeListKey, setThemeListKey] = useState(0); // Force re-render when themes update
   const [importProgress, setImportProgress] = useState({
     isOpen: false,
     progress: 0,
@@ -28,7 +30,17 @@ export default function PreferencesComponent() {
   });
 
   useEffect(() => {
-    loadPreferences();
+    // Load all themes (built-in + custom) first
+    loadAllThemes().then(() => {
+      console.log('[Preferences] All themes loaded');
+      setThemesLoaded(true);
+      setThemeListKey(prev => prev + 1); // Force re-render to show updated theme list
+      loadPreferences();
+    }).catch(error => {
+      console.error('[Preferences] Error loading themes:', error);
+      setThemesLoaded(true);
+      loadPreferences();
+    });
     
     // Apply theme on load
     const setupTheme = async () => {
@@ -333,17 +345,18 @@ export default function PreferencesComponent() {
             <label htmlFor="theme">Theme</label>
             <select
               id="theme"
+              key={themeListKey} // Force re-render when themes update
               value={preferences.theme || 'light'}
               onChange={(e) => updatePreference('theme', e.target.value as Preferences['theme'])}
             >
-              {AVAILABLE_THEMES.map(theme => (
+              {getAvailableThemes().map(theme => (
                 <option key={theme.name} value={theme.name}>
                   {theme.displayName}
                 </option>
               ))}
             </select>
             <small>
-              {AVAILABLE_THEMES.find(t => t.name === (preferences.theme || 'light'))?.description || ''}
+              {getAvailableThemes().find(t => t.name === (preferences.theme || 'light'))?.description || ''}
             </small>
           </div>
 

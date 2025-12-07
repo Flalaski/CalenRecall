@@ -223,8 +223,88 @@ function discoverThemes(): ThemeInfo[] {
   return [...coreThemes, ...otherThemes];
 }
 
-// Dynamically discover and register all themes
-export const AVAILABLE_THEMES: ThemeInfo[] = discoverThemes();
+// Built-in themes discovered at build time
+const BUILT_IN_THEMES: ThemeInfo[] = discoverThemes();
+
+// Dynamically loaded themes (built-in + custom)
+// This will be populated at runtime with custom themes from AppData
+let AVAILABLE_THEMES_CACHE: ThemeInfo[] = BUILT_IN_THEMES;
+
+/**
+ * Load custom themes from AppData and merge with built-in themes
+ * This must be called after custom themes are loaded via customThemeLoader
+ */
+export async function loadAllThemes(): Promise<ThemeInfo[]> {
+  // Start with built-in themes
+  const allThemes: ThemeInfo[] = [...BUILT_IN_THEMES];
+  const themeNames = new Set<string>(BUILT_IN_THEMES.map(t => t.name));
+  
+  // Load custom themes from Electron if available
+  if (typeof window !== 'undefined' && window.electronAPI && 'getCustomThemes' in window.electronAPI) {
+    try {
+      const result = await (window.electronAPI as any).getCustomThemes();
+      if (result.success && result.themes && Array.isArray(result.themes)) {
+        for (const theme of result.themes) {
+          // Skip if theme name already exists (built-in takes precedence)
+          if (themeNames.has(theme.name)) {
+            console.log(`[themes] Skipping duplicate custom theme (built-in exists): ${theme.name}`);
+            continue;
+          }
+          
+          themeNames.add(theme.name);
+          
+          // Extract theme name from CSS to determine display name
+          // Look for [data-theme="theme-name"] in the CSS
+          let displayName = formatDisplayName(theme.name);
+          const themeMatch = theme.css.match(/\[data-theme=["']([^"']+)["']\]/);
+          if (themeMatch && themeMatch[1]) {
+            const cssThemeName = themeMatch[1];
+            // Use metadata if available, otherwise format the name
+            const metadata = BUILT_IN_THEME_METADATA[cssThemeName];
+            if (metadata) {
+              displayName = metadata.displayName;
+            } else {
+              displayName = formatDisplayName(cssThemeName);
+            }
+          }
+          
+          allThemes.push({
+            name: theme.name,
+            displayName: displayName,
+            description: `Custom theme: ${displayName}`
+          });
+        }
+      }
+    } catch (error) {
+      console.error('[themes] Error loading custom themes:', error);
+    }
+  }
+  
+  // Sort: core themes first, then others alphabetically
+  const coreThemes = allThemes.filter(t => ['light', 'dark', 'auto'].includes(t.name));
+  const otherThemes = allThemes
+    .filter(t => !['light', 'dark', 'auto'].includes(t.name))
+    .sort((a, b) => a.displayName.localeCompare(b.displayName));
+  
+  AVAILABLE_THEMES_CACHE = [...coreThemes, ...otherThemes];
+  // Update exported AVAILABLE_THEMES for backwards compatibility
+  AVAILABLE_THEMES = AVAILABLE_THEMES_CACHE;
+  return AVAILABLE_THEMES_CACHE;
+}
+
+/**
+ * Get available themes (built-in + custom)
+ * If custom themes haven't been loaded yet, returns built-in themes only
+ * Call loadAllThemes() first to ensure custom themes are included
+ */
+export function getAvailableThemes(): ThemeInfo[] {
+  return AVAILABLE_THEMES_CACHE;
+}
+
+// For backwards compatibility, export AVAILABLE_THEMES 
+// Note: This is a mutable reference - it will update when loadAllThemes() is called
+// Use getAvailableThemes() for the most up-to-date list
+export let AVAILABLE_THEMES: ThemeInfo[] = AVAILABLE_THEMES_CACHE;
 
 /**
  * Get the effective theme name (resolves 'auto' to light/dark based on system preference)

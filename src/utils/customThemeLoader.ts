@@ -5,6 +5,8 @@
  * These themes are loaded at runtime and injected into the document as <style> tags.
  */
 
+import { loadAllThemes } from './themes';
+
 /**
  * Load all custom themes from AppData and inject them into the document
  */
@@ -56,6 +58,10 @@ export async function loadCustomThemes(): Promise<void> {
     }
     
     console.log('[CustomThemeLoader] Custom theme loading complete');
+    
+    // Reload theme list to include custom themes
+    await loadAllThemes();
+    console.log('[CustomThemeLoader] Theme list updated with custom themes');
   } catch (error) {
     console.error('[CustomThemeLoader] Error loading custom themes:', error);
   }
@@ -70,7 +76,8 @@ export async function reloadCustomThemes(): Promise<void> {
   const existingStyles = document.querySelectorAll('style[data-theme-name]');
   existingStyles.forEach(style => style.remove());
   
-  // Reload custom themes
+  // Reload custom themes and update theme list
   await loadCustomThemes();
+  await loadAllThemes();
 }
 
