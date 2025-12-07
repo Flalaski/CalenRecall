@@ -68,8 +68,8 @@ const BUILT_IN_THEME_METADATA: Record<string, Omit<ThemeInfo, 'name'>> = {
     displayName: 'Hot Spring',
     description: 'Warm nighttime hot spring theme with steamy blues and purples'
   },
-  'NEON_A': {
-    displayName: 'NEON_A',
+  'NEON': {
+    displayName: 'NEON',
     description: 'Vibrant 1980s retro theme'
   },
   'vegas80s': {
