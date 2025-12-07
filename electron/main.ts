@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, Menu } from 'electron';
+import { app, BrowserWindow, ipcMain, Menu, shell } from 'electron';
 import * as path from 'path';
 import * as fs from 'fs';
 import { initDatabase, getAllPreferences, setPreference, closeDatabase } from './database';
@@ -546,6 +546,18 @@ function createMenu() {
           label: 'About CalenRecall',
           click: () => {
             createAboutWindow();
+          },
+        },
+        { type: 'separator' },
+        {
+          label: 'Open AppData Folder',
+          click: async () => {
+            const userDataPath = app.getPath('userData');
+            try {
+              await shell.openPath(userDataPath);
+            } catch (error) {
+              console.error('Failed to open AppData folder:', error);
+            }
           },
         },
       ],
