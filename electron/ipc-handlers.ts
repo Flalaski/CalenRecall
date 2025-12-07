@@ -358,9 +358,9 @@ export function setupIpcHandlers() {
             const sent = mainWindowRef.webContents.send('preference-updated', { key: keyStr, value });
             console.log('[IPC] ✅ Message sent (send returns void, but no error thrown)');
             
-            // For theme and fontSize changes, send multiple fallback messages to ensure it's received
+            // For theme, fontSize, and minimapSize changes, send multiple fallback messages to ensure it's received
             // This handles cases where the listener might not be ready or there are timing issues
-            if (keyStr === 'theme' || keyStr === 'fontSize') {
+            if (keyStr === 'theme' || keyStr === 'fontSize' || keyStr === 'minimapSize') {
               // Send fallback messages for critical UI updates
               const sendFallback = (delay: number) => {
                 setTimeout(() => {
@@ -449,6 +449,11 @@ export function setupIpcHandlers() {
                     }
                   }
                 }, 150);
+              } else if (keyStr === 'minimapSize') {
+                // For minimapSize, send additional fallbacks to ensure it's received
+                sendFallback(300);
+                sendFallback(500);
+                console.log('[IPC] ✅ Sent additional fallback messages for minimapSize');
               }
             }
           } catch (error) {

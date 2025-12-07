@@ -269,6 +269,39 @@ export default function GlobalTimelineMinimap({
   minimapSize = 'medium',
   weekStartsOn = 0,
 }: GlobalTimelineMinimapProps) {
+  // Debug logging for minimapSize changes and force className update
+  useEffect(() => {
+    console.log('[GlobalTimelineMinimap] minimapSize prop changed to:', minimapSize);
+    
+    // Force update the container element's classes directly as backup
+    // Use setTimeout to ensure the DOM element is available
+    const updateContainerClasses = () => {
+      if (containerRef.current) {
+        const container = containerRef.current;
+        // Remove all minimap-size-* classes
+        const baseClasses = container.className.split(' ').filter(cls => !cls.startsWith('minimap-size-'));
+        // Preserve other classes (dragging, mechanical-click-active, etc.)
+        const otherClasses = baseClasses.filter(cls => 
+          cls !== 'minimap-container' && 
+          cls !== 'dragging' && 
+          cls !== 'mechanical-click-active' && 
+          cls !== 'horizontal-locked'
+        );
+        // Rebuild className with new minimap-size class
+        container.className = `minimap-container minimap-size-${minimapSize} ${otherClasses.join(' ')}`.trim();
+        console.log('[GlobalTimelineMinimap] Updated container className to:', container.className);
+        
+        // Force a reflow to ensure CSS variables are recalculated
+        void container.offsetHeight;
+      } else {
+        // Retry after a short delay if container isn't available yet
+        setTimeout(updateContainerClasses, 50);
+      }
+    };
+    
+    updateContainerClasses();
+  }, [minimapSize]);
+  
   const { formatDate, calendar } = useCalendar();
   const { entries } = useEntries();
   const tierNames = getCalendarTierNames(calendar);
@@ -1064,6 +1097,21 @@ export default function GlobalTimelineMinimap({
     
     return scaled;
   }, [viewMode, minimapDimensions.scaleFactor]);
+
+  // Calculate scaled label top positions for pixel-perfect alignment with CSS variables
+  const scaledLabelPositions = useMemo(() => {
+    const scale = minimapDimensions.scaleFactor;
+    return {
+      decade: 2 * scale,
+      decadeAlt: 5 * scale, // Alternative decade position
+      year: 45 * scale,
+      yearMinor: 48 * scale,
+      month: 85 * scale,
+      monthMinor: 88 * scale,
+      week: 125 * scale,
+      day: 165 * scale,
+    };
+  }, [minimapDimensions.scaleFactor]);
 
   // Calculate separator line positions between sections (must match background band calculation exactly)
   const separatorPositions = useMemo(() => {
@@ -3719,7 +3767,7 @@ export default function GlobalTimelineMinimap({
           style={{ 
             position: 'absolute',
             left: `${labelPosition}%`, 
-            top: '85px', 
+            top: `${scaledLabelPositions.month}px`, 
             color: lightenedColor,
             fontSize: fontSize,
             opacity: labelOpacity,
@@ -3736,7 +3784,7 @@ export default function GlobalTimelineMinimap({
         </div>
       );
     }).filter(Boolean);
-  }, [allScaleMarkings.month.major, currentIndicatorMetrics.position, viewMode]);
+  }, [allScaleMarkings.month.major, currentIndicatorMetrics.position, viewMode, scaledLabelPositions]);
 
   return (
     <div className="global-timeline-minimap">
@@ -4562,7 +4610,7 @@ export default function GlobalTimelineMinimap({
               const decadeLabelStyle: React.CSSProperties = {
                 position: 'absolute',
                 left: `${labelPosition}%`,
-                top: '5px',
+                top: `${scaledLabelPositions.decadeAlt}px`,
                 color: zodiacColor,
                 opacity: labelOpacity,
                 fontSize: fontSize,
@@ -4632,7 +4680,7 @@ export default function GlobalTimelineMinimap({
               const yearLabelStyle: React.CSSProperties = {
                 position: 'absolute',
                 left: `${labelPosition}%`,
-                top: '45px',
+                top: `${scaledLabelPositions.year}px`,
                 color: lightenedColor,
                 opacity: labelOpacity,
                 fontSize: fontSize,
@@ -4734,7 +4782,7 @@ export default function GlobalTimelineMinimap({
               const labelStyle: React.CSSProperties = {
                 position: 'absolute',
                 left: leftValue, // Explicitly set as percentage string
-                top: '48px',
+                top: `${scaledLabelPositions.yearMinor}px`,
                 color: lightenedColor,
                 opacity: labelOpacity,
                 fontSize: fontSize,
@@ -4833,7 +4881,7 @@ export default function GlobalTimelineMinimap({
                   style={{ 
                     position: 'absolute',
                     left: `${labelPosition}%`, 
-                    top: '88px', 
+                    top: `${scaledLabelPositions.monthMinor}px`, 
                     color: lightenedColor,
                     fontSize: fontSize,
                     opacity: labelOpacity,
@@ -4872,7 +4920,7 @@ export default function GlobalTimelineMinimap({
                   className={`scale-label week-label ${viewMode === 'week' ? 'current-scale' : ''}`}
                   style={{ 
                     left: `${mark.position}%`, 
-                    top: '125px',
+                    top: `${scaledLabelPositions.week}px`,
                     fontSize: fontSize,
                     opacity: labelOpacity,
                     transform: 'translate3d(-50%, 0, 0)',
@@ -4904,7 +4952,7 @@ export default function GlobalTimelineMinimap({
                   className={`scale-label day-label ${viewMode === 'day' ? 'current-scale' : ''}`}
                   style={{ 
                     left: `${mark.position}%`, 
-                    top: '165px',
+                    top: `${scaledLabelPositions.day}px`,
                     fontSize: fontSize,
                     opacity: labelOpacity,
                     transform: 'translate3d(-50%, 0, 0)',

@@ -220,8 +220,24 @@ function App() {
       setPreferences(prev => {
         const updated = { ...prev, minimapSize: value };
         console.log('[App] Preferences state updated with minimapSize:', updated.minimapSize);
+        console.log('[App] Full preferences object:', updated);
         return updated;
       });
+      
+      // Also reload preferences from database to ensure we have the latest value
+      // This is a backup in case the state update doesn't propagate correctly
+      if (window.electronAPI) {
+        window.electronAPI.getAllPreferences().then(prefs => {
+          console.log('[App] Reloaded preferences from database, minimapSize:', prefs.minimapSize);
+          if (prefs.minimapSize !== value) {
+            console.warn('[App] ⚠️ Minimap size mismatch! Expected:', value, 'Got from DB:', prefs.minimapSize);
+            // Force update with database value
+            setPreferences(prev => ({ ...prev, minimapSize: prefs.minimapSize || value }));
+          }
+        }).catch(err => {
+          console.error('[App] Error reloading preferences:', err);
+        });
+      }
     } else if (key === 'showMinimap') {
       // Update preferences state immediately for show minimap toggle
       // This triggers a re-render which will show/hide the minimap
@@ -417,12 +433,14 @@ function App() {
     };
   }, []); // Empty deps - listener is set up once and uses ref for latest function
 
-  // Check for theme changes when window gains focus or becomes visible (in case IPC message was missed)
+  // Check for preference changes when window gains focus or becomes visible (in case IPC message was missed)
   useEffect(() => {
-    const checkAndApplyTheme = async () => {
+    const checkAndApplyPreferences = async () => {
       if (window.electronAPI) {
         try {
           const prefs = await window.electronAPI.getAllPreferences();
+          
+          // Check theme
           const currentTheme = document.documentElement?.getAttribute('data-theme');
           const expectedTheme = prefs.theme === 'auto' 
             ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
@@ -432,33 +450,41 @@ function App() {
             console.log('[App] 🔄 Theme mismatch detected on focus/visibility, applying theme:', expectedTheme);
             updateSpecificPreferenceRef.current('theme', prefs.theme || 'light');
           }
+          
+          // Check minimapSize
+          const currentMinimapSize = preferences.minimapSize || 'medium';
+          const expectedMinimapSize = prefs.minimapSize || 'medium';
+          
+          if (currentMinimapSize !== expectedMinimapSize) {
+            console.log('[App] 🔄 Minimap size mismatch detected on focus/visibility, current:', currentMinimapSize, 'expected:', expectedMinimapSize);
+            updateSpecificPreferenceRef.current('minimapSize', expectedMinimapSize);
+          }
         } catch (error) {
-          console.error('[App] Error checking theme on focus/visibility:', error);
+          console.error('[App] Error checking preferences on focus/visibility:', error);
         }
       }
     };
 
     // Check when window gains focus
-    window.addEventListener('focus', checkAndApplyTheme);
+    window.addEventListener('focus', checkAndApplyPreferences);
     // Check when window becomes visible (handles cases where preferences window was closed)
     document.addEventListener('visibilitychange', () => {
       if (!document.hidden) {
-        checkAndApplyTheme();
+        checkAndApplyPreferences();
       }
     });
     
-    // Also periodically check for theme changes (every 2 seconds) as a safety net
-    // This ensures theme changes are picked up even if IPC messages are missed
-    const themeCheckInterval = setInterval(() => {
-      checkAndApplyTheme();
+    // Also periodically check for preference changes (every 2 seconds) as a safety net
+    // This ensures preference changes are picked up even if IPC messages are missed
+    const preferenceCheckInterval = setInterval(() => {
+      checkAndApplyPreferences();
     }, 2000);
     
     return () => {
-      window.removeEventListener('focus', checkAndApplyTheme);
-      document.removeEventListener('visibilitychange', checkAndApplyTheme);
-      clearInterval(themeCheckInterval);
+      window.removeEventListener('focus', checkAndApplyPreferences);
+      clearInterval(preferenceCheckInterval);
     };
-  }, []);
+  }, [preferences.minimapSize, updateSpecificPreferenceRef]);
 
   // Cleanup theme listener on unmount
   useEffect(() => {
@@ -718,6 +744,7 @@ function App() {
       />
       {preferences.showMinimap !== false && (
         <GlobalTimelineMinimap
+          key={`minimap-${preferences.minimapSize || 'medium'}`}
           selectedDate={selectedDate}
           viewMode={viewMode}
           onTimePeriodSelect={handleTimePeriodSelect}
