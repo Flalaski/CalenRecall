@@ -1,17 +1,19 @@
 /**
  * ON SCREEN Theme
- * Futuristic interface design inspired by LCARS
- * Authentic LCARS-style design with amber/orange active elements,
- * dark blue panels, and black background
+ * Futuristic interface design inspired by LCARS (Library Computer Access/Retrieval System)
+ * Authentic LCARS-style design based on Star Trek: The Next Generation
+ * 
+ * Design Principles:
+ * - Black background (#000000) - pure void
+ * - Dark blue panels (#003366, #004488) - primary panel colors
+ * - Amber/Orange (#FF9900, #FFAA00) - active elements and data highlights
+ * - Beige/Tan (#E6D5B8, #D4C4A8) - secondary panel accents
+ * - White text (#FFFFFF) - primary text
+ * - Red (#FF3300, #FF0000) - alerts and critical actions
+ * - Rounded top corners (20px 20px 0 0) - signature LCARS shape
+ * - Uppercase typography with increased letter spacing
+ * - Modular panel layout with clear visual hierarchy
  */
-
-/* LCARS Color Palette */
-/* Background: Pure black */
-/* Panels: Dark blue (#003366, #004488) */
-/* Active/Data: Amber/Orange (#FF9900, #FFAA00) */
-/* Text: White (#FFFFFF) */
-/* Alerts: Red (#FF0000, #FF3300) */
-/* Accent: Bright blue (#0099FF) */
 
 [data-theme="on-screen"] body {
   background: #000000;
@@ -19,11 +21,14 @@
   font-family: 'Antonio', 'Arial Narrow', 'Helvetica Condensed', sans-serif;
   font-weight: 400;
   letter-spacing: 0.05em;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 /* LCARS Design - Rounded panels, geometric layout */
+/* Note: Not all elements should have rounded corners - only panels and buttons */
 [data-theme="on-screen"] * {
-  border-radius: 20px 20px 0 0 !important;
+  box-sizing: border-box;
 }
 
 [data-theme="on-screen"] .app {
@@ -42,13 +47,27 @@
   background: #003366;
   border-bottom: none;
   border-radius: 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
 }
 
 [data-theme="on-screen"] .navigation-bar-top-row {
   background: #003366;
-  border-bottom: 4px solid #FF9900;
+  border-bottom: 5px solid #FF9900;
   border-radius: 0;
-  padding: 1rem 1.5rem;
+  padding: 1.25rem 2rem;
+  position: relative;
+}
+
+/* LCARS-style decorative element on nav bar */
+[data-theme="on-screen"] .navigation-bar-top-row::after {
+  content: '';
+  position: absolute;
+  bottom: -5px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, #FFAA00, transparent);
+  opacity: 0.6;
 }
 
 [data-theme="on-screen"] .nav-controls {
@@ -62,21 +81,46 @@
   color: #FFFFFF;
   font-family: 'Antonio', 'Arial Narrow', 'Helvetica Condensed', sans-serif;
   font-weight: 600;
-  letter-spacing: 0.1em;
-  padding: 0.75rem 1.5rem;
+  font-size: 0.95rem;
+  letter-spacing: 0.12em;
+  padding: 0.875rem 1.75rem;
   text-transform: uppercase;
-  transition: all 0.2s ease;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* LCARS button inner glow effect */
+[data-theme="on-screen"] .nav-button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+  transition: left 0.5s ease;
+}
+
+[data-theme="on-screen"] .nav-button:hover::before {
+  left: 100%;
 }
 
 [data-theme="on-screen"] .nav-button:hover {
   background: #FF9900;
   color: #000000;
-  transform: translateY(-2px);
+  transform: translateY(-3px);
+  box-shadow: 0 4px 12px rgba(255, 153, 0, 0.4);
 }
 
 [data-theme="on-screen"] .nav-button.active {
   background: #FFAA00;
   color: #000000;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2), 0 2px 8px rgba(255, 170, 0, 0.3);
 }
 
 [data-theme="on-screen"] .date-label {
@@ -93,14 +137,20 @@
   border-radius: 20px 20px 0 0;
   color: #000000;
   font-family: 'Antonio', 'Arial Narrow', 'Helvetica Condensed', sans-serif;
-  font-weight: 600;
-  letter-spacing: 0.1em;
+  font-weight: 700;
+  font-size: 0.95rem;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
+  padding: 0.875rem 1.75rem;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  min-height: 44px;
+  box-shadow: 0 2px 6px rgba(255, 153, 0, 0.3);
 }
 
 [data-theme="on-screen"] .today-button:hover {
   background: #FFAA00;
-  transform: translateY(-2px);
+  transform: translateY(-3px);
+  box-shadow: 0 4px 12px rgba(255, 170, 0, 0.5);
 }
 
 [data-theme="on-screen"] .view-mode-selector {
@@ -192,30 +242,74 @@
 
 [data-theme="on-screen"] .editor-section {
   background: #003366;
-  border-left: 4px solid #FF9900;
+  border-left: 5px solid #FF9900;
   border-radius: 0;
+  position: relative;
+  box-shadow: -4px 0 12px rgba(255, 153, 0, 0.2);
+}
+
+/* LCARS panel left border accent */
+[data-theme="on-screen"] .editor-section::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 5px;
+  background: linear-gradient(180deg, #FFAA00, #FF9900, #FFAA00);
+  opacity: 0.8;
 }
 
 /* Journal List */
 [data-theme="on-screen"] .journal-list {
   background: #003366;
-  border-right: 4px solid #FF9900;
+  border-right: 5px solid #FF9900;
   border-radius: 0;
+  position: relative;
+  box-shadow: 4px 0 12px rgba(255, 153, 0, 0.2);
+}
+
+/* LCARS panel right border accent */
+[data-theme="on-screen"] .journal-list::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 5px;
+  background: linear-gradient(180deg, #FFAA00, #FF9900, #FFAA00);
+  opacity: 0.8;
 }
 
 [data-theme="on-screen"] .journal-list-header {
   background: #004488;
-  border-bottom: 4px solid #FF9900;
+  border-bottom: 5px solid #FF9900;
   border-radius: 0;
-  padding: 1rem 1.5rem;
+  padding: 1.25rem 2rem;
+  position: relative;
+}
+
+/* LCARS panel header decorative line */
+[data-theme="on-screen"] .journal-list-header::after {
+  content: '';
+  position: absolute;
+  bottom: -5px;
+  left: 0;
+  width: 30%;
+  height: 2px;
+  background: linear-gradient(90deg, #FFAA00, transparent);
+  opacity: 0.7;
 }
 
 [data-theme="on-screen"] .journal-list-header h3 {
   color: #FFFFFF;
   font-family: 'Antonio', 'Arial Narrow', 'Helvetica Condensed', sans-serif;
   font-weight: 700;
-  letter-spacing: 0.1em;
+  font-size: 1.1rem;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
+  margin: 0;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
 }
 
 [data-theme="on-screen"] .new-entry-button {
@@ -224,14 +318,37 @@
   border-radius: 20px 20px 0 0;
   color: #000000;
   font-family: 'Antonio', 'Arial Narrow', 'Helvetica Condensed', sans-serif;
-  font-weight: 600;
-  letter-spacing: 0.1em;
+  font-weight: 700;
+  font-size: 0.95rem;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
+  padding: 0.875rem 1.75rem;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  min-height: 44px;
+  box-shadow: 0 2px 6px rgba(255, 153, 0, 0.3);
+  position: relative;
+  overflow: hidden;
+}
+
+[data-theme="on-screen"] .new-entry-button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s ease;
+}
+
+[data-theme="on-screen"] .new-entry-button:hover::before {
+  left: 100%;
 }
 
 [data-theme="on-screen"] .new-entry-button:hover {
   background: #FFAA00;
-  transform: translateY(-2px);
+  transform: translateY(-3px);
+  box-shadow: 0 4px 12px rgba(255, 170, 0, 0.5);
 }
 
 [data-theme="on-screen"] .bulk-edit-toggle-button {
@@ -269,23 +386,46 @@
 [data-theme="on-screen"] .journal-entry-item {
   background: #004488;
   border: none;
-  border-left: 4px solid #FF9900;
+  border-left: 5px solid #FF9900;
   border-radius: 20px 20px 0 0;
   color: #FFFFFF;
-  margin-bottom: 0.5rem;
-  padding: 1rem;
+  margin-bottom: 0.75rem;
+  padding: 1.25rem 1.5rem;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+/* LCARS entry item subtle glow */
+[data-theme="on-screen"] .journal-entry-item::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 5px;
+  background: linear-gradient(180deg, #FFAA00, #FF9900);
+  opacity: 0;
+  transition: opacity 0.25s ease;
+}
+
+[data-theme="on-screen"] .journal-entry-item:hover::before {
+  opacity: 1;
 }
 
 [data-theme="on-screen"] .journal-entry-item:hover {
   background: #0055AA;
   border-left-color: #FFAA00;
-  transform: translateX(4px);
+  transform: translateX(6px);
+  box-shadow: -4px 0 12px rgba(255, 153, 0, 0.3);
 }
 
 [data-theme="on-screen"] .journal-entry-item.selected {
   background: #FF9900;
   color: #000000;
   border-left-color: #FFAA00;
+  border-left-width: 6px;
+  box-shadow: -4px 0 12px rgba(255, 170, 0, 0.4), 0 2px 8px rgba(255, 170, 0, 0.2);
 }
 
 [data-theme="on-screen"] .entry-item-title {
@@ -321,7 +461,8 @@
   background: #003366;
   border: none;
   border-radius: 20px 20px 0 0;
-  padding: 1rem;
+  padding: 1.5rem;
+  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 
 [data-theme="on-screen"] .calendar-cell {
@@ -330,31 +471,73 @@
   border-radius: 20px 20px 0 0;
   color: #FFFFFF;
   font-family: 'Antonio', 'Arial Narrow', 'Helvetica Condensed', sans-serif;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+/* LCARS cell subtle inner glow */
+[data-theme="on-screen"] .calendar-cell::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(circle at center, rgba(255, 153, 0, 0.1), transparent);
+  opacity: 0;
+  transition: opacity 0.25s ease;
+  pointer-events: none;
+}
+
+[data-theme="on-screen"] .calendar-cell:hover::before {
+  opacity: 1;
 }
 
 [data-theme="on-screen"] .calendar-cell:hover {
   background: #0055AA;
-  transform: scale(1.05);
+  transform: scale(1.03);
+  box-shadow: 0 4px 12px rgba(0, 68, 136, 0.4);
 }
 
 [data-theme="on-screen"] .calendar-cell.empty-cell {
   background: #003366;
-  opacity: 0.5;
+  opacity: 0.4;
+  cursor: default;
+}
+
+[data-theme="on-screen"] .calendar-cell.empty-cell:hover {
+  transform: none;
+  box-shadow: none;
 }
 
 [data-theme="on-screen"] .calendar-cell.today {
   background: #FF9900;
   color: #000000;
   font-weight: 700;
+  box-shadow: 0 0 16px rgba(255, 153, 0, 0.5), inset 0 2px 4px rgba(255, 255, 255, 0.2);
 }
 
 [data-theme="on-screen"] .calendar-cell.selected {
   background: #FFAA00;
   color: #000000;
+  box-shadow: 0 0 20px rgba(255, 170, 0, 0.6), inset 0 2px 4px rgba(255, 255, 255, 0.2);
 }
 
 [data-theme="on-screen"] .calendar-cell.has-entry {
-  border-bottom: 4px solid #FF9900;
+  border-bottom: 5px solid #FF9900;
+  position: relative;
+}
+
+[data-theme="on-screen"] .calendar-cell.has-entry::after {
+  content: '';
+  position: absolute;
+  bottom: -5px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, #FFAA00, transparent);
+  opacity: 0.6;
 }
 
 [data-theme="on-screen"] .cell-content {
@@ -387,14 +570,29 @@
 [data-theme="on-screen"] .weekday-header {
   background: #004488;
   border: none;
-  border-bottom: 4px solid #FF9900;
+  border-bottom: 5px solid #FF9900;
   border-radius: 0;
   color: #FFFFFF;
   font-family: 'Antonio', 'Arial Narrow', 'Helvetica Condensed', sans-serif;
   font-weight: 700;
-  letter-spacing: 0.1em;
-  padding: 0.75rem;
+  font-size: 0.9rem;
+  letter-spacing: 0.12em;
+  padding: 1rem;
   text-transform: uppercase;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+  position: relative;
+}
+
+/* LCARS weekday header accent */
+[data-theme="on-screen"] .weekday-header::after {
+  content: '';
+  position: absolute;
+  bottom: -5px;
+  left: 0;
+  width: 20%;
+  height: 2px;
+  background: linear-gradient(90deg, #FFAA00, transparent);
+  opacity: 0.7;
 }
 
 [data-theme="on-screen"] .weekday-cell {
@@ -447,8 +645,22 @@
 [data-theme="on-screen"] .month-week-entries-section {
   background: #003366;
   border: none;
-  border-left: 4px solid #FF9900;
+  border-left: 5px solid #FF9900;
   border-radius: 0;
+  position: relative;
+  box-shadow: -4px 0 12px rgba(255, 153, 0, 0.2);
+}
+
+/* LCARS timeline section border accent */
+[data-theme="on-screen"] .month-week-entries-section::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 5px;
+  background: linear-gradient(180deg, #FFAA00, #FF9900, #FFAA00);
+  opacity: 0.8;
 }
 
 [data-theme="on-screen"] .month-entries-section {
@@ -458,14 +670,29 @@
 [data-theme="on-screen"] .month-entries-header {
   background: #004488;
   border: none;
-  border-bottom: 4px solid #FF9900;
+  border-bottom: 5px solid #FF9900;
   border-radius: 0;
   color: #FFFFFF;
   font-family: 'Antonio', 'Arial Narrow', 'Helvetica Condensed', sans-serif;
   font-weight: 700;
-  letter-spacing: 0.1em;
-  padding: 1rem;
+  font-size: 1rem;
+  letter-spacing: 0.12em;
+  padding: 1.25rem 1.5rem;
   text-transform: uppercase;
+  position: relative;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+/* LCARS month entries header accent */
+[data-theme="on-screen"] .month-entries-header::after {
+  content: '';
+  position: absolute;
+  bottom: -5px;
+  left: 0;
+  width: 25%;
+  height: 2px;
+  background: linear-gradient(90deg, #FFAA00, transparent);
+  opacity: 0.7;
 }
 
 [data-theme="on-screen"] .month-entries-list {
@@ -518,14 +745,29 @@
 [data-theme="on-screen"] .week-entries-header {
   background: #004488;
   border: none;
-  border-bottom: 4px solid #FF9900;
+  border-bottom: 5px solid #FF9900;
   border-radius: 0;
   color: #FFFFFF;
   font-family: 'Antonio', 'Arial Narrow', 'Helvetica Condensed', sans-serif;
   font-weight: 700;
-  letter-spacing: 0.1em;
-  padding: 1rem;
+  font-size: 1rem;
+  letter-spacing: 0.12em;
+  padding: 1.25rem 1.5rem;
   text-transform: uppercase;
+  position: relative;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+/* LCARS week entries header accent */
+[data-theme="on-screen"] .week-entries-header::after {
+  content: '';
+  position: absolute;
+  bottom: -5px;
+  left: 0;
+  width: 25%;
+  height: 2px;
+  background: linear-gradient(90deg, #FFAA00, transparent);
+  opacity: 0.7;
 }
 
 [data-theme="on-screen"] .week-entries-list {
@@ -535,15 +777,36 @@
 [data-theme="on-screen"] .week-entry-group {
   background: #004488;
   border: none;
-  border-left: 4px solid #FF9900;
+  border-left: 5px solid #FF9900;
   border-radius: 20px 20px 0 0;
   color: #FFFFFF;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.75rem;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+/* LCARS week entry group border accent */
+[data-theme="on-screen"] .week-entry-group::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 5px;
+  background: linear-gradient(180deg, #FFAA00, #FF9900);
+  opacity: 0;
+  transition: opacity 0.25s ease;
+}
+
+[data-theme="on-screen"] .week-entry-group:hover::before {
+  opacity: 1;
 }
 
 [data-theme="on-screen"] .week-entry-group:hover {
   background: #0055AA;
-  transform: translateX(4px);
+  transform: translateX(6px);
+  box-shadow: -4px 0 12px rgba(255, 153, 0, 0.3);
 }
 
 [data-theme="on-screen"] .week-entry-group-header {
@@ -567,6 +830,12 @@
   color: #000000;
   font-family: 'Antonio', 'Arial Narrow', 'Helvetica Condensed', sans-serif;
   font-weight: 700;
+  font-size: 0.85rem;
+  letter-spacing: 0.05em;
+  padding: 0.375rem 0.75rem;
+  box-shadow: 0 2px 4px rgba(255, 153, 0, 0.3);
+  min-width: 2rem;
+  text-align: center;
 }
 
 [data-theme="on-screen"] .week-entry-items {
@@ -580,13 +849,32 @@
   border-radius: 20px 20px 0 0;
   color: #FFFFFF;
   font-family: 'Antonio', 'Arial Narrow', 'Helvetica Condensed', sans-serif;
-  margin: 0.25rem 0.5rem;
-  padding: 0.75rem;
+  margin: 0.375rem 0.75rem;
+  padding: 0.875rem 1rem;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+}
+
+[data-theme="on-screen"] .week-entry-item::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: linear-gradient(180deg, #FFAA00, #FF9900);
+  opacity: 0;
+  transition: opacity 0.25s ease;
+}
+
+[data-theme="on-screen"] .week-entry-item:hover::before {
+  opacity: 1;
 }
 
 [data-theme="on-screen"] .week-entry-item:hover {
   background: #004488;
-  transform: translateX(4px);
+  transform: translateX(6px);
+  box-shadow: -4px 0 12px rgba(255, 153, 0, 0.3);
 }
 
 [data-theme="on-screen"] .week-entry-title {
@@ -613,9 +901,23 @@
 [data-theme="on-screen"] .viewer-header {
   background: #004488;
   border: none;
-  border-bottom: 4px solid #FF9900;
+  border-bottom: 5px solid #FF9900;
   border-radius: 0;
-  padding: 1rem 1.5rem;
+  padding: 1.25rem 2rem;
+  position: relative;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+/* LCARS viewer header decorative element */
+[data-theme="on-screen"] .viewer-header::after {
+  content: '';
+  position: absolute;
+  bottom: -5px;
+  left: 0;
+  width: 25%;
+  height: 2px;
+  background: linear-gradient(90deg, #FFAA00, transparent);
+  opacity: 0.7;
 }
 
 [data-theme="on-screen"] .header-top {
@@ -695,16 +997,20 @@
   color: #FFFFFF;
   font-family: 'Antonio', 'Arial Narrow', 'Helvetica Condensed', sans-serif;
   font-weight: 700;
-  font-size: 1.5rem;
-  letter-spacing: 0.05em;
-  margin-bottom: 1rem;
+  font-size: 1.75rem;
+  letter-spacing: 0.1em;
+  margin-bottom: 1.25rem;
   text-transform: uppercase;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+  line-height: 1.3;
 }
 
 [data-theme="on-screen"] .viewer-text {
   color: #FFFFFF;
   font-family: 'Antonio', 'Arial Narrow', 'Helvetica Condensed', sans-serif;
-  line-height: 1.6;
+  font-size: 1rem;
+  line-height: 1.7;
+  letter-spacing: 0.03em;
 }
 
 [data-theme="on-screen"] .viewer-tags {
@@ -720,10 +1026,19 @@
   color: #000000;
   font-family: 'Antonio', 'Arial Narrow', 'Helvetica Condensed', sans-serif;
   font-weight: 600;
-  letter-spacing: 0.05em;
+  font-size: 0.85rem;
+  letter-spacing: 0.08em;
   margin: 0.25rem;
-  padding: 0.5rem 1rem;
+  padding: 0.5rem 1.125rem;
   text-transform: uppercase;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(255, 153, 0, 0.2);
+}
+
+[data-theme="on-screen"] .viewer-tag:hover {
+  background: #FFAA00;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(255, 170, 0, 0.3);
 }
 
 [data-theme="on-screen"] .viewer-linked-entries {
@@ -814,9 +1129,23 @@
 [data-theme="on-screen"] .editor-header {
   background: #004488;
   border: none;
-  border-bottom: 4px solid #FF9900;
+  border-bottom: 5px solid #FF9900;
   border-radius: 0;
-  padding: 1rem 1.5rem;
+  padding: 1.25rem 2rem;
+  position: relative;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+/* LCARS editor header decorative element */
+[data-theme="on-screen"] .editor-header::after {
+  content: '';
+  position: absolute;
+  bottom: -5px;
+  left: 0;
+  width: 25%;
+  height: 2px;
+  background: linear-gradient(90deg, #FFAA00, transparent);
+  opacity: 0.7;
 }
 
 [data-theme="on-screen"] .editor-form {
@@ -840,12 +1169,15 @@
 [data-theme="on-screen"] textarea {
   background: #004488;
   border: none;
-  border-bottom: 2px solid #FF9900;
+  border-bottom: 3px solid #FF9900;
   border-radius: 0;
   color: #FFFFFF;
   font-family: 'Antonio', 'Arial Narrow', 'Helvetica Condensed', sans-serif;
-  padding: 0.75rem;
-  transition: border-color 0.2s;
+  font-size: 0.95rem;
+  letter-spacing: 0.05em;
+  padding: 0.875rem 1rem;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
 }
 
 [data-theme="on-screen"] .editor-form input:focus,
@@ -854,7 +1186,10 @@
 [data-theme="on-screen"] input[type="number"]:focus,
 [data-theme="on-screen"] textarea:focus {
   border-bottom-color: #FFAA00;
+  border-bottom-width: 4px;
   outline: none;
+  background: #0055AA;
+  box-shadow: 0 4px 8px rgba(255, 153, 0, 0.2);
 }
 
 [data-theme="on-screen"] input::placeholder,
@@ -877,14 +1212,36 @@
   color: #000000;
   font-family: 'Antonio', 'Arial Narrow', 'Helvetica Condensed', sans-serif;
   font-weight: 700;
-  letter-spacing: 0.1em;
-  padding: 0.75rem 2rem;
+  font-size: 1rem;
+  letter-spacing: 0.12em;
+  padding: 0.875rem 2.25rem;
   text-transform: uppercase;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  min-height: 44px;
+  box-shadow: 0 2px 6px rgba(255, 153, 0, 0.3);
+  position: relative;
+  overflow: hidden;
+}
+
+[data-theme="on-screen"] .editor-save-button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s ease;
+}
+
+[data-theme="on-screen"] .editor-save-button:hover:not(:disabled)::before {
+  left: 100%;
 }
 
 [data-theme="on-screen"] .editor-save-button:hover:not(:disabled) {
   background: #FFAA00;
-  transform: translateY(-2px);
+  transform: translateY(-3px);
+  box-shadow: 0 4px 12px rgba(255, 170, 0, 0.5);
 }
 
 [data-theme="on-screen"] .editor-save-button:disabled {
@@ -947,9 +1304,18 @@
   color: #000000;
   font-family: 'Antonio', 'Arial Narrow', 'Helvetica Condensed', sans-serif;
   font-weight: 600;
-  letter-spacing: 0.05em;
-  padding: 0.5rem 1rem;
+  font-size: 0.85rem;
+  letter-spacing: 0.08em;
+  padding: 0.5rem 1.125rem;
   text-transform: uppercase;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(255, 153, 0, 0.2);
+}
+
+[data-theme="on-screen"] .editor-tag:hover {
+  background: #FFAA00;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(255, 170, 0, 0.3);
 }
 
 [data-theme="on-screen"] .editor-tag-remove {
@@ -1095,9 +1461,23 @@
 [data-theme="on-screen"] .modal-header {
   background: #004488;
   border: none;
-  border-bottom: 4px solid #FF9900;
+  border-bottom: 5px solid #FF9900;
   border-radius: 0;
-  padding: 1.5rem;
+  padding: 1.75rem 2rem;
+  position: relative;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+/* LCARS modal header decorative element */
+[data-theme="on-screen"] .modal-header::after {
+  content: '';
+  position: absolute;
+  bottom: -5px;
+  left: 0;
+  width: 30%;
+  height: 2px;
+  background: linear-gradient(90deg, #FFAA00, transparent);
+  opacity: 0.7;
 }
 
 [data-theme="on-screen"] .modal-header-top {
@@ -1138,9 +1518,23 @@
 [data-theme="on-screen"] .modal-footer {
   background: #004488;
   border: none;
-  border-top: 4px solid #FF9900;
+  border-top: 5px solid #FF9900;
   border-radius: 0;
-  padding: 1.5rem;
+  padding: 1.75rem 2rem;
+  position: relative;
+  box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.3);
+}
+
+/* LCARS modal footer decorative element */
+[data-theme="on-screen"] .modal-footer::before {
+  content: '';
+  position: absolute;
+  top: -5px;
+  right: 0;
+  width: 30%;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, #FFAA00);
+  opacity: 0.7;
 }
 
 [data-theme="on-screen"] .modal-footer-actions {
@@ -1210,14 +1604,36 @@
   color: #FFFFFF;
   font-family: 'Antonio', 'Arial Narrow', 'Helvetica Condensed', sans-serif;
   font-weight: 700;
-  letter-spacing: 0.1em;
-  padding: 0.75rem 2rem;
+  font-size: 1rem;
+  letter-spacing: 0.12em;
+  padding: 0.875rem 2.25rem;
   text-transform: uppercase;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  min-height: 44px;
+  box-shadow: 0 2px 6px rgba(255, 51, 0, 0.3);
+  position: relative;
+  overflow: hidden;
+}
+
+[data-theme="on-screen"] .modal-delete-button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.15), transparent);
+  transition: left 0.5s ease;
+}
+
+[data-theme="on-screen"] .modal-delete-button:hover::before {
+  left: 100%;
 }
 
 [data-theme="on-screen"] .modal-delete-button:hover {
   background: #FF0000;
-  transform: translateY(-2px);
+  transform: translateY(-3px);
+  box-shadow: 0 4px 12px rgba(255, 0, 0, 0.5);
 }
 
 [data-theme="on-screen"] .modal-tag-input {
@@ -1286,9 +1702,23 @@
 [data-theme="on-screen"] .search-header {
   background: #003366;
   border: none;
-  border-bottom: 4px solid #FF9900;
+  border-bottom: 5px solid #FF9900;
   border-radius: 0;
-  padding: 1.5rem;
+  padding: 1.75rem 2rem;
+  position: relative;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+/* LCARS search header accent */
+[data-theme="on-screen"] .search-header::after {
+  content: '';
+  position: absolute;
+  bottom: -5px;
+  left: 0;
+  width: 30%;
+  height: 2px;
+  background: linear-gradient(90deg, #FFAA00, transparent);
+  opacity: 0.7;
 }
 
 [data-theme="on-screen"] .search-input-container {
@@ -1298,17 +1728,22 @@
 [data-theme="on-screen"] .search-input {
   background: #004488;
   border: none;
-  border-bottom: 2px solid #FF9900;
+  border-bottom: 3px solid #FF9900;
   border-radius: 0;
   color: #FFFFFF;
   font-family: 'Antonio', 'Arial Narrow', 'Helvetica Condensed', sans-serif;
   font-size: 1.25rem;
-  padding: 0.75rem 1rem;
+  letter-spacing: 0.05em;
+  padding: 0.875rem 1.25rem;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 [data-theme="on-screen"] .search-input:focus {
   border-bottom-color: #FFAA00;
+  border-bottom-width: 4px;
   outline: none;
+  background: #0055AA;
+  box-shadow: 0 4px 12px rgba(255, 153, 0, 0.3);
 }
 
 [data-theme="on-screen"] .search-input::placeholder {
@@ -1591,9 +2026,23 @@
 [data-theme="on-screen"] .preferences-header {
   background: #003366;
   border: none;
-  border-bottom: 4px solid #FF9900;
+  border-bottom: 5px solid #FF9900;
   border-radius: 0;
-  padding: 1.5rem;
+  padding: 1.75rem 2rem;
+  position: relative;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+/* LCARS preferences header accent */
+[data-theme="on-screen"] .preferences-header::after {
+  content: '';
+  position: absolute;
+  bottom: -5px;
+  left: 0;
+  width: 30%;
+  height: 2px;
+  background: linear-gradient(90deg, #FFAA00, transparent);
+  opacity: 0.7;
 }
 
 [data-theme="on-screen"] .preferences-header h1 {
@@ -1633,10 +2082,24 @@
 [data-theme="on-screen"] .preferences-section {
   background: #003366;
   border: none;
-  border-left: 4px solid #FF9900;
+  border-left: 5px solid #FF9900;
   border-radius: 20px 20px 0 0;
-  margin-bottom: 1.5rem;
-  padding: 1.5rem;
+  margin-bottom: 1.75rem;
+  padding: 1.75rem 2rem;
+  position: relative;
+  box-shadow: -4px 0 12px rgba(255, 153, 0, 0.2), 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* LCARS preferences section border accent */
+[data-theme="on-screen"] .preferences-section::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 5px;
+  background: linear-gradient(180deg, #FFAA00, #FF9900, #FFAA00);
+  opacity: 0.8;
 }
 
 [data-theme="on-screen"] .preferences-section h2 {
@@ -1644,11 +2107,25 @@
   font-family: 'Antonio', 'Arial Narrow', 'Helvetica Condensed', sans-serif;
   font-weight: 700;
   font-size: 1.5rem;
-  letter-spacing: 0.1em;
-  margin-bottom: 1rem;
+  letter-spacing: 0.12em;
+  margin-bottom: 1.25rem;
   text-transform: uppercase;
-  border-bottom: 2px solid #FF9900;
-  padding-bottom: 0.5rem;
+  border-bottom: 3px solid #FF9900;
+  padding-bottom: 0.75rem;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+  position: relative;
+}
+
+/* LCARS section header accent */
+[data-theme="on-screen"] .preferences-section h2::after {
+  content: '';
+  position: absolute;
+  bottom: -3px;
+  left: 0;
+  width: 20%;
+  height: 2px;
+  background: linear-gradient(90deg, #FFAA00, transparent);
+  opacity: 0.7;
 }
 
 [data-theme="on-screen"] .preference-item {
@@ -2217,20 +2694,28 @@
 
 /* Scrollbars - LCARS style */
 [data-theme="on-screen"] ::-webkit-scrollbar {
-  width: 12px;
-  height: 12px;
+  width: 14px;
+  height: 14px;
 }
 
 [data-theme="on-screen"] ::-webkit-scrollbar-track {
   background: #003366;
+  border-left: 2px solid #004488;
 }
 
 [data-theme="on-screen"] ::-webkit-scrollbar-thumb {
-  background: #FF9900;
-  border-radius: 6px;
+  background: linear-gradient(180deg, #FF9900, #FFAA00);
+  border-radius: 0;
+  border: 2px solid #000000;
+  box-shadow: inset 0 0 4px rgba(0, 0, 0, 0.3);
 }
 
 [data-theme="on-screen"] ::-webkit-scrollbar-thumb:hover {
-  background: #FFAA00;
+  background: linear-gradient(180deg, #FFAA00, #FF9900);
+  box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.2), 0 0 8px rgba(255, 153, 0, 0.4);
+}
+
+[data-theme="on-screen"] ::-webkit-scrollbar-corner {
+  background: #003366;
 }
 
