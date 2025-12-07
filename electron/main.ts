@@ -1,13 +1,110 @@
 import { app, BrowserWindow, ipcMain, Menu } from 'electron';
 import * as path from 'path';
+import * as fs from 'fs';
 import { initDatabase, getAllPreferences, setPreference, closeDatabase } from './database';
-import { setupIpcHandlers, setMainWindow } from './ipc-handlers';
+import { setupIpcHandlers, setMainWindow, setMenuUpdateCallback } from './ipc-handlers';
 
 let mainWindow: BrowserWindow | null = null;
 let preferencesWindow: BrowserWindow | null = null;
 let aboutWindow: BrowserWindow | null = null;
 
 const isDev = process.env.NODE_ENV === 'development' || !app.isPackaged;
+
+interface ThemeInfo {
+  name: string;
+  displayName: string;
+}
+
+// Theme metadata matching src/utils/themes.ts
+const THEME_METADATA: Record<string, { displayName: string }> = {
+  'light': { displayName: 'Light' },
+  'dark': { displayName: 'Dark' },
+  'auto': { displayName: 'Auto (System)' },
+  'classic-light': { displayName: 'Classic Light' },
+  'classic-dark': { displayName: 'Classic Dark' },
+  'high-contrast': { displayName: 'High Contrast' },
+  'terminal': { displayName: 'Terminal' },
+  'bios': { displayName: 'BIOS' },
+  'forest': { displayName: 'Forest' },
+  'ocean': { displayName: 'Ocean' },
+  'sunset': { displayName: 'Sunset' },
+  'red-rock': { displayName: 'Red Rock' },
+  'australian-desert': { displayName: 'Australian Desert' },
+  'hot-spring': { displayName: 'Hot Spring' },
+  'NEON_A': { displayName: 'NEON_A' },
+  'vegas80s': { displayName: 'Vegas 80s' },
+  'modern-minimal': { displayName: 'Modern Minimal' },
+  'modern-minimal-oled': { displayName: 'Modern Minimal OLED' },
+  'on-screen': { displayName: 'ON SCREEN' },
+  'elite': { displayName: 'Elite' },
+  'journeyman': { displayName: 'Journeyman' },
+  'aero-glass': { displayName: 'Aero Glass' },
+  'galactic-basic': { displayName: 'Galactic Basic' },
+  'the-real-world': { displayName: 'The Real World' },
+};
+
+/**
+ * Convert a filename to a display name
+ * Examples: "modern-minimal.css" -> "Modern Minimal", "high-contrast.css" -> "High Contrast"
+ */
+function formatDisplayName(filename: string): string {
+  // Remove .css extension
+  const name = filename.replace(/\.css$/, '');
+  
+  // Split by hyphens and capitalize each word
+  return name
+    .split('-')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+}
+
+/**
+ * Discover all available themes
+ * Uses a hardcoded list based on themes available in src/themes/
+ */
+function discoverThemes(): ThemeInfo[] {
+  // Core themes that are always available (handled in index.css)
+  const coreThemes: ThemeInfo[] = [
+    { name: 'light', displayName: THEME_METADATA['light']?.displayName || 'Light' },
+    { name: 'dark', displayName: THEME_METADATA['dark']?.displayName || 'Dark' },
+    { name: 'auto', displayName: THEME_METADATA['auto']?.displayName || 'Auto (System)' },
+  ];
+  
+  // All available theme files (excluding templates/examples)
+  const knownThemes = [
+    'aero-glass',
+    'australian-desert',
+    'bios',
+    'classic-dark',
+    'classic-light',
+    'elite',
+    'forest',
+    'galactic-basic',
+    'high-contrast',
+    'hot-spring',
+    'journeyman',
+    'modern-minimal',
+    'modern-minimal-oled',
+    'NEON_A',
+    'ocean',
+    'on-screen',
+    'red-rock',
+    'sunset',
+    'terminal',
+    'the-real-world',
+    'vegas80s',
+  ];
+  
+  // Build theme list from known themes
+  const otherThemes: ThemeInfo[] = knownThemes
+    .map(themeName => ({
+      name: themeName,
+      displayName: THEME_METADATA[themeName]?.displayName || formatDisplayName(themeName + '.css'),
+    }))
+    .sort((a, b) => a.displayName.localeCompare(b.displayName));
+  
+  return [...coreThemes, ...otherThemes];
+}
 
 function createWindow() {
   // Load preferences for window size/position
@@ -127,6 +224,25 @@ function createWindow() {
 }
 
 function createMenu() {
+  const themes = discoverThemes();
+  const currentTheme = getAllPreferences().theme || 'light';
+  
+  // Build theme menu items
+  const themeMenuItems: Electron.MenuItemConstructorOptions[] = themes.map(theme => ({
+    label: theme.displayName,
+    type: 'radio',
+    checked: theme.name === currentTheme,
+    click: () => {
+      setPreference('theme', theme.name);
+      // Notify the renderer process about the theme change
+      if (mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.webContents.send('preference-updated', { key: 'theme', value: theme.name });
+      }
+      // Update the menu to reflect the change
+      updateMenu();
+    },
+  }));
+  
   const template: Electron.MenuItemConstructorOptions[] = [
     {
       label: 'File',
@@ -177,6 +293,10 @@ function createMenu() {
       ],
     },
     {
+      label: 'Themes',
+      submenu: themeMenuItems,
+    },
+    {
       label: 'Window',
       submenu: [
         { role: 'minimize', label: 'Minimize' },
@@ -198,6 +318,14 @@ function createMenu() {
 
   const menu = Menu.buildFromTemplate(template);
   Menu.setApplicationMenu(menu);
+}
+
+/**
+ * Update the menu to reflect current theme selection
+ * This is called when theme changes to update the radio button state
+ */
+function updateMenu() {
+  createMenu();
 }
 
 function createPreferencesWindow() {
@@ -449,6 +577,11 @@ app.whenReady().then(() => {
   // Setup IPC handlers
   setupIpcHandlers();
   
+  // Register menu update callback with IPC handlers
+  setMenuUpdateCallback(() => {
+    updateMenu();
+  });
+  
   // Create application menu
   createMenu();
   
@@ -462,6 +595,11 @@ app.whenReady().then(() => {
     if (preferencesWindow) {
       preferencesWindow.close();
     }
+  });
+  
+  // Handle menu update requests (called when preferences change)
+  ipcMain.handle('update-application-menu', () => {
+    updateMenu();
   });
   
   createWindow();

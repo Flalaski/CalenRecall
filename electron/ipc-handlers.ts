@@ -32,9 +32,14 @@ import { JournalEntry, TimeRange, ExportFormat, EntryAttachment } from './types'
 import { EntryTemplate, getAllTemplates, getTemplate, saveTemplate, deleteTemplate } from './database';
 
 let mainWindowRef: Electron.BrowserWindow | null = null;
+let menuUpdateCallback: (() => void) | null = null;
 
 export function setMainWindow(window: Electron.BrowserWindow | null) {
   mainWindowRef = window;
+}
+
+export function setMenuUpdateCallback(callback: (() => void) | null) {
+  menuUpdateCallback = callback;
 }
 
 export function setupIpcHandlers() {
@@ -385,6 +390,16 @@ export function setupIpcHandlers() {
               
               // For theme changes, send additional fallbacks and use direct JavaScript execution
               if (keyStr === 'theme') {
+                // Update the application menu to reflect the new theme selection
+                if (menuUpdateCallback) {
+                  try {
+                    menuUpdateCallback();
+                    console.log('[IPC] ✅ Application menu updated for theme change');
+                  } catch (error) {
+                    console.error('[IPC] ❌ Error updating application menu:', error);
+                  }
+                }
+                
                 sendFallback(300);
                 sendFallback(500);
                 sendFallback(1000);

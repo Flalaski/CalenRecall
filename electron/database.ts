@@ -1125,7 +1125,7 @@ export interface Preferences {
   weekStartsOn?: 0 | 1 | 2 | 3 | 4 | 5 | 6; // 0 = Sunday, 1 = Monday, etc.
   autoSave?: boolean;
   autoSaveInterval?: number; // in seconds
-  theme?: 'light' | 'dark' | 'auto';
+  theme?: string; // Theme name (e.g., 'light', 'dark', 'auto', 'elite', 'journeyman', etc.)
   fontSize?: 'xxxSmall' | 'xxSmall' | 'xSmall' | 'small' | 'medium' | 'large' | 'xLarge' | 'xxLarge' | 'xxxLarge';
   showMinimap?: boolean;
   minimapPosition?: 'left' | 'right' | 'top' | 'bottom';
