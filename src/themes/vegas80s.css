@@ -123,6 +123,72 @@
   text-shadow: 0 0 10px #ffd700, 0 0 20px #ffd700, 0 0 5px rgba(255, 215, 0, 0.5);
 }
 
+/* Date Input Components */
+[data-theme="vegas80s"] .date-input {
+  background: #1a0a2e;
+  border: 2px solid #ff1493;
+  border-radius: 4px;
+  color: #ffffff;
+  text-shadow: 0 0 5px #ffd700;
+  box-shadow: 0 0 10px rgba(255, 20, 147, 0.5);
+}
+
+[data-theme="vegas80s"] .date-input::placeholder {
+  color: #ff69b4;
+  text-shadow: 0 0 5px #ffd700;
+}
+
+[data-theme="vegas80s"] .date-input:hover {
+  background: #2d1b3d;
+  border-color: #ff1744;
+  box-shadow: 0 0 15px #ff1493, 0 0 25px rgba(255, 20, 147, 0.6);
+}
+
+[data-theme="vegas80s"] .date-input:focus {
+  background: #2d1b3d;
+  border-color: #ffd700;
+  box-shadow: 0 0 20px #ffd700, 0 0 30px rgba(255, 215, 0, 0.7), inset 0 0 10px rgba(255, 20, 147, 0.3);
+  outline: none;
+}
+
+[data-theme="vegas80s"] .date-input.error {
+  border-color: #ff0000;
+  background: #2a0000;
+  box-shadow: 0 0 15px #ff0000;
+  color: #ff8080;
+}
+
+[data-theme="vegas80s"] .date-input.error:focus {
+  border-color: #ff0000;
+  box-shadow: 0 0 20px #ff0000, 0 0 30px rgba(255, 0, 0, 0.7);
+}
+
+[data-theme="vegas80s"] .date-field-label {
+  color: #ffd700;
+  text-shadow: 0 0 5px #ffd700;
+}
+
+[data-theme="vegas80s"] .date-field-separator {
+  color: #ff1493;
+  text-shadow: 0 0 5px #ff1493;
+}
+
+[data-theme="vegas80s"] .date-input-helper-text {
+  background: #1a0a2e;
+  border: 2px solid #ff1493;
+  color: #ffffff;
+  text-shadow: 0 0 5px #ffd700;
+  box-shadow: 0 0 10px rgba(255, 20, 147, 0.5);
+}
+
+[data-theme="vegas80s"] .date-input-error-message {
+  background: #2a0000;
+  border: 2px solid #ff0000;
+  color: #ff8080;
+  text-shadow: 0 0 5px #ff0000;
+  box-shadow: 0 0 15px #ff0000;
+}
+
 [data-theme="vegas80s"] .calendar-selector {
   background: transparent;
 }

@@ -176,6 +176,67 @@
   
 }
 
+/* Date Input Components */
+[data-theme="terminal"] .date-input {
+  background: #000000;
+  border: 1px solid #00ff00;
+  border-radius: 0;
+  color: #00ff00;
+  font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
+  box-shadow: 0 0 5px rgba(0, 255, 0, 0.3);
+}
+
+[data-theme="terminal"] .date-input::placeholder {
+  color: #008000;
+}
+
+[data-theme="terminal"] .date-input:hover {
+  box-shadow: 0 0 10px rgba(0, 255, 0, 0.5);
+}
+
+[data-theme="terminal"] .date-input:focus {
+  border-color: #00ff00;
+  box-shadow: 0 0 15px #00ff00;
+  outline: none;
+}
+
+[data-theme="terminal"] .date-input.error {
+  border-color: #ff0000;
+  background: #1a0000;
+  box-shadow: 0 0 10px rgba(255, 0, 0, 0.5);
+  color: #ff0000;
+}
+
+[data-theme="terminal"] .date-input.error:focus {
+  border-color: #ff0000;
+  box-shadow: 0 0 15px #ff0000;
+}
+
+[data-theme="terminal"] .date-field-label {
+  color: #00ff00;
+  font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
+}
+
+[data-theme="terminal"] .date-field-separator {
+  color: #00ff00;
+}
+
+[data-theme="terminal"] .date-input-helper-text {
+  background: #000000;
+  border: 1px solid #00ff00;
+  color: #00ff00;
+  font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
+  box-shadow: 0 0 10px rgba(0, 255, 0, 0.3);
+}
+
+[data-theme="terminal"] .date-input-error-message {
+  background: #1a0000;
+  border: 1px solid #ff0000;
+  color: #ff0000;
+  font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
+  box-shadow: 0 0 10px rgba(255, 0, 0, 0.5);
+}
+
 [data-theme="terminal"] .calendar-selector {
   background: #000000;
 }

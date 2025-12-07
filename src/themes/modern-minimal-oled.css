@@ -127,6 +127,61 @@
   text-shadow: none;
 }
 
+/* Date Input Components */
+[data-theme="modern-minimal-oled"] .date-input {
+  background: #0a0a0a;
+  border: 1px solid #1a1a1a;
+  border-radius: 4px;
+  color: #e0e0e0;
+}
+
+[data-theme="modern-minimal-oled"] .date-input::placeholder {
+  color: #808080;
+}
+
+[data-theme="modern-minimal-oled"] .date-input:hover {
+  background: #151515;
+  border-color: #2a2a2a;
+}
+
+[data-theme="modern-minimal-oled"] .date-input:focus {
+  background: #151515;
+  border-color: #808080;
+  box-shadow: 0 0 0 2px rgba(128, 128, 128, 0.1);
+  outline: none;
+}
+
+[data-theme="modern-minimal-oled"] .date-input.error {
+  border-color: #ff4444;
+  background: #1a0a0a;
+}
+
+[data-theme="modern-minimal-oled"] .date-input.error:focus {
+  border-color: #ff4444;
+  box-shadow: 0 0 0 2px rgba(255, 68, 68, 0.1);
+}
+
+[data-theme="modern-minimal-oled"] .date-field-label {
+  color: #b0b0b0;
+}
+
+[data-theme="modern-minimal-oled"] .date-field-separator {
+  color: #808080;
+}
+
+[data-theme="modern-minimal-oled"] .date-input-helper-text {
+  background: #0a0a0a;
+  border: 1px solid #1a1a1a;
+  color: #b0b0b0;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+[data-theme="modern-minimal-oled"] .date-input-error-message {
+  background: #1a0a0a;
+  border: 1px solid #ff4444;
+  color: #ff8888;
+}
+
 [data-theme="modern-minimal-oled"] .calendar-selector {
   background: transparent;
 }

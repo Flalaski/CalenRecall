@@ -123,6 +123,10 @@ const BUILT_IN_THEME_METADATA: Record<string, Omit<ThemeInfo, 'name'>> = {
   'reading-room': {
     displayName: 'Reading Room',
     description: 'Traditional library reading room aesthetic with soft cream backgrounds, forest green accents, and quiet blue highlights - peaceful design for focused reading'
+  },
+  'temple': {
+    displayName: 'Temple',
+    description: 'Mormon temple aesthetic with marble interiors, custom carpets featuring diamond patterns and floral motifs, rich mahogany woodwork, and soft stained glass blues and greens - sacred and serene design'
   }
 };
 
@@ -165,7 +169,6 @@ function discoverThemes(): ThemeInfo[] {
     // Skip template/example files
     if (themeName.includes('template') || 
         themeName.includes('example') || 
-        themeName.includes('temp') ||
         themeName === 'README' ||
         themeName === 'COMPONENT_CLASSES' ||
         themeName === 'THEME_EXPANSION_STATUS') {

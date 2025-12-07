@@ -149,6 +149,65 @@
   font-weight: 600;
 }
 
+/* Date Input Components */
+[data-theme="librarians-study"] .date-input {
+  background: var(--library-bg-secondary);
+  border: 1px solid var(--border-gray);
+  border-radius: 4px;
+  color: var(--text-primary);
+  font-family: 'Georgia', 'Times New Roman', serif;
+}
+
+[data-theme="librarians-study"] .date-input::placeholder {
+  color: var(--text-muted);
+}
+
+[data-theme="librarians-study"] .date-input:hover {
+  background: var(--library-bg-tertiary);
+  border-color: var(--border-gray-light);
+}
+
+[data-theme="librarians-study"] .date-input:focus {
+  background: var(--library-bg-hover);
+  border-color: var(--accent-blue);
+  box-shadow: 0 0 0 2px rgba(44, 82, 130, 0.2);
+  outline: none;
+}
+
+[data-theme="librarians-study"] .date-input.error {
+  border-color: #c62828;
+  background: #ffebee;
+}
+
+[data-theme="librarians-study"] .date-input.error:focus {
+  border-color: #c62828;
+  box-shadow: 0 0 0 2px rgba(198, 40, 40, 0.2);
+}
+
+[data-theme="librarians-study"] .date-field-label {
+  color: var(--text-secondary);
+  font-family: 'Georgia', 'Times New Roman', serif;
+}
+
+[data-theme="librarians-study"] .date-field-separator {
+  color: var(--border-gray);
+}
+
+[data-theme="librarians-study"] .date-input-helper-text {
+  background: var(--library-bg-secondary);
+  border: 1px solid var(--border-gray);
+  color: var(--text-secondary);
+  font-family: 'Georgia', 'Times New Roman', serif;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="librarians-study"] .date-input-error-message {
+  background: #ffebee;
+  border: 1px solid #c62828;
+  color: #b71c1c;
+  font-family: 'Georgia', 'Times New Roman', serif;
+}
+
 [data-theme="librarians-study"] .view-mode-selector {
   background: transparent;
 }

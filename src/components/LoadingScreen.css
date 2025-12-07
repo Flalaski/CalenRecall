@@ -754,4 +754,17 @@
   }
 }
 
+/* Ensure loading screen always has dark space background, regardless of theme */
+/* High specificity to override theme-specific rules */
+[data-theme] .loading-screen,
+.loading-screen {
+  background: #000000 !important;
+}
+
+[data-theme] .loading-screen .space-background,
+.loading-screen .space-background,
+[data-theme] .space-background {
+  background: #000000 !important;
+}
+
 

@@ -141,6 +141,72 @@ export function playMicroBlip(): void {
   }
 }
 
+// Tab sound - for tabbing between date input fields
+export function playTabSound(): void {
+  const audioContext = getAudioContext();
+  if (!audioContext) return;
+  
+  if (audioContext.state === 'closed') return;
+  
+  try {
+    const now = audioContext.currentTime;
+    const oscillator = audioContext.createOscillator();
+    const gainNode = audioContext.createGain();
+    
+    // Light stepping sound - quick, crisp tick for field navigation
+    oscillator.type = 'sine';
+    oscillator.frequency.setValueAtTime(800, now);
+    oscillator.frequency.linearRampToValueAtTime(950, now + 0.03);
+    oscillator.frequency.linearRampToValueAtTime(700, now + 0.06);
+    
+    gainNode.gain.setValueAtTime(0, now);
+    gainNode.gain.linearRampToValueAtTime(0.2, now + 0.001);
+    gainNode.gain.exponentialRampToValueAtTime(0.04, now + 0.05);
+    gainNode.gain.linearRampToValueAtTime(0, now + 0.08);
+    
+    oscillator.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+    
+    oscillator.start(now);
+    oscillator.stop(now + 0.08);
+  } catch (error) {
+    console.debug('Tab sound error:', error);
+  }
+}
+
+// Date submit sound - for submitting date with Enter key
+export function playDateSubmitSound(): void {
+  const audioContext = getAudioContext();
+  if (!audioContext) return;
+  
+  if (audioContext.state === 'closed') return;
+  
+  try {
+    const now = audioContext.currentTime;
+    const oscillator = audioContext.createOscillator();
+    const gainNode = audioContext.createGain();
+    
+    // Confident date submission sound - ascending, decisive
+    oscillator.type = 'sine';
+    oscillator.frequency.setValueAtTime(550, now);
+    oscillator.frequency.linearRampToValueAtTime(750, now + 0.08);
+    oscillator.frequency.linearRampToValueAtTime(900, now + 0.15);
+    
+    gainNode.gain.setValueAtTime(0, now);
+    gainNode.gain.linearRampToValueAtTime(0.3, now + 0.005);
+    gainNode.gain.exponentialRampToValueAtTime(0.12, now + 0.12);
+    gainNode.gain.linearRampToValueAtTime(0, now + 0.18);
+    
+    oscillator.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+    
+    oscillator.start(now);
+    oscillator.stop(now + 0.18);
+  } catch (error) {
+    console.debug('Date submit sound error:', error);
+  }
+}
+
 // Navigation sound - for prev/next/today buttons
 export function playNavigationSound(): void {
   const audioContext = getAudioContext();
@@ -171,6 +237,141 @@ export function playNavigationSound(): void {
     oscillator.stop(now + 0.18);
   } catch (error) {
     console.debug('Navigation sound error:', error);
+  }
+}
+
+// Navigation journey sound - procedurally generated based on time tier
+// Creates unique sounds for each tier that reflect the journey through time scales
+export function playNavigationJourneySound(tier: 'decade' | 'year' | 'month' | 'week' | 'day'): void {
+  const audioContext = getAudioContext();
+  if (!audioContext) return;
+  
+  if (audioContext.state === 'closed') return;
+  
+  try {
+    const now = audioContext.currentTime;
+    
+    // Each tier has a distinct sound profile reflecting its temporal scale
+    // Larger time periods = deeper, more resonant sounds
+    // Smaller time periods = brighter, more precise sounds
+    switch (tier) {
+      case 'decade': {
+        // Deep, resonant sweep - vast temporal movement
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+        
+        oscillator.type = 'sine';
+        oscillator.frequency.setValueAtTime(150, now);
+        oscillator.frequency.linearRampToValueAtTime(200, now + 0.1);
+        oscillator.frequency.linearRampToValueAtTime(180, now + 0.2);
+        
+        gainNode.gain.setValueAtTime(0, now);
+        gainNode.gain.linearRampToValueAtTime(0.3, now + 0.01);
+        gainNode.gain.exponentialRampToValueAtTime(0.15, now + 0.15);
+        gainNode.gain.linearRampToValueAtTime(0, now + 0.25);
+        
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+        
+        oscillator.start(now);
+        oscillator.stop(now + 0.25);
+        break;
+      }
+      
+      case 'year': {
+        // Medium-low sweep with slight resonance - substantial time passage
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+        
+        oscillator.type = 'sine';
+        oscillator.frequency.setValueAtTime(250, now);
+        oscillator.frequency.linearRampToValueAtTime(320, now + 0.08);
+        oscillator.frequency.linearRampToValueAtTime(280, now + 0.15);
+        
+        gainNode.gain.setValueAtTime(0, now);
+        gainNode.gain.linearRampToValueAtTime(0.28, now + 0.008);
+        gainNode.gain.exponentialRampToValueAtTime(0.12, now + 0.12);
+        gainNode.gain.linearRampToValueAtTime(0, now + 0.2);
+        
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+        
+        oscillator.start(now);
+        oscillator.stop(now + 0.2);
+        break;
+      }
+      
+      case 'month': {
+        // Mid-range transition sound - moderate temporal step
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+        
+        oscillator.type = 'sine';
+        oscillator.frequency.setValueAtTime(400, now);
+        oscillator.frequency.linearRampToValueAtTime(500, now + 0.06);
+        oscillator.frequency.linearRampToValueAtTime(450, now + 0.12);
+        
+        gainNode.gain.setValueAtTime(0, now);
+        gainNode.gain.linearRampToValueAtTime(0.25, now + 0.006);
+        gainNode.gain.exponentialRampToValueAtTime(0.08, now + 0.1);
+        gainNode.gain.linearRampToValueAtTime(0, now + 0.16);
+        
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+        
+        oscillator.start(now);
+        oscillator.stop(now + 0.16);
+        break;
+      }
+      
+      case 'week': {
+        // Bright, quick transition - shorter temporal step
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+        
+        oscillator.type = 'sine';
+        oscillator.frequency.setValueAtTime(550, now);
+        oscillator.frequency.linearRampToValueAtTime(650, now + 0.05);
+        oscillator.frequency.linearRampToValueAtTime(600, now + 0.1);
+        
+        gainNode.gain.setValueAtTime(0, now);
+        gainNode.gain.linearRampToValueAtTime(0.22, now + 0.004);
+        gainNode.gain.exponentialRampToValueAtTime(0.06, now + 0.08);
+        gainNode.gain.linearRampToValueAtTime(0, now + 0.12);
+        
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+        
+        oscillator.start(now);
+        oscillator.stop(now + 0.12);
+        break;
+      }
+      
+      case 'day': {
+        // Crisp, precise tick - fine temporal movement
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+        
+        oscillator.type = 'sine';
+        oscillator.frequency.setValueAtTime(700, now);
+        oscillator.frequency.linearRampToValueAtTime(800, now + 0.03);
+        oscillator.frequency.linearRampToValueAtTime(750, now + 0.06);
+        
+        gainNode.gain.setValueAtTime(0, now);
+        gainNode.gain.linearRampToValueAtTime(0.2, now + 0.002);
+        gainNode.gain.exponentialRampToValueAtTime(0.04, now + 0.05);
+        gainNode.gain.linearRampToValueAtTime(0, now + 0.08);
+        
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+        
+        oscillator.start(now);
+        oscillator.stop(now + 0.08);
+        break;
+      }
+    }
+  } catch (error) {
+    console.debug('Navigation journey sound error:', error);
   }
 }
 

@@ -56,6 +56,171 @@
   margin-right: 1rem;
 }
 
+.date-input-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+  margin-left: 1rem;
+}
+
+.date-input-wrapper {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.date-input-fields {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.25rem;
+  flex-wrap: nowrap;
+}
+
+.date-field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  flex-shrink: 0;
+}
+
+.date-field-label {
+  font-size: 0.65rem;
+  color: #666;
+  font-family: 'Bebas Neue', 'Impact', 'Arial Black', 'Franklin Gothic Heavy', 'Arial Narrow', sans-serif;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  line-height: 1;
+}
+
+.date-field-separator {
+  font-size: 1rem;
+  color: #999;
+  padding-bottom: 0.4rem;
+  font-weight: bold;
+  line-height: 1;
+}
+
+.date-input {
+  padding: 0.4rem 0.5rem;
+  font-size: 0.9rem;
+  background: #f5f5f5;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  transition: all 0.2s;
+  font-family: 'Bebas Neue', 'Impact', 'Arial Black', 'Franklin Gothic Heavy', 'Arial Narrow', sans-serif;
+  letter-spacing: 0.05em;
+  text-transform: none;
+  color: #333;
+  text-align: center;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.date-input-year {
+  width: 120px;
+  min-width: 120px;
+}
+
+.date-input-month,
+.date-input-day {
+  width: 70px;
+  min-width: 70px;
+}
+
+.date-input::placeholder {
+  color: #999;
+  text-transform: none;
+  font-size: 0.85rem;
+  letter-spacing: 0.02em;
+}
+
+.date-input:hover {
+  background: #e8e8e8;
+  border-color: #bbb;
+}
+
+.date-input:focus {
+  outline: none;
+  border-color: #4a90e2;
+  box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.2);
+  background: white;
+}
+
+.date-input.error {
+  border-color: #e53935;
+  background: #ffebee;
+}
+
+.date-input.error:focus {
+  border-color: #e53935;
+  box-shadow: 0 0 0 2px rgba(229, 57, 53, 0.2);
+}
+
+.date-input-helper-text {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  margin-top: 0.25rem;
+  font-size: 0.7rem;
+  color: #666;
+  white-space: nowrap;
+  font-family: 'Bebas Neue', 'Impact', 'Arial Black', 'Franklin Gothic Heavy', 'Arial Narrow', sans-serif;
+  letter-spacing: 0.03em;
+  text-transform: none;
+  background: white;
+  padding: 0.2rem 0.4rem;
+  border-radius: 3px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  z-index: 10;
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.2s, visibility 0.2s;
+}
+
+.date-input-helper-text.visible {
+  opacity: 1;
+  visibility: visible;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+.date-input-error-message {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  margin-top: 0.25rem;
+  font-size: 0.75rem;
+  color: #e53935;
+  white-space: nowrap;
+  font-family: 'Bebas Neue', 'Impact', 'Arial Black', 'Franklin Gothic Heavy', 'Arial Narrow', sans-serif;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  background: #ffebee;
+  padding: 0.2rem 0.4rem;
+  border-radius: 3px;
+  z-index: 10;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.2s, visibility 0.2s;
+}
+
+.date-input-error-message.visible {
+  opacity: 1;
+  visibility: visible;
+}
+
 .date-label {
   font-size: 3.5rem;
   font-weight: 400;
@@ -301,5 +466,49 @@
 [data-theme="dark"] .calendar-info-details {
   border-top-color: #333;
   color: #888;
+}
+
+[data-theme="dark"] .date-input {
+  background: #2a2a2a;
+  border-color: #444;
+  color: #e0e0e0;
+}
+
+[data-theme="dark"] .date-input::placeholder {
+  color: #888;
+}
+
+[data-theme="dark"] .date-input:hover {
+  background: #333;
+  border-color: #555;
+}
+
+[data-theme="dark"] .date-input:focus {
+  background: #1e1e1e;
+  border-color: #4a90e2;
+}
+
+[data-theme="dark"] .date-input.error {
+  border-color: #e53935;
+  background: #3a1f1f;
+}
+
+[data-theme="dark"] .date-input-helper-text {
+  color: #aaa;
+  background: #2a2a2a;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+[data-theme="dark"] .date-input-error-message {
+  color: #ff6b6b;
+  background: #3a1f1f;
+}
+
+[data-theme="dark"] .date-field-label {
+  color: #aaa;
+}
+
+[data-theme="dark"] .date-field-separator {
+  color: #666;
 }
 

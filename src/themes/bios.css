@@ -254,6 +254,67 @@
   text-shadow: none;
 }
 
+/* Date Input Components */
+[data-theme="bios"] .date-input {
+  background: #000080;
+  border: 1px solid #0000ff;
+  border-radius: 0;
+  color: #ffffff;
+  font-family: 'Fixedsys', 'Terminal', 'MS Sans Serif', system-ui, monospace;
+  text-shadow: none;
+}
+
+[data-theme="bios"] .date-input::placeholder {
+  color: #8080ff;
+}
+
+[data-theme="bios"] .date-input:hover {
+  background: #0000a0;
+  border-color: #4040ff;
+}
+
+[data-theme="bios"] .date-input:focus {
+  background: #0000a0;
+  border-color: #8080ff;
+  box-shadow: 0 0 10px rgba(128, 128, 255, 0.5);
+  outline: none;
+}
+
+[data-theme="bios"] .date-input.error {
+  border-color: #ff0000;
+  background: #800000;
+  color: #ff8080;
+}
+
+[data-theme="bios"] .date-input.error:focus {
+  border-color: #ff0000;
+  box-shadow: 0 0 10px rgba(255, 0, 0, 0.5);
+}
+
+[data-theme="bios"] .date-field-label {
+  color: #ffffff;
+  font-family: 'Fixedsys', 'Terminal', 'MS Sans Serif', system-ui, monospace;
+}
+
+[data-theme="bios"] .date-field-separator {
+  color: #8080ff;
+}
+
+[data-theme="bios"] .date-input-helper-text {
+  background: #000080;
+  border: 1px solid #0000ff;
+  color: #ffffff;
+  font-family: 'Fixedsys', 'Terminal', 'MS Sans Serif', system-ui, monospace;
+  box-shadow: 0 0 10px rgba(0, 0, 255, 0.3);
+}
+
+[data-theme="bios"] .date-input-error-message {
+  background: #800000;
+  border: 1px solid #ff0000;
+  color: #ff8080;
+  font-family: 'Fixedsys', 'Terminal', 'MS Sans Serif', system-ui, monospace;
+}
+
 [data-theme="bios"] .calendar-selector {
   background: #000080;
 }

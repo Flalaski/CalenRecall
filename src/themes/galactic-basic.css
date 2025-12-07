@@ -217,6 +217,67 @@
   
 }
 
+/* Date Input Components */
+[data-theme="galactic-basic"] .date-input {
+  background: #001122;
+  border: 1px solid #00aaff;
+  border-radius: 0;
+  color: #00aaff;
+  font-family: 'Arial', 'Helvetica', 'Verdana', sans-serif;
+  box-shadow: 0 0 10px rgba(0, 170, 255, 0.3);
+}
+
+[data-theme="galactic-basic"] .date-input::placeholder {
+  color: #0066aa;
+}
+
+[data-theme="galactic-basic"] .date-input:hover {
+  box-shadow: 0 0 15px rgba(0, 170, 255, 0.5);
+}
+
+[data-theme="galactic-basic"] .date-input:focus {
+  border-color: #66ccff;
+  box-shadow: 0 0 20px #00aaff, inset 0 0 10px rgba(0, 170, 255, 0.2);
+  outline: none;
+}
+
+[data-theme="galactic-basic"] .date-input.error {
+  border-color: #ff0000;
+  background: #220000;
+  box-shadow: 0 0 10px rgba(255, 0, 0, 0.5);
+  color: #ff6666;
+}
+
+[data-theme="galactic-basic"] .date-input.error:focus {
+  border-color: #ff0000;
+  box-shadow: 0 0 20px #ff0000, inset 0 0 10px rgba(255, 0, 0, 0.2);
+}
+
+[data-theme="galactic-basic"] .date-field-label {
+  color: #66ccff;
+  font-family: 'Arial', 'Helvetica', 'Verdana', sans-serif;
+}
+
+[data-theme="galactic-basic"] .date-field-separator {
+  color: #00aaff;
+}
+
+[data-theme="galactic-basic"] .date-input-helper-text {
+  background: #001122;
+  border: 1px solid #00aaff;
+  color: #00aaff;
+  font-family: 'Arial', 'Helvetica', 'Verdana', sans-serif;
+  box-shadow: 0 0 10px rgba(0, 170, 255, 0.3);
+}
+
+[data-theme="galactic-basic"] .date-input-error-message {
+  background: #220000;
+  border: 1px solid #ff0000;
+  color: #ff6666;
+  font-family: 'Arial', 'Helvetica', 'Verdana', sans-serif;
+  box-shadow: 0 0 10px rgba(255, 0, 0, 0.5);
+}
+
 [data-theme="galactic-basic"] .calendar-selector {
   background: #000011;
 }

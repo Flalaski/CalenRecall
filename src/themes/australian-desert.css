@@ -114,6 +114,61 @@
   color: #f4e4c1;
 }
 
+/* Date Input Components */
+[data-theme="australian-desert"] .date-input {
+  background: #7a4a35;
+  border: 1px solid #a6734f;
+  border-radius: 4px;
+  color: #f4e4c1;
+}
+
+[data-theme="australian-desert"] .date-input::placeholder {
+  color: #d4b494;
+}
+
+[data-theme="australian-desert"] .date-input:hover {
+  background: #8a5a45;
+  border-color: #b6896f;
+}
+
+[data-theme="australian-desert"] .date-input:focus {
+  background: #8a5a45;
+  border-color: #d48728;
+  box-shadow: 0 0 0 2px rgba(212, 135, 40, 0.3);
+  outline: none;
+}
+
+[data-theme="australian-desert"] .date-input.error {
+  border-color: #ff6b6b;
+  background: #5a2a2a;
+}
+
+[data-theme="australian-desert"] .date-input.error:focus {
+  border-color: #ff6b6b;
+  box-shadow: 0 0 0 2px rgba(255, 107, 107, 0.3);
+}
+
+[data-theme="australian-desert"] .date-field-label {
+  color: #d4b494;
+}
+
+[data-theme="australian-desert"] .date-field-separator {
+  color: #a6734f;
+}
+
+[data-theme="australian-desert"] .date-input-helper-text {
+  background: #7a4a35;
+  border: 1px solid #a6734f;
+  color: #f4e4c1;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+[data-theme="australian-desert"] .date-input-error-message {
+  background: #5a2a2a;
+  border: 1px solid #ff6b6b;
+  color: #ffaaaa;
+}
+
 [data-theme="australian-desert"] .calendar-selector {
   background: #7a4a35;
 }

@@ -54,6 +54,61 @@
   color: #your-date-label-color;
 }
 
+/* Date Input Components */
+[data-theme="your-theme-name"] .date-input {
+  background: #your-input-background;
+  border: 1px solid #your-border-color;
+  border-radius: 4px;
+  color: #your-text-color;
+}
+
+[data-theme="your-theme-name"] .date-input::placeholder {
+  color: #your-placeholder-color;
+}
+
+[data-theme="your-theme-name"] .date-input:hover {
+  background: #your-input-hover-background;
+  border-color: #your-hover-border-color;
+}
+
+[data-theme="your-theme-name"] .date-input:focus {
+  background: #your-input-focus-background;
+  border-color: #your-focus-border-color;
+  box-shadow: 0 0 0 2px rgba(your-focus-color-rgb, 0.2);
+  outline: none;
+}
+
+[data-theme="your-theme-name"] .date-input.error {
+  border-color: #your-error-color;
+  background: #your-error-background;
+}
+
+[data-theme="your-theme-name"] .date-input.error:focus {
+  border-color: #your-error-color;
+  box-shadow: 0 0 0 2px rgba(your-error-color-rgb, 0.2);
+}
+
+[data-theme="your-theme-name"] .date-field-label {
+  color: #your-label-color;
+}
+
+[data-theme="your-theme-name"] .date-field-separator {
+  color: #your-separator-color;
+}
+
+[data-theme="your-theme-name"] .date-input-helper-text {
+  background: #your-helper-background;
+  border: 1px solid #your-border-color;
+  color: #your-helper-text-color;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="your-theme-name"] .date-input-error-message {
+  background: #your-error-background;
+  border: 1px solid #your-error-color;
+  color: #your-error-text-color;
+}
+
 /* Calendar View */
 [data-theme="your-theme-name"] .calendar-grid {
   background: #your-calendar-grid-background;

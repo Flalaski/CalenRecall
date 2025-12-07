@@ -149,6 +149,65 @@
   font-weight: 600;
 }
 
+/* Date Input Components */
+[data-theme="research"] .date-input {
+  background: var(--archive-bg-secondary);
+  border: 1px solid var(--border-aged);
+  border-radius: 4px;
+  color: var(--text-primary);
+  font-family: 'Georgia', 'Times New Roman', serif;
+}
+
+[data-theme="research"] .date-input::placeholder {
+  color: var(--text-muted);
+}
+
+[data-theme="research"] .date-input:hover {
+  background: var(--archive-bg-tertiary);
+  border-color: var(--border-aged-light);
+}
+
+[data-theme="research"] .date-input:focus {
+  background: var(--archive-bg-hover);
+  border-color: var(--accent-brown);
+  box-shadow: 0 0 0 2px rgba(90, 74, 58, 0.2);
+  outline: none;
+}
+
+[data-theme="research"] .date-input.error {
+  border-color: #c62828;
+  background: #ffebee;
+}
+
+[data-theme="research"] .date-input.error:focus {
+  border-color: #c62828;
+  box-shadow: 0 0 0 2px rgba(198, 40, 40, 0.2);
+}
+
+[data-theme="research"] .date-field-label {
+  color: var(--text-secondary);
+  font-family: 'Georgia', 'Times New Roman', serif;
+}
+
+[data-theme="research"] .date-field-separator {
+  color: var(--border-aged);
+}
+
+[data-theme="research"] .date-input-helper-text {
+  background: var(--archive-bg-secondary);
+  border: 1px solid var(--border-aged);
+  color: var(--text-secondary);
+  font-family: 'Georgia', 'Times New Roman', serif;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="research"] .date-input-error-message {
+  background: #ffebee;
+  border: 1px solid #c62828;
+  color: #b71c1c;
+  font-family: 'Georgia', 'Times New Roman', serif;
+}
+
 [data-theme="research"] .view-mode-selector {
   background: transparent;
 }

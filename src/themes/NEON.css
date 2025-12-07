@@ -123,6 +123,69 @@
   text-shadow: 0 0 10px #00ffff, 0 0 20px #00ffff;
 }
 
+/* Date Input Components */
+[data-theme="NEON"] .date-input {
+  background: #1a0033;
+  border: 2px solid #ff00ff;
+  border-radius: 4px;
+  color: #00ffff;
+  text-shadow: 0 0 5px #00ffff;
+  box-shadow: 0 0 10px rgba(255, 0, 255, 0.5);
+}
+
+[data-theme="NEON"] .date-input::placeholder {
+  color: #ff00ff;
+  text-shadow: 0 0 5px #ff00ff;
+}
+
+[data-theme="NEON"] .date-input:hover {
+  background: #330066;
+  border-color: #00ffff;
+  box-shadow: 0 0 15px #00ffff;
+}
+
+[data-theme="NEON"] .date-input:focus {
+  background: #330066;
+  border-color: #ffff00;
+  box-shadow: 0 0 20px #ffff00, inset 0 0 10px #00ffff;
+  outline: none;
+}
+
+[data-theme="NEON"] .date-input.error {
+  border-color: #ff0000;
+  background: #330000;
+  box-shadow: 0 0 15px #ff0000;
+}
+
+[data-theme="NEON"] .date-input.error:focus {
+  border-color: #ff0000;
+  box-shadow: 0 0 20px #ff0000, inset 0 0 10px #ff0000;
+}
+
+[data-theme="NEON"] .date-field-label {
+  color: #00ffff;
+  text-shadow: 0 0 5px #00ffff;
+}
+
+[data-theme="NEON"] .date-field-separator {
+  color: #ffff00;
+  text-shadow: 0 0 5px #ffff00;
+}
+
+[data-theme="NEON"] .date-input-helper-text {
+  background: #1a0033;
+  border: 2px solid #ff00ff;
+  color: #00ffff;
+  box-shadow: 0 0 10px rgba(255, 0, 255, 0.5);
+}
+
+[data-theme="NEON"] .date-input-error-message {
+  background: #330000;
+  border: 2px solid #ff0000;
+  color: #ff8080;
+  box-shadow: 0 0 15px #ff0000;
+}
+
 [data-theme="NEON"] .calendar-selector {
   background: transparent;
 }

@@ -1,0 +1,741 @@
+/**
+ * Temple Theme
+ * Mormon temple aesthetic with marble interiors, custom carpets, intricate woodwork, and stained glass
+ * Sacred and serene design inspired by temple architecture and spiritual symbolism
+ * 
+ * Design Elements:
+ * - Marble textures: White Vermont marble, Crema Marfil from Turkey
+ * - Custom carpets: Diamond patterns, circle accents, floral motifs in green, teal, cream, gold, blue
+ * - Rich woodwork: Mahogany, cherrywood, walnut tones
+ * - Stained glass: Soft blues and greens with natural light effects
+ * - Gold accents: Soft gold highlights throughout
+ * - Spiritual symbolism: Regional cultural elements and natural motifs
+ */
+
+/* ============================================
+   COLOR PALETTE - CSS Custom Properties
+   ============================================ */
+[data-theme="temple"] {
+  /* Backgrounds - Marble tones (white, cream, Crema Marfil) */
+  --temple-bg: #faf9f6;                    /* Primary marble white */
+  --temple-bg-secondary: #f5f4f1;          /* Secondary marble cream */
+  --temple-bg-tertiary: #f0efe8;           /* Tertiary marble tone */
+  --temple-bg-hover: #ebe9e0;              /* Hover state */
+  --temple-bg-dark: #e5e3d8;               /* Darker marble accent */
+  
+  /* Text - Deep, readable tones */
+  --text-primary: #2c2416;                /* Rich brown like aged wood */
+  --text-secondary: #3d3425;              /* Secondary text */
+  --text-muted: #5a4f3d;                  /* Muted text */
+  
+  /* Marble Accents */
+  --marble-white: #ffffff;
+  --marble-cream: #f5f4f1;
+  --marble-crema-marfil: #e8e4d8;        /* Crema Marfil from Turkey */
+  
+  /* Woodwork - Rich hardwoods */
+  --wood-mahogany: #8b5a3c;              /* African mahogany */
+  --wood-mahogany-light: #a67c5a;
+  --wood-mahogany-dark: #6b4328;
+  --wood-cherry: #9d6b4f;                /* Cherrywood */
+  --wood-walnut: #6b5a4a;                /* Walnut */
+  --wood-accent: var(--wood-mahogany);
+  
+  /* Carpets - Custom patterns with regional motifs */
+  --carpet-green: #4a6b5a;               /* Green (Colorado flora) */
+  --carpet-teal: #4a7a8b;                /* Teal (Spanish influence) */
+  --carpet-cream: #f5f0e8;               /* Cream base */
+  --carpet-gold: #d4b896;                /* Soft gold */
+  --carpet-blue: #5a7a9b;                /* Blue (Gulf waters) */
+  
+  /* Stained Glass - Soft blues and greens */
+  --glass-blue: #7a9bb8;                 /* Soft blue stained glass */
+  --glass-blue-light: #9bb8d4;
+  --glass-green: #7a9b8b;                /* Soft green stained glass */
+  --glass-green-light: #9bb8a8;
+  
+  /* Gold Accents - Illuminated highlights */
+  --gold-soft: #d4b896;                  /* Soft gold */
+  --gold-light: #e8d4b8;
+  --gold-dark: #b8966a;
+  
+  /* Borders - Wood and marble */
+  --border-wood: var(--wood-mahogany);
+  --border-wood-light: var(--wood-mahogany-light);
+  --border-marble: #d4d0c8;
+  
+  /* Highlights */
+  --highlight-gold: rgba(212, 184, 150, 0.3);
+  --highlight-glass-blue: rgba(122, 155, 184, 0.15);
+  --highlight-glass-green: rgba(122, 155, 139, 0.15);
+  --highlight-carpet: rgba(74, 107, 90, 0.1);
+  
+  /* Base Typography - Elegant serif */
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+/* ============================================
+   BASE STYLES - Marble Background with Texture
+   ============================================ */
+[data-theme="temple"] html,
+[data-theme="temple"] body {
+  background: var(--temple-bg);
+  color: var(--text-primary);
+  --theme-body-bg: var(--temple-bg);
+  /* Marble texture with subtle veining and stained glass light effects */
+  background-image: 
+    radial-gradient(circle at 20% 30%, rgba(122, 155, 184, 0.08) 0%, transparent 50%),
+    radial-gradient(circle at 80% 70%, rgba(122, 155, 139, 0.08) 0%, transparent 50%),
+    radial-gradient(ellipse at 50% 50%, rgba(212, 184, 150, 0.06) 0%, transparent 60%),
+    repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(212, 208, 200, 0.03) 2px, rgba(212, 208, 200, 0.03) 4px),
+    linear-gradient(135deg, #faf9f6 0%, #f5f4f1 48%, #f0efe8 100%);
+  background-attachment: fixed;
+  position: relative;
+}
+
+[data-theme="temple"] #root {
+  background: var(--temple-bg);
+}
+
+[data-theme="temple"] .app {
+  background: var(--temple-bg);
+}
+
+[data-theme="temple"] .app-content {
+  background: var(--temple-bg);
+  gap: 2px;
+}
+
+[data-theme="temple"] .timeline-section {
+  background: var(--temple-bg);
+}
+
+[data-theme="temple"] .editor-section {
+  background: var(--temple-bg);
+  border-left: 3px solid var(--wood-mahogany);
+  box-shadow: inset 4px 0 12px rgba(139, 90, 60, 0.1);
+  position: relative;
+}
+
+/* Woodwork detail on editor section */
+[data-theme="temple"] .editor-section::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -3px;
+  width: 3px;
+  height: 100%;
+  background: linear-gradient(180deg, 
+    var(--wood-mahogany-dark) 0%,
+    var(--wood-mahogany) 50%,
+    var(--wood-mahogany-dark) 100%);
+  box-shadow: inset 0 0 4px rgba(107, 67, 40, 0.3);
+}
+
+/* ============================================
+   NAVIGATION BAR - Mahogany woodwork with gold accents
+   ============================================ */
+[data-theme="temple"] .navigation-bar {
+  background: var(--temple-bg-secondary);
+  border-bottom: 3px solid var(--wood-mahogany);
+  box-shadow: 0 2px 8px rgba(139, 90, 60, 0.15);
+  position: relative;
+}
+
+[data-theme="temple"] .navigation-bar::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, 
+    transparent 0%, 
+    var(--gold-soft) 20%, 
+    var(--gold-soft) 80%, 
+    transparent 100%);
+  opacity: 0.4;
+}
+
+[data-theme="temple"] .navigation-bar-top-row {
+  background: var(--temple-bg-secondary);
+  border-bottom: 1px solid var(--border-marble);
+}
+
+[data-theme="temple"] .nav-controls {
+  background: transparent;
+}
+
+[data-theme="temple"] .nav-button,
+[data-theme="temple"] .view-mode-button {
+  background: var(--temple-bg);
+  border: 2px solid var(--wood-mahogany);
+  border-radius: 4px;
+  color: var(--text-primary);
+  padding: 6px 14px;
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 13px;
+  transition: all 0.25s ease;
+  box-shadow: 0 1px 3px rgba(139, 90, 60, 0.1);
+}
+
+[data-theme="temple"] .nav-button:hover,
+[data-theme="temple"] .view-mode-button:hover {
+  background: var(--highlight-gold);
+  border-color: var(--wood-mahogany-dark);
+  box-shadow: 0 2px 6px rgba(139, 90, 60, 0.2);
+  transform: translateY(-1px);
+}
+
+[data-theme="temple"] .view-mode-button.active {
+  background: var(--wood-mahogany);
+  color: var(--temple-bg);
+  border-color: var(--gold-soft);
+  box-shadow: 0 2px 8px rgba(139, 90, 60, 0.3);
+}
+
+[data-theme="temple"] .today-button {
+  background: var(--temple-bg);
+  border: 2px solid var(--wood-mahogany);
+  border-radius: 4px;
+  color: var(--text-primary);
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 13px;
+  transition: all 0.25s ease;
+}
+
+[data-theme="temple"] .today-button:hover {
+  background: var(--highlight-gold);
+  border-color: var(--wood-mahogany-dark);
+}
+
+[data-theme="temple"] .date-label {
+  font-family: 'Georgia', 'Times New Roman', serif;
+  color: var(--text-primary);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+/* Date Input Components */
+[data-theme="temple"] .date-input {
+  background: var(--temple-bg-secondary);
+  border: 1px solid var(--border-marble);
+  border-radius: 4px;
+  color: var(--text-primary);
+  font-family: 'Georgia', 'Times New Roman', serif;
+}
+
+[data-theme="temple"] .date-input::placeholder {
+  color: var(--text-muted);
+}
+
+[data-theme="temple"] .date-input:hover {
+  background: var(--temple-bg-tertiary);
+  border-color: var(--wood-mahogany-light);
+}
+
+[data-theme="temple"] .date-input:focus {
+  background: var(--temple-bg);
+  border-color: var(--gold-soft);
+  box-shadow: 0 0 0 2px rgba(212, 184, 150, 0.2);
+  outline: none;
+}
+
+[data-theme="temple"] .date-input.error {
+  border-color: #c62828;
+  background: #ffebee;
+}
+
+[data-theme="temple"] .date-field-label {
+  color: var(--text-secondary);
+  font-family: 'Georgia', 'Times New Roman', serif;
+}
+
+[data-theme="temple"] .date-field-separator {
+  color: var(--wood-mahogany);
+}
+
+/* ============================================
+   CALENDAR VIEW - Marble with carpet patterns
+   ============================================ */
+[data-theme="temple"] .calendar-grid {
+  background: var(--temple-bg-secondary);
+  border: 2px solid var(--wood-mahogany);
+  border-radius: 4px;
+  box-shadow: 0 2px 8px rgba(139, 90, 60, 0.12);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Carpet pattern overlay */
+[data-theme="temple"] .calendar-grid::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    repeating-linear-gradient(45deg, transparent, transparent 20px, rgba(74, 107, 90, 0.02) 20px, rgba(74, 107, 90, 0.02) 40px),
+    radial-gradient(circle at 30% 30%, rgba(212, 184, 150, 0.04) 0%, transparent 50%);
+  pointer-events: none;
+}
+
+[data-theme="temple"] .calendar-cell {
+  background: var(--temple-bg);
+  border: 1px solid var(--border-marble);
+  border-radius: 2px;
+  color: var(--text-primary);
+  transition: all 0.25s ease;
+  position: relative;
+}
+
+[data-theme="temple"] .calendar-cell:hover {
+  background: var(--highlight-gold);
+  border-color: var(--wood-mahogany);
+  box-shadow: 0 2px 4px rgba(139, 90, 60, 0.15);
+}
+
+[data-theme="temple"] .calendar-cell.today {
+  background: var(--highlight-gold);
+  color: var(--text-primary);
+  border: 2px solid var(--wood-mahogany);
+  font-weight: 600;
+  box-shadow: 0 2px 6px rgba(139, 90, 60, 0.2);
+}
+
+[data-theme="temple"] .calendar-cell.selected {
+  background: var(--wood-mahogany);
+  color: var(--temple-bg);
+  border-color: var(--gold-soft);
+  box-shadow: 0 2px 8px rgba(139, 90, 60, 0.3);
+}
+
+[data-theme="temple"] .calendar-cell.has-entry {
+  background: var(--highlight-carpet);
+  border: 2px solid var(--carpet-green);
+}
+
+[data-theme="temple"] .weekday-header {
+  background: var(--temple-bg-dark);
+  border-bottom: 2px solid var(--wood-mahogany);
+  color: var(--text-primary);
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-weight: 600;
+}
+
+/* ============================================
+   TIMELINE VIEW
+   ============================================ */
+[data-theme="temple"] .timeline-grid {
+  background: var(--temple-bg-secondary);
+  border: 2px solid var(--wood-mahogany);
+  border-radius: 4px;
+  box-shadow: 0 2px 8px rgba(139, 90, 60, 0.12);
+}
+
+[data-theme="temple"] .timeline-cell {
+  background: var(--temple-bg);
+  border: 1px solid var(--border-marble);
+  border-radius: 2px;
+  color: var(--text-primary);
+  transition: all 0.25s ease;
+}
+
+[data-theme="temple"] .timeline-cell:hover {
+  background: var(--highlight-gold);
+  border-color: var(--wood-mahogany);
+}
+
+[data-theme="temple"] .timeline-cell.today {
+  background: var(--highlight-gold);
+  color: var(--text-primary);
+  border: 2px solid var(--wood-mahogany);
+  font-weight: 600;
+}
+
+/* ============================================
+   ENTRY CARDS AND LISTS - Carpet textures
+   ============================================ */
+[data-theme="temple"] .week-entry-group {
+  background: var(--carpet-cream);
+  border: 1px solid var(--carpet-green);
+  border-radius: 4px;
+  box-shadow: 0 2px 4px rgba(74, 107, 90, 0.1);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Diamond pattern on carpet */
+[data-theme="temple"] .week-entry-group::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    repeating-linear-gradient(45deg, transparent, transparent 15px, rgba(74, 107, 90, 0.03) 15px, rgba(74, 107, 90, 0.03) 16px),
+    repeating-linear-gradient(-45deg, transparent, transparent 15px, rgba(212, 184, 150, 0.02) 15px, rgba(212, 184, 150, 0.02) 16px);
+  pointer-events: none;
+}
+
+[data-theme="temple"] .week-entry-item {
+  background: var(--temple-bg);
+  border: 1px solid var(--border-marble);
+  border-left: 3px solid var(--wood-mahogany);
+  border-radius: 3px;
+  transition: all 0.25s ease;
+}
+
+[data-theme="temple"] .week-entry-item:hover {
+  background: var(--highlight-gold);
+  border-color: var(--wood-mahogany);
+}
+
+[data-theme="temple"] .journal-entry-item {
+  background: var(--temple-bg-secondary);
+  border: 1px solid var(--border-marble);
+  border-left: 3px solid var(--wood-mahogany);
+  border-radius: 3px;
+  transition: all 0.25s ease;
+  box-shadow: 0 1px 3px rgba(139, 90, 60, 0.08);
+}
+
+[data-theme="temple"] .journal-entry-item:hover {
+  background: var(--highlight-gold);
+  border-color: var(--wood-mahogany);
+  box-shadow: 0 2px 6px rgba(139, 90, 60, 0.15);
+}
+
+[data-theme="temple"] .journal-entry-item.selected {
+  background: var(--wood-mahogany);
+  color: var(--temple-bg);
+  border-color: var(--gold-soft);
+  box-shadow: 0 2px 8px rgba(139, 90, 60, 0.3);
+}
+
+/* ============================================
+   EDITOR AND VIEWER - Stained glass effects
+   ============================================ */
+[data-theme="temple"] .journal-editor,
+[data-theme="temple"] .entry-viewer {
+  background: var(--temple-bg);
+}
+
+[data-theme="temple"] .editor-header,
+[data-theme="temple"] .viewer-header {
+  background: var(--temple-bg-secondary);
+  border-bottom: 3px solid var(--wood-mahogany);
+  box-shadow: 0 2px 6px rgba(139, 90, 60, 0.1);
+}
+
+[data-theme="temple"] .viewer-header h3,
+[data-theme="temple"] .editor-header h3 {
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 16px;
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+[data-theme="temple"] .title-input,
+[data-theme="temple"] .content-input,
+[data-theme="temple"] .tag-input {
+  background: var(--temple-bg);
+  border: 1px solid var(--border-marble);
+  border-radius: 3px;
+  color: var(--text-primary);
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 14px;
+  padding: 8px;
+  transition: all 0.25s ease;
+}
+
+[data-theme="temple"] .title-input:focus,
+[data-theme="temple"] .content-input:focus,
+[data-theme="temple"] .tag-input:focus {
+  border-color: var(--gold-soft);
+  outline: 2px solid var(--gold-soft);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 3px rgba(212, 184, 150, 0.15);
+}
+
+[data-theme="temple"] .viewer-content {
+  background: var(--temple-bg-secondary);
+  color: var(--text-primary);
+  box-shadow: 0 2px 6px rgba(139, 90, 60, 0.1);
+  border-radius: 2px;
+}
+
+[data-theme="temple"] .viewer-title {
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary);
+  border-bottom: 2px solid var(--wood-mahogany);
+  padding-bottom: 8px;
+  margin-bottom: 12px;
+}
+
+[data-theme="temple"] .viewer-text {
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 14px;
+  color: var(--text-primary);
+  line-height: 1.7;
+}
+
+/* ============================================
+   BUTTONS - Wood and gold
+   ============================================ */
+[data-theme="temple"] .edit-button,
+[data-theme="temple"] .save-button,
+[data-theme="temple"] .cancel-button,
+[data-theme="temple"] .delete-button,
+[data-theme="temple"] .new-entry-button {
+  background: var(--temple-bg);
+  border: 2px solid var(--wood-mahogany);
+  border-radius: 4px;
+  color: var(--text-primary);
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 13px;
+  padding: 8px 16px;
+  transition: all 0.25s ease;
+}
+
+[data-theme="temple"] .save-button {
+  background: var(--wood-mahogany);
+  color: var(--temple-bg);
+  border-color: var(--gold-soft);
+  font-weight: 600;
+  box-shadow: 0 2px 4px rgba(139, 90, 60, 0.2);
+}
+
+[data-theme="temple"] .save-button:hover:not(:disabled) {
+  background: var(--wood-mahogany-dark);
+  box-shadow: 0 2px 6px rgba(139, 90, 60, 0.3);
+}
+
+[data-theme="temple"] .delete-button:hover {
+  background: #8b4a3a;
+  border-color: #6b2a1a;
+  color: var(--temple-bg);
+}
+
+[data-theme="temple"] .edit-button:hover,
+[data-theme="temple"] .new-entry-button:hover {
+  background: var(--highlight-gold);
+  border-color: var(--wood-mahogany-dark);
+}
+
+/* ============================================
+   MODALS - Marble with wood trim
+   ============================================ */
+[data-theme="temple"] .entry-edit-modal-overlay {
+  background-color: rgba(44, 36, 22, 0.6);
+}
+
+[data-theme="temple"] .entry-edit-modal {
+  background: var(--temple-bg-secondary);
+  border: 3px solid var(--wood-mahogany);
+  border-radius: 4px;
+  box-shadow: 0 4px 20px rgba(44, 36, 22, 0.4);
+}
+
+[data-theme="temple"] .modal-header {
+  background: var(--temple-bg-dark);
+  border-bottom: 2px solid var(--wood-mahogany);
+}
+
+[data-theme="temple"] .modal-content {
+  background: var(--temple-bg-secondary);
+}
+
+[data-theme="temple"] .modal-footer {
+  background: var(--temple-bg-secondary);
+  border-top: 2px solid var(--wood-mahogany);
+}
+
+/* ============================================
+   TAGS - Carpet colors
+   ============================================ */
+[data-theme="temple"] .tag,
+[data-theme="temple"] .viewer-tag,
+[data-theme="temple"] .modal-tag {
+  background: var(--carpet-cream);
+  color: var(--text-primary);
+  border: 1px solid var(--carpet-green);
+  border-radius: 3px;
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 12px;
+  padding: 4px 8px;
+}
+
+/* ============================================
+   SEARCH VIEW
+   ============================================ */
+[data-theme="temple"] .search-view {
+  background: var(--temple-bg);
+  color: var(--text-primary);
+}
+
+[data-theme="temple"] .search-header {
+  background: var(--temple-bg-dark);
+  border-bottom: 2px solid var(--wood-mahogany);
+}
+
+[data-theme="temple"] .search-input {
+  background: var(--temple-bg-secondary);
+  border: 1px solid var(--border-marble);
+  border-radius: 3px;
+  color: var(--text-primary);
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 14px;
+  padding: 8px 12px;
+}
+
+[data-theme="temple"] .search-input:focus {
+  border-color: var(--gold-soft);
+  outline: 2px solid var(--gold-soft);
+  outline-offset: 2px;
+}
+
+[data-theme="temple"] .search-result-item {
+  background: var(--temple-bg-secondary);
+  border: 1px solid var(--border-marble);
+  border-left: 3px solid var(--wood-mahogany);
+  border-radius: 3px;
+  transition: all 0.25s ease;
+}
+
+[data-theme="temple"] .search-result-item:hover {
+  background: var(--highlight-gold);
+  border-color: var(--wood-mahogany);
+}
+
+/* ============================================
+   PREFERENCES
+   ============================================ */
+[data-theme="temple"] .preferences-container {
+  background: var(--temple-bg);
+  color: var(--text-primary);
+}
+
+[data-theme="temple"] .preferences-header {
+  background: var(--temple-bg-dark);
+  border-bottom: 2px solid var(--wood-mahogany);
+}
+
+[data-theme="temple"] .preferences-section {
+  background: var(--temple-bg-secondary);
+  border: 2px solid var(--wood-mahogany);
+  border-radius: 4px;
+  box-shadow: 0 2px 6px rgba(139, 90, 60, 0.1);
+}
+
+[data-theme="temple"] .preference-item input,
+[data-theme="temple"] .preference-item select {
+  background: var(--temple-bg);
+  border: 1px solid var(--border-marble);
+  border-radius: 3px;
+  color: var(--text-primary);
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 14px;
+  padding: 6px 10px;
+}
+
+[data-theme="temple"] .preference-item input:focus,
+[data-theme="temple"] .preference-item select:focus {
+  border-color: var(--gold-soft);
+  outline: 2px solid var(--gold-soft);
+  outline-offset: 2px;
+}
+
+/* ============================================
+   JOURNAL LIST
+   ============================================ */
+[data-theme="temple"] .journal-list {
+  background: var(--temple-bg);
+  border-right: 3px solid var(--wood-mahogany);
+}
+
+[data-theme="temple"] .journal-list-header {
+  background: var(--temple-bg-dark);
+  border-bottom: 2px solid var(--wood-mahogany);
+}
+
+/* ============================================
+   LOADING SCREEN - Stained glass effect
+   ============================================ */
+[data-theme="temple"] .loading-screen {
+  background: var(--temple-bg);
+  color: var(--text-primary);
+}
+
+[data-theme="temple"] .loading-progress-bar {
+  background: var(--border-marble);
+  border-radius: 4px;
+}
+
+[data-theme="temple"] .loading-progress-fill {
+  background: linear-gradient(90deg, var(--wood-mahogany), var(--gold-soft));
+  box-shadow: 0 0 10px rgba(212, 184, 150, 0.5);
+}
+
+/* ============================================
+   TIME RANGE BADGES - Stained glass colors
+   ============================================ */
+[data-theme="temple"] .entry-decade {
+  background: var(--highlight-glass-blue);
+  color: var(--glass-blue);
+  border: 1px solid var(--glass-blue);
+}
+
+[data-theme="temple"] .entry-year {
+  background: var(--highlight-gold);
+  color: var(--wood-mahogany-dark);
+  border: 1px solid var(--gold-soft);
+}
+
+[data-theme="temple"] .entry-month {
+  background: var(--highlight-glass-green);
+  color: var(--glass-green);
+  border: 1px solid var(--glass-green);
+}
+
+[data-theme="temple"] .entry-week {
+  background: var(--highlight-carpet);
+  color: var(--carpet-green);
+  border: 1px solid var(--carpet-green);
+}
+
+[data-theme="temple"] .entry-day {
+  background: var(--highlight-gold);
+  color: var(--wood-mahogany-dark);
+  border: 1px solid var(--gold-soft);
+}
+
+/* ============================================
+   MINIMAP
+   ============================================ */
+[data-theme="temple"] .minimap-container {
+  background: var(--temple-bg-secondary);
+  border: 1px solid var(--wood-mahogany);
+  border-radius: 4px;
+}
+
+[data-theme="temple"] .minimap-timeline {
+  background: var(--temple-bg);
+}
+
+[data-theme="temple"] .entry-indicator-minimap {
+  background: var(--wood-mahogany);
+  border: 1px solid var(--gold-soft);
+}
+
+[data-theme="temple"] .current-period-indicator {
+  background: var(--highlight-gold);
+  border: 1px solid var(--wood-mahogany);
+}
+

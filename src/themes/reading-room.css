@@ -306,6 +306,65 @@
   letter-spacing: 0.02em;
 }
 
+/* Date Input Components */
+[data-theme="reading-room"] .date-input {
+  background: var(--reading-bg-secondary);
+  border: 2px solid var(--primary-blue);
+  border-radius: 4px;
+  color: var(--text-primary);
+  font-family: 'Georgia', 'Times New Roman', serif;
+}
+
+[data-theme="reading-room"] .date-input::placeholder {
+  color: var(--text-muted);
+}
+
+[data-theme="reading-room"] .date-input:hover {
+  background: var(--reading-bg-tertiary);
+  border-color: var(--primary-blue-light);
+}
+
+[data-theme="reading-room"] .date-input:focus {
+  background: var(--reading-bg-hover);
+  border-color: var(--primary-blue);
+  box-shadow: 0 0 0 2px rgba(0, 102, 255, 0.2);
+  outline: none;
+}
+
+[data-theme="reading-room"] .date-input.error {
+  border-color: var(--primary-red);
+  background: #ffebee;
+}
+
+[data-theme="reading-room"] .date-input.error:focus {
+  border-color: var(--primary-red);
+  box-shadow: 0 0 0 2px rgba(255, 51, 51, 0.2);
+}
+
+[data-theme="reading-room"] .date-field-label {
+  color: var(--text-secondary);
+  font-family: 'Georgia', 'Times New Roman', serif;
+}
+
+[data-theme="reading-room"] .date-field-separator {
+  color: var(--primary-blue);
+}
+
+[data-theme="reading-room"] .date-input-helper-text {
+  background: var(--reading-bg-secondary);
+  border: 2px solid var(--primary-blue);
+  color: var(--text-secondary);
+  font-family: 'Georgia', 'Times New Roman', serif;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="reading-room"] .date-input-error-message {
+  background: #ffebee;
+  border: 2px solid var(--primary-red);
+  color: var(--primary-red-dark);
+  font-family: 'Georgia', 'Times New Roman', serif;
+}
+
 [data-theme="reading-room"] .view-mode-selector {
   background: transparent;
 }

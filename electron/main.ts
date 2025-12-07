@@ -47,6 +47,7 @@ const THEME_METADATA: Record<string, { displayName: string }> = {
   'research': { displayName: 'Research' },
   'manuscript-room': { displayName: 'Manuscript Room' },
   'reading-room': { displayName: 'Reading Room' },
+  'temple': { displayName: 'Temple' },
 };
 
 /**
@@ -66,7 +67,7 @@ function formatDisplayName(filename: string): string {
 
 /**
  * Discover all available themes
- * Uses a hardcoded list based on themes available in src/themes/
+ * Dynamically reads the themes directory to find all CSS files
  */
 function discoverThemes(): ThemeInfo[] {
   // Core themes that are always available (handled in index.css)
@@ -76,46 +77,110 @@ function discoverThemes(): ThemeInfo[] {
     { name: 'auto', displayName: THEME_METADATA['auto']?.displayName || 'Auto (System)' },
   ];
   
-  // All available theme files (excluding templates/examples)
-  const knownThemes = [
-    'aero-glass',
-    'archive',
-    'australian-desert',
-    'bios',
-    'classic-dark',
-    'classic-light',
-    'elite',
-    'forest',
-    'galactic-basic',
-    'high-contrast',
-    'hot-spring',
-    'journeyman',
-    'librarians-study',
-    'manuscript-room',
-    'modern-minimal',
-    'modern-minimal-oled',
-    'NEON',
-    'ocean',
-    'on-screen',
-    'reading-room',
-    'red-rock',
-    'research',
-    'scholar',
-    'sunset',
-    'terminal',
-    'the-real-world',
-    'vegas80s',
-  ];
+  // Determine themes directory path
+  // In dev: src/themes/ relative to project root
+  // In production: check multiple possible locations
+  let themesDir: string | null = null;
+  const possiblePaths: string[] = [];
   
-  // Build theme list from known themes
-  const otherThemes: ThemeInfo[] = knownThemes
-    .map(themeName => ({
-      name: themeName,
-      displayName: THEME_METADATA[themeName]?.displayName || formatDisplayName(themeName + '.css'),
-    }))
-    .sort((a, b) => a.displayName.localeCompare(b.displayName));
+  if (isDev) {
+    // Development: themes are in src/themes/ relative to dist-electron/
+    possiblePaths.push(
+      path.join(__dirname, '../../src/themes'),
+      path.join(process.cwd(), 'src/themes'),
+      path.resolve(__dirname, '../../src/themes')
+    );
+  } else {
+    // Production: try multiple paths
+    possiblePaths.push(
+      path.join(__dirname, '../../src/themes'),           // Source directory
+      path.join(process.resourcesPath || '', 'src/themes'), // Resources (packaged)
+      path.join(app.getAppPath(), 'src/themes'),          // App path
+      path.join(__dirname, '../src/themes'),              // Relative to dist-electron
+      path.join(process.cwd(), 'src/themes')              // Current working directory
+    );
+  }
   
-  return [...coreThemes, ...otherThemes];
+  // Find the first existing path
+  for (const testPath of possiblePaths) {
+    if (fs.existsSync(testPath)) {
+      themesDir = testPath;
+      console.log(`[Main] Found themes directory: ${themesDir}`);
+      break;
+    }
+  }
+  
+  if (!themesDir) {
+    console.error(`[Main] Themes directory not found. Tried paths:`, possiblePaths);
+    console.error(`[Main] __dirname: ${__dirname}`);
+    console.error(`[Main] process.cwd(): ${process.cwd()}`);
+    console.error(`[Main] app.getAppPath(): ${app.getAppPath()}`);
+    return coreThemes; // Return only core themes if directory not found
+  }
+  
+  const discoveredThemes: ThemeInfo[] = [];
+  const processedNames = new Set<string>();
+  
+  try {
+    // Read themes directory
+    const files = fs.readdirSync(themesDir);
+    console.log(`[Main] Found ${files.length} files in themes directory`);
+    
+    for (const file of files) {
+      // Only process .css files
+      if (!file.endsWith('.css')) {
+        console.log(`[Main] Skipping non-CSS file: ${file}`);
+        continue;
+      }
+      
+      // Extract theme name from filename (e.g., "temple.css" -> "temple")
+      const themeName = file.replace(/\.css$/, '');
+      
+      // Skip template/example files
+      if (themeName.includes('template') || 
+          themeName.includes('example') || 
+          themeName === 'README' ||
+          themeName === 'COMPONENT_CLASSES' ||
+          themeName === 'THEME_EXPANSION_STATUS') {
+        console.log(`[Main] Skipping template/example file: ${file}`);
+        continue;
+      }
+      
+      // Skip core themes (already handled)
+      if (['light', 'dark', 'auto'].includes(themeName)) {
+        console.log(`[Main] Skipping core theme: ${themeName}`);
+        continue;
+      }
+      
+      // Avoid duplicates
+      if (processedNames.has(themeName)) {
+        console.log(`[Main] Skipping duplicate: ${themeName}`);
+        continue;
+      }
+      processedNames.add(themeName);
+      
+      // Use metadata if available, otherwise format the name
+      const displayName = THEME_METADATA[themeName]?.displayName || formatDisplayName(themeName + '.css');
+      
+      console.log(`[Main] Discovered theme: ${themeName} -> ${displayName}`);
+      discoveredThemes.push({
+        name: themeName,
+        displayName: displayName,
+      });
+    }
+    
+    console.log(`[Main] Total discovered themes: ${discoveredThemes.length}`);
+  } catch (error) {
+    console.error('[Main] Error discovering themes:', error);
+    if (error instanceof Error) {
+      console.error('[Main] Error stack:', error.stack);
+    }
+  }
+  
+  // Sort discovered themes alphabetically by display name
+  const sortedThemes = discoveredThemes.sort((a, b) => a.displayName.localeCompare(b.displayName));
+  
+  return [...coreThemes, ...sortedThemes];
 }
 
 function createWindow() {
