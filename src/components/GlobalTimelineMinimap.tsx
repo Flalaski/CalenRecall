@@ -1,11 +1,12 @@
 import { useMemo, useState, useEffect, useRef } from 'react';
 import { TimeRange, JournalEntry } from '../types';
-import { getWeekStart, getWeekEnd, getMonthStart, getMonthEnd, getYearEnd, getDecadeEnd, getZodiacColor, getZodiacColorForDecade, getCanonicalDate, parseISODate, createDate } from '../utils/dateUtils';
+import { getWeekStart, getWeekEnd, getMonthStart, getMonthEnd, getYearEnd, getDecadeEnd, getZodiacColor, getZodiacColorForDecade, getCanonicalDate, parseISODate, createDate, getYearStart, isToday } from '../utils/dateUtils';
 import { addDays, addWeeks, addMonths, addYears, getYear, getMonth, getDate } from 'date-fns';
 import { playMechanicalClick, playMicroBlip, getAudioContext, createSliderNoise, SliderNoise } from '../utils/audioUtils';
 import { calculateEntryColor } from '../utils/entryColorUtils';
 import { useCalendar } from '../contexts/CalendarContext';
 import { useEntries } from '../contexts/EntriesContext';
+import { filterEntriesByDateRange, filterEntriesForDate } from '../utils/entryFilterUtils';
 import { getCalendarTierNames } from '../utils/calendarTierNames';
 import { getCalendarEpoch } from '../utils/calendars/epochUtils';
 import { jdnToDate } from '../utils/calendars/julianDayUtils';
@@ -3086,6 +3087,9 @@ export default function GlobalTimelineMinimap({
   const allScaleMarkingsRef = useRef(allScaleMarkings);
 
   // Update refs when values change
+  // Ref to access current entries in keyboard handler
+  const entriesRef = useRef<JournalEntry[]>(entries);
+  
   useEffect(() => {
     timelineDataRef.current = timelineData;
     viewModeRef.current = viewMode;
@@ -3093,7 +3097,241 @@ export default function GlobalTimelineMinimap({
     onTimePeriodSelectRef.current = onTimePeriodSelect;
     horizontalLockedRef.current = horizontalLocked;
     allScaleMarkingsRef.current = allScaleMarkings;
-  }, [timelineData, viewMode, selectedDate, onTimePeriodSelect, horizontalLocked, allScaleMarkings]);
+    entriesRef.current = entries;
+  }, [timelineData, viewMode, selectedDate, onTimePeriodSelect, horizontalLocked, allScaleMarkings, entries]);
+
+  /**
+   * Find the best date to focus on when zooming in, with subtle magnetization
+   * towards entries, today's date, and time tier boundaries.
+   * 
+   * @param currentDate The current selected date
+   * @param currentViewMode The current view mode we're zooming from
+   * @param targetViewMode The view mode we're zooming into (finer scale)
+   * @param entries All available entries
+   * @param weekStartsOn Week start preference
+   * @returns The best date to focus on, or the original date if no good candidate found
+   */
+  const findMagnetizedDate = (
+    currentDate: Date,
+    currentViewMode: TimeRange,
+    targetViewMode: TimeRange,
+    entries: JournalEntry[],
+    weekStartsOn: number
+  ): Date => {
+    // Get the date range of the current period
+    let periodStart: Date;
+    let periodEnd: Date;
+    
+    switch (currentViewMode) {
+      case 'decade': {
+        const decadeStart = Math.floor(getYear(currentDate) / 10) * 10;
+        periodStart = createDate(decadeStart, 0, 1);
+        periodEnd = createDate(decadeStart + 9, 11, 31);
+        break;
+      }
+      case 'year': {
+        periodStart = getYearStart(currentDate);
+        periodEnd = getYearEnd(currentDate);
+        break;
+      }
+      case 'month': {
+        periodStart = getMonthStart(currentDate);
+        periodEnd = getMonthEnd(currentDate);
+        break;
+      }
+      case 'week': {
+        periodStart = getWeekStart(currentDate, weekStartsOn);
+        periodEnd = getWeekEnd(currentDate, weekStartsOn);
+        break;
+      }
+      case 'day': {
+        periodStart = new Date(currentDate);
+        periodStart.setHours(0, 0, 0, 0);
+        periodEnd = new Date(currentDate);
+        periodEnd.setHours(23, 59, 59, 999);
+        break;
+      }
+      default:
+        return currentDate;
+    }
+    
+    // Collect candidate dates with their priorities and distances
+    interface Candidate {
+      date: Date;
+      priority: number; // Higher = better (entries: 3, today: 2, boundaries: 1)
+      distance: number; // Distance in milliseconds from currentDate
+    }
+    
+    const candidates: Candidate[] = [];
+    const currentTime = currentDate.getTime();
+    
+    // 1. Find entries in the period that match the target view mode
+    const periodEntries = filterEntriesByDateRange(entries, periodStart, periodEnd);
+    const entryDates = new Set<string>(); // Track unique entry dates
+    
+    periodEntries.forEach(entry => {
+      const entryDate = parseISODate(entry.date);
+      // Only consider entries that match the target view mode's granularity
+      const entryDateStr = entryDate.toISOString().split('T')[0];
+      if (!entryDates.has(entryDateStr)) {
+        entryDates.add(entryDateStr);
+        const distance = Math.abs(entryDate.getTime() - currentTime);
+        candidates.push({
+          date: entryDate,
+          priority: 3, // Highest priority for entries
+          distance
+        });
+      }
+    });
+    
+    // 2. Add today's date if it's in the period
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    if (today >= periodStart && today <= periodEnd && isToday(today)) {
+      const distance = Math.abs(today.getTime() - currentTime);
+      candidates.push({
+        date: new Date(today),
+        priority: 2, // High priority for today
+        distance
+      });
+    }
+    
+    // 3. Add time tier boundaries for the target view mode
+    // Generate boundaries within the current period
+    switch (targetViewMode) {
+      case 'year': {
+        // Add year starts within the current period
+        const startYear = getYear(periodStart);
+        const endYear = getYear(periodEnd);
+        for (let year = startYear; year <= endYear; year++) {
+          const yearStart = createDate(year, 0, 1);
+          // Check if year start is within the period (using <= for end to include boundary)
+          if (yearStart.getTime() >= periodStart.getTime() && yearStart.getTime() <= periodEnd.getTime()) {
+            const distance = Math.abs(yearStart.getTime() - currentTime);
+            candidates.push({
+              date: yearStart,
+              priority: 1,
+              distance
+            });
+          }
+        }
+        break;
+      }
+      case 'month': {
+        // Add month starts within the year
+        let current = new Date(periodStart);
+        while (current.getTime() <= periodEnd.getTime()) {
+          const monthStart = getMonthStart(current);
+          if (monthStart.getTime() >= periodStart.getTime() && monthStart.getTime() <= periodEnd.getTime()) {
+            const distance = Math.abs(monthStart.getTime() - currentTime);
+            candidates.push({
+              date: monthStart,
+              priority: 1,
+              distance
+            });
+          }
+          current = addMonths(current, 1);
+          // Safety check to prevent infinite loops
+          if (current.getTime() <= periodStart.getTime()) break;
+        }
+        break;
+      }
+      case 'week': {
+        // Add week starts within the month
+        let current = new Date(periodStart);
+        while (current.getTime() <= periodEnd.getTime()) {
+          const weekStart = getWeekStart(current, weekStartsOn);
+          if (weekStart.getTime() >= periodStart.getTime() && weekStart.getTime() <= periodEnd.getTime()) {
+            const distance = Math.abs(weekStart.getTime() - currentTime);
+            candidates.push({
+              date: weekStart,
+              priority: 1,
+              distance
+            });
+          }
+          current = addWeeks(current, 1);
+          // Safety check to prevent infinite loops
+          if (current.getTime() <= periodStart.getTime()) break;
+        }
+        break;
+      }
+      case 'day': {
+        // When zooming from week to day, prioritize week start, then add other days
+        // First add the week start (highest priority for boundaries)
+        const weekStartDate = getWeekStart(currentDate, weekStartsOn);
+        if (weekStartDate.getTime() >= periodStart.getTime() && weekStartDate.getTime() <= periodEnd.getTime()) {
+          const distance = Math.abs(weekStartDate.getTime() - currentTime);
+          candidates.push({
+            date: weekStartDate,
+            priority: 1,
+            distance
+          });
+        }
+        // Also add other days in the week as fallback options
+        let current = new Date(periodStart);
+        while (current.getTime() <= periodEnd.getTime()) {
+          const dayDate = createDate(getYear(current), getMonth(current), getDate(current));
+          // Skip if we already added this as week start
+          if (dayDate.getTime() !== weekStartDate.getTime()) {
+            const distance = Math.abs(dayDate.getTime() - currentTime);
+            candidates.push({
+              date: dayDate,
+              priority: 1,
+              distance
+            });
+          }
+          current = addDays(current, 1);
+          // Safety check to prevent infinite loops
+          if (current.getTime() <= periodStart.getTime()) break;
+        }
+        break;
+      }
+    }
+    
+    // If no candidates, return original date
+    if (candidates.length === 0) {
+      return currentDate;
+    }
+    
+    // Calculate maximum reasonable distance
+    const periodDuration = periodEnd.getTime() - periodStart.getTime();
+    const maxDistanceForEntries = periodDuration * 0.1; // 10% of period for entries/today
+    const maxDistanceForBoundaries = periodDuration * 0.5; // 50% of period for boundaries (more lenient)
+    
+    // Separate candidates by priority
+    const highPriorityCandidates = candidates.filter(
+      c => c.priority >= 2 && c.distance <= maxDistanceForEntries
+    );
+    const boundaryCandidates = candidates.filter(
+      c => c.priority === 1 && c.distance <= maxDistanceForBoundaries
+    );
+    
+    // Sort high-priority candidates by distance (closest first)
+    highPriorityCandidates.sort((a, b) => a.distance - b.distance);
+    
+    // For boundary candidates, when there are no entries, prefer the FIRST boundary
+    // (start of period) rather than the closest one
+    if (highPriorityCandidates.length === 0 && boundaryCandidates.length > 0) {
+      // Sort by date (earliest first) to get the first boundary in the period
+      boundaryCandidates.sort((a, b) => a.date.getTime() - b.date.getTime());
+    } else {
+      // If we have entries, sort boundaries by distance (closest first)
+      boundaryCandidates.sort((a, b) => a.distance - b.distance);
+    }
+    
+    // Priority 1: Use high-priority candidates (entries or today) if available and close enough
+    if (highPriorityCandidates.length > 0) {
+      return highPriorityCandidates[0].date;
+    }
+    
+    // Priority 2: If no entries/today, use the first time tier boundary (start of period)
+    if (boundaryCandidates.length > 0) {
+      return boundaryCandidates[0].date;
+    }
+    
+    // Fall back to canonical date for the target view mode (start of period)
+    return getCanonicalDate(currentDate, targetViewMode, weekStartsOn);
+  };
 
   // Handle keyboard arrow key navigation
   useEffect(() => {
@@ -3164,12 +3402,22 @@ export default function GlobalTimelineMinimap({
         const currentIndex = scaleOrder.indexOf(currentViewMode);
 
         if (isUp && currentIndex < scaleOrder.length - 1) {
-          // Zoom in (more detail)
+          // Zoom in (more detail) - apply subtle magnetization
           const newViewMode = scaleOrder[currentIndex + 1];
           playMechanicalClick('up');
           setMechanicalClick({ scale: newViewMode, direction: 'up' });
           setTimeout(() => setMechanicalClick(null), 300);
-          currentOnTimePeriodSelect(currentSelectedDate, newViewMode);
+          
+          // Apply magnetization to find the best date to focus on
+          const magnetizedDate = findMagnetizedDate(
+            currentSelectedDate,
+            currentViewMode,
+            newViewMode,
+            entriesRef.current,
+            weekStartsOn
+          );
+          
+          currentOnTimePeriodSelect(magnetizedDate, newViewMode);
         } else if (isDown && currentIndex > 0) {
           // Zoom out (less detail)
           const newViewMode = scaleOrder[currentIndex - 1];
