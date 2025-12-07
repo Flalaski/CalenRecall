@@ -207,6 +207,11 @@
   color: #f0e8e8;
 }
 
+[data-theme="hot-spring"] .calendar-select option {
+  background: #2d2535;
+  color: #f0e8e8;
+}
+
 [data-theme="hot-spring"] .calendar-select:focus {
   border-color: #6dc8b8;
   outline: 2px solid #6dc8b8;
@@ -1598,6 +1603,11 @@
 [data-theme="hot-spring"] .preference-item select {
   background: #2d2535;
   border: 1px solid #5a4a6a;
+  color: #f0e8e8;
+}
+
+[data-theme="hot-spring"] .preference-item select option {
+  background: #2d2535;
   color: #f0e8e8;
 }
 

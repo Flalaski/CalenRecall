@@ -646,6 +646,11 @@
   padding: 6px 10px;
 }
 
+[data-theme="temple-of-light"] .preference-item select option {
+  background: var(--temple-bg);
+  color: var(--text-primary);
+}
+
 [data-theme="temple-of-light"] .preference-item input:focus,
 [data-theme="temple-of-light"] .preference-item select:focus {
   border-color: var(--gold-soft);

@@ -185,6 +185,11 @@
   text-shadow: none;
 }
 
+[data-theme="modern-minimal"] .calendar-select option {
+  background: #ffffff;
+  color: #424242;
+}
+
 [data-theme="modern-minimal"] .calendar-select:focus {
   border-color: #9e9e9e;
   outline: 1px solid #9e9e9e;
@@ -1663,6 +1668,11 @@
   border: 1px solid #e0e0e0;
   color: #212121;
   text-shadow: none;
+}
+
+[data-theme="modern-minimal"] .preference-item select option {
+  background: #ffffff;
+  color: #212121;
 }
 
 [data-theme="modern-minimal"] .preference-item input[type="text"]:focus,

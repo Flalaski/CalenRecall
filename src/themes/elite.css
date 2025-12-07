@@ -262,6 +262,11 @@
   padding: 0.5rem 1rem;
 }
 
+[data-theme="elite"] .calendar-select option {
+  background: #002244;
+  color: #FFFFFF;
+}
+
 [data-theme="elite"] .calendar-select:focus {
   outline: 2px solid #FF9900;
   outline-offset: 2px;
@@ -1803,6 +1808,11 @@
   padding: 0.75rem;
 }
 
+[data-theme="elite"] .filter-sort select option {
+  background: #002244;
+  color: #FFFFFF;
+}
+
 [data-theme="elite"] .filter-sort select:focus {
   border-bottom-color: #FFAA00;
   outline: none;
@@ -2030,6 +2040,11 @@
   padding: 0.75rem;
 }
 
+[data-theme="elite"] .preference-item select option {
+  background: #002244;
+  color: #FFFFFF;
+}
+
 [data-theme="elite"] .preference-item input[type="text"]:focus,
 [data-theme="elite"] .preference-item input[type="number"]:focus,
 [data-theme="elite"] .preference-item select:focus {
@@ -2082,6 +2097,11 @@
   color: #FFFFFF;
   font-family: 'Antonio', 'Arial Narrow', 'Helvetica Condensed', sans-serif;
   padding: 0.75rem;
+}
+
+[data-theme="elite"] .export-controls select option {
+  background: #002244;
+  color: #FFFFFF;
 }
 
 [data-theme="elite"] .export-controls select:focus {

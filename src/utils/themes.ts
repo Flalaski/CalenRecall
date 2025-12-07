@@ -135,6 +135,10 @@ const BUILT_IN_THEME_METADATA: Record<string, Omit<ThemeInfo, 'name'>> = {
   'kallisti': {
     displayName: 'Kallisti',
     description: 'Inspired by Eris, the divine mother of chaos and goddess of discord - deep night backgrounds with golden apple highlights and discord purple accents, representing the legendary "Kallisti" (to the fairest) that sparked the Trojan War'
+  },
+  'aero-glass': {
+    displayName: 'Aero',
+    description: 'Windows Aero-inspired glassmorphism theme with translucent effects and smooth gradients'
   }
 };
 

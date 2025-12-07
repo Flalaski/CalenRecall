@@ -249,6 +249,11 @@
   
 }
 
+[data-theme="terminal"] .calendar-select option {
+  background: #000000;
+  color: #00ff00;
+}
+
 [data-theme="terminal"] .calendar-select:focus {
   
   outline: 1px solid #00ff00;
@@ -1896,6 +1901,11 @@
   color: #00ff00;
   font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
   
+}
+
+[data-theme="terminal"] .preference-item select option {
+  background: #000000;
+  color: #00ff00;
 }
 
 [data-theme="terminal"] .preference-item input[type="text"]:focus,

@@ -197,6 +197,11 @@
   text-shadow: 0 0 5px #00ffff;
 }
 
+[data-theme="NEON"] .calendar-select option {
+  background: #1a0033;
+  color: #00ffff;
+}
+
 [data-theme="NEON"] .calendar-select:focus {
   box-shadow: 0 0 15px #ff00ff, inset 0 0 10px #00ffff;
   outline: 2px solid #ffff00;
@@ -1712,6 +1717,11 @@
   border: 2px solid #ff00ff;
   color: #00ffff;
   text-shadow: 0 0 3px #00ffff;
+}
+
+[data-theme="NEON"] .preference-item select option {
+  background: #1a0033;
+  color: #00ffff;
 }
 
 [data-theme="NEON"] .preference-item input[type="text"]:focus,

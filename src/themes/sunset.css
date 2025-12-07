@@ -179,6 +179,11 @@
   color: #ffe0b2;
 }
 
+[data-theme="sunset"] .calendar-select option {
+  background: #4e3733;
+  color: #ffe0b2;
+}
+
 [data-theme="sunset"] .calendar-select:focus {
   border-color: #ff8f00;
   outline: 2px solid #ff8f00;
@@ -1552,6 +1557,11 @@
 [data-theme="sunset"] .preference-item select {
   background: #4e3733;
   border: 1px solid #8d6e63;
+  color: #ffe0b2;
+}
+
+[data-theme="sunset"] .preference-item select option {
+  background: #4e3733;
   color: #ffe0b2;
 }
 

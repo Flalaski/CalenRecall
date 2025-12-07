@@ -257,6 +257,11 @@
   padding: 0.5rem 1rem;
 }
 
+[data-theme="on-screen"] .calendar-select option {
+  background: #004488;
+  color: #FFFFFF;
+}
+
 [data-theme="on-screen"] .calendar-select:focus {
   outline: 2px solid #FF9900;
   outline-offset: 2px;
@@ -1952,6 +1957,11 @@
   padding: 0.75rem;
 }
 
+[data-theme="on-screen"] .filter-sort select option {
+  background: #004488;
+  color: #FFFFFF;
+}
+
 [data-theme="on-screen"] .filter-sort select:focus {
   border-bottom-color: #FFAA00;
   outline: none;
@@ -2215,6 +2225,11 @@
   color: #FFFFFF;
   font-family: 'Antonio', 'Arial Narrow', 'Helvetica Condensed', sans-serif;
   padding: 0.75rem;
+}
+
+[data-theme="on-screen"] .preference-item select option {
+  background: #004488;
+  color: #FFFFFF;
 }
 
 [data-theme="on-screen"] .preference-item input[type="text"]:focus,

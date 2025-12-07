@@ -226,6 +226,11 @@
   padding: 4px 8px;
 }
 
+[data-theme="research"] .calendar-select option {
+  background: var(--archive-bg);
+  color: var(--text-primary);
+}
+
 [data-theme="research"] .calendar-select:focus {
   border-color: var(--accent-blue);
   outline: 2px solid var(--accent-blue);

@@ -290,6 +290,11 @@
   
 }
 
+[data-theme="galactic-basic"] .calendar-select option {
+  background: #000011;
+  color: #00aaff;
+}
+
 [data-theme="galactic-basic"] .calendar-select:focus {
   
   outline: 1px solid #00aaff;
@@ -813,6 +818,11 @@
   
 }
 
+[data-theme="galactic-basic"] .period-entries-sort select option {
+  background: #000011;
+  color: #00aaff;
+}
+
 [data-theme="galactic-basic"] .period-entries-sort select:focus {
   
   outline: 1px solid #00aaff;
@@ -1236,6 +1246,11 @@
   color: #00aaff;
   font-family: 'Arial', 'Helvetica', 'Verdana', sans-serif;
   
+}
+
+[data-theme="galactic-basic"] .journal-list-sort select option {
+  background: #000011;
+  color: #00aaff;
 }
 
 [data-theme="galactic-basic"] .journal-list-sort select:focus {
@@ -1937,6 +1952,11 @@
   color: #00aaff;
   font-family: 'Arial', 'Helvetica', 'Verdana', sans-serif;
   
+}
+
+[data-theme="galactic-basic"] .preference-item select option {
+  background: #000011;
+  color: #00aaff;
 }
 
 [data-theme="galactic-basic"] .preference-item input[type="text"]:focus,

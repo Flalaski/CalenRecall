@@ -188,6 +188,11 @@
   color: #b3e5fc;
 }
 
+[data-theme="ocean"] .calendar-select option {
+  background: #003355;
+  color: #b3e5fc;
+}
+
 [data-theme="ocean"] .calendar-select:focus {
   border-color: #039be5;
   outline: 2px solid #039be5;
@@ -1561,6 +1566,11 @@
 [data-theme="ocean"] .preference-item select {
   background: #003355;
   border: 1px solid #005a9e;
+  color: #b3e5fc;
+}
+
+[data-theme="ocean"] .preference-item select option {
+  background: #003355;
   color: #b3e5fc;
 }
 

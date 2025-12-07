@@ -192,6 +192,11 @@
   font-weight: bold;
 }
 
+[data-theme="high-contrast"] .calendar-select option {
+  background: #000000;
+  color: #ffffff;
+}
+
 [data-theme="high-contrast"] .calendar-select:focus {
   border: 3px solid #ffff00;
   outline: 3px solid #ffff00;
@@ -1721,6 +1726,11 @@
   border: 2px solid #ffffff;
   color: #ffffff;
   font-weight: bold;
+}
+
+[data-theme="high-contrast"] .preference-item select option {
+  background: #000000;
+  color: #ffffff;
 }
 
 [data-theme="high-contrast"] .preference-item input[type="text"]:focus,

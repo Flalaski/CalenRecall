@@ -295,6 +295,11 @@
   color: #e0e0e0;
 }
 
+[data-theme="classic-dark"] .calendar-select option {
+  background: #1e1e1e;
+  color: #e0e0e0;
+}
+
 [data-theme="classic-dark"] .calendar-info-panel {
   background: #1e1e1e;
   border: 2px inset #606060;
@@ -758,6 +763,11 @@
   font-size: 11px;
 }
 
+[data-theme="classic-dark"] .period-entries-sort select option {
+  background: #1e1e1e;
+  color: #e0e0e0;
+}
+
 [data-theme="classic-dark"] .period-entries-list {
   background: transparent;
 }
@@ -1127,6 +1137,11 @@
   color: #e0e0e0;
   font-family: 'MS Sans Serif', sans-serif;
   font-size: 11px;
+}
+
+[data-theme="classic-dark"] .journal-list-sort select option {
+  background: #1e1e1e;
+  color: #e0e0e0;
 }
 
 [data-theme="classic-dark"] .journal-list-empty {
@@ -1655,6 +1670,11 @@
   font-size: 11px;
 }
 
+[data-theme="classic-dark"] .filter-sort select option {
+  background: #1e1e1e;
+  color: #e0e0e0;
+}
+
 [data-theme="classic-dark"] .clear-filters-button {
   background: #404040;
   border: 2px outset #606060;
@@ -1845,6 +1865,11 @@
   font-size: 11px;
 }
 
+[data-theme="classic-dark"] .preference-item select option {
+  background: #1e1e1e;
+  color: #e0e0e0;
+}
+
 [data-theme="classic-dark"] .preference-item input[type="text"]:focus,
 [data-theme="classic-dark"] .preference-item input[type="number"]:focus,
 [data-theme="classic-dark"] .preference-item select:focus {
@@ -1894,6 +1919,11 @@
   color: #e0e0e0;
   font-family: 'MS Sans Serif', sans-serif;
   font-size: 11px;
+}
+
+[data-theme="classic-dark"] .export-controls select option {
+  background: #1e1e1e;
+  color: #e0e0e0;
 }
 
 [data-theme="classic-dark"] .about-section {

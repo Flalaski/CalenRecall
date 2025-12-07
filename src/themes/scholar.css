@@ -226,6 +226,11 @@
   padding: 4px 8px;
 }
 
+[data-theme="scholar"] .calendar-select option {
+  background: var(--parchment-bg);
+  color: var(--text-primary);
+}
+
 [data-theme="scholar"] .calendar-select:focus {
   border-color: var(--accent-sepia);
   outline: 2px solid var(--accent-sepia);
@@ -827,6 +832,11 @@
   padding: 4px 8px;
 }
 
+[data-theme="scholar"] .period-entries-sort select option {
+  background: var(--parchment-bg-light);
+  color: var(--text-primary);
+}
+
 [data-theme="scholar"] .period-entries-sort select:focus {
   border-color: var(--accent-sepia);
   outline: 2px solid var(--accent-sepia);
@@ -1252,6 +1262,11 @@
   font-family: 'Georgia', 'Times New Roman', serif;
   font-size: 13px;
   padding: 4px 8px;
+}
+
+[data-theme="scholar"] .journal-list-sort select option {
+  background: var(--parchment-bg-light);
+  color: var(--text-primary);
 }
 
 [data-theme="scholar"] .journal-list-empty {
@@ -1741,6 +1756,11 @@
   padding: 4px 8px;
 }
 
+[data-theme="scholar"] .filter-sort select option {
+  background: var(--parchment-bg-light);
+  color: var(--text-primary);
+}
+
 [data-theme="scholar"] .clear-filters-button {
   background: var(--parchment-bg);
   border: 1px solid var(--border-aged);
@@ -1940,6 +1960,11 @@
   padding: 6px 10px;
 }
 
+[data-theme="scholar"] .preference-item select option {
+  background: var(--parchment-bg);
+  color: var(--text-primary);
+}
+
 [data-theme="scholar"] .preference-item input[type="text"]:focus,
 [data-theme="scholar"] .preference-item input[type="number"]:focus,
 [data-theme="scholar"] .preference-item select:focus {
@@ -1994,6 +2019,11 @@
   font-family: 'Georgia', 'Times New Roman', serif;
   font-size: 13px;
   padding: 6px 10px;
+}
+
+[data-theme="scholar"] .export-controls select option {
+  background: var(--parchment-bg-light);
+  color: var(--text-primary);
 }
 
 [data-theme="scholar"] .about-section {

@@ -179,6 +179,11 @@
   color: #f5d5b8;
 }
 
+[data-theme="red-rock"] .calendar-select option {
+  background: #5a2f28;
+  color: #f5d5b8;
+}
+
 [data-theme="red-rock"] .calendar-select:focus {
   border-color: #d97345;
   outline: 2px solid #d97345;
@@ -1552,6 +1557,11 @@
 [data-theme="red-rock"] .preference-item select {
   background: #5a2f28;
   border: 1px solid #9d5544;
+  color: #f5d5b8;
+}
+
+[data-theme="red-rock"] .preference-item select option {
+  background: #5a2f28;
   color: #f5d5b8;
 }
 

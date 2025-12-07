@@ -307,6 +307,11 @@
   color: #000000;
 }
 
+[data-theme="classic-light"] .calendar-select option {
+  background: #ffffff;
+  color: #000000;
+}
+
 [data-theme="classic-light"] .calendar-info-panel {
   background: #ffffff;
   border: 2px inset #c0c0c0;
@@ -770,6 +775,11 @@
   font-size: 11px;
 }
 
+[data-theme="classic-light"] .period-entries-sort select option {
+  background: #ffffff;
+  color: #000000;
+}
+
 [data-theme="classic-light"] .period-entries-list {
   background: transparent;
 }
@@ -1127,6 +1137,11 @@
   color: #000000;
   font-family: 'MS Sans Serif', sans-serif;
   font-size: 11px;
+}
+
+[data-theme="classic-light"] .journal-list-sort select option {
+  background: #ffffff;
+  color: #000000;
 }
 
 [data-theme="classic-light"] .journal-list-empty {
@@ -1655,6 +1670,11 @@
   font-size: 11px;
 }
 
+[data-theme="classic-light"] .filter-sort select option {
+  background: #ffffff;
+  color: #000000;
+}
+
 [data-theme="classic-light"] .clear-filters-button {
   background: #c0c0c0;
   border: 2px outset #c0c0c0;
@@ -1845,6 +1865,11 @@
   font-size: 11px;
 }
 
+[data-theme="classic-light"] .preference-item select option {
+  background: #ffffff;
+  color: #000000;
+}
+
 [data-theme="classic-light"] .preference-item input[type="text"]:focus,
 [data-theme="classic-light"] .preference-item input[type="number"]:focus,
 [data-theme="classic-light"] .preference-item select:focus {
@@ -1894,6 +1919,11 @@
   color: #000000;
   font-family: 'MS Sans Serif', sans-serif;
   font-size: 11px;
+}
+
+[data-theme="classic-light"] .export-controls select option {
+  background: #ffffff;
+  color: #000000;
 }
 
 [data-theme="classic-light"] .about-section {

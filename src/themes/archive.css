@@ -226,6 +226,11 @@
   padding: 4px 8px;
 }
 
+[data-theme="archive"] .calendar-select option {
+  background: var(--victorian-bg);
+  color: var(--text-primary);
+}
+
 [data-theme="archive"] .calendar-select:focus {
   border-color: var(--accent-ink-blue);
   outline: 2px solid var(--accent-ink-blue);

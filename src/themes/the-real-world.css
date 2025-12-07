@@ -283,6 +283,11 @@
   font-size: 11px;
 }
 
+[data-theme="the-real-world"] .calendar-select option {
+  background: #1a1a1a;
+  color: #7fbf7f;
+}
+
 [data-theme="the-real-world"] .calendar-select:focus {
   outline: 1px solid #7fbf7f;
   background: #333333;
@@ -877,6 +882,11 @@
   font-size: 11px;
 }
 
+[data-theme="the-real-world"] .period-entries-sort select option {
+  background: #1a1a1a;
+  color: #7fbf7f;
+}
+
 [data-theme="the-real-world"] .period-entries-sort select:focus {
   outline: 1px solid #7fbf7f;
   background: #333333;
@@ -1363,6 +1373,11 @@
   font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
   padding: 4px 6px;
   font-size: 11px;
+}
+
+[data-theme="the-real-world"] .journal-list-sort select option {
+  background: #1a1a1a;
+  color: #7fbf7f;
 }
 
 [data-theme="the-real-world"] .journal-list-sort select:focus {
@@ -1955,6 +1970,11 @@
   font-size: 11px;
 }
 
+[data-theme="the-real-world"] .filter-sort select option {
+  background: #1a1a1a;
+  color: #7fbf7f;
+}
+
 [data-theme="the-real-world"] .filter-sort select:focus {
   outline: 1px solid #7fbf7f;
   background: #333333;
@@ -2165,6 +2185,11 @@
   font-size: 12px;
 }
 
+[data-theme="the-real-world"] .preference-item select option {
+  background: #1a1a1a;
+  color: #7fbf7f;
+}
+
 [data-theme="the-real-world"] .preference-item input[type="text"]:focus,
 [data-theme="the-real-world"] .preference-item input[type="number"]:focus,
 [data-theme="the-real-world"] .preference-item select:focus {
@@ -2217,6 +2242,11 @@
   font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
   padding: 4px 6px;
   font-size: 11px;
+}
+
+[data-theme="the-real-world"] .export-controls select option {
+  background: #1a1a1a;
+  color: #7fbf7f;
 }
 
 [data-theme="the-real-world"] .export-controls select:focus {

@@ -327,6 +327,11 @@
   text-shadow: none;
 }
 
+[data-theme="bios"] .calendar-select option {
+  background: #000080;
+  color: #ffffff;
+}
+
 [data-theme="bios"] .calendar-select:focus {
   box-shadow: none;
   outline: 1px solid #ffffff;
@@ -1969,6 +1974,11 @@
   color: #ffffff;
   font-family: 'Fixedsys', 'Terminal', 'MS Sans Serif', system-ui, monospace;
   text-shadow: none;
+}
+
+[data-theme="bios"] .preference-item select option {
+  background: #000080;
+  color: #ffffff;
 }
 
 [data-theme="bios"] .preference-item input[type="text"]:focus,

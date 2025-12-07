@@ -1032,6 +1032,11 @@
   text-shadow: var(--text-glow) !important;
 }
 
+[data-theme="temple-of-darkness"] .preference-item select option {
+  background: var(--temple-bg);
+  color: var(--text-primary);
+}
+
 [data-theme="temple-of-darkness"] .preference-item input:focus,
 [data-theme="temple-of-darkness"] .preference-item select:focus {
   border-color: var(--torch-orange);
@@ -1272,6 +1277,11 @@
   border: 1px solid var(--border-stone);
   color: var(--text-primary);
   box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+[data-theme="temple-of-darkness"] .calendar-select option {
+  background: var(--temple-bg-secondary);
+  color: var(--text-primary);
 }
 
 [data-theme="temple-of-darkness"] .calendar-select:focus {

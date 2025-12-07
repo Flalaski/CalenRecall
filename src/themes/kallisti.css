@@ -1283,6 +1283,11 @@
   text-shadow: var(--text-glow) !important;
 }
 
+[data-theme="kallisti"] .preference-item select option {
+  background: var(--chaos-bg);
+  color: var(--text-primary);
+}
+
 [data-theme="kallisti"] .preference-item input:focus,
 [data-theme="kallisti"] .preference-item select:focus {
   border-color: var(--golden-apple);
@@ -1529,6 +1534,11 @@
   border: 1px solid var(--border-discord);
   color: var(--text-primary);
   box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.4);
+}
+
+[data-theme="kallisti"] .calendar-select option {
+  background: var(--chaos-bg-secondary);
+  color: var(--text-primary);
 }
 
 [data-theme="kallisti"] .calendar-select:focus {

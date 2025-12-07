@@ -179,6 +179,11 @@
   color: #f4e4c1;
 }
 
+[data-theme="australian-desert"] .calendar-select option {
+  background: #6a4030;
+  color: #f4e4c1;
+}
+
 [data-theme="australian-desert"] .calendar-select:focus {
   border-color: #e49d38;
   outline: 2px solid #e49d38;
@@ -601,6 +606,11 @@
   color: #f4e4c1;
 }
 
+[data-theme="australian-desert"] .period-entries-sort select option {
+  background: #6a4030;
+  color: #f4e4c1;
+}
+
 [data-theme="australian-desert"] .period-entries-sort select:focus {
   border-color: #e49d38;
   outline: 2px solid #e49d38;
@@ -967,6 +977,11 @@
 [data-theme="australian-desert"] .journal-list-sort select {
   background: #6a4030;
   border: 1px solid #a6734f;
+  color: #f4e4c1;
+}
+
+[data-theme="australian-desert"] .journal-list-sort select option {
+  background: #6a4030;
   color: #f4e4c1;
 }
 
@@ -1407,6 +1422,11 @@
   color: #f4e4c1;
 }
 
+[data-theme="australian-desert"] .filter-sort select option {
+  background: #6a4030;
+  color: #f4e4c1;
+}
+
 [data-theme="australian-desert"] .filter-sort select:focus {
   border-color: #e49d38;
   outline: 2px solid #e49d38;
@@ -1555,6 +1575,11 @@
   color: #f4e4c1;
 }
 
+[data-theme="australian-desert"] .preference-item select option {
+  background: #6a4030;
+  color: #f4e4c1;
+}
+
 [data-theme="australian-desert"] .preference-item input[type="text"]:focus,
 [data-theme="australian-desert"] .preference-item input[type="number"]:focus,
 [data-theme="australian-desert"] .preference-item select:focus {
@@ -1595,6 +1620,11 @@
 [data-theme="australian-desert"] .export-controls select {
   background: #6a4030;
   border: 1px solid #a6734f;
+  color: #f4e4c1;
+}
+
+[data-theme="australian-desert"] .export-controls select option {
+  background: #6a4030;
   color: #f4e4c1;
 }
 

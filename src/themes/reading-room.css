@@ -385,6 +385,11 @@
   transition: all 0.2s ease;
 }
 
+[data-theme="reading-room"] .calendar-select option {
+  background: var(--reading-bg);
+  color: var(--text-primary);
+}
+
 [data-theme="reading-room"] .calendar-select:focus {
   border-color: var(--accent-green);
   outline: 3px solid rgba(45, 80, 22, 0.2);
@@ -1118,6 +1123,11 @@
   color: var(--text-primary);
   font-family: 'Georgia', 'Times New Roman', serif;
   font-size: 13px;
+}
+
+[data-theme="reading-room"] .period-entries-sort select option {
+  background: var(--reading-bg-secondary);
+  color: var(--text-primary);
   font-weight: 500;
   padding: 5px 10px;
 }
@@ -1631,6 +1641,11 @@
   color: var(--text-primary);
   font-family: 'Georgia', 'Times New Roman', serif;
   font-size: 13px;
+}
+
+[data-theme="reading-room"] .journal-list-sort select option {
+  background: var(--reading-bg-secondary);
+  color: var(--text-primary);
   font-weight: 500;
   padding: 5px 10px;
 }
@@ -2139,6 +2154,11 @@
   color: var(--text-primary);
   font-family: 'Georgia', 'Times New Roman', serif;
   font-size: 13px;
+}
+
+[data-theme="reading-room"] .filter-sort select option {
+  background: var(--reading-bg-secondary);
+  color: var(--text-primary);
   font-weight: 400;
   padding: 5px 10px;
 }
@@ -2350,6 +2370,11 @@
   padding: 7px 12px;
 }
 
+[data-theme="reading-room"] .preference-item select option {
+  background: var(--reading-bg);
+  color: var(--text-primary);
+}
+
 [data-theme="reading-room"] .preference-item input[type="text"]:focus,
 [data-theme="reading-room"] .preference-item input[type="number"]:focus,
 [data-theme="reading-room"] .preference-item select:focus {
@@ -2408,6 +2433,11 @@
   font-size: 13px;
   font-weight: 400;
   padding: 6px 12px;
+}
+
+[data-theme="reading-room"] .export-controls select option {
+  background: var(--reading-bg-secondary);
+  color: var(--text-primary);
 }
 
 [data-theme="reading-room"] .about-section {
