@@ -76,11 +76,37 @@ export default function JournalList({
       switch (sortBy) {
         case 'date':
           comparison = a.date.localeCompare(b.date);
-          // If dates are equal, sort by time if available
+          // If dates are equal, sort by time if available (especially for day entries)
           if (comparison === 0) {
-            const aTime = (a.hour ?? 0) * 3600 + (a.minute ?? 0) * 60 + (a.second ?? 0);
-            const bTime = (b.hour ?? 0) * 3600 + (b.minute ?? 0) * 60 + (b.second ?? 0);
-            comparison = aTime - bTime;
+            // Check if entries have time information (at least one time field is defined)
+            const aHasTime = a.timeRange === 'day' && (
+              (a.hour !== undefined && a.hour !== null) || 
+              (a.minute !== undefined && a.minute !== null) || 
+              (a.second !== undefined && a.second !== null)
+            );
+            const bHasTime = b.timeRange === 'day' && (
+              (b.hour !== undefined && b.hour !== null) || 
+              (b.minute !== undefined && b.minute !== null) || 
+              (b.second !== undefined && b.second !== null)
+            );
+            
+            if (aHasTime && bHasTime) {
+              // Both have time: sort chronologically by time
+              const aTime = (a.hour ?? 0) * 3600 + (a.minute ?? 0) * 60 + (a.second ?? 0);
+              const bTime = (b.hour ?? 0) * 3600 + (b.minute ?? 0) * 60 + (b.second ?? 0);
+              comparison = aTime - bTime;
+            } else if (aHasTime && !bHasTime) {
+              // Entry with time comes before entry without time
+              comparison = -1;
+            } else if (!aHasTime && bHasTime) {
+              // Entry without time comes after entry with time
+              comparison = 1;
+            } else {
+              // Neither has time: sort by creation time as fallback
+              const aCreated = new Date(a.createdAt).getTime();
+              const bCreated = new Date(b.createdAt).getTime();
+              comparison = aCreated - bCreated;
+            }
           }
           break;
         case 'title':
