@@ -7,6 +7,8 @@ import { calculateEntryColor } from '../utils/entryColorUtils';
 import { useCalendar } from '../contexts/CalendarContext';
 import { useEntries } from '../contexts/EntriesContext';
 import { getCalendarTierNames } from '../utils/calendarTierNames';
+import { getCalendarEpoch } from '../utils/calendars/epochUtils';
+import { jdnToDate } from '../utils/calendars/julianDayUtils';
 import './GlobalTimelineMinimap.css';
 
 interface GlobalTimelineMinimapProps {
@@ -694,6 +696,70 @@ export default function GlobalTimelineMinimap({
     
     return { position, width };
   }, [selectedDate, viewMode, timelineData]);
+
+  // Calculate epoch 0 position for the current calendar
+  const epochLinePosition = useMemo(() => {
+    if (!timelineData.startDate || !timelineData.endDate) {
+      return null;
+    }
+    
+    try {
+      // Get the epoch JDN for the current calendar
+      const epochJDN = getCalendarEpoch(calendar);
+      // Convert JDN to Date
+      const epochDate = jdnToDate(epochJDN);
+      
+      // Calculate position on timeline
+      const totalTime = timelineData.endDate.getTime() - timelineData.startDate.getTime();
+      if (totalTime <= 0 || !isFinite(totalTime)) {
+        return null;
+      }
+      
+      const epochTime = epochDate.getTime() - timelineData.startDate.getTime();
+      const position = (epochTime / totalTime) * 100;
+      
+      // Only show if epoch is within the visible timeline range
+      if (isFinite(position) && !isNaN(position) && position >= 0 && position <= 100) {
+        return position;
+      }
+      
+      return null;
+    } catch (error) {
+      console.warn('Error calculating epoch position:', error);
+      return null;
+    }
+  }, [calendar, timelineData]);
+
+  // Get theme color for epoch line
+  const epochLineColor = useMemo(() => {
+    try {
+      const activeTheme = document.documentElement.getAttribute('data-theme') || 'light';
+      const tempEl = document.createElement('div');
+      tempEl.className = 'entry-indicator';
+      tempEl.setAttribute('data-theme', activeTheme);
+      tempEl.style.position = 'absolute';
+      tempEl.style.visibility = 'hidden';
+      tempEl.style.pointerEvents = 'none';
+      tempEl.style.width = '1px';
+      tempEl.style.height = '1px';
+      
+      document.body.appendChild(tempEl);
+      const computedStyle = window.getComputedStyle(tempEl);
+      const bgColor = computedStyle.backgroundColor;
+      document.body.removeChild(tempEl);
+      
+      // Return the color, or fallback to a theme-appropriate color
+      if (bgColor && bgColor !== 'rgba(0, 0, 0, 0)' && bgColor !== 'transparent') {
+        return bgColor;
+      }
+    } catch (error) {
+      // Fall through to default
+    }
+    
+    // Fallback color based on theme
+    const activeTheme = document.documentElement.getAttribute('data-theme') || 'light';
+    return activeTheme === 'dark' ? '#90caf9' : '#4a90e2';
+  }, [currentTheme]);
 
   // Update throttled position only when it changes significantly or after delay
   // This allows approximate viewport filtering without recalculating on every drag movement
@@ -1946,23 +2012,21 @@ export default function GlobalTimelineMinimap({
     for (const entry of entries) {
       // Cache dates
       if (!dateCache.has(entry.date)) {
-        const dateParts = entry.date.split('-');
-        if (dateParts.length >= 3) {
-          const year = parseInt(dateParts[0], 10);
-          const month = parseInt(dateParts[1], 10) - 1;
-          const day = parseInt(dateParts[2], 10);
-          if (!isNaN(year) && !isNaN(month) && !isNaN(day)) {
-            const rawDate = new Date(year, month, day);
-            const canonicalMap = new Map<TimeRange, Date>();
-            
-            // Pre-calculate canonical dates for all timeRanges
-            const timeRanges: TimeRange[] = ['day', 'week', 'month', 'year', 'decade'];
-            for (const tr of timeRanges) {
-              canonicalMap.set(tr, getCanonicalDate(rawDate, tr));
-            }
-            
-            dateCache.set(entry.date, { raw: rawDate, canonical: canonicalMap });
+        // Use parseISODate to properly handle year 0 and negative years
+        try {
+          const rawDate = parseISODate(entry.date);
+          const canonicalMap = new Map<TimeRange, Date>();
+          
+          // Pre-calculate canonical dates for all timeRanges
+          const timeRanges: TimeRange[] = ['day', 'week', 'month', 'year', 'decade'];
+          for (const tr of timeRanges) {
+            canonicalMap.set(tr, getCanonicalDate(rawDate, tr));
           }
+          
+          dateCache.set(entry.date, { raw: rawDate, canonical: canonicalMap });
+        } catch (error) {
+          // Skip entries with invalid dates
+          console.warn('Failed to parse entry date:', entry.date, error);
         }
       }
       
@@ -4429,6 +4493,21 @@ export default function GlobalTimelineMinimap({
               />
             );
           })}
+          
+          {/* Epoch 0 line for current calendar */}
+          {epochLinePosition !== null && (
+            <line
+              x1={Math.round((epochLinePosition / 100) * 1000) + 0.5}
+              y1="0.5"
+              x2={Math.round((epochLinePosition / 100) * 1000) + 0.5}
+              y2={minimapDimensions.height - 0.5}
+              stroke={epochLineColor}
+              strokeWidth="1"
+              opacity="0.6"
+              shapeRendering="crispEdges"
+              className="epoch-line"
+            />
+          )}
         </svg>
         
         {/* Scale labels for all levels - localized to current indicator */}

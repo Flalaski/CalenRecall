@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { JournalEntry } from '../types';
 
 interface EntriesContextType {
@@ -30,6 +30,27 @@ export function EntriesProvider({ children }: { children: ReactNode }) {
   const removeEntry = (entryId: number) => {
     setEntries(prev => prev.filter(entry => entry.id !== entryId));
   };
+
+  // Reload entries from database when a new entry is saved
+  useEffect(() => {
+    const handleEntrySaved = async () => {
+      try {
+        if (window.electronAPI) {
+          // Reload all entries from database to ensure we have the latest data
+          const allEntries = await window.electronAPI.getAllEntries();
+          setEntries(allEntries);
+        }
+      } catch (error) {
+        console.error('Error reloading entries after save:', error);
+      }
+    };
+
+    window.addEventListener('journalEntrySaved', handleEntrySaved);
+    
+    return () => {
+      window.removeEventListener('journalEntrySaved', handleEntrySaved);
+    };
+  }, []);
 
   return (
     <EntriesContext.Provider
