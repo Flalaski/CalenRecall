@@ -40,7 +40,7 @@ export default function CalendarView({
   selectedDate,
   viewMode,
   onTimePeriodSelect,
-  weekStartsOn = 1,
+  weekStartsOn = 0,
 }: CalendarViewProps) {
   const { calendar } = useCalendar();
   const { entries: allEntries } = useEntries();

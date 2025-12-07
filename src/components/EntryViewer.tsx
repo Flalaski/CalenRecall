@@ -28,7 +28,7 @@ export default function EntryViewer({
   onNewEntry,
   onEntrySelect,
   onEditEntry,
-  weekStartsOn = 1,
+  weekStartsOn = 0,
 }: EntryViewerProps) {
   const { calendar } = useCalendar();
   const { entries: allEntries } = useEntries();
@@ -137,7 +137,7 @@ export default function EntryViewer({
           endDate = new Date(startDate.getFullYear(), startDate.getMonth() + 1, 0);
           break;
         case 'week':
-          startDate = getWeekStart(date, weekStartsOn ?? 1);
+          startDate = getWeekStart(date, weekStartsOn ?? 0);
           endDate = new Date(startDate);
           endDate.setDate(endDate.getDate() + 6);
           break;
@@ -312,8 +312,8 @@ export default function EntryViewer({
         case 'month':
           return formatDate(entryDate, 'MMMM yyyy');
         case 'week':
-          const weekStart = getWeekStart(entryDate, weekStartsOn ?? 1);
-          const weekEnd = getWeekEnd(entryDate, weekStartsOn ?? 1);
+          const weekStart = getWeekStart(entryDate, weekStartsOn ?? 0);
+          const weekEnd = getWeekEnd(entryDate, weekStartsOn ?? 0);
           if (weekStart.getMonth() === weekEnd.getMonth()) {
             return `Week of ${formatDate(weekStart, 'MMM d')} - ${formatDate(weekEnd, 'd, yyyy')}`;
           } else {

@@ -585,7 +585,7 @@ export default function PreferencesComponent() {
             <label htmlFor="weekStartsOn">Week Starts On</label>
             <select
               id="weekStartsOn"
-              value={preferences.weekStartsOn ?? 1}
+              value={preferences.weekStartsOn ?? 0}
               onChange={(e) => updatePreference('weekStartsOn', parseInt(e.target.value) as Preferences['weekStartsOn'])}
             >
               <option value="0">Sunday</option>

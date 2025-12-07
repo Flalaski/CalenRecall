@@ -145,7 +145,7 @@ export function getDaysInWeek(date: Date, weekStartsOn: 0 | 1 | 2 | 3 | 4 | 5 | 
  * Get weekday labels based on weekStartsOn preference
  * Returns an array of weekday abbreviations starting with the specified day
  */
-export function getWeekdayLabels(weekStartsOn: 0 | 1 | 2 | 3 | 4 | 5 | 6 = 1): string[] {
+export function getWeekdayLabels(weekStartsOn: 0 | 1 | 2 | 3 | 4 | 5 | 6 = 0): string[] {
   const allDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
   const labels: string[] = [];
   
@@ -161,7 +161,7 @@ export function getWeekdayLabels(weekStartsOn: 0 | 1 | 2 | 3 | 4 | 5 | 6 = 1): s
 /**
  * Get full weekday names based on weekStartsOn preference
  */
-export function getWeekdayNames(weekStartsOn: 0 | 1 | 2 | 3 | 4 | 5 | 6 = 1): string[] {
+export function getWeekdayNames(weekStartsOn: 0 | 1 | 2 | 3 | 4 | 5 | 6 = 0): string[] {
   const allDays = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
   const names: string[] = [];
   
@@ -201,7 +201,7 @@ export function isToday(date: Date): boolean {
 }
 
 // Get canonical date for a time range (the date used to store entries)
-export function getCanonicalDate(date: Date, timeRange: 'decade' | 'year' | 'month' | 'week' | 'day', weekStartsOn: 0 | 1 | 2 | 3 | 4 | 5 | 6 = 1): Date {
+export function getCanonicalDate(date: Date, timeRange: 'decade' | 'year' | 'month' | 'week' | 'day', weekStartsOn: 0 | 1 | 2 | 3 | 4 | 5 | 6 = 0): Date {
   switch (timeRange) {
     case 'decade':
       return getDecadeStart(date);

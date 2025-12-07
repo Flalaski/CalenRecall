@@ -267,7 +267,7 @@ export default function GlobalTimelineMinimap({
   onTimePeriodSelect,
   onEntrySelect,
   minimapSize = 'medium',
-  weekStartsOn = 1,
+  weekStartsOn = 0,
 }: GlobalTimelineMinimapProps) {
   const { formatDate, calendar } = useCalendar();
   const { entries } = useEntries();

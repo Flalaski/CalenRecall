@@ -27,7 +27,7 @@ export default function TimelineView({
   onTimePeriodSelect,
   onEntrySelect,
   onEditEntry,
-  weekStartsOn = 1,
+  weekStartsOn = 0,
 }: TimelineViewProps) {
   const { calendar } = useCalendar();
   const { entries: allEntries } = useEntries();

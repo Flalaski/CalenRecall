@@ -723,7 +723,7 @@ function App() {
           onTimePeriodSelect={handleTimePeriodSelect}
           onEntrySelect={handleEntrySelect}
           minimapSize={preferences.minimapSize || 'medium'}
-          weekStartsOn={preferences.weekStartsOn ?? 1}
+          weekStartsOn={preferences.weekStartsOn ?? 0}
         />
       )}
       <div className="app-content">
@@ -734,7 +734,7 @@ function App() {
             onTimePeriodSelect={handleTimePeriodSelect}
             onEntrySelect={handleEntrySelect}
             onEditEntry={handleEditEntry}
-            weekStartsOn={preferences.weekStartsOn ?? 1}
+            weekStartsOn={preferences.weekStartsOn ?? 0}
           />
         </div>
         <div className="editor-section">
@@ -760,7 +760,7 @@ function App() {
               onNewEntry={handleNewEntry}
               onEntrySelect={handleEntrySelect}
               onEditEntry={handleEditEntry}
-              weekStartsOn={preferences.weekStartsOn ?? 1}
+              weekStartsOn={preferences.weekStartsOn ?? 0}
             />
           )}
         </div>
