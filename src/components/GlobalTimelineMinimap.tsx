@@ -4439,35 +4439,74 @@ export default function GlobalTimelineMinimap({
               const isActiveScale = scale === viewMode;
               const levelIndex = timeScaleOrder.indexOf(scale);
               const baseOpacity = isActiveScale ? 0.9 : 0.35;
-              const thickness = isActiveScale ? 2.6 : 1.6;
-              const glowColorPrimary = '#4a90e2';
-              const glowColorSecondary = '#90caf9';
+              // Make active tier thicker and more visible
+              const thickness = isActiveScale ? 3.2 : 1.6;
+              
+              // Get tier-specific colors
+              const tierColor = getViewModeColor(scale);
+              // For right branch, use a slightly lighter variant for visual distinction
+              // Using same color temporarily to test if color is the issue
+              const tierColorRight = lightenColor(tierColor, 0.15);
+              
+              // Create separate glow filters to ensure both work correctly
+              const glowFilterIdLeft = `glow-left-${scale}-${levelIndex}`;
+              const glowFilterIdRight = `glow-right-${scale}-${levelIndex}`;
+              const glowIntensity = isActiveScale ? 3 : 1.5;
 
               return (
                 <g key={scale}>
-                  {/* Primary crystalline branch */}
+                  {/* Define glow filters for both branches */}
+                  <defs>
+                    <filter id={glowFilterIdLeft} x="-50%" y="-50%" width="200%" height="200%">
+                      <feGaussianBlur stdDeviation={glowIntensity} result="coloredBlur"/>
+                      <feMerge>
+                        <feMergeNode in="coloredBlur"/>
+                        <feMergeNode in="SourceGraphic"/>
+                      </feMerge>
+                    </filter>
+                    <filter id={glowFilterIdRight} x="-50%" y="-50%" width="200%" height="200%">
+                      <feGaussianBlur stdDeviation={glowIntensity} result="coloredBlur"/>
+                      <feMerge>
+                        <feMergeNode in="coloredBlur"/>
+                        <feMergeNode in="SourceGraphic"/>
+                      </feMerge>
+                    </filter>
+                  </defs>
+                  
+                  {/* Left branch */}
                   <path
                     d={buildInfinityBranchPath(scale, 'left')}
-                    stroke={glowColorPrimary}
+                    stroke={tierColor}
                     strokeWidth={thickness}
                     fill="none"
                     className={`infinity-tree-branch ${isActiveScale ? 'active' : ''}`}
-                    style={{ opacity: baseOpacity, '--branch-opacity': baseOpacity } as React.CSSProperties}
+                    style={{ 
+                      opacity: baseOpacity, 
+                      filter: `url(#${glowFilterIdLeft})`,
+                      stroke: tierColor,
+                      strokeWidth: thickness
+                    } as React.CSSProperties}
                   />
+                  {/* Right branch - identical structure to left, using same color to test */}
                   <path
                     d={buildInfinityBranchPath(scale, 'right')}
-                    stroke={glowColorSecondary}
-                    strokeWidth={thickness - 0.4}
+                    stroke={tierColor}
+                    strokeWidth={thickness}
                     fill="none"
-                    className={`infinity-tree-branch secondary ${isActiveScale ? 'active' : ''}`}
-                    style={{ opacity: baseOpacity, '--branch-opacity': baseOpacity } as React.CSSProperties}
+                    className={`infinity-tree-branch ${isActiveScale ? 'active' : ''}`}
+                    style={{ 
+                      opacity: baseOpacity, 
+                      filter: `url(#${glowFilterIdRight})`,
+                      stroke: tierColor,
+                      strokeWidth: thickness
+                    } as React.CSSProperties}
                   />
 
                   {/* Subtle crystalline filaments hugging the scale band */}
                   <path
                     d={`M ${centerX - 12 * (levelIndex + 1)},${scaleYPositions[scale]} 
                         L ${centerX + 12 * (levelIndex + 1)},${scaleYPositions[scale]}`}
-                    stroke={glowColorSecondary}
+                    stroke={tierColorRight}
                     strokeWidth="0.8"
                     opacity={baseOpacity * 0.4}
                     className="infinity-tree-filament"

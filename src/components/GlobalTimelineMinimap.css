@@ -585,25 +585,12 @@
   stroke-linecap: round;
   stroke-linejoin: bevel;
   stroke-dasharray: 6 5;
-  /* Opacity is controlled inline based on current tier */
+  /* Opacity and stroke-width are controlled inline based on current tier */
   animation: infinityBranchIdle 4s ease-in-out infinite;
   will-change: stroke-dashoffset, opacity;
-  opacity: var(--branch-opacity, 0.35) !important;
-}
-
-.infinity-tree-branch.secondary {
-  stroke-dasharray: 3 7;
-  /* Opacity is controlled inline based on current tier */
-  animation: infinityBranchIdle 4s ease-in-out infinite;
-  will-change: stroke-dashoffset, opacity;
-  opacity: var(--branch-opacity, 0.35) !important;
 }
 
 .infinity-tree-branch.active {
-  animation: infinityBranchActive 1.2s ease-in-out infinite;
-}
-
-.infinity-tree-branch.secondary.active {
   animation: infinityBranchActive 1.2s ease-in-out infinite;
 }
 
