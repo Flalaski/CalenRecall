@@ -164,6 +164,24 @@ function App() {
     } else if (key === 'fontSize') {
       // Apply font size immediately (synchronous for instant feedback)
       applyFontSize(value);
+      
+      // Force a reflow to ensure CSS is recalculated
+      void document.documentElement.offsetHeight;
+      
+      // Verify and re-apply if needed after a short delay
+      setTimeout(() => {
+        const appliedFontSize = document.documentElement?.getAttribute('data-font-size');
+        const expectedFontSize = value || 'medium';
+        if (appliedFontSize !== expectedFontSize) {
+          console.warn('[App] Font size verification failed! Expected:', expectedFontSize, 'Got:', appliedFontSize);
+          console.log('[App] Force re-applying font size');
+          applyFontSize(value);
+          void document.documentElement.offsetHeight;
+        } else {
+          console.log('[App] Font size verified successfully:', appliedFontSize);
+        }
+      }, 50);
+      
       // Update preferences state
       setPreferences(prev => ({ ...prev, fontSize: value }));
     } else if (key === 'backgroundImage') {
@@ -189,12 +207,26 @@ function App() {
       // Update preferences state
       setPreferences(prev => ({ ...prev, backgroundImage: value }));
     } else if (key === 'minimapCrystalUseDefaultColors') {
-      // Update preferences state only
+      // Update preferences state
       setPreferences(prev => ({ ...prev, minimapCrystalUseDefaultColors: value }));
-    } else if (key === 'minimapSize' || key === 'showMinimap') {
-      // Update preferences state immediately for minimap settings
-      // These trigger re-renders which will apply the changes via props
-      setPreferences(prev => ({ ...prev, [key]: value }));
+      // Dispatch window event so GlobalTimelineMinimap can update immediately
+      window.dispatchEvent(new CustomEvent('preferences-updated', { 
+        detail: { key: 'minimapCrystalUseDefaultColors', value } 
+      }));
+    } else if (key === 'minimapSize') {
+      // Update preferences state immediately for minimap size
+      // This triggers a re-render which will apply the changes via props to GlobalTimelineMinimap
+      console.log('[App] Updating minimap size:', value);
+      setPreferences(prev => {
+        const updated = { ...prev, minimapSize: value };
+        console.log('[App] Preferences state updated with minimapSize:', updated.minimapSize);
+        return updated;
+      });
+    } else if (key === 'showMinimap') {
+      // Update preferences state immediately for show minimap toggle
+      // This triggers a re-render which will show/hide the minimap
+      console.log('[App] Updating show minimap:', value);
+      setPreferences(prev => ({ ...prev, showMinimap: value }));
     } else {
       // For all other preferences, update state (they may not need immediate UI updates)
       setPreferences(prev => ({ ...prev, [key]: value }));

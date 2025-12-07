@@ -482,6 +482,40 @@ export default function PreferencesComponent() {
             <small>When enabled, minimap crystals use calculated numerological colors (default behavior). When disabled, crystals use the theme's entry indicator color.</small>
           </div>
 
+          <div className="preference-item">
+            <label>
+              <input
+                type="checkbox"
+                checked={preferences.showMinimap !== false}
+                onChange={(e) => updatePreference('showMinimap', e.target.checked)}
+              />
+              Show Minimap
+            </label>
+          </div>
+
+          {preferences.showMinimap !== false && (
+            <>
+              <div className="preference-item">
+                <label htmlFor="minimapSize">Minimap Size</label>
+                <select
+                  id="minimapSize"
+                  value={preferences.minimapSize || 'medium'}
+                  onChange={(e) => updatePreference('minimapSize', e.target.value as Preferences['minimapSize'])}
+                >
+                  <option value="xxxSmall">XXX Small</option>
+                  <option value="xxSmall">XX Small</option>
+                  <option value="xSmall">X Small</option>
+                  <option value="small">Small</option>
+                  <option value="medium">Medium</option>
+                  <option value="large">Large</option>
+                  <option value="xLarge">X Large</option>
+                  <option value="xxLarge">XX Large</option>
+                  <option value="xxxLarge">XXX Large</option>
+                </select>
+              </div>
+            </>
+          )}
+
         </div>
 
         <div className="preferences-section">
@@ -563,43 +597,6 @@ export default function PreferencesComponent() {
               <option value="6">Saturday</option>
             </select>
           </div>
-        </div>
-
-        <div className="preferences-section">
-          <h2>Timeline Minimap</h2>
-          <div className="preference-item">
-            <label>
-              <input
-                type="checkbox"
-                checked={preferences.showMinimap !== false}
-                onChange={(e) => updatePreference('showMinimap', e.target.checked)}
-              />
-              Show Minimap
-            </label>
-          </div>
-
-          {preferences.showMinimap !== false && (
-            <>
-              <div className="preference-item">
-                <label htmlFor="minimapSize">Minimap Size</label>
-                <select
-                  id="minimapSize"
-                  value={preferences.minimapSize || 'medium'}
-                  onChange={(e) => updatePreference('minimapSize', e.target.value as Preferences['minimapSize'])}
-                >
-                  <option value="xxxSmall">XXX Small</option>
-                  <option value="xxSmall">XX Small</option>
-                  <option value="xSmall">X Small</option>
-                  <option value="small">Small</option>
-                  <option value="medium">Medium</option>
-                  <option value="large">Large</option>
-                  <option value="xLarge">X Large</option>
-                  <option value="xxLarge">XX Large</option>
-                  <option value="xxxLarge">XXX Large</option>
-                </select>
-              </div>
-            </>
-          )}
         </div>
 
         <div className="preferences-section">

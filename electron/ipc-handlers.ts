@@ -358,14 +358,14 @@ export function setupIpcHandlers() {
             const sent = mainWindowRef.webContents.send('preference-updated', { key: keyStr, value });
             console.log('[IPC] ✅ Message sent (send returns void, but no error thrown)');
             
-            // For theme changes, send multiple fallback messages to ensure it's received
+            // For theme and fontSize changes, send multiple fallback messages to ensure it's received
             // This handles cases where the listener might not be ready or there are timing issues
-            if (keyStr === 'theme') {
-              // Send after short delays as fallbacks - more aggressive for theme changes
+            if (keyStr === 'theme' || keyStr === 'fontSize') {
+              // Send fallback messages for critical UI updates
               const sendFallback = (delay: number) => {
                 setTimeout(() => {
                   if (mainWindowRef && !mainWindowRef.isDestroyed()) {
-                    console.log(`[IPC] 📤 Sending fallback preference-updated for theme (${delay}ms):`, value);
+                    console.log(`[IPC] 📤 Sending fallback preference-updated for ${keyStr} (${delay}ms):`, value);
                     try {
                       mainWindowRef.webContents.send('preference-updated', { key: keyStr, value });
                       console.log(`[IPC] ✅ Fallback message sent at ${delay}ms`);
@@ -378,45 +378,78 @@ export function setupIpcHandlers() {
                 }, delay);
               };
               
-              // Send multiple fallbacks at different intervals to ensure message is received
+              // Send multiple fallbacks at different intervals
               sendFallback(50);
               sendFallback(100);
               sendFallback(200);
-              sendFallback(300);
-              sendFallback(500);
-              sendFallback(1000);
               
-              // Also try executing JavaScript directly as a last resort
-              setTimeout(() => {
-                if (mainWindowRef && !mainWindowRef.isDestroyed()) {
-                  try {
-                    console.log('[IPC] 🔧 Attempting direct theme application via executeJavaScript');
-                    mainWindowRef.webContents.executeJavaScript(`
-                      (function() {
-                        try {
-                          const theme = '${value}';
-                          const themeToApply = theme === 'auto' 
-                            ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
-                            : theme;
-                          document.documentElement.setAttribute('data-theme', themeToApply);
-                          void document.documentElement.offsetHeight; // Force reflow
-                          console.log('[IPC] ✅ Direct theme application complete:', themeToApply);
-                          return true;
-                        } catch (e) {
-                          console.error('[IPC] ❌ Error in direct theme application:', e);
-                          return false;
-                        }
-                      })();
-                    `).then((result) => {
-                      console.log('[IPC] ✅ executeJavaScript completed:', result);
-                    }).catch((err) => {
-                      console.error('[IPC] ❌ executeJavaScript failed:', err);
-                    });
-                  } catch (error) {
-                    console.error('[IPC] ❌ Error calling executeJavaScript:', error);
+              // For theme changes, send additional fallbacks and use direct JavaScript execution
+              if (keyStr === 'theme') {
+                sendFallback(300);
+                sendFallback(500);
+                sendFallback(1000);
+                
+                // Also try executing JavaScript directly as a last resort for theme
+                setTimeout(() => {
+                  if (mainWindowRef && !mainWindowRef.isDestroyed()) {
+                    try {
+                      console.log('[IPC] 🔧 Attempting direct theme application via executeJavaScript');
+                      mainWindowRef.webContents.executeJavaScript(`
+                        (function() {
+                          try {
+                            const theme = '${value}';
+                            const themeToApply = theme === 'auto' 
+                              ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
+                              : theme;
+                            document.documentElement.setAttribute('data-theme', themeToApply);
+                            void document.documentElement.offsetHeight; // Force reflow
+                            console.log('[IPC] ✅ Direct theme application complete:', themeToApply);
+                            return true;
+                          } catch (e) {
+                            console.error('[IPC] ❌ Error in direct theme application:', e);
+                            return false;
+                          }
+                        })();
+                      `).then((result) => {
+                        console.log('[IPC] ✅ executeJavaScript completed:', result);
+                      }).catch((err) => {
+                        console.error('[IPC] ❌ executeJavaScript failed:', err);
+                      });
+                    } catch (error) {
+                      console.error('[IPC] ❌ Error calling executeJavaScript:', error);
+                    }
                   }
-                }
-              }, 150);
+                }, 150);
+              } else if (keyStr === 'fontSize') {
+                // For font size, also try direct JavaScript execution as a fallback
+                setTimeout(() => {
+                  if (mainWindowRef && !mainWindowRef.isDestroyed()) {
+                    try {
+                      console.log('[IPC] 🔧 Attempting direct font size application via executeJavaScript');
+                      mainWindowRef.webContents.executeJavaScript(`
+                        (function() {
+                          try {
+                            const fontSize = '${value}';
+                            document.documentElement.setAttribute('data-font-size', fontSize);
+                            void document.documentElement.offsetHeight; // Force reflow
+                            console.log('[IPC] ✅ Direct font size application complete:', fontSize);
+                            return true;
+                          } catch (e) {
+                            console.error('[IPC] ❌ Error in direct font size application:', e);
+                            return false;
+                          }
+                        })();
+                      `).then((result) => {
+                        console.log('[IPC] ✅ executeJavaScript completed for fontSize:', result);
+                      }).catch((err) => {
+                        console.error('[IPC] ❌ executeJavaScript failed for fontSize:', err);
+                      });
+                    } catch (error) {
+                      console.error('[IPC] ❌ Error calling executeJavaScript for fontSize:', error);
+                    }
+                  }
+                }, 150);
+              }
             }
           } catch (error) {
             console.error('[IPC] Error sending preference-updated message:', error);
