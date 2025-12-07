@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { JournalEntry, TimeRange, Preferences } from '../types';
-import { formatDate, getCanonicalDate } from '../utils/dateUtils';
+import { formatDate, getCanonicalDate, isToday } from '../utils/dateUtils';
 import { getEntryForDate, saveJournalEntry, deleteJournalEntry } from '../services/journalService';
 import { playSaveSound, playCancelSound, playDeleteSound, playAddSound, playRemoveSound } from '../utils/audioUtils';
 import { useCalendar } from '../contexts/CalendarContext';
@@ -177,16 +177,43 @@ export default function JournalEditor({
       setTitle('');
       setContent('');
       setTags([]);
-      setHour(undefined);
-      setMinute(undefined);
-      setSecond(undefined);
-      setAmPm('AM');
+      
+      // If creating a day entry for today, automatically set time to "now"
+      if (viewMode === 'day' && isToday(date)) {
+        const now = new Date();
+        const hour24 = now.getHours();
+        const minute = now.getMinutes();
+        const second = now.getSeconds();
+        
+        const timeFormat = preferences.timeFormat || '12h';
+        if (timeFormat === '12h') {
+          // Convert to 12-hour format
+          const hour12 = hour24 === 0 ? 12 : (hour24 > 12 ? hour24 - 12 : hour24);
+          setHour(hour12);
+          setAmPm(hour24 >= 12 ? 'PM' : 'AM');
+        } else {
+          // Use 24-hour format directly
+          setHour(hour24);
+        }
+        setMinute(minute);
+        setSecond(second);
+        setOriginalHour(hour24);
+        setOriginalMinute(minute);
+        setOriginalSecond(second);
+      } else {
+        // For non-day entries or entries not for today, clear time fields
+        setHour(undefined);
+        setMinute(undefined);
+        setSecond(undefined);
+        setAmPm('AM');
+        setOriginalHour(undefined);
+        setOriginalMinute(undefined);
+        setOriginalSecond(undefined);
+      }
+      
       setOriginalTitle('');
       setOriginalContent('');
       setOriginalTags([]);
-      setOriginalHour(undefined);
-      setOriginalMinute(undefined);
-      setOriginalSecond(undefined);
       setCurrentEntry(null);
       setLoading(false);
     } else {
@@ -238,16 +265,43 @@ export default function JournalEditor({
         setTitle('');
         setContent('');
         setTags([]);
-        setHour(undefined);
-        setMinute(undefined);
-        setSecond(undefined);
-        setAmPm('AM');
+        
+        // If in day view mode and the date is today, automatically set time to "now"
+        if (viewMode === 'day' && isToday(date)) {
+          const now = new Date();
+          const hour24 = now.getHours();
+          const minute = now.getMinutes();
+          const second = now.getSeconds();
+          
+          const timeFormat = preferences.timeFormat || '12h';
+          if (timeFormat === '12h') {
+            // Convert to 12-hour format
+            const hour12 = hour24 === 0 ? 12 : (hour24 > 12 ? hour24 - 12 : hour24);
+            setHour(hour12);
+            setAmPm(hour24 >= 12 ? 'PM' : 'AM');
+          } else {
+            // Use 24-hour format directly
+            setHour(hour24);
+          }
+          setMinute(minute);
+          setSecond(second);
+          setOriginalHour(hour24);
+          setOriginalMinute(minute);
+          setOriginalSecond(second);
+        } else {
+          // For non-day entries or entries not for today, clear time fields
+          setHour(undefined);
+          setMinute(undefined);
+          setSecond(undefined);
+          setAmPm('AM');
+          setOriginalHour(undefined);
+          setOriginalMinute(undefined);
+          setOriginalSecond(undefined);
+        }
+        
         setOriginalTitle('');
         setOriginalContent('');
         setOriginalTags([]);
-        setOriginalHour(undefined);
-        setOriginalMinute(undefined);
-        setOriginalSecond(undefined);
       }
     } catch (error) {
       console.error('Error loading entry:', error);
@@ -653,14 +707,6 @@ export default function JournalEditor({
             <div className="time-buttons">
               <button
                 type="button"
-                className="now-time-button"
-                onClick={handleSetNow}
-                title="Set to current time"
-              >
-                Now
-              </button>
-              <button
-                type="button"
                 className="clear-time-button"
                 onClick={() => {
                   setHour(undefined);
@@ -671,6 +717,14 @@ export default function JournalEditor({
                 title="Clear time"
               >
                 Clear
+              </button>
+              <button
+                type="button"
+                className="now-time-button"
+                onClick={handleSetNow}
+                title="Set to current time"
+              >
+                Now
               </button>
             </div>
           </div>

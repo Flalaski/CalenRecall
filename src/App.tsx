@@ -527,6 +527,67 @@ function App() {
     };
   }, [updateSpecificPreference]);
 
+  // Listen for menu messages from main process
+  useEffect(() => {
+    if (!window.electronAPI) return;
+
+    const handleMenuNewEntry = () => {
+      playNewEntrySound();
+      handleNewEntryRef.current();
+    };
+
+    const handleMenuImport = async (format: 'json' | 'markdown') => {
+      try {
+        if (window.electronAPI) {
+          const result = await window.electronAPI.importEntries(format);
+          if (result.success) {
+            // Reload entries after successful import
+            const allEntries = await window.electronAPI.getAllEntries();
+            setEntries(allEntries);
+            // Show success message (you could add a toast notification here)
+            console.log(`Import successful: ${result.imported} entries imported${result.skipped ? `, ${result.skipped} skipped` : ''}`);
+          } else if (!result.canceled) {
+            console.error('Import failed:', result.error);
+          }
+        }
+      } catch (error) {
+        console.error('Error handling import:', error);
+      }
+    };
+
+    const handleMenuExport = async (format: 'markdown' | 'text' | 'json' | 'rtf' | 'pdf' | 'dec' | 'csv') => {
+      try {
+        if (window.electronAPI) {
+          const result = await window.electronAPI.exportEntries(format);
+          if (result.success) {
+            console.log('Export successful:', result.path);
+          } else if (!result.canceled) {
+            console.error('Export failed:', result.error);
+          }
+        }
+      } catch (error) {
+        console.error('Error handling export:', error);
+      }
+    };
+
+    // Set up menu message listeners
+    if (window.electronAPI.onMenuNewEntry) {
+      window.electronAPI.onMenuNewEntry(handleMenuNewEntry);
+    }
+    if (window.electronAPI.onMenuImport) {
+      window.electronAPI.onMenuImport(handleMenuImport);
+    }
+    if (window.electronAPI.onMenuExport) {
+      window.electronAPI.onMenuExport(handleMenuExport);
+    }
+
+    return () => {
+      if (window.electronAPI.removeMenuListeners) {
+        window.electronAPI.removeMenuListeners();
+      }
+    };
+  }, [setEntries]);
+
   // Save last viewed position when date or view mode changes (if restoreLastView is enabled)
   // Use a ref to track if we're in the initial restore phase to avoid saving during restoration
   const isRestoringRef = useRef(true);
@@ -650,6 +711,14 @@ function App() {
         target.isContentEditable ||
         (target.closest('input') || target.closest('textarea') || target.closest('[contenteditable="true"]'))
       ) {
+        return;
+      }
+
+      // Handle Ctrl+N or Cmd+N for new entry
+      if ((e.ctrlKey || e.metaKey) && e.key === 'n') {
+        e.preventDefault();
+        playNewEntrySound();
+        handleNewEntryRef.current();
         return;
       }
 

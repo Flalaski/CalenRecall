@@ -126,6 +126,10 @@ declare global {
       getBackgroundImagePath: () => Promise<{ success: boolean; error?: string; message?: string; path?: string | null }>;
       onPreferenceUpdated: (callback: (data: { key: string; value: any }) => void) => void;
       removePreferenceUpdatedListener: () => void;
+      onMenuNewEntry: (callback: () => void) => void;
+      onMenuImport: (callback: (format: 'json' | 'markdown') => void) => void;
+      onMenuExport: (callback: (format: ExportFormat) => void) => void;
+      removeMenuListeners: () => void;
     };
   }
 }

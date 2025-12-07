@@ -173,5 +173,24 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // Get custom themes from AppData/themes directory
   getCustomThemes: (): Promise<{ success: boolean; error?: string; message?: string; themes?: Array<{ name: string; css: string }> }> =>
     ipcRenderer.invoke('get-custom-themes'),
+
+  // Menu message listeners
+  onMenuNewEntry: (callback: () => void) => {
+    ipcRenderer.on('menu-new-entry', () => callback());
+  },
+
+  onMenuImport: (callback: (format: 'json' | 'markdown') => void) => {
+    ipcRenderer.on('menu-import', (_event, format) => callback(format));
+  },
+
+  onMenuExport: (callback: (format: ExportFormat) => void) => {
+    ipcRenderer.on('menu-export', (_event, format) => callback(format));
+  },
+
+  removeMenuListeners: () => {
+    ipcRenderer.removeAllListeners('menu-new-entry');
+    ipcRenderer.removeAllListeners('menu-import');
+    ipcRenderer.removeAllListeners('menu-export');
+  },
 });
 

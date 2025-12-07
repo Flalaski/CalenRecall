@@ -24,8 +24,36 @@ export default function EntryEditModal({
   const [content, setContent] = useState('');
   const [tags, setTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState('');
+  const [hour, setHour] = useState<number | undefined>(undefined);
+  const [minute, setMinute] = useState<number | undefined>(undefined);
+  const [second, setSecond] = useState<number | undefined>(undefined);
+  const [amPm, setAmPm] = useState<'AM' | 'PM'>('AM');
   const [saving, setSaving] = useState(false);
   const [preferences, setPreferences] = useState<Preferences>({});
+
+  const getDisplayHour = (hour24: number | undefined | null): number | undefined => {
+    if (hour24 === undefined || hour24 === null) return undefined;
+    const timeFormat = preferences.timeFormat || '12h';
+    if (timeFormat === '12h') {
+      if (hour24 === 0) return 12;
+      if (hour24 > 12) return hour24 - 12;
+      return hour24;
+    }
+    return hour24;
+  };
+
+  const convertTo24Hour = (hour12: number | undefined, amPmValue: 'AM' | 'PM'): number | undefined => {
+    if (hour12 === undefined || hour12 === null) return undefined;
+    const timeFormat = preferences.timeFormat || '12h';
+    if (timeFormat === '12h') {
+      if (amPmValue === 'AM') {
+        return hour12 === 12 ? 0 : hour12;
+      } else {
+        return hour12 === 12 ? 12 : hour12 + 12;
+      }
+    }
+    return hour12;
+  };
 
   useEffect(() => {
     if (isOpen && entry) {
@@ -33,8 +61,29 @@ export default function EntryEditModal({
       setContent(entry.content);
       setTags(entry.tags || []);
       setTagInput('');
+      
+      // Only load time fields for day entries
+      if (entry.timeRange === 'day') {
+        const timeFormat = preferences.timeFormat || '12h';
+        if (timeFormat === '12h' && entry.hour !== undefined && entry.hour !== null) {
+          const hour24 = entry.hour;
+          setHour(getDisplayHour(hour24));
+          setAmPm(hour24 >= 12 ? 'PM' : 'AM');
+        } else {
+          setHour(entry.hour);
+          setAmPm(entry.hour !== undefined && entry.hour !== null && entry.hour >= 12 ? 'PM' : 'AM');
+        }
+        setMinute(entry.minute);
+        setSecond(entry.second);
+      } else {
+        // Clear time fields for non-day entries
+        setHour(undefined);
+        setMinute(undefined);
+        setSecond(undefined);
+        setAmPm('AM');
+      }
     }
-  }, [isOpen, entry]);
+  }, [isOpen, entry, preferences.timeFormat]);
 
   // Load preferences for time format
   useEffect(() => {
@@ -45,6 +94,22 @@ export default function EntryEditModal({
       }
     };
     loadPreferences();
+
+    // Listen for preference updates
+    if (window.electronAPI && window.electronAPI.onPreferenceUpdated) {
+      const handlePreferenceUpdate = (data: { key: string; value: any }) => {
+        setPreferences(prev => ({ ...prev, [data.key]: data.value }));
+        // The effect that depends on preferences.timeFormat will reload time fields when format changes
+      };
+      
+      window.electronAPI.onPreferenceUpdated(handlePreferenceUpdate);
+      
+      return () => {
+        if (window.electronAPI && window.electronAPI.removePreferenceUpdatedListener) {
+          window.electronAPI.removePreferenceUpdatedListener();
+        }
+      };
+    }
   }, []);
 
   // Close modal on Escape key
@@ -68,11 +133,20 @@ export default function EntryEditModal({
     setSaving(true);
 
     try {
+      // Convert hour to 24-hour format if needed (only for day entries)
+      const hour24 = entry.timeRange === 'day' && hour !== undefined && hour !== null 
+        ? convertTo24Hour(hour, amPm) 
+        : undefined;
+      
       const updatedEntry: JournalEntry = {
         ...entry,
         title: title.trim() || entry.title,
         content: content.trim(),
         tags: tags,
+        // Only include time fields for day entries
+        hour: entry.timeRange === 'day' ? hour24 : entry.hour,
+        minute: entry.timeRange === 'day' ? (minute !== undefined && minute !== null ? minute : entry.minute) : entry.minute,
+        second: entry.timeRange === 'day' ? (second !== undefined && second !== null ? second : entry.second) : entry.second,
         updatedAt: new Date().toISOString(),
       };
 
@@ -149,6 +223,9 @@ export default function EntryEditModal({
         title: `${entry.title} (Copy)`,
         content: entry.content,
         tags: entry.tags ? [...entry.tags] : [],
+        hour: entry.hour,
+        minute: entry.minute,
+        second: entry.second,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       };
@@ -173,6 +250,26 @@ export default function EntryEditModal({
     if (e.key === 'Enter' && e.ctrlKey) {
       handleSave();
     }
+  };
+
+  const handleSetNow = () => {
+    const now = new Date();
+    const hour24 = now.getHours();
+    const minute = now.getMinutes();
+    const second = now.getSeconds();
+    
+    const timeFormat = preferences.timeFormat || '12h';
+    if (timeFormat === '12h') {
+      // Convert to 12-hour format
+      const hour12 = hour24 === 0 ? 12 : (hour24 > 12 ? hour24 - 12 : hour24);
+      setHour(hour12);
+      setAmPm(hour24 >= 12 ? 'PM' : 'AM');
+    } else {
+      // Use 24-hour format directly
+      setHour(hour24);
+    }
+    setMinute(minute);
+    setSecond(second);
   };
 
   const formatEntryTime = (entry: JournalEntry): string | null => {
@@ -246,6 +343,112 @@ export default function EntryEditModal({
         </div>
 
         <div className="modal-content">
+          {entry.timeRange === 'day' && (
+            <div className="modal-time-inputs-section">
+              <label className="modal-time-label">Time (optional):</label>
+              <div className="modal-time-inputs">
+                <div className="modal-time-input-group">
+                  <label htmlFor="modal-hour-input">Hour</label>
+                  <input
+                    id="modal-hour-input"
+                    type="number"
+                    className="modal-time-input"
+                    min={preferences.timeFormat === '12h' ? 1 : 0}
+                    max={preferences.timeFormat === '12h' ? 12 : 23}
+                    placeholder="--"
+                    value={hour !== undefined && hour !== null ? hour : ''}
+                    onChange={(e) => {
+                      const val = e.target.value === '' ? undefined : parseInt(e.target.value, 10);
+                      const timeFormat = preferences.timeFormat || '12h';
+                      const maxVal = timeFormat === '12h' ? 12 : 23;
+                      const minVal = timeFormat === '12h' ? 1 : 0;
+                      if (val === undefined || (val >= minVal && val <= maxVal)) {
+                        setHour(val);
+                      }
+                    }}
+                    onKeyDown={handleKeyPress}
+                  />
+                </div>
+                {preferences.timeFormat === '12h' && (
+                  <div className="modal-time-input-group modal-time-input-group-ampm">
+                    <label htmlFor="modal-ampm-input">AM/PM</label>
+                    <select
+                      id="modal-ampm-input"
+                      className="modal-time-input"
+                      value={amPm}
+                      onChange={(e) => setAmPm(e.target.value as 'AM' | 'PM')}
+                      onKeyDown={handleKeyPress}
+                    >
+                      <option value="AM">AM</option>
+                      <option value="PM">PM</option>
+                    </select>
+                  </div>
+                )}
+                <div className="modal-time-input-group">
+                  <label htmlFor="modal-minute-input">Minute</label>
+                  <input
+                    id="modal-minute-input"
+                    type="number"
+                    className="modal-time-input"
+                    min="0"
+                    max="59"
+                    placeholder="--"
+                    value={minute !== undefined && minute !== null ? minute : ''}
+                    onChange={(e) => {
+                      const val = e.target.value === '' ? undefined : parseInt(e.target.value, 10);
+                      if (val === undefined || (val >= 0 && val <= 59)) {
+                        setMinute(val);
+                      }
+                    }}
+                    onKeyDown={handleKeyPress}
+                  />
+                </div>
+                <div className="modal-time-input-group">
+                  <label htmlFor="modal-second-input">Second</label>
+                  <input
+                    id="modal-second-input"
+                    type="number"
+                    className="modal-time-input"
+                    min="0"
+                    max="59"
+                    placeholder="--"
+                    value={second !== undefined && second !== null ? second : ''}
+                    onChange={(e) => {
+                      const val = e.target.value === '' ? undefined : parseInt(e.target.value, 10);
+                      if (val === undefined || (val >= 0 && val <= 59)) {
+                        setSecond(val);
+                      }
+                    }}
+                    onKeyDown={handleKeyPress}
+                  />
+                </div>
+              </div>
+              <div className="modal-time-buttons">
+                <button
+                  type="button"
+                  className="modal-clear-time-button"
+                  onClick={() => {
+                    setHour(undefined);
+                    setMinute(undefined);
+                    setSecond(undefined);
+                    setAmPm('AM');
+                  }}
+                  title="Clear time"
+                >
+                  Clear
+                </button>
+                <button
+                  type="button"
+                  className="modal-now-time-button"
+                  onClick={handleSetNow}
+                  title="Set to current time"
+                >
+                  Now
+                </button>
+              </div>
+            </div>
+          )}
+
           <input
             type="text"
             className="modal-title-input"
@@ -272,8 +475,12 @@ export default function EntryEditModal({
                 placeholder="Add a tag..."
                 value={tagInput}
                 onChange={(e) => setTagInput(e.target.value)}
-                onKeyPress={(e) => {
-                  if (e.key === 'Enter') {
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && e.ctrlKey) {
+                    e.preventDefault();
+                    handleSave();
+                  } else if (e.key === 'Enter') {
+                    e.preventDefault();
                     handleAddTag();
                   }
                 }}

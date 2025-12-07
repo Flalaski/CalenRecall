@@ -702,6 +702,9 @@ export function getEntriesByDateAndRange(date: string, timeRange: 'decade' | 'ye
     id: row.id,
     date: row.date,
     timeRange: row.time_range || 'day',
+    hour: row.hour !== null && row.hour !== undefined ? row.hour : undefined,
+    minute: row.minute !== null && row.minute !== undefined ? row.minute : undefined,
+    second: row.second !== null && row.second !== undefined ? row.second : undefined,
     title: row.title,
     content: row.content,
     tags: row.tags ? JSON.parse(row.tags) : [],
@@ -721,7 +724,15 @@ export function saveEntry(entry: JournalEntry): void {
   const now = new Date().toISOString();
   
   try {
-    console.log('saveEntry called with:', { id: entry.id, date: entry.date, timeRange: entry.timeRange, title: entry.title });
+    console.log('saveEntry called with:', { 
+      id: entry.id, 
+      date: entry.date, 
+      timeRange: entry.timeRange, 
+      title: entry.title,
+      hour: entry.hour,
+      minute: entry.minute,
+      second: entry.second
+    });
     
     // Calculate JDN from date string
     const jdn = calculateJDNFromDateString(entry.date);
@@ -1038,6 +1049,9 @@ export function searchEntries(query: string, includeArchived: boolean = false): 
     id: row.id,
     date: row.date,
     timeRange: row.time_range || 'day',
+    hour: row.hour !== null && row.hour !== undefined ? row.hour : undefined,
+    minute: row.minute !== null && row.minute !== undefined ? row.minute : undefined,
+    second: row.second !== null && row.second !== undefined ? row.second : undefined,
     title: row.title,
     content: row.content,
     tags: row.tags ? JSON.parse(row.tags) : [],

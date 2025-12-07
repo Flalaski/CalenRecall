@@ -484,6 +484,99 @@ function createMenu() {
       label: 'File',
       submenu: [
         {
+          label: 'New Entry',
+          accelerator: process.platform === 'darwin' ? 'Cmd+N' : 'Ctrl+N',
+          click: () => {
+            if (mainWindow && !mainWindow.isDestroyed()) {
+              mainWindow.webContents.send('menu-new-entry');
+            }
+          },
+        },
+        { type: 'separator' },
+        {
+          label: 'Import',
+          submenu: [
+            {
+              label: 'Import from JSON...',
+              click: () => {
+                if (mainWindow && !mainWindow.isDestroyed()) {
+                  mainWindow.webContents.send('menu-import', 'json');
+                }
+              },
+            },
+            {
+              label: 'Import from Markdown...',
+              click: () => {
+                if (mainWindow && !mainWindow.isDestroyed()) {
+                  mainWindow.webContents.send('menu-import', 'markdown');
+                }
+              },
+            },
+          ],
+        },
+        {
+          label: 'Export',
+          submenu: [
+            {
+              label: 'Export as Markdown...',
+              click: () => {
+                if (mainWindow && !mainWindow.isDestroyed()) {
+                  mainWindow.webContents.send('menu-export', 'markdown');
+                }
+              },
+            },
+            {
+              label: 'Export as Text...',
+              click: () => {
+                if (mainWindow && !mainWindow.isDestroyed()) {
+                  mainWindow.webContents.send('menu-export', 'text');
+                }
+              },
+            },
+            {
+              label: 'Export as JSON...',
+              click: () => {
+                if (mainWindow && !mainWindow.isDestroyed()) {
+                  mainWindow.webContents.send('menu-export', 'json');
+                }
+              },
+            },
+            {
+              label: 'Export as RTF...',
+              click: () => {
+                if (mainWindow && !mainWindow.isDestroyed()) {
+                  mainWindow.webContents.send('menu-export', 'rtf');
+                }
+              },
+            },
+            {
+              label: 'Export as PDF...',
+              click: () => {
+                if (mainWindow && !mainWindow.isDestroyed()) {
+                  mainWindow.webContents.send('menu-export', 'pdf');
+                }
+              },
+            },
+            {
+              label: 'Export as CSV...',
+              click: () => {
+                if (mainWindow && !mainWindow.isDestroyed()) {
+                  mainWindow.webContents.send('menu-export', 'csv');
+                }
+              },
+            },
+            {
+              label: 'Export as Decades...',
+              click: () => {
+                if (mainWindow && !mainWindow.isDestroyed()) {
+                  mainWindow.webContents.send('menu-export', 'dec');
+                }
+              },
+            },
+          ],
+        },
+        { type: 'separator' },
+        {
           label: 'Exit',
           accelerator: process.platform === 'darwin' ? 'Cmd+Q' : 'Ctrl+Q',
           click: () => {

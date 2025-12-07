@@ -109,6 +109,154 @@
   gap: 16px;
 }
 
+.modal-time-inputs-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  background: var(--editor-bg, #f9f9f9);
+  border: 1px solid var(--border-color, #ddd);
+  border-radius: 4px;
+}
+
+[data-theme="dark"] .modal-time-inputs-section {
+  background: var(--editor-bg, #2a2a2a);
+  border-color: var(--border-color, #444);
+}
+
+.modal-time-label {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--text-secondary, #666);
+  margin-bottom: 0.25rem;
+}
+
+[data-theme="dark"] .modal-time-label {
+  color: var(--text-secondary, #aaa);
+}
+
+.modal-time-inputs {
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-end;
+}
+
+.modal-time-buttons {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+  justify-content: flex-start;
+}
+
+.modal-time-input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.modal-time-input-group-ampm {
+  flex: 0 0 auto;
+  min-width: 90px;
+}
+
+.modal-time-input-group label {
+  font-size: 0.75rem;
+  color: var(--text-secondary, #666);
+  font-weight: 400;
+}
+
+[data-theme="dark"] .modal-time-input-group label {
+  color: var(--text-secondary, #aaa);
+}
+
+.modal-time-input {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--border-color, #ddd);
+  border-radius: 4px;
+  font-size: 0.9rem;
+  background: var(--input-bg-color, #ffffff);
+  color: var(--text-color, #000000);
+  font-family: inherit;
+}
+
+[data-theme="dark"] .modal-time-input {
+  background: var(--input-bg-color, #2a2a2a);
+  border-color: var(--border-color, #444);
+  color: var(--text-color, #ffffff);
+}
+
+.modal-time-input[type="number"] {
+  text-align: center;
+  padding: 0.5rem;
+}
+
+.modal-time-input:focus {
+  outline: none;
+  border-color: var(--accent-color, #4a90e2);
+  box-shadow: 0 0 0 3px var(--accent-color-alpha, rgba(74, 144, 226, 0.1));
+}
+
+.modal-time-input-group select.modal-time-input {
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23333' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.5rem center;
+  padding-right: 2rem;
+}
+
+[data-theme="dark"] .modal-time-input-group select.modal-time-input {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23fff' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+}
+
+.modal-now-time-button {
+  padding: 0.5rem 1rem;
+  background: var(--accent-color, #4a90e2);
+  color: white;
+  border: 1px solid var(--accent-color, #4a90e2);
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: background-color 0.2s, border-color 0.2s;
+}
+
+.modal-now-time-button:hover {
+  background: var(--accent-hover, #357abd);
+  border-color: var(--accent-hover, #357abd);
+}
+
+.modal-clear-time-button {
+  padding: 0.5rem 1rem;
+  background: var(--button-secondary-bg, #f5f5f5);
+  color: var(--text-secondary, #666);
+  border: 1px solid var(--border-color, #ddd);
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: background-color 0.2s, border-color 0.2s;
+}
+
+[data-theme="dark"] .modal-clear-time-button {
+  background: var(--button-secondary-bg, #2a2a2a);
+  color: var(--text-secondary, #aaa);
+  border-color: var(--border-color, #444);
+}
+
+.modal-clear-time-button:hover {
+  background: var(--button-secondary-hover, #e8e8e8);
+  border-color: var(--border-hover, #bbb);
+}
+
+[data-theme="dark"] .modal-clear-time-button:hover {
+  background: var(--button-secondary-hover, #3a3a3a);
+  border-color: var(--border-hover, #555);
+}
+
 .modal-title-input {
   width: 100%;
   padding: 12px;

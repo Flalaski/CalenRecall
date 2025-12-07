@@ -1,4 +1,4 @@
-import { ipcMain, dialog, app, BrowserWindow } from 'electron';
+import { ipcMain, dialog, app, BrowserWindow, shell } from 'electron';
 import * as fs from 'fs';
 import * as path from 'path';
 import PDFDocument from 'pdfkit';
@@ -331,6 +331,10 @@ export function setupIpcHandlers() {
         const content = formatExportContent(entries, format);
         fs.writeFileSync(filePath, content, { encoding: 'utf-8' });
       }
+      
+      // Open the folder containing the exported file
+      shell.showItemInFolder(filePath);
+      
       return { success: true, canceled: false, path: filePath };
     } catch (error: any) {
       console.error('Error exporting entries:', error);
