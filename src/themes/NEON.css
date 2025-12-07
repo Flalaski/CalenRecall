@@ -806,6 +806,68 @@
   font-style: italic;
 }
 
+[data-theme="NEON"] .time-inputs-section {
+  background: #0a0011;
+  border: 2px solid #ff00ff;
+  border-radius: 4px;
+  padding: 0.75rem;
+  box-shadow: 0 0 10px rgba(255, 0, 255, 0.3);
+}
+
+[data-theme="NEON"] .time-label {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #00ffff;
+  margin-bottom: 0.25rem;
+  text-shadow: 0 0 3px #00ffff;
+}
+
+[data-theme="NEON"] .time-inputs {
+  background: transparent;
+}
+
+[data-theme="NEON"] .time-input-group {
+  background: transparent;
+}
+
+[data-theme="NEON"] .time-input-group label {
+  font-size: 0.75rem;
+  color: #00ffff;
+  font-weight: 400;
+  text-shadow: 0 0 3px #00ffff;
+}
+
+[data-theme="NEON"] .time-input {
+  background: #1a0033;
+  border: 2px solid #ff00ff;
+  border-radius: 4px;
+  color: #00ffff;
+  text-align: center;
+  text-shadow: 0 0 3px #00ffff;
+}
+
+[data-theme="NEON"] .time-input:focus {
+  box-shadow: 0 0 15px #ff00ff, inset 0 0 10px #00ffff;
+  outline: 2px solid #ffff00;
+}
+
+[data-theme="NEON"] .time-input-group select.time-input {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2300ffff' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+}
+
+[data-theme="NEON"] .clear-time-button {
+  background: #1a0033;
+  border: 2px solid #ff00ff;
+  border-radius: 4px;
+  color: #00ffff;
+  text-shadow: 0 0 3px #00ffff;
+}
+
+[data-theme="NEON"] .clear-time-button:hover {
+  box-shadow: 0 0 15px #ff00ff, inset 0 0 10px #00ffff;
+  outline: 2px solid #ffff00;
+}
+
 [data-theme="NEON"] .title-input {
   background: #1a0033;
   border: 2px solid #ff00ff;

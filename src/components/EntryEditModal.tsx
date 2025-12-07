@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { JournalEntry, TimeRange } from '../types';
-import { formatDate, getCanonicalDate } from '../utils/dateUtils';
+import { JournalEntry, TimeRange, Preferences } from '../types';
+import { formatDate, getCanonicalDate, formatTime } from '../utils/dateUtils';
 import { saveJournalEntry, deleteJournalEntry } from '../services/journalService';
 import { playSaveSound, playCancelSound, playDeleteSound, playAddSound, playRemoveSound } from '../utils/audioUtils';
 import './EntryEditModal.css';
@@ -25,6 +25,7 @@ export default function EntryEditModal({
   const [tags, setTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState('');
   const [saving, setSaving] = useState(false);
+  const [preferences, setPreferences] = useState<Preferences>({});
 
   useEffect(() => {
     if (isOpen && entry) {
@@ -34,6 +35,17 @@ export default function EntryEditModal({
       setTagInput('');
     }
   }, [isOpen, entry]);
+
+  // Load preferences for time format
+  useEffect(() => {
+    const loadPreferences = async () => {
+      if (window.electronAPI) {
+        const prefs = await window.electronAPI.getAllPreferences();
+        setPreferences(prefs);
+      }
+    };
+    loadPreferences();
+  }, []);
 
   // Close modal on Escape key
   useEffect(() => {
@@ -163,6 +175,11 @@ export default function EntryEditModal({
     }
   };
 
+  const formatEntryTime = (entry: JournalEntry): string | null => {
+    const timeFormat = preferences.timeFormat || '12h';
+    return formatTime(entry.hour, entry.minute, entry.second, timeFormat);
+  };
+
   const formatEntryDate = (entry: JournalEntry): string => {
     const [entryYearStr, entryMonthStr, entryDayStr] = entry.date.split('-');
     const entryDate = new Date(
@@ -171,21 +188,37 @@ export default function EntryEditModal({
       parseInt(entryDayStr, 10)
     );
     
+    let dateStr: string;
     switch (entry.timeRange) {
       case 'decade':
         const decadeStart = Math.floor(entryDate.getFullYear() / 10) * 10;
-        return `${decadeStart}s`;
+        dateStr = `${decadeStart}s`;
+        break;
       case 'year':
-        return formatDate(entryDate, 'yyyy');
+        dateStr = formatDate(entryDate, 'yyyy');
+        break;
       case 'month':
-        return formatDate(entryDate, 'MMMM yyyy');
+        dateStr = formatDate(entryDate, 'MMMM yyyy');
+        break;
       case 'week':
-        return `Week of ${formatDate(entryDate, 'MMM d, yyyy')}`;
+        dateStr = `Week of ${formatDate(entryDate, 'MMM d, yyyy')}`;
+        break;
       case 'day':
-        return formatDate(entryDate, 'MMM d, yyyy');
+        dateStr = formatDate(entryDate, 'MMM d, yyyy');
+        break;
       default:
-        return formatDate(entryDate, 'MMM d, yyyy');
+        dateStr = formatDate(entryDate, 'MMM d, yyyy');
     }
+    
+    // Append time if available
+    // Append time if available (only for day entries)
+    if (entry.timeRange === 'day') {
+      const timeStr = formatEntryTime(entry);
+      if (timeStr) {
+        return `${dateStr} at ${timeStr}`;
+      }
+    }
+    return dateStr;
   };
 
   if (!isOpen) return null;
@@ -202,7 +235,9 @@ export default function EntryEditModal({
           </div>
           <div className="modal-entry-meta">
             <span className="time-range-badge-viewer">{entry.timeRange.charAt(0).toUpperCase() + entry.timeRange.slice(1)}</span>
-            <small className="entry-date-display">Date: {formatEntryDate(entry)}</small>
+            <small className="entry-date-display">
+              Date: {formatEntryDate(entry)}
+            </small>
             <small>Created: {formatDate(new Date(entry.createdAt), 'MMM d, yyyy')}</small>
             {entry.updatedAt !== entry.createdAt && (
               <small>Updated: {formatDate(new Date(entry.updatedAt), 'MMM d, yyyy')}</small>

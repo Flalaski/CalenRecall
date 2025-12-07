@@ -730,6 +730,63 @@
   font-style: italic;
 }
 
+[data-theme="red-rock"] .time-inputs-section {
+  background: #4a2520;
+  border: 1px solid #9d5544;
+  border-radius: 4px;
+  padding: 0.75rem;
+}
+
+[data-theme="red-rock"] .time-label {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #f5d5b8;
+  margin-bottom: 0.25rem;
+}
+
+[data-theme="red-rock"] .time-inputs {
+  background: transparent;
+}
+
+[data-theme="red-rock"] .time-input-group {
+  background: transparent;
+}
+
+[data-theme="red-rock"] .time-input-group label {
+  font-size: 0.75rem;
+  color: #f5d5b8;
+  font-weight: 400;
+}
+
+[data-theme="red-rock"] .time-input {
+  background: #5a2f28;
+  border: 1px solid #9d5544;
+  border-radius: 4px;
+  color: #f5d5b8;
+  text-align: center;
+}
+
+[data-theme="red-rock"] .time-input:focus {
+  border-color: #d97345;
+  outline: 2px solid #d97345;
+}
+
+[data-theme="red-rock"] .time-input-group select.time-input {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23f5d5b8' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+}
+
+[data-theme="red-rock"] .clear-time-button {
+  background: #5a2f28;
+  border: 1px solid #9d5544;
+  border-radius: 4px;
+  color: #f5d5b8;
+}
+
+[data-theme="red-rock"] .clear-time-button:hover {
+  border-color: #d97345;
+  background: #6a3f38;
+}
+
 [data-theme="red-rock"] .title-input {
   background: #5a2f28;
   border: 1px solid #9d5544;

@@ -595,6 +595,19 @@ export default function PreferencesComponent() {
           </div>
 
           <div className="preference-item">
+            <label htmlFor="timeFormat">Time Format</label>
+            <select
+              id="timeFormat"
+              value={preferences.timeFormat || '12h'}
+              onChange={(e) => updatePreference('timeFormat', e.target.value as Preferences['timeFormat'])}
+            >
+              <option value="24h">24-hour (14:30:45)</option>
+              <option value="12h">12-hour (02:30:45 PM)</option>
+            </select>
+            <small>Choose between 24-hour format or 12-hour format with AM/PM</small>
+          </div>
+
+          <div className="preference-item">
             <label htmlFor="weekStartsOn">Week Starts On</label>
             <select
               id="weekStartsOn"

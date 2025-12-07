@@ -145,6 +145,52 @@
   color: #4a90e2 !important;
 }
 
+.entry-date-time {
+  font-weight: 500;
+  color: #666;
+}
+
+.entry-time-display {
+  font-size: 0.8rem;
+  color: var(--text-secondary, #999);
+}
+
+/* Time input elements - inherit theme colors */
+.time-inputs-section {
+  background: var(--editor-bg, #f9f9f9);
+  border-color: var(--border-color, #e0e0e0);
+}
+
+.time-label {
+  color: var(--text-secondary, #666);
+}
+
+.time-input-group label {
+  color: var(--text-secondary, #666);
+}
+
+.time-input {
+  background: var(--input-bg, #fff);
+  border-color: var(--border-color, #ddd);
+  color: var(--text-primary, #333);
+}
+
+.time-input:focus {
+  border-color: var(--accent-color, #4a90e2);
+  box-shadow: 0 0 0 3px var(--accent-color-alpha, rgba(74, 144, 226, 0.1));
+}
+
+.clear-time-button {
+  background: var(--button-secondary-bg, #f5f5f5);
+  color: var(--text-secondary, #666);
+  border-color: var(--border-color, #ddd);
+}
+
+.clear-time-button:hover {
+  background: var(--button-secondary-hover, #e8e8e8);
+  border-color: var(--border-hover, #bbb);
+}
+
 .viewer-content {
   flex: 1;
   overflow-y: auto;
@@ -249,6 +295,11 @@
 
 .linked-entry-date {
   color: #666;
+}
+
+.linked-entry-time {
+  font-weight: 500;
+  color: #555;
 }
 
 .linked-entry-time-range {

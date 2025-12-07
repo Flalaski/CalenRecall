@@ -2,6 +2,9 @@ export interface JournalEntry {
   id?: number;
   date: string; // ISO date string (YYYY-MM-DD) - canonical date for the time range
   timeRange: 'decade' | 'year' | 'month' | 'week' | 'day'; // Time scale for this entry
+  hour?: number; // Optional hour (0-23)
+  minute?: number; // Optional minute (0-59)
+  second?: number; // Optional second (0-59)
   title: string;
   content: string;
   createdAt: string; // ISO datetime string

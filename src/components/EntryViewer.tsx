@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, Fragment, useMemo } from 'react';
-import { JournalEntry, TimeRange } from '../types';
-import { formatDate, getWeekStart, getWeekEnd, getMonthStart, getYearStart, getDecadeStart, parseISODate } from '../utils/dateUtils';
+import { JournalEntry, TimeRange, Preferences } from '../types';
+import { formatDate, getWeekStart, getWeekEnd, getMonthStart, getYearStart, getDecadeStart, parseISODate, formatTime } from '../utils/dateUtils';
 import { playEditSound, playNewEntrySound } from '../utils/audioUtils';
 import { useCalendar } from '../contexts/CalendarContext';
 import { useEntries } from '../contexts/EntriesContext';
@@ -41,6 +41,7 @@ export default function EntryViewer({
   const [loadingLinked, setLoadingLinked] = useState(false);
   const [bulkEditMode, setBulkEditMode] = useState(false);
   const [selectedEntryIds, setSelectedEntryIds] = useState<Set<number>>(new Set());
+  const [preferences, setPreferences] = useState<Preferences>({});
 
   // Check if there are day entries for the selected date (for day view messaging)
   const dayEntries = useMemo(() => {
@@ -219,6 +220,12 @@ export default function EntryViewer({
       switch (sortBy) {
         case 'date':
           comparison = a.date.localeCompare(b.date);
+          // If dates are equal, sort by time if available
+          if (comparison === 0) {
+            const aTime = (a.hour ?? 0) * 3600 + (a.minute ?? 0) * 60 + (a.second ?? 0);
+            const bTime = (b.hour ?? 0) * 3600 + (b.minute ?? 0) * 60 + (b.second ?? 0);
+            comparison = aTime - bTime;
+          }
           break;
         case 'title':
           comparison = a.title.localeCompare(b.title);
@@ -295,36 +302,67 @@ export default function EntryViewer({
     }
   };
 
+  // Load preferences for time format
+  useEffect(() => {
+    const loadPreferences = async () => {
+      if (window.electronAPI) {
+        const prefs = await window.electronAPI.getAllPreferences();
+        setPreferences(prefs);
+      }
+    };
+    loadPreferences();
+  }, []);
+
+  const formatEntryTime = (entry: JournalEntry): string | null => {
+    const timeFormat = preferences.timeFormat || '12h';
+    return formatTime(entry.hour, entry.minute, entry.second, timeFormat);
+  };
+
   const formatEntryDate = (entry: JournalEntry): string => {
     const entryDate = parseISODate(entry.date);
+    let dateStr: string;
     // Use calendar-aware formatting
     try {
-      return getTimeRangeLabelInCalendar(entryDate, entry.timeRange, calendar);
+      dateStr = getTimeRangeLabelInCalendar(entryDate, entry.timeRange, calendar);
     } catch (e) {
       console.error('Error formatting entry date in calendar:', e);
       // Fallback to Gregorian formatting
       switch (entry.timeRange) {
         case 'decade':
           const decadeStart = Math.floor(entryDate.getFullYear() / 10) * 10;
-          return `${decadeStart}s`;
+          dateStr = `${decadeStart}s`;
+          break;
         case 'year':
-          return formatDate(entryDate, 'yyyy');
+          dateStr = formatDate(entryDate, 'yyyy');
+          break;
         case 'month':
-          return formatDate(entryDate, 'MMMM yyyy');
+          dateStr = formatDate(entryDate, 'MMMM yyyy');
+          break;
         case 'week':
           const weekStart = getWeekStart(entryDate, weekStartsOn ?? 0);
           const weekEnd = getWeekEnd(entryDate, weekStartsOn ?? 0);
           if (weekStart.getMonth() === weekEnd.getMonth()) {
-            return `Week of ${formatDate(weekStart, 'MMM d')} - ${formatDate(weekEnd, 'd, yyyy')}`;
+            dateStr = `Week of ${formatDate(weekStart, 'MMM d')} - ${formatDate(weekEnd, 'd, yyyy')}`;
           } else {
-            return `Week of ${formatDate(weekStart, 'MMM d')} - ${formatDate(weekEnd, 'MMM d, yyyy')}`;
+            dateStr = `Week of ${formatDate(weekStart, 'MMM d')} - ${formatDate(weekEnd, 'MMM d, yyyy')}`;
           }
+          break;
         case 'day':
-          return formatDate(entryDate, 'MMM d, yyyy');
+          dateStr = formatDate(entryDate, 'MMM d, yyyy');
+          break;
         default:
-          return formatDate(entryDate, 'MMM d, yyyy');
+          dateStr = formatDate(entryDate, 'MMM d, yyyy');
       }
     }
+    
+    // Append time if available (only for day entries)
+    if (entry.timeRange === 'day') {
+      const timeStr = formatEntryTime(entry);
+      if (timeStr) {
+        return `${dateStr} at ${timeStr}`;
+      }
+    }
+    return dateStr;
   };
 
   const getNewEntryButtonText = (): string => {
@@ -435,7 +473,9 @@ export default function EntryViewer({
           </div>
           <div className="entry-meta">
             <span className="time-range-badge-viewer">{getTimeRangeLabel(entry.timeRange)}</span>
-            <small className="entry-date-display">Date: {formatEntryDate(entry)}</small>
+            <small className="entry-date-display">
+              Date: {formatEntryDate(entry)}
+            </small>
             <small>Created: {formatDate(new Date(entry.createdAt), 'MMM d, yyyy')}</small>
             {entry.updatedAt !== entry.createdAt && (
               <small>Updated: {formatDate(new Date(entry.updatedAt), 'MMM d, yyyy')}</small>
@@ -465,7 +505,12 @@ export default function EntryViewer({
                   >
                     <div className="linked-entry-title">{linkedEntry.title}</div>
                     <div className="linked-entry-meta">
-                      <span className="linked-entry-date">{formatEntryDate(linkedEntry)}</span>
+                      <span className="linked-entry-date">
+                        {formatEntryDate(linkedEntry)}
+                        {formatEntryTime(linkedEntry) && (
+                          <span className="linked-entry-time"> at {formatEntryTime(linkedEntry)}</span>
+                        )}
+                      </span>
                       <span className="linked-entry-time-range">{getTimeRangeLabel(linkedEntry.timeRange)}</span>
                     </div>
                   </div>
@@ -685,4 +730,5 @@ export default function EntryViewer({
     </div>
   );
 }
+
 

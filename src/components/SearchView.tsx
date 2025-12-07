@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
-import { JournalEntry, TimeRange } from '../types';
+import { JournalEntry, TimeRange, Preferences } from '../types';
 import { searchJournalEntries } from '../services/journalService';
-import { formatDate, parseISODate } from '../utils/dateUtils';
+import { formatDate, parseISODate, formatTime } from '../utils/dateUtils';
 import { useCalendar } from '../contexts/CalendarContext';
 import { getTimeRangeLabelInCalendar } from '../utils/calendars/timeRangeConverter';
 import { playNavigationSound } from '../utils/audioUtils';
@@ -24,6 +24,7 @@ export default function SearchView({ onEntrySelect, onClose }: SearchViewProps) 
   const [sortBy, setSortBy] = useState<'date' | 'title' | 'timeRange'>('date');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [showFilters, setShowFilters] = useState(false);
+  const [preferences, setPreferences] = useState<Preferences>({});
   const searchInputRef = useRef<HTMLInputElement>(null);
 
   // Focus search input on mount
@@ -31,6 +32,17 @@ export default function SearchView({ onEntrySelect, onClose }: SearchViewProps) 
     if (searchInputRef.current) {
       searchInputRef.current.focus();
     }
+  }, []);
+
+  // Load preferences for time format
+  useEffect(() => {
+    const loadPreferences = async () => {
+      if (window.electronAPI) {
+        const prefs = await window.electronAPI.getAllPreferences();
+        setPreferences(prefs);
+      }
+    };
+    loadPreferences();
   }, []);
 
   // Get all unique tags from results
@@ -181,28 +193,48 @@ export default function SearchView({ onEntrySelect, onClose }: SearchViewProps) 
     }
   };
 
+  const formatEntryTime = (entry: JournalEntry): string | null => {
+    const timeFormat = preferences.timeFormat || '12h';
+    return formatTime(entry.hour, entry.minute, entry.second, timeFormat);
+  };
+
   const formatEntryDate = (entry: JournalEntry): string => {
     const entryDate = parseISODate(entry.date);
+    let dateStr: string;
     try {
-      return getTimeRangeLabelInCalendar(entryDate, entry.timeRange, calendar);
+      dateStr = getTimeRangeLabelInCalendar(entryDate, entry.timeRange, calendar);
     } catch (e) {
       console.error('Error formatting entry date in calendar:', e);
       switch (entry.timeRange) {
         case 'decade':
           const decadeStart = Math.floor(entryDate.getFullYear() / 10) * 10;
-          return `${decadeStart}s`;
+          dateStr = `${decadeStart}s`;
+          break;
         case 'year':
-          return formatDate(entryDate, 'yyyy');
+          dateStr = formatDate(entryDate, 'yyyy');
+          break;
         case 'month':
-          return formatDate(entryDate, 'MMMM yyyy');
+          dateStr = formatDate(entryDate, 'MMMM yyyy');
+          break;
         case 'week':
-          return `Week of ${formatDate(entryDate, 'MMM d, yyyy')}`;
+          dateStr = `Week of ${formatDate(entryDate, 'MMM d, yyyy')}`;
+          break;
         case 'day':
-          return formatDate(entryDate, 'MMM d, yyyy');
+          dateStr = formatDate(entryDate, 'MMM d, yyyy');
+          break;
         default:
-          return formatDate(entryDate, 'MMM d, yyyy');
+          dateStr = formatDate(entryDate, 'MMM d, yyyy');
       }
     }
+    
+    // Append time if available (only for day entries)
+    if (entry.timeRange === 'day') {
+      const timeStr = formatEntryTime(entry);
+      if (timeStr) {
+        return `${dateStr} at ${timeStr}`;
+      }
+    }
+    return dateStr;
   };
 
   const handleEntryClick = (entry: JournalEntry) => {
@@ -376,4 +408,5 @@ export default function SearchView({ onEntrySelect, onClose }: SearchViewProps) 
     </div>
   );
 }
+
 

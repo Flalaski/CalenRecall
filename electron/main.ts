@@ -142,7 +142,7 @@ const THEME_METADATA: Record<string, { displayName: string }> = {
   'on-screen': { displayName: 'ON SCREEN' },
   'elite': { displayName: 'Elite' },
   'journeyman': { displayName: 'Journeyman' },
-  'aero-glass': { displayName: 'Aero Glass' },
+  'aero': { displayName: 'Aero' },
   'galactic-basic': { displayName: 'Galactic Basic' },
   'the-real-world': { displayName: 'The Real World' },
   'scholar': { displayName: 'Scholar' },

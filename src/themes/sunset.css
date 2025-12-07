@@ -730,6 +730,63 @@
   font-style: italic;
 }
 
+[data-theme="sunset"] .time-inputs-section {
+  background: #3d2b28;
+  border: 1px solid #8d6e63;
+  border-radius: 4px;
+  padding: 0.75rem;
+}
+
+[data-theme="sunset"] .time-label {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #ffe0b2;
+  margin-bottom: 0.25rem;
+}
+
+[data-theme="sunset"] .time-inputs {
+  background: transparent;
+}
+
+[data-theme="sunset"] .time-input-group {
+  background: transparent;
+}
+
+[data-theme="sunset"] .time-input-group label {
+  font-size: 0.75rem;
+  color: #ffe0b2;
+  font-weight: 400;
+}
+
+[data-theme="sunset"] .time-input {
+  background: #4e3733;
+  border: 1px solid #8d6e63;
+  border-radius: 4px;
+  color: #ffe0b2;
+  text-align: center;
+}
+
+[data-theme="sunset"] .time-input:focus {
+  border-color: #ff8f00;
+  outline: 2px solid #ff8f00;
+}
+
+[data-theme="sunset"] .time-input-group select.time-input {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23ffe0b2' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+}
+
+[data-theme="sunset"] .clear-time-button {
+  background: #4e3733;
+  border: 1px solid #8d6e63;
+  border-radius: 4px;
+  color: #ffe0b2;
+}
+
+[data-theme="sunset"] .clear-time-button:hover {
+  border-color: #ff8f00;
+  background: #5d423d;
+}
+
 [data-theme="sunset"] .title-input {
   background: #4e3733;
   border: 1px solid #8d6e63;

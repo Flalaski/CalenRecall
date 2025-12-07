@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import { JournalEntry, TimeRange } from '../types';
-import { formatDate, getDaysInMonth, getDaysInWeek, isToday, getWeekStart, getWeekEnd, getZodiacColor, getZodiacGradientColor, getZodiacGradientColorForYear, parseISODate, getMonthStart, getMonthEnd, createDate, getWeekdayLabels } from '../utils/dateUtils';
+import { JournalEntry, TimeRange, Preferences } from '../types';
+import { formatDate, getDaysInMonth, getDaysInWeek, isToday, getWeekStart, getWeekEnd, getZodiacColor, getZodiacGradientColor, getZodiacGradientColorForYear, parseISODate, getMonthStart, getMonthEnd, createDate, getWeekdayLabels, formatTime } from '../utils/dateUtils';
 import { isSameDay, isSameMonth, isSameYear } from 'date-fns';
 import { playCalendarSelectionSound, playEntrySelectionSound, playEditSound } from '../utils/audioUtils';
 import { calculateEntryColor } from '../utils/entryColorUtils';
@@ -31,8 +31,20 @@ export default function TimelineView({
 }: TimelineViewProps) {
   const { calendar } = useCalendar();
   const { entries: allEntries } = useEntries();
+  const [preferences, setPreferences] = useState<Preferences>({});
   const [bulkEditMode, setBulkEditMode] = useState(false);
   const [selectedEntryIds, setSelectedEntryIds] = useState<Set<number>>(new Set());
+
+  // Load preferences for time format
+  useEffect(() => {
+    const loadPreferences = async () => {
+      if (window.electronAPI) {
+        const prefs = await window.electronAPI.getAllPreferences();
+        setPreferences(prefs);
+      }
+    };
+    loadPreferences();
+  }, []);
 
   // OPTIMIZATION: Filter entries from global context instead of querying database
   const entries = useMemo(() => {
@@ -368,6 +380,11 @@ export default function TimelineView({
                             style={{ backgroundColor: entryColor }}
                           >
                             <span className="badge-title">{entry.title}</span>
+                            {entry.hour !== undefined && entry.hour !== null && (
+                              <span className="badge-time">
+                                {formatTime(entry.hour, entry.minute, entry.second, preferences.timeFormat || '12h')}
+                              </span>
+                            )}
                             {entry.tags && entry.tags.length > 0 && (
                               <span className="badge-tag-count">{entry.tags.length}</span>
                             )}
@@ -402,7 +419,14 @@ export default function TimelineView({
                         title={entry.title}
                         style={{ borderLeftColor: entryColor }}
                       >
-                        <span className="month-entry-title">{entry.title}</span>
+                        <div className="month-entry-header">
+                          <span className="month-entry-title">{entry.title}</span>
+                          {entry.hour !== undefined && entry.hour !== null && (
+                            <span className="month-entry-time">
+                              {formatTime(entry.hour, entry.minute, entry.second, preferences.timeFormat || '12h')}
+                            </span>
+                          )}
+                        </div>
                         {entry.content && entry.content.length > 0 && (
                           <span className="month-entry-preview">{entry.content.substring(0, 80)}...</span>
                         )}
@@ -457,7 +481,14 @@ export default function TimelineView({
                                   title={entry.title}
                                   style={{ borderLeftColor: entryColor }}
                                 >
-                                  <span className="week-entry-title">{entry.title}</span>
+                                  <div className="week-entry-header">
+                                    <span className="week-entry-title">{entry.title}</span>
+                                    {entry.hour !== undefined && entry.hour !== null && (
+                                      <span className="week-entry-time">
+                                        {formatTime(entry.hour, entry.minute, entry.second, preferences.timeFormat || '12h')}
+                                      </span>
+                                    )}
+                                  </div>
                                 </div>
                               );
                             })}
@@ -533,6 +564,11 @@ export default function TimelineView({
                       >
                       <div className="card-title-row">
                         <div className="card-title">{entry.title}</div>
+                        {entry.hour !== undefined && entry.hour !== null && (
+                          <span className="card-time-small">
+                            {formatTime(entry.hour, entry.minute, entry.second, preferences.timeFormat || '12h')}
+                          </span>
+                        )}
                         {onEditEntry && (
                           <button
                             className="card-edit-button-small"
@@ -725,7 +761,14 @@ export default function TimelineView({
                       </button>
                     )}
                     <span className="time-range-badge">{entry.timeRange}</span>
-                    <span className="card-date">{formatDate(parseISODate(entry.date), 'MMM d')}</span>
+                    <span className="card-date">
+                      {formatDate(parseISODate(entry.date), 'MMM d')}
+                      {entry.hour !== undefined && entry.hour !== null && (
+                        <span className="card-date-time">
+                          {' '}{formatTime(entry.hour, entry.minute, entry.second, preferences.timeFormat || '12h')}
+                        </span>
+                      )}
+                    </span>
                   </div>
                 </div>
                 <div className="card-content-full">{entry.content}</div>

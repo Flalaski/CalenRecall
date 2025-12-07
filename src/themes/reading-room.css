@@ -1278,6 +1278,72 @@
   font-style: italic;
 }
 
+[data-theme="reading-room"] .time-inputs-section {
+  background: var(--reading-bg-secondary);
+  border: 2px solid var(--border-green);
+  border-radius: 8px;
+  padding: 0.75rem;
+}
+
+[data-theme="reading-room"] .time-label {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  margin-bottom: 0.25rem;
+  font-family: 'Georgia', 'Times New Roman', serif;
+}
+
+[data-theme="reading-room"] .time-inputs {
+  background: transparent;
+}
+
+[data-theme="reading-room"] .time-input-group {
+  background: transparent;
+}
+
+[data-theme="reading-room"] .time-input-group label {
+  font-size: 0.75rem;
+  color: var(--text-primary);
+  font-weight: 400;
+  font-family: 'Georgia', 'Times New Roman', serif;
+}
+
+[data-theme="reading-room"] .time-input {
+  background: var(--reading-bg);
+  border: 2px solid var(--border-green);
+  border-radius: 8px;
+  color: var(--text-primary);
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 14px;
+  text-align: center;
+}
+
+[data-theme="reading-room"] .time-input:focus {
+  border-color: var(--accent-green);
+  outline: 3px solid rgba(45, 80, 22, 0.2);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px rgba(45, 80, 22, 0.1);
+  background: var(--reading-bg-secondary);
+}
+
+[data-theme="reading-room"] .time-input-group select.time-input {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%232d5016' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+}
+
+[data-theme="reading-room"] .clear-time-button {
+  background: var(--reading-bg);
+  border: 2px solid var(--border-green);
+  border-radius: 8px;
+  color: var(--text-primary);
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 14px;
+}
+
+[data-theme="reading-room"] .clear-time-button:hover {
+  background: var(--reading-bg-secondary);
+  border-color: var(--accent-green);
+}
+
 [data-theme="reading-room"] .title-input,
 [data-theme="reading-room"] .content-input,
 [data-theme="reading-room"] .tag-input {

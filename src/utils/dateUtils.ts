@@ -417,3 +417,42 @@ export function getZodiacColorForDecade(decadeStart: number): string {
   return getZodiacGradientColorForYear(middleYear);
 }
 
+/**
+ * Formats time from hour, minute, second values
+ * @param hour Hour (0-23)
+ * @param minute Minute (0-59), optional
+ * @param second Second (0-59), optional
+ * @param timeFormat '12h' for AM/PM format, '24h' for 24-hour format (default: '12h')
+ * @returns Formatted time string (e.g., "02:30:45 PM" or "14:30:45")
+ */
+export function formatTime(
+  hour: number | undefined | null,
+  minute: number | undefined | null,
+  second: number | undefined | null,
+  timeFormat: '12h' | '24h' = '12h'
+): string | null {
+  if (hour === undefined || hour === null) {
+    return null;
+  }
+
+  const h = hour;
+  const m = minute !== undefined && minute !== null ? minute : 0;
+  const s = second !== undefined && second !== null ? second : 0;
+
+  if (timeFormat === '12h') {
+    // 12-hour format with AM/PM
+    const period = h >= 12 ? 'PM' : 'AM';
+    const hour12 = h === 0 ? 12 : (h > 12 ? h - 12 : h);
+    const hourStr = String(hour12).padStart(2, '0');
+    const minuteStr = String(m).padStart(2, '0');
+    const secondStr = String(s).padStart(2, '0');
+    return `${hourStr}:${minuteStr}:${secondStr} ${period}`;
+  } else {
+    // 24-hour format
+    const hourStr = String(h).padStart(2, '0');
+    const minuteStr = String(m).padStart(2, '0');
+    const secondStr = String(s).padStart(2, '0');
+    return `${hourStr}:${minuteStr}:${secondStr}`;
+  }
+}
+

@@ -230,6 +230,52 @@ function migrateDatabase(database: Database.Database) {
       // Don't throw - attachments is optional
     }
   }
+
+  // Check if time columns exist and add them if missing
+  const hasHour = checkColumnExists(database, 'journal_entries', 'hour');
+  if (!hasHour) {
+    try {
+      // Add hour column (nullable, 0-23)
+      database.exec(`
+        ALTER TABLE journal_entries ADD COLUMN hour INTEGER;
+      `);
+      
+      console.log('Database migrated successfully: Added hour column');
+    } catch (error) {
+      console.error('Hour migration error:', error);
+      // Don't throw - time fields are optional
+    }
+  }
+
+  const hasMinute = checkColumnExists(database, 'journal_entries', 'minute');
+  if (!hasMinute) {
+    try {
+      // Add minute column (nullable, 0-59)
+      database.exec(`
+        ALTER TABLE journal_entries ADD COLUMN minute INTEGER;
+      `);
+      
+      console.log('Database migrated successfully: Added minute column');
+    } catch (error) {
+      console.error('Minute migration error:', error);
+      // Don't throw - time fields are optional
+    }
+  }
+
+  const hasSecond = checkColumnExists(database, 'journal_entries', 'second');
+  if (!hasSecond) {
+    try {
+      // Add second column (nullable, 0-59)
+      database.exec(`
+        ALTER TABLE journal_entries ADD COLUMN second INTEGER;
+      `);
+      
+      console.log('Database migrated successfully: Added second column');
+    } catch (error) {
+      console.error('Second migration error:', error);
+      // Don't throw - time fields are optional
+    }
+  }
 }
 
 export function initDatabase() {
@@ -431,6 +477,9 @@ function createTables(database: Database.Database) {
       date TEXT NOT NULL,
       jdn INTEGER,
       time_range TEXT NOT NULL DEFAULT 'day',
+      hour INTEGER,
+      minute INTEGER,
+      second INTEGER,
       title TEXT NOT NULL,
       content TEXT NOT NULL,
       tags TEXT,
@@ -533,6 +582,9 @@ export function getAllEntries(includeArchived: boolean = false): JournalEntry[] 
     id: row.id,
     date: row.date,
     timeRange: row.time_range || 'day',
+    hour: row.hour !== null && row.hour !== undefined ? row.hour : undefined,
+    minute: row.minute !== null && row.minute !== undefined ? row.minute : undefined,
+    second: row.second !== null && row.second !== undefined ? row.second : undefined,
     title: row.title,
     content: row.content,
     tags: row.tags ? JSON.parse(row.tags) : [],
@@ -559,6 +611,9 @@ export function getEntries(startDate: string, endDate: string, includeArchived: 
     id: row.id,
     date: row.date,
     timeRange: row.time_range || 'day', // Default to 'day' for backward compatibility
+    hour: row.hour !== null && row.hour !== undefined ? row.hour : undefined,
+    minute: row.minute !== null && row.minute !== undefined ? row.minute : undefined,
+    second: row.second !== null && row.second !== undefined ? row.second : undefined,
     title: row.title,
     content: row.content,
     tags: row.tags ? JSON.parse(row.tags) : [],
@@ -586,6 +641,9 @@ export function getEntryById(id: number): JournalEntry | null {
     id: row.id,
     date: row.date,
     timeRange: row.time_range || 'day',
+    hour: row.hour !== null && row.hour !== undefined ? row.hour : undefined,
+    minute: row.minute !== null && row.minute !== undefined ? row.minute : undefined,
+    second: row.second !== null && row.second !== undefined ? row.second : undefined,
     title: row.title,
     content: row.content,
     tags: row.tags ? JSON.parse(row.tags) : [],
@@ -694,7 +752,7 @@ export function saveEntry(entry: JournalEntry): void {
       
       const stmt = database.prepare(`
         UPDATE journal_entries 
-        SET title = ?, content = ?, tags = ?, linked_entries = ?, archived = ?, pinned = ?, attachments = ?, updated_at = ?, jdn = ?
+        SET title = ?, content = ?, tags = ?, linked_entries = ?, archived = ?, pinned = ?, attachments = ?, updated_at = ?, jdn = ?, hour = ?, minute = ?, second = ?
         WHERE id = ?
       `);
       stmt.run(
@@ -707,6 +765,9 @@ export function saveEntry(entry: JournalEntry): void {
         JSON.stringify(entry.attachments || []),
         now,
         jdn,
+        entry.hour ?? null,
+        entry.minute ?? null,
+        entry.second ?? null,
         entry.id
       );
       console.log('Entry updated successfully');
@@ -714,13 +775,16 @@ export function saveEntry(entry: JournalEntry): void {
       // If no ID, always insert a new entry (allows multiple entries per date/timeRange)
       console.log('Inserting new entry');
       const stmt = database.prepare(`
-        INSERT INTO journal_entries (date, jdn, time_range, title, content, tags, linked_entries, archived, pinned, attachments, created_at, updated_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO journal_entries (date, jdn, time_range, hour, minute, second, title, content, tags, linked_entries, archived, pinned, attachments, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `);
       stmt.run(
         entry.date,
         jdn,
         entry.timeRange,
+        entry.hour ?? null,
+        entry.minute ?? null,
+        entry.second ?? null,
         entry.title,
         entry.content,
         JSON.stringify(entry.tags || []),
@@ -806,6 +870,9 @@ export function getArchivedEntries(): JournalEntry[] {
     id: row.id,
     date: row.date,
     timeRange: row.time_range || 'day',
+    hour: row.hour !== null && row.hour !== undefined ? row.hour : undefined,
+    minute: row.minute !== null && row.minute !== undefined ? row.minute : undefined,
+    second: row.second !== null && row.second !== undefined ? row.second : undefined,
     title: row.title,
     content: row.content,
     tags: row.tags ? JSON.parse(row.tags) : [],
@@ -842,6 +909,9 @@ export function getPinnedEntries(): JournalEntry[] {
     id: row.id,
     date: row.date,
     timeRange: row.time_range || 'day',
+    hour: row.hour !== null && row.hour !== undefined ? row.hour : undefined,
+    minute: row.minute !== null && row.minute !== undefined ? row.minute : undefined,
+    second: row.second !== null && row.second !== undefined ? row.second : undefined,
     title: row.title,
     content: row.content,
     tags: row.tags ? JSON.parse(row.tags) : [],

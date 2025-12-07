@@ -24,6 +24,7 @@ export interface Preferences {
   showMultipleCalendars?: boolean; // Show date in multiple calendars simultaneously
   backgroundImage?: string; // Path to custom background image, or empty for procedural art
   enableProceduralArt?: boolean; // Enable procedural background art (default: true)
+  timeFormat?: '12h' | '24h'; // Time format: 12-hour (AM/PM) or 24-hour
 }
 
 contextBridge.exposeInMainWorld('electronAPI', {

@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { JournalEntry, TimeRange } from '../types';
+import { JournalEntry, TimeRange, Preferences } from '../types';
 import { formatDate, getCanonicalDate } from '../utils/dateUtils';
 import { getEntryForDate, saveJournalEntry, deleteJournalEntry } from '../services/journalService';
 import { playSaveSound, playCancelSound, playDeleteSound, playAddSound, playRemoveSound } from '../utils/audioUtils';
@@ -29,6 +29,9 @@ export default function JournalEditor({
   const [content, setContent] = useState('');
   const [tags, setTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState('');
+  const [hour, setHour] = useState<number | undefined>(undefined);
+  const [minute, setMinute] = useState<number | undefined>(undefined);
+  const [second, setSecond] = useState<number | undefined>(undefined);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [currentEntry, setCurrentEntry] = useState<JournalEntry | null>(null);
@@ -36,7 +39,101 @@ export default function JournalEditor({
   const [originalTitle, setOriginalTitle] = useState('');
   const [originalContent, setOriginalContent] = useState('');
   const [originalTags, setOriginalTags] = useState<string[]>([]);
+  const [originalHour, setOriginalHour] = useState<number | undefined>(undefined);
+  const [originalMinute, setOriginalMinute] = useState<number | undefined>(undefined);
+  const [originalSecond, setOriginalSecond] = useState<number | undefined>(undefined);
+  const [preferences, setPreferences] = useState<Preferences>({});
+  const [amPm, setAmPm] = useState<'AM' | 'PM'>('AM');
   const titleInputRef = useRef<HTMLInputElement>(null);
+
+  // Load preferences for time format
+  useEffect(() => {
+    const loadPreferences = async () => {
+      if (window.electronAPI) {
+        const prefs = await window.electronAPI.getAllPreferences();
+        setPreferences(prefs);
+      }
+    };
+    loadPreferences();
+
+    // Listen for preference updates
+    if (window.electronAPI && window.electronAPI.onPreferenceUpdated) {
+      const handlePreferenceUpdate = (data: { key: string; value: any }) => {
+        if (data.key === 'timeFormat') {
+          const newTimeFormat = data.value || '12h';
+          setPreferences(prev => ({ ...prev, timeFormat: newTimeFormat }));
+          
+          // Convert current hour when format changes
+          if (hour !== undefined && hour !== null) {
+            // Get the stored 24-hour value from currentEntry if available
+            const storedHour24 = currentEntry?.hour;
+            
+            if (newTimeFormat === '12h') {
+              // Converting to 12-hour: use stored 24-hour value or convert current
+              if (storedHour24 !== undefined && storedHour24 !== null) {
+                const hour12 = storedHour24 === 0 ? 12 : (storedHour24 > 12 ? storedHour24 - 12 : storedHour24);
+                setHour(hour12);
+                setAmPm(storedHour24 >= 12 ? 'PM' : 'AM');
+              } else {
+                // No stored value, convert current hour assuming it's in old format
+                const oldFormat = preferences.timeFormat || '12h';
+                if (oldFormat === '24h') {
+                  // Was 24-hour, convert to 12-hour
+                  const hour12 = hour === 0 ? 12 : (hour > 12 ? hour - 12 : hour);
+                  setHour(hour12);
+                  setAmPm(hour >= 12 ? 'PM' : 'AM');
+                }
+              }
+            } else {
+              // Converting to 24-hour: convert current 12-hour value to 24-hour
+              if (storedHour24 !== undefined && storedHour24 !== null) {
+                setHour(storedHour24);
+              } else {
+                // Convert from 12-hour to 24-hour
+                const hour24 = amPm === 'AM' ? (hour === 12 ? 0 : hour) : (hour === 12 ? 12 : hour + 12);
+                setHour(hour24);
+              }
+            }
+          }
+        } else {
+          setPreferences(prev => ({ ...prev, [data.key]: data.value }));
+        }
+      };
+
+      window.electronAPI.onPreferenceUpdated(handlePreferenceUpdate);
+      return () => {
+        if (window.electronAPI && window.electronAPI.removePreferenceUpdatedListener) {
+          window.electronAPI.removePreferenceUpdatedListener();
+        }
+      };
+    }
+  }, [hour, amPm, currentEntry, preferences.timeFormat]);
+
+  // Convert 24-hour to 12-hour format for display
+  const getDisplayHour = (hour24: number | undefined | null): number | undefined => {
+    if (hour24 === undefined || hour24 === null) return undefined;
+    const timeFormat = preferences.timeFormat || '12h';
+    if (timeFormat === '12h') {
+      if (hour24 === 0) return 12;
+      if (hour24 > 12) return hour24 - 12;
+      return hour24;
+    }
+    return hour24;
+  };
+
+  // Convert 12-hour display hour + AM/PM to 24-hour format
+  const convertTo24Hour = (hour12: number | undefined, amPmValue: 'AM' | 'PM'): number | undefined => {
+    if (hour12 === undefined || hour12 === null) return undefined;
+    const timeFormat = preferences.timeFormat || '12h';
+    if (timeFormat === '12h') {
+      if (amPmValue === 'AM') {
+        return hour12 === 12 ? 0 : hour12;
+      } else {
+        return hour12 === 12 ? 12 : hour12 + 12;
+      }
+    }
+    return hour12;
+  };
 
   useEffect(() => {
     if (propSelectedEntry) {
@@ -44,6 +141,32 @@ export default function JournalEditor({
       setTitle(propSelectedEntry.title);
       setContent(propSelectedEntry.content);
       setTags(propSelectedEntry.tags || []);
+      // Only load time fields for day entries
+      if (propSelectedEntry.timeRange === 'day') {
+        const timeFormat = preferences.timeFormat || '12h';
+        if (timeFormat === '12h' && propSelectedEntry.hour !== undefined && propSelectedEntry.hour !== null) {
+          const hour24 = propSelectedEntry.hour;
+          setHour(getDisplayHour(hour24));
+          setAmPm(hour24 >= 12 ? 'PM' : 'AM');
+        } else {
+          setHour(propSelectedEntry.hour);
+          setAmPm(propSelectedEntry.hour !== undefined && propSelectedEntry.hour !== null && propSelectedEntry.hour >= 12 ? 'PM' : 'AM');
+        }
+        setMinute(propSelectedEntry.minute);
+        setSecond(propSelectedEntry.second);
+        setOriginalHour(propSelectedEntry.hour);
+        setOriginalMinute(propSelectedEntry.minute);
+        setOriginalSecond(propSelectedEntry.second);
+      } else {
+        // Clear time fields for non-day entries
+        setHour(undefined);
+        setMinute(undefined);
+        setSecond(undefined);
+        setAmPm('AM');
+        setOriginalHour(undefined);
+        setOriginalMinute(undefined);
+        setOriginalSecond(undefined);
+      }
       setOriginalTitle(propSelectedEntry.title);
       setOriginalContent(propSelectedEntry.content);
       setOriginalTags(propSelectedEntry.tags || []);
@@ -54,9 +177,16 @@ export default function JournalEditor({
       setTitle('');
       setContent('');
       setTags([]);
+      setHour(undefined);
+      setMinute(undefined);
+      setSecond(undefined);
+      setAmPm('AM');
       setOriginalTitle('');
       setOriginalContent('');
       setOriginalTags([]);
+      setOriginalHour(undefined);
+      setOriginalMinute(undefined);
+      setOriginalSecond(undefined);
       setCurrentEntry(null);
       setLoading(false);
     } else {
@@ -64,7 +194,7 @@ export default function JournalEditor({
       loadEntry();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [date, viewMode, propSelectedEntry, isNewEntry]);
+  }, [date, viewMode, propSelectedEntry, isNewEntry, preferences.timeFormat]);
 
   const loadEntry = async () => {
     setLoading(true);
@@ -75,6 +205,32 @@ export default function JournalEditor({
         setTitle(existingEntry.title);
         setContent(existingEntry.content);
         setTags(existingEntry.tags || []);
+        // Only load time fields for day entries and when in day view mode
+        if (viewMode === 'day' && existingEntry.timeRange === 'day') {
+          const timeFormat = preferences.timeFormat || '12h';
+          if (timeFormat === '12h' && existingEntry.hour !== undefined && existingEntry.hour !== null) {
+            const hour24 = existingEntry.hour;
+            setHour(getDisplayHour(hour24));
+            setAmPm(hour24 >= 12 ? 'PM' : 'AM');
+          } else {
+            setHour(existingEntry.hour);
+            setAmPm(existingEntry.hour !== undefined && existingEntry.hour !== null && existingEntry.hour >= 12 ? 'PM' : 'AM');
+          }
+          setMinute(existingEntry.minute);
+          setSecond(existingEntry.second);
+          setOriginalHour(existingEntry.hour);
+          setOriginalMinute(existingEntry.minute);
+          setOriginalSecond(existingEntry.second);
+        } else {
+          // Clear time fields for non-day entries or non-day view modes
+          setHour(undefined);
+          setMinute(undefined);
+          setSecond(undefined);
+          setAmPm('AM');
+          setOriginalHour(undefined);
+          setOriginalMinute(undefined);
+          setOriginalSecond(undefined);
+        }
         setOriginalTitle(existingEntry.title);
         setOriginalContent(existingEntry.content);
         setOriginalTags(existingEntry.tags || []);
@@ -82,9 +238,16 @@ export default function JournalEditor({
         setTitle('');
         setContent('');
         setTags([]);
+        setHour(undefined);
+        setMinute(undefined);
+        setSecond(undefined);
+        setAmPm('AM');
         setOriginalTitle('');
         setOriginalContent('');
         setOriginalTags([]);
+        setOriginalHour(undefined);
+        setOriginalMinute(undefined);
+        setOriginalSecond(undefined);
       }
     } catch (error) {
       console.error('Error loading entry:', error);
@@ -123,10 +286,19 @@ export default function JournalEditor({
         entryTimeRange = viewMode;
       }
       
+      // Convert hour to 24-hour format if needed (only for day entries)
+      const hour24 = entryTimeRange === 'day' && hour !== undefined && hour !== null 
+        ? convertTo24Hour(hour, amPm) 
+        : undefined;
+      
       const entry: JournalEntry = {
         id: currentEntry?.id, // Preserve ID if editing existing entry
         date: entryDate,
         timeRange: entryTimeRange,
+        // Only include time fields for day entries
+        hour: entryTimeRange === 'day' ? hour24 : undefined,
+        minute: entryTimeRange === 'day' ? (minute !== undefined && minute !== null ? minute : undefined) : undefined,
+        second: entryTimeRange === 'day' ? (second !== undefined && second !== null ? second : undefined) : undefined,
         title: title.trim() || defaultTitle,
         content: content.trim(),
         tags: tags,
@@ -152,6 +324,9 @@ export default function JournalEditor({
         setTitle('');
         setContent('');
         setTags([]);
+        setHour(undefined);
+        setMinute(undefined);
+        setSecond(undefined);
         setCurrentEntry(null);
       }
       
@@ -246,7 +421,12 @@ export default function JournalEditor({
     const titleChanged = title.trim() !== originalTitle.trim();
     const contentChanged = content.trim() !== originalContent.trim();
     const tagsChanged = JSON.stringify(tags.sort()) !== JSON.stringify(originalTags.sort());
-    const hasChanges = titleChanged || contentChanged || tagsChanged;
+    // Compare in 24-hour format for change detection
+    const currentHour24 = hour !== undefined && hour !== null ? convertTo24Hour(hour, amPm) : undefined;
+    const hourChanged = currentHour24 !== originalHour;
+    const minuteChanged = minute !== originalMinute;
+    const secondChanged = second !== originalSecond;
+    const hasChanges = titleChanged || contentChanged || tagsChanged || hourChanged || minuteChanged || secondChanged;
     
     if (hasChanges) {
       setShowConfirmDialog(true);
@@ -256,7 +436,7 @@ export default function JournalEditor({
         onCancel();
       }
     }
-  }, [title, content, tags, originalTitle, originalContent, originalTags, onCancel]);
+  }, [title, content, tags, hour, minute, second, originalTitle, originalContent, originalTags, originalHour, originalMinute, originalSecond, onCancel]);
 
   // Confirm discard changes
   const handleConfirmDiscard = useCallback(() => {
@@ -280,18 +460,7 @@ export default function JournalEditor({
         return;
       }
 
-      // Don't handle ESC if user is typing in an input, textarea, or contenteditable element
-      const target = e.target as HTMLElement;
-      if (
-        target.tagName === 'INPUT' ||
-        target.tagName === 'TEXTAREA' ||
-        target.isContentEditable ||
-        (target.closest('input') || target.closest('textarea') || target.closest('[contenteditable="true"]'))
-      ) {
-        return;
-      }
-
-      // Handle ESC key
+      // Handle ESC key to cancel entry - works even when typing in inputs
       if (e.key === 'Escape') {
         e.preventDefault();
         handleCancel();
@@ -333,6 +502,27 @@ export default function JournalEditor({
       }, 0);
     }
   }, [isNewEntry, loading]);
+
+  // Handle "now" button - set current local time
+  const handleSetNow = () => {
+    const now = new Date();
+    const hour24 = now.getHours();
+    const minute = now.getMinutes();
+    const second = now.getSeconds();
+    
+    const timeFormat = preferences.timeFormat || '12h';
+    if (timeFormat === '12h') {
+      // Convert to 12-hour format
+      const hour12 = hour24 === 0 ? 12 : (hour24 > 12 ? hour24 - 12 : hour24);
+      setHour(hour12);
+      setAmPm(hour24 >= 12 ? 'PM' : 'AM');
+    } else {
+      // Use 24-hour format directly
+      setHour(hour24);
+    }
+    setMinute(minute);
+    setSecond(second);
+  };
 
   const getDateLabel = () => {
     // Use calendar-aware formatting
@@ -384,6 +574,108 @@ export default function JournalEditor({
       </div>
       
       <div className="editor-content">
+        {viewMode === 'day' && (
+          <div className="time-inputs-section">
+            <label className="time-label">Time (optional):</label>
+            <div className="time-inputs">
+              <div className="time-input-group">
+                <label htmlFor="hour-input">Hour</label>
+                <input
+                  id="hour-input"
+                  type="number"
+                  className="time-input"
+                  min={preferences.timeFormat === '12h' ? 1 : 0}
+                  max={preferences.timeFormat === '12h' ? 12 : 23}
+                  placeholder="--"
+                  value={hour !== undefined && hour !== null ? hour : ''}
+                  onChange={(e) => {
+                    const val = e.target.value === '' ? undefined : parseInt(e.target.value, 10);
+                    const timeFormat = preferences.timeFormat || '12h';
+                    const maxVal = timeFormat === '12h' ? 12 : 23;
+                    const minVal = timeFormat === '12h' ? 1 : 0;
+                    if (val === undefined || (val >= minVal && val <= maxVal)) {
+                      setHour(val);
+                    }
+                  }}
+                />
+              </div>
+              {preferences.timeFormat === '12h' && (
+                <div className="time-input-group time-input-group-ampm">
+                  <label htmlFor="ampm-input">AM/PM</label>
+                  <select
+                    id="ampm-input"
+                    className="time-input"
+                    value={amPm}
+                    onChange={(e) => setAmPm(e.target.value as 'AM' | 'PM')}
+                  >
+                    <option value="AM">AM</option>
+                    <option value="PM">PM</option>
+                  </select>
+                </div>
+              )}
+              <div className="time-input-group">
+                <label htmlFor="minute-input">Minute</label>
+                <input
+                  id="minute-input"
+                  type="number"
+                  className="time-input"
+                  min="0"
+                  max="59"
+                  placeholder="--"
+                  value={minute !== undefined && minute !== null ? minute : ''}
+                  onChange={(e) => {
+                    const val = e.target.value === '' ? undefined : parseInt(e.target.value, 10);
+                    if (val === undefined || (val >= 0 && val <= 59)) {
+                      setMinute(val);
+                    }
+                  }}
+                />
+              </div>
+              <div className="time-input-group">
+                <label htmlFor="second-input">Second</label>
+                <input
+                  id="second-input"
+                  type="number"
+                  className="time-input"
+                  min="0"
+                  max="59"
+                  placeholder="--"
+                  value={second !== undefined && second !== null ? second : ''}
+                  onChange={(e) => {
+                    const val = e.target.value === '' ? undefined : parseInt(e.target.value, 10);
+                    if (val === undefined || (val >= 0 && val <= 59)) {
+                      setSecond(val);
+                    }
+                  }}
+                />
+              </div>
+            </div>
+            <div className="time-buttons">
+              <button
+                type="button"
+                className="now-time-button"
+                onClick={handleSetNow}
+                title="Set to current time"
+              >
+                Now
+              </button>
+              <button
+                type="button"
+                className="clear-time-button"
+                onClick={() => {
+                  setHour(undefined);
+                  setMinute(undefined);
+                  setSecond(undefined);
+                  setAmPm('AM');
+                }}
+                title="Clear time"
+              >
+                Clear
+              </button>
+            </div>
+          </div>
+        )}
+        
         <input
           ref={titleInputRef}
           type="text"

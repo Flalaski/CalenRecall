@@ -739,6 +739,63 @@
   font-style: italic;
 }
 
+[data-theme="ocean"] .time-inputs-section {
+  background: #002244;
+  border: 1px solid #005a9e;
+  border-radius: 4px;
+  padding: 0.75rem;
+}
+
+[data-theme="ocean"] .time-label {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #b3e5fc;
+  margin-bottom: 0.25rem;
+}
+
+[data-theme="ocean"] .time-inputs {
+  background: transparent;
+}
+
+[data-theme="ocean"] .time-input-group {
+  background: transparent;
+}
+
+[data-theme="ocean"] .time-input-group label {
+  font-size: 0.75rem;
+  color: #b3e5fc;
+  font-weight: 400;
+}
+
+[data-theme="ocean"] .time-input {
+  background: #003355;
+  border: 1px solid #005a9e;
+  border-radius: 4px;
+  color: #b3e5fc;
+  text-align: center;
+}
+
+[data-theme="ocean"] .time-input:focus {
+  border-color: #039be5;
+  outline: 2px solid #039be5;
+}
+
+[data-theme="ocean"] .time-input-group select.time-input {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23b3e5fc' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+}
+
+[data-theme="ocean"] .clear-time-button {
+  background: #003355;
+  border: 1px solid #005a9e;
+  border-radius: 4px;
+  color: #b3e5fc;
+}
+
+[data-theme="ocean"] .clear-time-button:hover {
+  border-color: #039be5;
+  background: #004466;
+}
+
 [data-theme="ocean"] .title-input {
   background: #003355;
   border: 1px solid #005a9e;

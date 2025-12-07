@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import { TimeRange } from '../types';
+import { TimeRange, Preferences } from '../types';
 import {
   getDaysInMonth,
   getDaysInWeek,
@@ -17,6 +17,7 @@ import {
   getMonthStart,
   getMonthEnd,
   getWeekdayLabels,
+  formatTime,
 } from '../utils/dateUtils';
 import { isSameDay, isSameMonth, isSameYear } from 'date-fns';
 import { JournalEntry } from '../types';
@@ -26,7 +27,7 @@ import { useCalendar } from '../contexts/CalendarContext';
 import { useEntries } from '../contexts/EntriesContext';
 import { dateToCalendarDate } from '../utils/calendars/calendarConverter';
 import { formatCalendarDate } from '../utils/calendars/calendarConverter';
-import { filterEntriesByDateRange, hasEntryForDate } from '../utils/entryFilterUtils';
+import { filterEntriesByDateRange, hasEntryForDate, filterEntriesForRange } from '../utils/entryFilterUtils';
 import './CalendarView.css';
 
 interface CalendarViewProps {
@@ -44,6 +45,18 @@ export default function CalendarView({
 }: CalendarViewProps) {
   const { calendar } = useCalendar();
   const { entries: allEntries } = useEntries();
+  const [preferences, setPreferences] = useState<Preferences>({});
+
+  // Load preferences for time format
+  useEffect(() => {
+    const loadPreferences = async () => {
+      if (window.electronAPI) {
+        const prefs = await window.electronAPI.getAllPreferences();
+        setPreferences(prefs);
+      }
+    };
+    loadPreferences();
+  }, []);
 
   // OPTIMIZATION: Filter entries from global context instead of querying database
   const entries = useMemo(() => {
@@ -248,6 +261,10 @@ export default function CalendarView({
           {days.map((day, idx) => {
             const gradientColor = getZodiacGradientColor(day);
             const entryColor = hasEntry(day) ? getEntryColorForDate(entries, day, 'day') : null;
+            const dayEntries = filterEntriesForRange(entries, 'day', day);
+            const entriesWithTime = dayEntries.filter(e => e.hour !== undefined && e.hour !== null);
+            const timeFormat = preferences.timeFormat || '12h';
+            
             return (
               <div
                 key={idx}
@@ -265,6 +282,21 @@ export default function CalendarView({
                       className="entry-indicator"
                       style={{ backgroundColor: entryColor }}
                     ></div>
+                  )}
+                  {entriesWithTime.length > 0 && (
+                    <div className="cell-time-info">
+                      {entriesWithTime.slice(0, 2).map((entry, eIdx) => {
+                        const timeStr = formatTime(entry.hour, entry.minute, entry.second, timeFormat);
+                        return timeStr ? (
+                          <div key={eIdx} className="cell-time-badge" title={entry.title}>
+                            {timeStr}
+                          </div>
+                        ) : null;
+                      })}
+                      {entriesWithTime.length > 2 && (
+                        <div className="cell-time-more">+{entriesWithTime.length - 2}</div>
+                      )}
+                    </div>
                   )}
                 </div>
               </div>
@@ -300,6 +332,10 @@ export default function CalendarView({
           {days.map((day, idx) => {
             const gradientColor = getZodiacGradientColor(day);
             const entryColor = hasEntry(day) ? getEntryColorForDate(entries, day, 'day') : null;
+            const dayEntries = filterEntriesForRange(entries, 'day', day);
+            const entriesWithTime = dayEntries.filter(e => e.hour !== undefined && e.hour !== null);
+            const timeFormat = preferences.timeFormat || '12h';
+            
             return (
               <div
                 key={idx}
@@ -316,6 +352,21 @@ export default function CalendarView({
                       className="entry-indicator"
                       style={{ backgroundColor: entryColor }}
                     ></div>
+                  )}
+                  {entriesWithTime.length > 0 && (
+                    <div className="cell-time-info">
+                      {entriesWithTime.slice(0, 2).map((entry, eIdx) => {
+                        const timeStr = formatTime(entry.hour, entry.minute, entry.second, timeFormat);
+                        return timeStr ? (
+                          <div key={eIdx} className="cell-time-badge" title={entry.title}>
+                            {timeStr}
+                          </div>
+                        ) : null;
+                      })}
+                      {entriesWithTime.length > 2 && (
+                        <div className="cell-time-more">+{entriesWithTime.length - 2}</div>
+                      )}
+                    </div>
                   )}
                 </div>
               </div>

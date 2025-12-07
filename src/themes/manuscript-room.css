@@ -1060,6 +1060,75 @@
   font-style: italic;
 }
 
+[data-theme="manuscript-room"] .time-inputs-section {
+  background: var(--manuscript-bg-secondary);
+  border: 1px solid var(--border-gold);
+  border-radius: 3px;
+  padding: 0.75rem;
+}
+
+[data-theme="manuscript-room"] .time-label {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  margin-bottom: 0.25rem;
+  font-family: 'Georgia', 'Times New Roman', serif;
+}
+
+[data-theme="manuscript-room"] .time-inputs {
+  background: transparent;
+}
+
+[data-theme="manuscript-room"] .time-input-group {
+  background: transparent;
+}
+
+[data-theme="manuscript-room"] .time-input-group label {
+  font-size: 0.75rem;
+  color: var(--text-primary);
+  font-weight: 400;
+  font-family: 'Georgia', 'Times New Roman', serif;
+}
+
+[data-theme="manuscript-room"] .time-input {
+  background: var(--manuscript-bg);
+  border: 1px solid var(--border-gold);
+  border-radius: 3px;
+  color: var(--text-primary);
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 14px;
+  padding: 8px;
+  text-align: center;
+  transition: all 0.25s ease;
+}
+
+[data-theme="manuscript-room"] .time-input:focus {
+  border-color: var(--accent-gold);
+  outline: 2px solid rgba(184, 134, 11, 0.3);
+  box-shadow: 0 0 0 3px rgba(184, 134, 11, 0.1);
+  background: var(--manuscript-bg-secondary);
+}
+
+[data-theme="manuscript-room"] .time-input-group select.time-input {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%238b6914' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+}
+
+[data-theme="manuscript-room"] .clear-time-button {
+  background: var(--manuscript-bg);
+  border: 1px solid var(--border-gold);
+  border-radius: 3px;
+  color: var(--text-primary);
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 14px;
+  padding: 8px;
+  transition: all 0.25s ease;
+}
+
+[data-theme="manuscript-room"] .clear-time-button:hover {
+  border-color: var(--accent-gold);
+  background: var(--manuscript-bg-secondary);
+}
+
 [data-theme="manuscript-room"] .title-input,
 [data-theme="manuscript-room"] .content-input,
 [data-theme="manuscript-room"] .tag-input {

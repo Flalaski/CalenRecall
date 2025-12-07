@@ -31,6 +31,7 @@ export default function JournalList({
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [bulkEditMode, setBulkEditMode] = useState(false);
   const [selectedEntryIds, setSelectedEntryIds] = useState<Set<number>>(new Set());
+  const [preferences, setPreferences] = useState<Preferences>({});
 
   // OPTIMIZATION: Filter entries from global context instead of querying database
   const entries = useMemo(() => {
@@ -43,6 +44,17 @@ export default function JournalList({
     setSelectedEntryIds(new Set());
     setBulkEditMode(false);
   }, [selectedDate, viewMode]);
+
+  // Load preferences for time format
+  useEffect(() => {
+    const loadPreferences = async () => {
+      if (window.electronAPI) {
+        const prefs = await window.electronAPI.getAllPreferences();
+        setPreferences(prefs);
+      }
+    };
+    loadPreferences();
+  }, []);
 
   // Removed loadEntries - now using EntriesContext with memoized filtering
 
@@ -64,6 +76,12 @@ export default function JournalList({
       switch (sortBy) {
         case 'date':
           comparison = a.date.localeCompare(b.date);
+          // If dates are equal, sort by time if available
+          if (comparison === 0) {
+            const aTime = (a.hour ?? 0) * 3600 + (a.minute ?? 0) * 60 + (a.second ?? 0);
+            const bTime = (b.hour ?? 0) * 3600 + (b.minute ?? 0) * 60 + (b.second ?? 0);
+            comparison = aTime - bTime;
+          }
           break;
         case 'title':
           comparison = a.title.localeCompare(b.title);
@@ -167,30 +185,50 @@ export default function JournalList({
     }
   };
 
+  const formatEntryTime = (entry: JournalEntry): string | null => {
+    const timeFormat = preferences.timeFormat || '12h';
+    return formatTime(entry.hour, entry.minute, entry.second, timeFormat);
+  };
+
   const formatEntryDate = (entry: JournalEntry): string => {
     const entryDate = parseISODate(entry.date);
+    let dateStr: string;
     // Use calendar-aware formatting
     try {
-      return getTimeRangeLabelInCalendar(entryDate, entry.timeRange, calendar);
+      dateStr = getTimeRangeLabelInCalendar(entryDate, entry.timeRange, calendar);
     } catch (e) {
       console.error('Error formatting entry date in calendar:', e);
       // Fallback to Gregorian formatting
       switch (entry.timeRange) {
         case 'decade':
           const decadeStart = Math.floor(entryDate.getFullYear() / 10) * 10;
-          return `${decadeStart}s`;
+          dateStr = `${decadeStart}s`;
+          break;
         case 'year':
-          return formatDate(entryDate, 'yyyy');
+          dateStr = formatDate(entryDate, 'yyyy');
+          break;
         case 'month':
-          return formatDate(entryDate, 'MMMM yyyy');
+          dateStr = formatDate(entryDate, 'MMMM yyyy');
+          break;
         case 'week':
-          return `Week of ${formatDate(entryDate, 'MMM d, yyyy')}`;
+          dateStr = `Week of ${formatDate(entryDate, 'MMM d, yyyy')}`;
+          break;
         case 'day':
-          return formatDate(entryDate, 'MMM d, yyyy');
+          dateStr = formatDate(entryDate, 'MMM d, yyyy');
+          break;
         default:
-          return formatDate(entryDate, 'MMM d, yyyy');
+          dateStr = formatDate(entryDate, 'MMM d, yyyy');
       }
     }
+    
+    // Append time if available (only for day entries)
+    if (entry.timeRange === 'day') {
+      const timeStr = formatEntryTime(entry);
+      if (timeStr) {
+        return `${dateStr} at ${timeStr}`;
+      }
+    }
+    return dateStr;
   };
 
   const getNewEntryButtonText = (): string => {
@@ -368,4 +406,5 @@ export default function JournalList({
     </div>
   );
 }
+
 
