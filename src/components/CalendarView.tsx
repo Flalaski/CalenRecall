@@ -13,6 +13,9 @@ import {
   getZodiacGradientColor,
   getZodiacGradientColorForYear,
   parseISODate,
+  createDate,
+  getMonthStart,
+  getMonthEnd,
 } from '../utils/dateUtils';
 import { isSameDay, isSameMonth, isSameYear } from 'date-fns';
 import { JournalEntry } from '../types';
@@ -47,18 +50,18 @@ export default function CalendarView({
     switch (viewMode) {
       case 'decade': {
         const decadeStart = Math.floor(selectedDate.getFullYear() / 10) * 10;
-        startDate = new Date(decadeStart, 0, 1);
-        endDate = new Date(decadeStart + 9, 11, 31);
+        startDate = createDate(decadeStart, 0, 1);
+        endDate = createDate(decadeStart + 9, 11, 31);
         break;
       }
       case 'year': {
-        startDate = new Date(selectedDate.getFullYear(), 0, 1);
-        endDate = new Date(selectedDate.getFullYear(), 11, 31);
+        startDate = createDate(selectedDate.getFullYear(), 0, 1);
+        endDate = createDate(selectedDate.getFullYear(), 11, 31);
         break;
       }
       case 'month': {
-        startDate = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1);
-        endDate = new Date(selectedDate.getFullYear(), selectedDate.getMonth() + 1, 0);
+        startDate = getMonthStart(selectedDate);
+        endDate = getMonthEnd(selectedDate);
         break;
       }
       case 'week': {
@@ -66,8 +69,8 @@ export default function CalendarView({
         endDate = getWeekEnd(selectedDate);
         // For week view, we also need to load month entries that could apply
         // So expand the range to include the full month(s) that contain this week
-        const weekStartMonth = new Date(startDate.getFullYear(), startDate.getMonth(), 1);
-        const weekEndMonth = new Date(endDate.getFullYear(), endDate.getMonth() + 1, 0);
+        const weekStartMonth = getMonthStart(startDate);
+        const weekEndMonth = getMonthEnd(endDate);
         // Use the wider range to catch month entries
         if (weekStartMonth < startDate) startDate = weekStartMonth;
         if (weekEndMonth > endDate) endDate = weekEndMonth;
@@ -75,8 +78,8 @@ export default function CalendarView({
       }
       case 'day': {
         // For day view, load entries for the full month to catch month/week entries
-        startDate = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1);
-        endDate = new Date(selectedDate.getFullYear(), selectedDate.getMonth() + 1, 0);
+        startDate = getMonthStart(selectedDate);
+        endDate = getMonthEnd(selectedDate);
         break;
       }
       default: {
@@ -166,7 +169,7 @@ export default function CalendarView({
       <div className="calendar-grid year-view">
         {months.map((month, idx) => {
           // Use the 15th of each month as representative for the zodiac color
-          const monthMidpoint = new Date(month.getFullYear(), month.getMonth(), 15);
+          const monthMidpoint = createDate(month.getFullYear(), month.getMonth(), 15);
           const zodiacColor = getZodiacColor(monthMidpoint);
           const entryColor = hasEntry(month) ? getEntryColorForDate(entries, month, 'month') : null;
           
@@ -174,8 +177,9 @@ export default function CalendarView({
           const daysInMonth = getDaysInMonth(month).length;
           
           // Count entries for this month (including day, week, and month entries)
-          const monthStart = new Date(month.getFullYear(), month.getMonth(), 1);
-          const monthEnd = new Date(month.getFullYear(), month.getMonth() + 1, 0, 23, 59, 59, 999);
+          const monthStart = getMonthStart(month);
+          const monthEnd = getMonthEnd(month);
+          monthEnd.setHours(23, 59, 59, 999);
           const monthEntries = entries.filter(entry => {
             try {
               const entryDate = parseISODate(entry.date);

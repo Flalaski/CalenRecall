@@ -38,6 +38,8 @@ function App() {
   const isSelectingEntryRef = useRef(false);
   // Cache background image path to avoid unnecessary reloads
   const backgroundImagePathRef = useRef<string | null>(null);
+  // Track theme cleanup function for 'auto' theme listener
+  const themeCleanupRef = useRef<(() => void) | null>(null);
 
   // SUPREME OPTIMIZATION: Preload all entries at startup
   useEffect(() => {
@@ -104,17 +106,29 @@ function App() {
   const updateSpecificPreference = useCallback(async (key: string, value: any) => {
     console.log('[App] updateSpecificPreference called:', key, value);
     if (key === 'theme') {
+      // Clean up previous theme listener if it exists
+      if (themeCleanupRef.current) {
+        themeCleanupRef.current();
+        themeCleanupRef.current = null;
+      }
+      
       // Apply theme immediately (synchronous for instant feedback)
       const theme = (value || 'light') as any;
       console.log('[App] Applying theme:', theme);
       console.log('[App] Current document.documentElement:', document.documentElement);
       console.log('[App] Current data-theme attribute:', document.documentElement.getAttribute('data-theme'));
-      applyTheme(theme);
-      console.log('[App] After applyTheme, data-theme attribute:', document.documentElement.getAttribute('data-theme'));
-      // Re-initialize theme listener for 'auto' theme
+      
+      // For 'auto' theme, use initializeTheme which applies theme and sets up listener
+      // For other themes, just apply the theme directly
       if (theme === 'auto') {
-        initializeTheme(theme);
+        const cleanup = initializeTheme(theme);
+        themeCleanupRef.current = cleanup;
+      } else {
+        applyTheme(theme);
       }
+      
+      console.log('[App] After theme application, data-theme attribute:', document.documentElement.getAttribute('data-theme'));
+      
       // Update preferences state to trigger re-render
       setPreferences(prev => {
         console.log('[App] Updating preferences state, prev theme:', prev.theme, 'new theme:', value);
@@ -268,7 +282,7 @@ function App() {
     loadPreferences();
   }, []);
 
-  // Set up IPC listener in a separate effect that always runs
+  // Set up IPC listener for preference updates from preferences window
   // This ensures the listener is always ready to receive updates
   useEffect(() => {
     if (!window.electronAPI || !('onPreferenceUpdated' in window.electronAPI)) {
@@ -280,6 +294,7 @@ function App() {
     (window.electronAPI as any).onPreferenceUpdated((data: { key: string; value: any }) => {
       console.log('[App] Received preference update via IPC:', data);
       // Update only the specific preference that changed
+      // updateSpecificPreference handles all preference types including showMinimap
       updateSpecificPreference(data.key, data.value);
     });
 
@@ -290,13 +305,25 @@ function App() {
     };
   }, [updateSpecificPreference]); // Include updateSpecificPreference in deps
 
+  // Cleanup theme listener on unmount
+  useEffect(() => {
+    return () => {
+      if (themeCleanupRef.current) {
+        themeCleanupRef.current();
+        themeCleanupRef.current = null;
+      }
+    };
+  }, []);
+
   // Listen for window events (fallback for same-window communication)
   useEffect(() => {
-    const handlePreferencesUpdate = (event: Event) => {
+    const handleWindowEvent = (event: Event) => {
       const customEvent = event as CustomEvent<{ key?: string; value?: any }>;
-      if (customEvent.detail?.key) {
-        // Handle specific preference update
-        updateSpecificPreference(customEvent.detail.key, customEvent.detail.value);
+      const key = customEvent.detail?.key;
+      const value = customEvent.detail?.value;
+      
+      if (key) {
+        updateSpecificPreference(key, value);
       } else {
         // Fallback to full refresh if no key specified
         if (window.electronAPI) {
@@ -310,12 +337,14 @@ function App() {
       }
     };
     
-    window.addEventListener('preferences-updated', handlePreferencesUpdate);
+    window.addEventListener('preferences-updated', handleWindowEvent);
+    document.addEventListener('preferences-updated', handleWindowEvent);
     
     return () => {
-      window.removeEventListener('preferences-updated', handlePreferencesUpdate);
+      window.removeEventListener('preferences-updated', handleWindowEvent);
+      document.removeEventListener('preferences-updated', handleWindowEvent);
     };
-  }, []);
+  }, [updateSpecificPreference]);
 
   // Save last viewed position when date or view mode changes (if restoreLastView is enabled)
   // Use a ref to track if we're in the initial restore phase to avoid saving during restoration

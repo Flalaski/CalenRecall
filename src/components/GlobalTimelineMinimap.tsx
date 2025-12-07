@@ -1,6 +1,6 @@
 import { useMemo, useState, useEffect, useRef } from 'react';
 import { TimeRange, JournalEntry } from '../types';
-import { getWeekStart, getWeekEnd, getMonthStart, getMonthEnd, getYearEnd, getDecadeEnd, getZodiacColor, getZodiacColorForDecade, getCanonicalDate, parseISODate } from '../utils/dateUtils';
+import { getWeekStart, getWeekEnd, getMonthStart, getMonthEnd, getYearEnd, getDecadeEnd, getZodiacColor, getZodiacColorForDecade, getCanonicalDate, parseISODate, createDate } from '../utils/dateUtils';
 import { addDays, addWeeks, addMonths, addYears, getYear, getMonth, getDate } from 'date-fns';
 import { playMechanicalClick, playMicroBlip, getAudioContext, createSliderNoise, SliderNoise } from '../utils/audioUtils';
 import { calculateEntryColor } from '../utils/entryColorUtils';
@@ -420,14 +420,14 @@ export default function GlobalTimelineMinimap({
     switch (mode) {
       case 'decade': {
         const currentDecade = Math.floor(getYear(date) / 10) * 10;
-        startDate = new Date(currentDecade - 50, 0, 1);
-        endDate = new Date(currentDecade + 60, 11, 31);
+        startDate = createDate(currentDecade - 50, 0, 1);
+        endDate = createDate(currentDecade + 60, 11, 31);
         break;
       }
       case 'year': {
         const currentYear = getYear(date);
-        startDate = new Date(currentYear - 5, 0, 1);
-        endDate = new Date(currentYear + 6, 11, 31);
+        startDate = createDate(currentYear - 5, 0, 1);
+        endDate = createDate(currentYear + 6, 11, 31);
         break;
       }
       case 'month': {
@@ -443,7 +443,7 @@ export default function GlobalTimelineMinimap({
         break;
       }
       case 'day': {
-        const dayStart = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+        const dayStart = createDate(date.getFullYear(), date.getMonth(), date.getDate());
         startDate = addDays(dayStart, -14);
         endDate = addDays(dayStart, 15);
         break;
@@ -509,7 +509,7 @@ export default function GlobalTimelineMinimap({
         const endDecade = Math.floor(getYear(endDate) / 10) * 10;
         
         for (let year = startDecade; year <= endDecade; year += 10) {
-          const decadeDate = new Date(year, 0, 1);
+          const decadeDate = createDate(year, 0, 1);
           const isCurrent = Math.floor(getYear(selectedDate) / 10) * 10 === year;
           // Format using calendar-aware formatting to get proper year representation
           const calendarYear = formatDate(decadeDate, 'YYYY');
@@ -530,7 +530,7 @@ export default function GlobalTimelineMinimap({
         const endYear = getYear(endDate);
         
         for (let year = startYear; year <= endYear; year++) {
-          const yearDate = new Date(year, 0, 1);
+          const yearDate = createDate(year, 0, 1);
           const isCurrent = getYear(selectedDate) === year;
           // Format using calendar-aware formatting to get proper year representation
           const calendarYear = formatDate(yearDate, 'YYYY');
@@ -590,9 +590,9 @@ export default function GlobalTimelineMinimap({
       case 'day': {
         let current = new Date(startDate);
         let idx = 0;
-        const dayStart = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate());
+        const dayStart = createDate(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate());
         while (current <= endDate) {
-          const currentDay = new Date(current.getFullYear(), current.getMonth(), current.getDate());
+          const currentDay = createDate(current.getFullYear(), current.getMonth(), current.getDate());
           const isCurrent = currentDay.getTime() === dayStart.getTime();
           segments.push({
             date: currentDay,
@@ -735,7 +735,7 @@ export default function GlobalTimelineMinimap({
         return getZodiacColor(yearDate) || '#0277bd';
       }
       case 'month': {
-        const monthDate = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 15);
+        const monthDate = createDate(selectedDate.getFullYear(), selectedDate.getMonth(), 15);
         return getZodiacColor(monthDate) || '#ef6c00';
       }
       case 'week': {
@@ -880,12 +880,12 @@ export default function GlobalTimelineMinimap({
       let color: string;
       switch (scale) {
         case 'year': {
-          const yearDate = new Date(finerPeriodStart.getFullYear(), 0, 1);
+          const yearDate = createDate(finerPeriodStart.getFullYear(), 0, 1);
           color = getZodiacColor(yearDate) || getViewModeColor(scale);
           break;
         }
         case 'month': {
-          const monthDate = new Date(finerPeriodStart.getFullYear(), finerPeriodStart.getMonth(), 15);
+          const monthDate = createDate(finerPeriodStart.getFullYear(), finerPeriodStart.getMonth(), 15);
           color = getZodiacColor(monthDate) || getViewModeColor(scale);
           break;
         }
@@ -1653,7 +1653,7 @@ export default function GlobalTimelineMinimap({
     const endDecade = Math.ceil(endYear / 10) * 10;
 
     for (let decade = startDecade; decade <= endDecade; decade += 10) {
-      const decadeDate = new Date(decade, 0, 1);
+      const decadeDate = createDate(decade, 0, 1);
       if (decadeDate >= startDate && decadeDate <= endDate) {
         // Format using calendar-aware formatting to get proper year representation
         const calendarYear = formatDate(decadeDate, 'YYYY');
@@ -1666,7 +1666,7 @@ export default function GlobalTimelineMinimap({
     }
 
     for (let year = startYear; year <= endYear; year += 5) {
-      const yearDate = new Date(year, 0, 1);
+      const yearDate = createDate(year, 0, 1);
       if (yearDate >= startDate && yearDate <= endDate && year % 10 !== 0) {
         // Format using calendar-aware formatting to get proper year representation
         const calendarYear = formatDate(yearDate, 'YYYY');
@@ -1682,7 +1682,7 @@ export default function GlobalTimelineMinimap({
     // For decades view, limit year markings to every 5 years to reduce DOM elements
     const yearStep = viewMode === 'decade' ? 5 : 1;
     for (let year = startYear; year <= endYear; year += yearStep) {
-      const yearDate = new Date(year, 0, 1);
+      const yearDate = createDate(year, 0, 1);
       if (yearDate >= startDate && yearDate <= endDate) {
         // Format using calendar-aware formatting to get proper year representation
         const calendarYear = formatDate(yearDate, 'YYYY');
@@ -2038,8 +2038,10 @@ export default function GlobalTimelineMinimap({
       if (!yearEntries) continue;
       
       // Quick year-based range check before expensive date operations
-      const yearStart = new Date(year, 0, 1).getTime();
-      const yearEnd = new Date(year, 11, 31, 23, 59, 59, 999).getTime();
+      const yearStart = createDate(year, 0, 1).getTime();
+      const yearEndDate = createDate(year, 11, 31);
+      yearEndDate.setHours(23, 59, 59, 999);
+      const yearEnd = yearEndDate.getTime();
       
       // If year is completely outside timeline, skip all entries in this year
       if (yearEnd < timelineStartTime || yearStart > timelineEndTime) {
@@ -3470,8 +3472,8 @@ export default function GlobalTimelineMinimap({
       // Compare dates at day level (ignore time component) - check BEFORE throttling
       // This ensures blips play immediately even if the update callback is throttled
       const lastBlipDate = lastBlipDateRef.current;
-      const clampedDateDay = new Date(clampedDate.getFullYear(), clampedDate.getMonth(), clampedDate.getDate());
-      const lastBlipDateDay = lastBlipDate ? new Date(lastBlipDate.getFullYear(), lastBlipDate.getMonth(), lastBlipDate.getDate()) : null;
+      const clampedDateDay = createDate(clampedDate.getFullYear(), clampedDate.getMonth(), clampedDate.getDate());
+      const lastBlipDateDay = lastBlipDate ? createDate(lastBlipDate.getFullYear(), lastBlipDate.getMonth(), lastBlipDate.getDate()) : null;
       
       // Detect ALL date changes, even if we skip some updates due to throttling
       // If the date changed, play blip immediately (don't wait for throttle)
@@ -3623,7 +3625,7 @@ export default function GlobalTimelineMinimap({
       .slice(0, maxLabels); // Limit to closest N labels to prioritize indicators
     
     return labelsWithDistance.map(({ mark, labelPosition, absDistance }, idx) => {
-      const monthDate = mark.date ? new Date(mark.date.getFullYear(), mark.date.getMonth(), 15) : new Date();
+      const monthDate = mark.date ? createDate(mark.date.getFullYear(), mark.date.getMonth(), 15) : new Date();
       const zodiacColor = getZodiacColor(monthDate);
       const lightenedColor = lightenColor(zodiacColor, 0.5);
       
@@ -4513,7 +4515,7 @@ export default function GlobalTimelineMinimap({
               const labelPosition = Math.max(0, Math.min(100, Number(mark.position)));
               
               // Get zodiac color for the year
-              const yearDate = mark.date ? new Date(mark.date.getFullYear(), 0, 1) : new Date();
+              const yearDate = mark.date ? createDate(mark.date.getFullYear(), 0, 1) : new Date();
               const zodiacColor = getZodiacColor(yearDate);
               // Lighten the color for better readability on dark minimap background
               const lightenedColor = lightenColor(zodiacColor, 0.5);
@@ -4626,7 +4628,7 @@ export default function GlobalTimelineMinimap({
               const uniqueKey = `year-minor-label-${dateTimestamp}-${labelPosition}`;
               
               // Get zodiac color for the month
-              const monthDate = mark.date ? new Date(mark.date.getFullYear(), mark.date.getMonth(), 15) : new Date();
+              const monthDate = mark.date ? createDate(mark.date.getFullYear(), mark.date.getMonth(), 15) : new Date();
               const zodiacColor = getZodiacColor(monthDate);
               
               // Build the style object explicitly to ensure all properties are set correctly
@@ -4707,7 +4709,7 @@ export default function GlobalTimelineMinimap({
               // Final validation and clamping - ensure we have a valid position (0-100 range)
               labelPosition = Math.max(0, Math.min(100, labelPosition));
               
-              const monthDate = mark.date ? new Date(mark.date.getFullYear(), mark.date.getMonth(), 15) : new Date();
+              const monthDate = mark.date ? createDate(mark.date.getFullYear(), mark.date.getMonth(), 15) : new Date();
               const zodiacColor = getZodiacColor(monthDate);
               // Lighten the color for better readability on dark minimap background
               const lightenedColor = lightenColor(zodiacColor, 0.5);

@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { JournalEntry, TimeRange } from '../types';
-import { formatDate, getDaysInMonth, getDaysInWeek, isToday, getWeekStart, getWeekEnd, getZodiacColor, getZodiacGradientColor, getZodiacGradientColorForYear, parseISODate } from '../utils/dateUtils';
+import { formatDate, getDaysInMonth, getDaysInWeek, isToday, getWeekStart, getWeekEnd, getZodiacColor, getZodiacGradientColor, getZodiacGradientColorForYear, parseISODate, getMonthStart, getMonthEnd, createDate } from '../utils/dateUtils';
 import { isSameDay, isSameMonth, isSameYear } from 'date-fns';
 import { playCalendarSelectionSound, playEntrySelectionSound, playEditSound } from '../utils/audioUtils';
 import { calculateEntryColor } from '../utils/entryColorUtils';
@@ -40,34 +40,35 @@ export default function TimelineView({
     switch (viewMode) {
       case 'decade': {
         const decadeStart = Math.floor(selectedDate.getFullYear() / 10) * 10;
-        startDate = new Date(decadeStart, 0, 1);
-        endDate = new Date(decadeStart + 9, 11, 31);
+        startDate = createDate(decadeStart, 0, 1);
+        endDate = createDate(decadeStart + 9, 11, 31);
         break;
       }
       case 'year': {
-        startDate = new Date(selectedDate.getFullYear(), 0, 1);
-        endDate = new Date(selectedDate.getFullYear(), 11, 31);
+        startDate = createDate(selectedDate.getFullYear(), 0, 1);
+        endDate = createDate(selectedDate.getFullYear(), 11, 31);
         break;
       }
       case 'month': {
-        startDate = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1);
-        endDate = new Date(selectedDate.getFullYear(), selectedDate.getMonth() + 1, 0);
+        startDate = createDate(selectedDate.getFullYear(), selectedDate.getMonth(), 1);
+        // Use date-fns endOfMonth which handles negative years correctly
+        endDate = getMonthEnd(selectedDate);
         break;
       }
       case 'week': {
         startDate = getWeekStart(selectedDate);
         endDate = getWeekEnd(selectedDate);
         // Expand to include full month(s) to catch month entries
-        const weekStartMonth = new Date(startDate.getFullYear(), startDate.getMonth(), 1);
-        const weekEndMonth = new Date(endDate.getFullYear(), endDate.getMonth() + 1, 0);
+        const weekStartMonth = getMonthStart(startDate);
+        const weekEndMonth = getMonthEnd(endDate);
         if (weekStartMonth < startDate) startDate = weekStartMonth;
         if (weekEndMonth > endDate) endDate = weekEndMonth;
         break;
       }
       case 'day': {
         // Load entries for the full month to catch month/week entries
-        startDate = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1);
-        endDate = new Date(selectedDate.getFullYear(), selectedDate.getMonth() + 1, 0);
+        startDate = getMonthStart(selectedDate);
+        endDate = getMonthEnd(selectedDate);
         break;
       }
       default: {

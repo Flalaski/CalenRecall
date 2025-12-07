@@ -77,10 +77,46 @@ export function dateToJDN(date: Date): number {
  * Convert Julian Day Number to JavaScript Date object
  * @param jdn Julian Day Number
  * @returns Date object (local time, midnight)
+ * 
+ * This function properly handles negative years by calculating from a reference point.
+ * JavaScript Date constructor has unreliable behavior for negative years, especially around year 0.
  */
 export function jdnToDate(jdn: number): Date {
   const { year, month, day } = jdnToGregorian(jdn);
-  return new Date(year, month - 1, day); // month is 0-indexed in Date constructor
+  
+  // JavaScript Date constructor has issues with negative years, especially around year 0.
+  // Use a reference point approach: calculate days from a known good date.
+  // Reference: JDN 1721424 = January 1, 1 CE (Gregorian) at noon UTC
+  // We'll use January 1, 1970 (Unix epoch) as our reference for better Date compatibility
+  const referenceJDN = 2440588; // January 1, 1970 CE (Gregorian) = Unix epoch
+  const referenceDate = new Date(1970, 0, 1); // Local midnight on Jan 1, 1970
+  const daysDifference = jdn - referenceJDN;
+  const millisecondsPerDay = 24 * 60 * 60 * 1000;
+  
+  // Calculate the target date
+  const targetDate = new Date(referenceDate.getTime() + daysDifference * millisecondsPerDay);
+  
+  // Verify the conversion is correct by checking the date components
+  // (accounting for potential timezone issues)
+  const targetYear = targetDate.getFullYear();
+  const targetMonth = targetDate.getMonth();
+  const targetDay = targetDate.getDate();
+  
+  // If the date components match (within reasonable bounds), return it
+  // Otherwise, try a more direct approach for problematic years
+  if (Math.abs(targetYear - year) <= 1 && targetMonth === month - 1 && targetDay === day) {
+    return targetDate;
+  }
+  
+  // For dates that don't match (likely due to timezone or edge cases),
+  // calculate from Unix epoch (Jan 1, 1970 UTC) which is more reliable
+  // This works better for negative years
+  const epochDate = new Date(0); // Jan 1, 1970 UTC
+  const epochJDN = 2440588;
+  const daysFromEpochDate = jdn - epochJDN;
+  const result = new Date(epochDate.getTime() + daysFromEpochDate * millisecondsPerDay);
+  
+  return result;
 }
 
 /**

@@ -1,6 +1,7 @@
 import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth, 
   startOfYear, endOfYear, addDays, addWeeks, addMonths, addYears,
   getWeek, getYear, getMonth, differenceInDays, isSameDay } from 'date-fns';
+import { gregorianToJDN, jdnToDate } from './calendars/julianDayUtils';
 
 /**
  * Safely formats a date to ISO date string (YYYY-MM-DD) that works with negative years.
@@ -24,8 +25,43 @@ export function formatDateToISO(date: Date): string {
 }
 
 /**
+ * Safely creates a Date object from year, month, and day.
+ * Properly handles negative years and years around 0 AD by using JDN calculations.
+ * @param year Year (can be negative for BCE dates)
+ * @param month Month (0-11, JavaScript standard)
+ * @param day Day (1-31)
+ * @returns Date object
+ */
+export function createDate(year: number, month: number, day: number): Date {
+  // For years far from 0, use normal Date constructor
+  // JavaScript Date can handle years from -271821 to 275760, but behavior
+  // around year 0 is unreliable, so we use JDN for years near 0
+  if (year >= -100 && year <= 3000) {
+    // For years near 0, use JDN-based calculation for accuracy
+    if (year < 1 || (year >= 0 && year <= 100)) {
+      const jdn = gregorianToJDN(year, month + 1, day); // month is 1-indexed in gregorianToJDN
+      return jdnToDate(jdn);
+    }
+    // For normal positive years, use standard constructor
+    try {
+      const date = new Date(year, month, day);
+      // Verify the date was created correctly
+      if (date.getFullYear() === year && date.getMonth() === month && date.getDate() === day) {
+        return date;
+      }
+    } catch (e) {
+      // Fall through to JDN method if Date constructor fails
+    }
+  }
+  
+  // Use JDN for all other cases (very negative years, very positive years, or if Date constructor failed)
+  const jdn = gregorianToJDN(year, month + 1, day); // month is 1-indexed in gregorianToJDN
+  return jdnToDate(jdn);
+}
+
+/**
  * Parses an ISO date string (YYYY-MM-DD or -YYYY-MM-DD) to a Date object.
- * Handles negative years correctly by parsing as local date.
+ * Handles negative years correctly by using safe date creation.
  */
 export function parseISODate(dateStr: string): Date {
   // Handle negative years: -YYYY-MM-DD format
@@ -37,7 +73,7 @@ export function parseISODate(dateStr: string): Date {
   const month = parseInt(monthStr, 10) - 1; // Convert to 0-indexed month
   const day = parseInt(dayStr, 10);
   
-  return new Date(year, month, day);
+  return createDate(year, month, day);
 }
 
 export function formatDate(date: Date, formatStr: string = 'yyyy-MM-dd'): string {
@@ -71,13 +107,13 @@ export function getYearEnd(date: Date): Date {
 export function getDecadeStart(date: Date): Date {
   const year = getYear(date);
   const decadeStart = Math.floor(year / 10) * 10;
-  return new Date(decadeStart, 0, 1);
+  return createDate(decadeStart, 0, 1);
 }
 
 export function getDecadeEnd(date: Date): Date {
   const year = getYear(date);
   const decadeEnd = Math.floor(year / 10) * 10 + 9;
-  return new Date(decadeEnd, 11, 31);
+  return createDate(decadeEnd, 11, 31);
 }
 
 export function getDaysInMonth(date: Date): Date[] {
@@ -110,7 +146,7 @@ export function getMonthsInYear(date: Date): Date[] {
   const months: Date[] = [];
   
   for (let i = 0; i < 12; i++) {
-    months.push(new Date(year, i, 1));
+    months.push(createDate(year, i, 1));
   }
   
   return months;
@@ -121,7 +157,7 @@ export function getYearsInDecade(date: Date): Date[] {
   const years: Date[] = [];
   
   for (let i = 0; i < 10; i++) {
-    years.push(new Date(decadeStart + i, 0, 1));
+    years.push(createDate(decadeStart + i, 0, 1));
   }
   
   return years;
@@ -143,7 +179,7 @@ export function getCanonicalDate(date: Date, timeRange: 'decade' | 'year' | 'mon
     case 'week':
       return getWeekStart(date);
     case 'day':
-      return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+      return createDate(date.getFullYear(), date.getMonth(), date.getDate());
     default:
       return date;
   }

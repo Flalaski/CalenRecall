@@ -68,9 +68,13 @@ const BUILT_IN_THEME_METADATA: Record<string, Omit<ThemeInfo, 'name'>> = {
     displayName: 'Hot Spring',
     description: 'Warm nighttime hot spring theme with steamy blues and purples'
   },
-  'retro80s': {
-    displayName: 'Retro 80s',
+  'NEON_A': {
+    displayName: 'NEON_A',
     description: 'Vibrant 1980s retro theme'
+  },
+  'vegas80s': {
+    displayName: 'Vegas 80s',
+    description: 'Cigarette smoke-filled Vegas strip 80s with neon nightlife atmosphere'
   },
   'modern-minimal': {
     displayName: 'Modern Minimal',
@@ -217,19 +221,43 @@ export function applyTheme(theme: ThemeName) {
     return;
   }
   
-  const effectiveTheme = getEffectiveTheme(theme);
+  // For 'auto' theme, resolve to light/dark based on system preference
+  // For all other themes (including custom themes), use the theme name directly
+  const themeToApply = theme === 'auto' ? getEffectiveTheme(theme) : theme;
+  
+  console.log('[themes] Applying theme:', theme, '->', themeToApply);
+  
   try {
-    document.documentElement.setAttribute('data-theme', effectiveTheme);
+    // Set the theme attribute directly and synchronously
+    document.documentElement.setAttribute('data-theme', themeToApply);
+    
+    // Verify it was set correctly
+    const appliedTheme = document.documentElement.getAttribute('data-theme');
+    console.log('[themes] Theme applied. Current data-theme:', appliedTheme);
+    
+    if (appliedTheme !== themeToApply) {
+      console.warn('[themes] Theme mismatch! Expected:', themeToApply, 'Got:', appliedTheme);
+      // Force set again
+      document.documentElement.setAttribute('data-theme', themeToApply);
+    }
+    
+    // Force a reflow to ensure CSS is recalculated
+    void document.documentElement.offsetHeight;
+    
   } catch (error) {
-    console.error('Error applying theme:', error);
+    console.error('[themes] Error applying theme:', error);
     // Retry after a short delay in case of timing issues
     setTimeout(() => {
       try {
         if (document.documentElement) {
-          document.documentElement.setAttribute('data-theme', effectiveTheme);
+          document.documentElement.setAttribute('data-theme', themeToApply);
+          const appliedTheme = document.documentElement.getAttribute('data-theme');
+          console.log('[themes] Theme applied on retry. Current data-theme:', appliedTheme);
+          // Force a reflow
+          void document.documentElement.offsetHeight;
         }
       } catch (retryError) {
-        console.error('Error retrying theme application:', retryError);
+        console.error('[themes] Error retrying theme application:', retryError);
       }
     }, 50);
   }

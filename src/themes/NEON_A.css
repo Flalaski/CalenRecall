@@ -3,163 +3,163 @@
  * Vibrant 1980s retro theme
  */
 
-[data-theme="retro80s"] body {
+[data-theme="NEON_A"] body {
   background: #000000;
   color: #00ffff;
 }
 
-[data-theme="retro80s"] .app {
+[data-theme="NEON_A"] .app {
   background: #000000;
 }
 
-[data-theme="retro80s"] .navigation-bar {
+[data-theme="NEON_A"] .navigation-bar {
   background: linear-gradient(135deg, #ff00ff, #00ffff);
   border-bottom: 3px solid #ffff00;
 }
 
-[data-theme="retro80s"] .nav-button {
+[data-theme="NEON_A"] .nav-button {
   background: #ff00ff;
   border: 2px solid #ffff00;
   color: #ffffff;
   text-shadow: 0 0 10px #00ffff, 0 0 20px #00ffff;
 }
 
-[data-theme="retro80s"] .nav-button:hover {
+[data-theme="NEON_A"] .nav-button:hover {
   background: #00ffff;
   border-color: #ff00ff;
   box-shadow: 0 0 15px #00ffff;
 }
 
-[data-theme="retro80s"] .timeline-cell {
+[data-theme="NEON_A"] .timeline-cell {
   background: #1a0033;
   border: 2px solid #ff00ff;
   color: #00ffff;
 }
 
-[data-theme="retro80s"] .timeline-cell:hover {
+[data-theme="NEON_A"] .timeline-cell:hover {
   background: #330066;
   box-shadow: 0 0 10px #ff00ff, inset 0 0 10px #00ffff;
 }
 
-[data-theme="retro80s"] .timeline-cell.today {
+[data-theme="NEON_A"] .timeline-cell.today {
   background: linear-gradient(135deg, #ff00ff, #00ffff);
   color: #ffffff;
   border: 3px solid #ffff00;
   box-shadow: 0 0 20px #ffff00;
 }
 
-[data-theme="retro80s"] .week-entry-group {
+[data-theme="NEON_A"] .week-entry-group {
   background: #1a0033;
   border: 2px solid #ff00ff;
 }
 
-[data-theme="retro80s"] {
+[data-theme="NEON_A"] {
   font-family: 'Courier New', 'Arial Black', sans-serif;
   font-size: 14px;
 }
 
-[data-theme="retro80s"] .app-content {
+[data-theme="NEON_A"] .app-content {
   background: #000000;
   gap: 2px;
 }
 
-[data-theme="retro80s"] .timeline-section {
+[data-theme="NEON_A"] .timeline-section {
   background: #000000;
 }
 
-[data-theme="retro80s"] .editor-section {
+[data-theme="NEON_A"] .editor-section {
   background: #000000;
   border-left: 3px solid #ff00ff;
 }
 
 /* Navigation Bar - Additional */
-[data-theme="retro80s"] .navigation-bar-top-row {
+[data-theme="NEON_A"] .navigation-bar-top-row {
   background: linear-gradient(135deg, #ff00ff, #00ffff);
   border-bottom: 3px solid #ffff00;
 }
 
-[data-theme="retro80s"] .nav-controls {
+[data-theme="NEON_A"] .nav-controls {
   background: transparent;
 }
 
-[data-theme="retro80s"] .today-button {
+[data-theme="NEON_A"] .today-button {
   background: #ff00ff;
   border: 2px solid #ffff00;
   color: #ffffff;
   text-shadow: 0 0 10px #00ffff, 0 0 20px #00ffff;
 }
 
-[data-theme="retro80s"] .today-button:hover {
+[data-theme="NEON_A"] .today-button:hover {
   background: #00ffff;
   border-color: #ff00ff;
   box-shadow: 0 0 15px #00ffff;
 }
 
-[data-theme="retro80s"] .view-mode-selector {
+[data-theme="NEON_A"] .view-mode-selector {
   background: transparent;
 }
 
-[data-theme="retro80s"] .view-mode-button {
+[data-theme="NEON_A"] .view-mode-button {
   background: #ff00ff;
   border: 2px solid #ffff00;
   color: #ffffff;
   text-shadow: 0 0 10px #00ffff, 0 0 20px #00ffff;
 }
 
-[data-theme="retro80s"] .view-mode-button:hover {
+[data-theme="NEON_A"] .view-mode-button:hover {
   background: #00ffff;
   border-color: #ff00ff;
   box-shadow: 0 0 15px #00ffff;
 }
 
-[data-theme="retro80s"] .view-mode-button.active {
+[data-theme="NEON_A"] .view-mode-button.active {
   background: linear-gradient(135deg, #ff00ff, #00ffff);
   border: 3px solid #ffff00;
   box-shadow: 0 0 20px #ffff00;
 }
 
-[data-theme="retro80s"] .date-label {
+[data-theme="NEON_A"] .date-label {
   color: #ffffff;
   text-shadow: 0 0 10px #00ffff, 0 0 20px #00ffff;
 }
 
-[data-theme="retro80s"] .calendar-selector {
+[data-theme="NEON_A"] .calendar-selector {
   background: transparent;
 }
 
-[data-theme="retro80s"] .calendar-select {
+[data-theme="NEON_A"] .calendar-select {
   background: #1a0033;
   border: 2px solid #ff00ff;
   color: #00ffff;
   text-shadow: 0 0 5px #00ffff;
 }
 
-[data-theme="retro80s"] .calendar-select:focus {
+[data-theme="NEON_A"] .calendar-select:focus {
   box-shadow: 0 0 15px #ff00ff, inset 0 0 10px #00ffff;
   outline: 2px solid #ffff00;
 }
 
-[data-theme="retro80s"] .calendar-info-panel {
+[data-theme="NEON_A"] .calendar-info-panel {
   background: #1a0033;
   border: 2px solid #ff00ff;
   color: #00ffff;
   text-shadow: 0 0 5px #00ffff;
 }
 
-[data-theme="retro80s"] .calendar-definition-toggle {
+[data-theme="NEON_A"] .calendar-definition-toggle {
   background: #ff00ff;
   border: 2px solid #ffff00;
   color: #ffffff;
   text-shadow: 0 0 10px #00ffff;
 }
 
-[data-theme="retro80s"] .calendar-definition-toggle:hover {
+[data-theme="NEON_A"] .calendar-definition-toggle:hover {
   background: #00ffff;
   border-color: #ff00ff;
   box-shadow: 0 0 15px #00ffff;
 }
 
-[data-theme="retro80s"] .calendar-definition-drawer {
+[data-theme="NEON_A"] .calendar-definition-drawer {
   background: #1a0033;
   border: 2px solid #ff00ff;
   color: #00ffff;
@@ -167,189 +167,189 @@
 }
 
 /* Calendar View */
-[data-theme="retro80s"] .calendar-loading {
+[data-theme="NEON_A"] .calendar-loading {
   background: #000000;
   color: #00ffff;
   text-shadow: 0 0 10px #00ffff;
 }
 
-[data-theme="retro80s"] .calendar-grid {
+[data-theme="NEON_A"] .calendar-grid {
   background: #000000;
   border: 3px solid #ff00ff;
 }
 
-[data-theme="retro80s"] .calendar-cell {
+[data-theme="NEON_A"] .calendar-cell {
   background: #1a0033;
   border: 2px solid #ff00ff;
   color: #00ffff;
   text-shadow: 0 0 5px #00ffff;
 }
 
-[data-theme="retro80s"] .calendar-cell:hover {
+[data-theme="NEON_A"] .calendar-cell:hover {
   background: #330066;
   box-shadow: 0 0 10px #ff00ff, inset 0 0 10px #00ffff;
 }
 
-[data-theme="retro80s"] .calendar-cell.empty-cell {
+[data-theme="NEON_A"] .calendar-cell.empty-cell {
   background: #000000;
   border: 1px solid #330033;
   cursor: default;
 }
 
-[data-theme="retro80s"] .calendar-cell.today {
+[data-theme="NEON_A"] .calendar-cell.today {
   background: linear-gradient(135deg, #ff00ff, #00ffff);
   color: #ffffff;
   border: 3px solid #ffff00;
   box-shadow: 0 0 20px #ffff00;
 }
 
-[data-theme="retro80s"] .calendar-cell.selected {
+[data-theme="NEON_A"] .calendar-cell.selected {
   background: linear-gradient(135deg, #ff00ff, #00ffff);
   color: #ffffff;
   border: 3px solid #ffff00;
   box-shadow: 0 0 20px #ffff00;
 }
 
-[data-theme="retro80s"] .calendar-cell.has-entry {
+[data-theme="NEON_A"] .calendar-cell.has-entry {
   background: #1a0033;
   border: 3px solid #ffff00;
   box-shadow: 0 0 10px #ffff00;
 }
 
-[data-theme="retro80s"] .calendar-cell.has-entry.today {
+[data-theme="NEON_A"] .calendar-cell.has-entry.today {
   background: linear-gradient(135deg, #ff00ff, #00ffff);
   box-shadow: 0 0 20px #ffff00;
 }
 
-[data-theme="retro80s"] .cell-content {
+[data-theme="NEON_A"] .cell-content {
   color: inherit;
 }
 
-[data-theme="retro80s"] .cell-label {
+[data-theme="NEON_A"] .cell-label {
   color: inherit;
   text-shadow: 0 0 5px #00ffff;
 }
 
-[data-theme="retro80s"] .entry-indicator {
+[data-theme="NEON_A"] .entry-indicator {
   background: #ffff00;
   box-shadow: 0 0 10px #ffff00;
   border-radius: 0;
 }
 
-[data-theme="retro80s"] .weekday-header {
+[data-theme="NEON_A"] .weekday-header {
   background: linear-gradient(135deg, #ff00ff, #00ffff);
   border-bottom: 3px solid #ffff00;
   color: #ffffff;
   text-shadow: 0 0 10px #00ffff;
 }
 
-[data-theme="retro80s"] .day-header h2 {
+[data-theme="NEON_A"] .day-header h2 {
   color: #00ffff;
 }
 
-[data-theme="retro80s"] .weekday-cell {
+[data-theme="NEON_A"] .weekday-cell {
   background: linear-gradient(135deg, #ff00ff, #00ffff);
   border: 2px solid #ffff00;
   color: #ffffff;
   text-shadow: 0 0 5px #00ffff;
 }
 
-[data-theme="retro80s"] .day-number {
+[data-theme="NEON_A"] .day-number {
   color: inherit;
   text-shadow: 0 0 5px #00ffff;
 }
 
-[data-theme="retro80s"] .day-name {
+[data-theme="NEON_A"] .day-name {
   color: inherit;
   text-shadow: 0 0 5px #00ffff;
 }
 
-[data-theme="retro80s"] .day-month {
+[data-theme="NEON_A"] .day-month {
   color: inherit;
   text-shadow: 0 0 5px #00ffff;
 }
 
 /* Timeline View - Additional */
-[data-theme="retro80s"] .timeline-loading {
+[data-theme="NEON_A"] .timeline-loading {
   background: #000000;
   color: #00ffff;
   text-shadow: 0 0 10px #00ffff;
 }
 
-[data-theme="retro80s"] .timeline-month-view,
-[data-theme="retro80s"] .timeline-week-view {
+[data-theme="NEON_A"] .timeline-month-view,
+[data-theme="NEON_A"] .timeline-week-view {
   background: #000000;
 }
 
-[data-theme="retro80s"] .month-view-content {
+[data-theme="NEON_A"] .month-view-content {
   background: #000000;
 }
 
-[data-theme="retro80s"] .month-calendar-section {
+[data-theme="NEON_A"] .month-calendar-section {
   background: #000000;
 }
 
-[data-theme="retro80s"] .month-week-entries-section {
+[data-theme="NEON_A"] .month-week-entries-section {
   background: #000000;
   border-left: 3px solid #ff00ff;
 }
 
-[data-theme="retro80s"] .month-entries-section {
+[data-theme="NEON_A"] .month-entries-section {
   border-bottom: 3px solid #ff00ff;
 }
 
-[data-theme="retro80s"] .month-entries-header {
+[data-theme="NEON_A"] .month-entries-header {
   background: linear-gradient(135deg, #ff00ff, #00ffff);
   border-bottom: 3px solid #ffff00;
   color: #ffffff;
   text-shadow: 0 0 10px #00ffff;
 }
 
-[data-theme="retro80s"] .month-entries-list {
+[data-theme="NEON_A"] .month-entries-list {
   background: #000000;
 }
 
-[data-theme="retro80s"] .month-entry-title {
+[data-theme="NEON_A"] .month-entry-title {
   color: #00ffff;
   text-shadow: 0 0 5px #00ffff;
 }
 
-[data-theme="retro80s"] .month-entry-preview {
+[data-theme="NEON_A"] .month-entry-preview {
   color: #00ffff;
   text-shadow: 0 0 3px #00ffff;
 }
 
-[data-theme="retro80s"] .month-entry-empty {
+[data-theme="NEON_A"] .month-entry-empty {
   color: #660066;
 }
 
-[data-theme="retro80s"] .timeline-grid {
+[data-theme="NEON_A"] .timeline-grid {
   background: #000000;
   border: 3px solid #ff00ff;
 }
 
-[data-theme="retro80s"] .week-entries-header {
+[data-theme="NEON_A"] .week-entries-header {
   background: linear-gradient(135deg, #ff00ff, #00ffff);
   border-bottom: 3px solid #ffff00;
   color: #ffffff;
   text-shadow: 0 0 10px #00ffff;
 }
 
-[data-theme="retro80s"] .week-entries-list {
+[data-theme="NEON_A"] .week-entries-list {
   background: #000000;
 }
 
-[data-theme="retro80s"] .week-entry-group-header {
+[data-theme="NEON_A"] .week-entry-group-header {
   background: #1a0033;
   border-bottom: 2px solid #ff00ff;
 }
 
-[data-theme="retro80s"] .week-label {
+[data-theme="NEON_A"] .week-label {
   color: #00ffff;
   text-shadow: 0 0 10px #00ffff;
 }
 
-[data-theme="retro80s"] .week-entry-count {
+[data-theme="NEON_A"] .week-entry-count {
   background: linear-gradient(135deg, #ff00ff, #00ffff);
   color: #ffffff;
   border: 2px solid #ffff00;
@@ -357,73 +357,73 @@
   box-shadow: 0 0 15px #ffff00;
 }
 
-[data-theme="retro80s"] .week-entry-items {
+[data-theme="NEON_A"] .week-entry-items {
   background: transparent;
 }
 
-[data-theme="retro80s"] .week-entry-item {
+[data-theme="NEON_A"] .week-entry-item {
   background: #1a0033;
   border: 2px solid #ff00ff;
   color: #00ffff;
   text-shadow: 0 0 5px #00ffff;
 }
 
-[data-theme="retro80s"] .week-entry-item:hover {
+[data-theme="NEON_A"] .week-entry-item:hover {
   background: #330066;
   box-shadow: 0 0 10px #ff00ff, inset 0 0 10px #00ffff;
 }
 
-[data-theme="retro80s"] .week-entry-title {
+[data-theme="NEON_A"] .week-entry-title {
   color: inherit;
   text-shadow: 0 0 5px #00ffff;
 }
 
-[data-theme="retro80s"] .week-entry-empty {
+[data-theme="NEON_A"] .week-entry-empty {
   color: #660066;
   font-style: italic;
 }
 
 /* Entry Viewer - Additional */
-[data-theme="retro80s"] .entry-viewer {
+[data-theme="NEON_A"] .entry-viewer {
   background: #000000;
   color: #00ffff;
 }
 
-[data-theme="retro80s"] .viewer-header {
+[data-theme="NEON_A"] .viewer-header {
   background: linear-gradient(135deg, #ff00ff, #00ffff);
   border-bottom: 3px solid #ffff00;
 }
 
-[data-theme="retro80s"] .header-top {
+[data-theme="NEON_A"] .header-top {
   background: transparent;
 }
 
-[data-theme="retro80s"] .viewer-header h3,
-[data-theme="retro80s"] .editor-header h3 {
+[data-theme="NEON_A"] .viewer-header h3,
+[data-theme="NEON_A"] .editor-header h3 {
   color: #ffffff;
   text-shadow: 0 0 10px #00ffff;
 }
 
-[data-theme="retro80s"] .header-actions {
+[data-theme="NEON_A"] .header-actions {
   background: transparent;
 }
 
-[data-theme="retro80s"] .edit-button,
-[data-theme="retro80s"] .duplicate-button {
+[data-theme="NEON_A"] .edit-button,
+[data-theme="NEON_A"] .duplicate-button {
   background: #ff00ff;
   border: 2px solid #ffff00;
   color: #ffffff;
   text-shadow: 0 0 10px #00ffff;
 }
 
-[data-theme="retro80s"] .edit-button:hover,
-[data-theme="retro80s"] .duplicate-button:hover {
+[data-theme="NEON_A"] .edit-button:hover,
+[data-theme="NEON_A"] .duplicate-button:hover {
   background: #00ffff;
   border-color: #ff00ff;
   box-shadow: 0 0 15px #00ffff;
 }
 
-[data-theme="retro80s"] .new-entry-button-header {
+[data-theme="NEON_A"] .new-entry-button-header {
   background: linear-gradient(135deg, #ff00ff, #00ffff);
   border: 3px solid #ffff00;
   color: #ffffff;
@@ -431,232 +431,232 @@
   box-shadow: 0 0 20px #ffff00;
 }
 
-[data-theme="retro80s"] .new-entry-button-header:hover {
+[data-theme="NEON_A"] .new-entry-button-header:hover {
   box-shadow: 0 0 30px #ffff00;
 }
 
-[data-theme="retro80s"] .time-range-badge-viewer {
+[data-theme="NEON_A"] .time-range-badge-viewer {
   background: #1a0033;
   border: 2px solid #ff00ff;
   color: #00ffff;
   text-shadow: 0 0 5px #00ffff;
 }
 
-[data-theme="retro80s"] .entry-date-display {
+[data-theme="NEON_A"] .entry-date-display {
   color: #00ffff;
   text-shadow: 0 0 10px #00ffff;
 }
 
-[data-theme="retro80s"] .viewer-content {
+[data-theme="NEON_A"] .viewer-content {
   background: #1a0033;
   color: #00ffff;
   text-shadow: 0 0 3px #00ffff;
 }
 
-[data-theme="retro80s"] .viewer-title {
+[data-theme="NEON_A"] .viewer-title {
   color: #00ffff;
   text-shadow: 0 0 10px #00ffff;
   border-bottom: 2px solid #ff00ff;
 }
 
-[data-theme="retro80s"] .viewer-text {
+[data-theme="NEON_A"] .viewer-text {
   color: #00ffff;
   text-shadow: 0 0 3px #00ffff;
 }
 
-[data-theme="retro80s"] .viewer-tags {
+[data-theme="NEON_A"] .viewer-tags {
   background: transparent;
   border-top: 2px solid #ff00ff;
 }
 
-[data-theme="retro80s"] .viewer-tag {
+[data-theme="NEON_A"] .viewer-tag {
   background: #ff00ff;
   border: 2px solid #ffff00;
   color: #ffffff;
   text-shadow: 0 0 5px #00ffff;
 }
 
-[data-theme="retro80s"] .viewer-linked-entries {
+[data-theme="NEON_A"] .viewer-linked-entries {
   background: transparent;
   border-top: 2px solid #ff00ff;
 }
 
-[data-theme="retro80s"] .viewer-linked-entries h4 {
+[data-theme="NEON_A"] .viewer-linked-entries h4 {
   color: #00ffff;
   text-shadow: 0 0 10px #00ffff;
 }
 
-[data-theme="retro80s"] .linked-entries-list {
+[data-theme="NEON_A"] .linked-entries-list {
   background: transparent;
 }
 
-[data-theme="retro80s"] .linked-entry-item {
+[data-theme="NEON_A"] .linked-entry-item {
   background: #1a0033;
   border: 2px solid #ff00ff;
   color: #00ffff;
   text-shadow: 0 0 5px #00ffff;
 }
 
-[data-theme="retro80s"] .linked-entry-item:hover {
+[data-theme="NEON_A"] .linked-entry-item:hover {
   background: #330066;
   box-shadow: 0 0 10px #ff00ff, inset 0 0 10px #00ffff;
 }
 
-[data-theme="retro80s"] .linked-entry-title {
+[data-theme="NEON_A"] .linked-entry-title {
   color: inherit;
   text-shadow: 0 0 5px #00ffff;
 }
 
-[data-theme="retro80s"] .linked-entry-meta {
+[data-theme="NEON_A"] .linked-entry-meta {
   color: inherit;
 }
 
-[data-theme="retro80s"] .linked-entry-date {
+[data-theme="NEON_A"] .linked-entry-date {
   color: inherit;
 }
 
-[data-theme="retro80s"] .linked-entry-time-range {
+[data-theme="NEON_A"] .linked-entry-time-range {
   background: #1a0033;
   border: 2px solid #ff00ff;
   color: #00ffff;
   text-shadow: 0 0 5px #00ffff;
 }
 
-[data-theme="retro80s"] .viewer-empty {
+[data-theme="NEON_A"] .viewer-empty {
   background: #000000;
   color: #660066;
   font-style: italic;
 }
 
-[data-theme="retro80s"] .viewer-loading {
+[data-theme="NEON_A"] .viewer-loading {
   background: #000000;
   color: #00ffff;
   text-shadow: 0 0 10px #00ffff;
 }
 
-[data-theme="retro80s"] .period-entries-controls {
+[data-theme="NEON_A"] .period-entries-controls {
   background: linear-gradient(135deg, #ff00ff, #00ffff);
   border-bottom: 3px solid #ffff00;
 }
 
-[data-theme="retro80s"] .period-entries-filter,
-[data-theme="retro80s"] .period-entries-sort {
+[data-theme="NEON_A"] .period-entries-filter,
+[data-theme="NEON_A"] .period-entries-sort {
   background: transparent;
 }
 
-[data-theme="retro80s"] .period-entries-filter label,
-[data-theme="retro80s"] .period-entries-sort label {
+[data-theme="NEON_A"] .period-entries-filter label,
+[data-theme="NEON_A"] .period-entries-sort label {
   color: #ffffff;
   text-shadow: 0 0 10px #00ffff;
 }
 
-[data-theme="retro80s"] .period-entries-tags {
+[data-theme="NEON_A"] .period-entries-tags {
   background: transparent;
 }
 
-[data-theme="retro80s"] .period-entry-filter-tag {
+[data-theme="NEON_A"] .period-entry-filter-tag {
   background: #1a0033;
   border: 2px solid #ff00ff;
   color: #00ffff;
   text-shadow: 0 0 5px #00ffff;
 }
 
-[data-theme="retro80s"] .period-entry-filter-tag:hover {
+[data-theme="NEON_A"] .period-entry-filter-tag:hover {
   background: #330066;
   box-shadow: 0 0 10px #ff00ff, inset 0 0 10px #00ffff;
 }
 
-[data-theme="retro80s"] .period-entry-filter-tag.active {
+[data-theme="NEON_A"] .period-entry-filter-tag.active {
   background: linear-gradient(135deg, #ff00ff, #00ffff);
   color: #ffffff;
   border: 3px solid #ffff00;
   box-shadow: 0 0 15px #ffff00;
 }
 
-[data-theme="retro80s"] .period-entry-clear-filters {
+[data-theme="NEON_A"] .period-entry-clear-filters {
   background: #ff00ff;
   border: 2px solid #ffff00;
   color: #ffffff;
   text-shadow: 0 0 10px #00ffff;
 }
 
-[data-theme="retro80s"] .period-entry-clear-filters:hover {
+[data-theme="NEON_A"] .period-entry-clear-filters:hover {
   background: #00ffff;
   border-color: #ff00ff;
   box-shadow: 0 0 15px #00ffff;
 }
 
-[data-theme="retro80s"] .period-entries-sort select {
+[data-theme="NEON_A"] .period-entries-sort select {
   background: #1a0033;
   border: 2px solid #ff00ff;
   color: #00ffff;
   text-shadow: 0 0 5px #00ffff;
 }
 
-[data-theme="retro80s"] .period-entries-sort select:focus {
+[data-theme="NEON_A"] .period-entries-sort select:focus {
   box-shadow: 0 0 15px #ff00ff, inset 0 0 10px #00ffff;
   outline: 2px solid #ffff00;
 }
 
-[data-theme="retro80s"] .period-entries-list {
+[data-theme="NEON_A"] .period-entries-list {
   background: transparent;
 }
 
-[data-theme="retro80s"] .month-entry-item {
+[data-theme="NEON_A"] .month-entry-item {
   background: #1a0033 !important;
   border: 2px solid #ff00ff;
   color: #00ffff;
   text-shadow: 0 0 5px #00ffff;
 }
 
-[data-theme="retro80s"] .month-entry-item:hover {
+[data-theme="NEON_A"] .month-entry-item:hover {
   background: #330066 !important;
   box-shadow: 0 0 10px #ff00ff, inset 0 0 10px #00ffff;
 }
 
-[data-theme="retro80s"] .period-entry-item {
+[data-theme="NEON_A"] .period-entry-item {
   background: #1a0033;
   border: 2px solid #ff00ff;
   color: #00ffff;
   text-shadow: 0 0 5px #00ffff;
 }
 
-[data-theme="retro80s"] .period-entry-item:hover {
+[data-theme="NEON_A"] .period-entry-item:hover {
   background: #330066;
   box-shadow: 0 0 10px #ff00ff, inset 0 0 10px #00ffff;
 }
 
-[data-theme="retro80s"] .period-entry-header {
+[data-theme="NEON_A"] .period-entry-header {
   background: transparent;
 }
 
-[data-theme="retro80s"] .period-entry-title-row {
+[data-theme="NEON_A"] .period-entry-title-row {
   background: transparent;
 }
 
-[data-theme="retro80s"] .period-entry-title {
+[data-theme="NEON_A"] .period-entry-title {
   color: inherit;
   text-shadow: 0 0 10px #00ffff;
 }
 
-[data-theme="retro80s"] .period-entry-actions {
+[data-theme="NEON_A"] .period-entry-actions {
   background: transparent;
 }
 
-[data-theme="retro80s"] .period-entry-edit-button {
+[data-theme="NEON_A"] .period-entry-edit-button {
   background: #ff00ff;
   border: 2px solid #ffff00;
   color: #ffffff;
   text-shadow: 0 0 5px #00ffff;
 }
 
-[data-theme="retro80s"] .period-entry-edit-button:hover {
+[data-theme="NEON_A"] .period-entry-edit-button:hover {
   background: #00ffff;
   border-color: #ff00ff;
   box-shadow: 0 0 15px #00ffff;
 }
 
-[data-theme="retro80s"] .period-entry-badge {
+[data-theme="NEON_A"] .period-entry-badge {
   background: linear-gradient(135deg, #ff00ff, #00ffff);
   color: #ffffff;
   border: 2px solid #ffff00;
@@ -664,31 +664,31 @@
   box-shadow: 0 0 15px #ffff00;
 }
 
-[data-theme="retro80s"] .period-entry-meta {
+[data-theme="NEON_A"] .period-entry-meta {
   background: transparent;
 }
 
-[data-theme="retro80s"] .period-entry-date {
+[data-theme="NEON_A"] .period-entry-date {
   color: inherit;
   text-decoration: underline;
   text-decoration-color: #ffff00;
 }
 
-[data-theme="retro80s"] .period-entry-content {
+[data-theme="NEON_A"] .period-entry-content {
   color: inherit;
   text-shadow: 0 0 3px #00ffff;
 }
 
-[data-theme="retro80s"] .period-entry-content-wrapper {
+[data-theme="NEON_A"] .period-entry-content-wrapper {
   background: transparent;
 }
 
-[data-theme="retro80s"] .period-entry-tags {
+[data-theme="NEON_A"] .period-entry-tags {
   background: transparent;
   border-top: 2px solid #ff00ff;
 }
 
-[data-theme="retro80s"] .period-entry-tag {
+[data-theme="NEON_A"] .period-entry-tag {
   background: #ff00ff;
   border: 2px solid #ffff00;
   color: #ffffff;
@@ -696,153 +696,153 @@
 }
 
 /* Journal Editor - Additional */
-[data-theme="retro80s"] .journal-editor-inline {
+[data-theme="NEON_A"] .journal-editor-inline {
   background: #000000;
 }
 
-[data-theme="retro80s"] .journal-editor {
+[data-theme="NEON_A"] .journal-editor {
   background: #000000;
   color: #00ffff;
 }
 
-[data-theme="retro80s"] .editor-loading {
+[data-theme="NEON_A"] .editor-loading {
   background: #000000;
   color: #00ffff;
   text-shadow: 0 0 10px #00ffff;
 }
 
-[data-theme="retro80s"] .editor-header {
+[data-theme="NEON_A"] .editor-header {
   background: linear-gradient(135deg, #ff00ff, #00ffff);
   border-bottom: 3px solid #ffff00;
 }
 
-[data-theme="retro80s"] .editor-content {
+[data-theme="NEON_A"] .editor-content {
   background: #1a0033;
   color: #00ffff;
   text-shadow: 0 0 3px #00ffff;
 }
 
-[data-theme="retro80s"] .view-mode-message {
+[data-theme="NEON_A"] .view-mode-message {
   background: #000000;
   color: #660066;
   font-style: italic;
 }
 
-[data-theme="retro80s"] .title-input {
+[data-theme="NEON_A"] .title-input {
   background: #1a0033;
   border: 2px solid #ff00ff;
   color: #00ffff;
   text-shadow: 0 0 3px #00ffff;
 }
 
-[data-theme="retro80s"] .title-input:focus {
+[data-theme="NEON_A"] .title-input:focus {
   box-shadow: 0 0 15px #ff00ff, inset 0 0 10px #00ffff;
   outline: 2px solid #ffff00;
 }
 
-[data-theme="retro80s"] .content-input {
+[data-theme="NEON_A"] .content-input {
   background: #1a0033;
   border: 2px solid #ff00ff;
   color: #00ffff;
   text-shadow: 0 0 3px #00ffff;
 }
 
-[data-theme="retro80s"] .content-input:focus {
+[data-theme="NEON_A"] .content-input:focus {
   box-shadow: 0 0 15px #ff00ff, inset 0 0 10px #00ffff;
   outline: 2px solid #ffff00;
 }
 
-[data-theme="retro80s"] .tags-section {
+[data-theme="NEON_A"] .tags-section {
   background: transparent;
 }
 
-[data-theme="retro80s"] .tags-input-container {
+[data-theme="NEON_A"] .tags-input-container {
   background: transparent;
 }
 
-[data-theme="retro80s"] .tag-input {
+[data-theme="NEON_A"] .tag-input {
   background: #1a0033;
   border: 2px solid #ff00ff;
   color: #00ffff;
   text-shadow: 0 0 3px #00ffff;
 }
 
-[data-theme="retro80s"] .tag-input:focus {
+[data-theme="NEON_A"] .tag-input:focus {
   box-shadow: 0 0 15px #ff00ff, inset 0 0 10px #00ffff;
   outline: 2px solid #ffff00;
 }
 
-[data-theme="retro80s"] .add-tag-button {
+[data-theme="NEON_A"] .add-tag-button {
   background: #ff00ff;
   border: 2px solid #ffff00;
   color: #ffffff;
   text-shadow: 0 0 10px #00ffff;
 }
 
-[data-theme="retro80s"] .add-tag-button:hover {
+[data-theme="NEON_A"] .add-tag-button:hover {
   background: #00ffff;
   border-color: #ff00ff;
   box-shadow: 0 0 15px #00ffff;
 }
 
-[data-theme="retro80s"] .tags-list {
+[data-theme="NEON_A"] .tags-list {
   background: transparent;
 }
 
-[data-theme="retro80s"] .tag {
+[data-theme="NEON_A"] .tag {
   background: #ff00ff;
   border: 2px solid #ffff00;
   color: #ffffff;
   text-shadow: 0 0 5px #00ffff;
 }
 
-[data-theme="retro80s"] .tag-remove {
+[data-theme="NEON_A"] .tag-remove {
   background: transparent;
   border: none;
   color: #ffffff;
 }
 
-[data-theme="retro80s"] .tag-remove:hover {
+[data-theme="NEON_A"] .tag-remove:hover {
   background: #00ffff;
   color: #000000;
   box-shadow: 0 0 10px #00ffff;
 }
 
-[data-theme="retro80s"] .editor-footer {
+[data-theme="NEON_A"] .editor-footer {
   background: linear-gradient(135deg, #ff00ff, #00ffff);
   border-top: 3px solid #ffff00;
 }
 
-[data-theme="retro80s"] .footer-actions {
+[data-theme="NEON_A"] .footer-actions {
   background: transparent;
 }
 
-[data-theme="retro80s"] .cancel-button {
+[data-theme="NEON_A"] .cancel-button {
   background: #ff00ff;
   border: 2px solid #ffff00;
   color: #ffffff;
   text-shadow: 0 0 10px #00ffff;
 }
 
-[data-theme="retro80s"] .cancel-button:hover {
+[data-theme="NEON_A"] .cancel-button:hover {
   background: #00ffff;
   border-color: #ff00ff;
   box-shadow: 0 0 15px #00ffff;
 }
 
-[data-theme="retro80s"] .delete-button {
+[data-theme="NEON_A"] .delete-button {
   background: #ff0000;
   border: 2px solid #ffff00;
   color: #ffffff;
   text-shadow: 0 0 10px #ff0000;
 }
 
-[data-theme="retro80s"] .delete-button:hover {
+[data-theme="NEON_A"] .delete-button:hover {
   background: #ff3333;
   box-shadow: 0 0 15px #ff0000;
 }
 
-[data-theme="retro80s"] .save-button {
+[data-theme="NEON_A"] .save-button {
   background: linear-gradient(135deg, #ff00ff, #00ffff);
   border: 3px solid #ffff00;
   color: #ffffff;
@@ -850,11 +850,11 @@
   box-shadow: 0 0 20px #ffff00;
 }
 
-[data-theme="retro80s"] .save-button:hover:not(:disabled) {
+[data-theme="NEON_A"] .save-button:hover:not(:disabled) {
   box-shadow: 0 0 30px #ffff00;
 }
 
-[data-theme="retro80s"] .save-button:disabled {
+[data-theme="NEON_A"] .save-button:disabled {
   background: #1a0033;
   color: #660066;
   border: 2px solid #330033;
@@ -862,11 +862,11 @@
   text-shadow: none;
 }
 
-[data-theme="retro80s"] .confirm-dialog-overlay {
+[data-theme="NEON_A"] .confirm-dialog-overlay {
   background: rgba(0, 0, 0, 0.95);
 }
 
-[data-theme="retro80s"] .confirm-dialog {
+[data-theme="NEON_A"] .confirm-dialog {
   background: #1a0033;
   border: 3px solid #ff00ff;
   color: #00ffff;
@@ -874,37 +874,37 @@
   box-shadow: 0 0 30px #ff00ff;
 }
 
-[data-theme="retro80s"] .confirm-dialog-buttons {
+[data-theme="NEON_A"] .confirm-dialog-buttons {
   background: transparent;
 }
 
 /* Journal List - Additional */
-[data-theme="retro80s"] .journal-list {
+[data-theme="NEON_A"] .journal-list {
   background: #000000;
   border-right: 3px solid #ff00ff;
 }
 
-[data-theme="retro80s"] .journal-list-loading {
+[data-theme="NEON_A"] .journal-list-loading {
   background: #000000;
   color: #00ffff;
   text-shadow: 0 0 10px #00ffff;
 }
 
-[data-theme="retro80s"] .journal-list-header {
+[data-theme="NEON_A"] .journal-list-header {
   background: linear-gradient(135deg, #ff00ff, #00ffff);
   border-bottom: 3px solid #ffff00;
 }
 
-[data-theme="retro80s"] .journal-list-header h3 {
+[data-theme="NEON_A"] .journal-list-header h3 {
   color: #ffffff;
   text-shadow: 0 0 10px #00ffff;
 }
 
-[data-theme="retro80s"] .journal-list-header-actions {
+[data-theme="NEON_A"] .journal-list-header-actions {
   background: transparent;
 }
 
-[data-theme="retro80s"] .new-entry-button {
+[data-theme="NEON_A"] .new-entry-button {
   background: linear-gradient(135deg, #ff00ff, #00ffff);
   border: 3px solid #ffff00;
   color: #ffffff;
@@ -912,186 +912,186 @@
   box-shadow: 0 0 20px #ffff00;
 }
 
-[data-theme="retro80s"] .new-entry-button:hover {
+[data-theme="NEON_A"] .new-entry-button:hover {
   box-shadow: 0 0 30px #ffff00;
 }
 
-[data-theme="retro80s"] .bulk-edit-toggle-button {
+[data-theme="NEON_A"] .bulk-edit-toggle-button {
   background: #ff00ff;
   border: 2px solid #ffff00;
   color: #ffffff;
   text-shadow: 0 0 10px #00ffff;
 }
 
-[data-theme="retro80s"] .bulk-edit-toggle-button:hover {
+[data-theme="NEON_A"] .bulk-edit-toggle-button:hover {
   background: #00ffff;
   border-color: #ff00ff;
   box-shadow: 0 0 15px #00ffff;
 }
 
-[data-theme="retro80s"] .bulk-edit-toggle-button.active {
+[data-theme="NEON_A"] .bulk-edit-toggle-button.active {
   background: linear-gradient(135deg, #ff00ff, #00ffff);
   border: 3px solid #ffff00;
   box-shadow: 0 0 20px #ffff00;
 }
 
-[data-theme="retro80s"] .journal-list-content {
+[data-theme="NEON_A"] .journal-list-content {
   background: #000000;
 }
 
-[data-theme="retro80s"] .journal-list-controls {
+[data-theme="NEON_A"] .journal-list-controls {
   background: linear-gradient(135deg, #ff00ff, #00ffff);
   border-bottom: 3px solid #ffff00;
 }
 
-[data-theme="retro80s"] .journal-list-filter,
-[data-theme="retro80s"] .journal-list-sort {
+[data-theme="NEON_A"] .journal-list-filter,
+[data-theme="NEON_A"] .journal-list-sort {
   background: transparent;
 }
 
-[data-theme="retro80s"] .journal-list-filter label,
-[data-theme="retro80s"] .journal-list-sort label {
+[data-theme="NEON_A"] .journal-list-filter label,
+[data-theme="NEON_A"] .journal-list-sort label {
   color: #ffffff;
   text-shadow: 0 0 10px #00ffff;
 }
 
-[data-theme="retro80s"] .journal-list-tags {
+[data-theme="NEON_A"] .journal-list-tags {
   background: transparent;
 }
 
-[data-theme="retro80s"] .journal-entry-filter-tag {
+[data-theme="NEON_A"] .journal-entry-filter-tag {
   background: #1a0033;
   border: 2px solid #ff00ff;
   color: #00ffff;
   text-shadow: 0 0 5px #00ffff;
 }
 
-[data-theme="retro80s"] .journal-entry-filter-tag:hover {
+[data-theme="NEON_A"] .journal-entry-filter-tag:hover {
   background: #330066;
   box-shadow: 0 0 10px #ff00ff, inset 0 0 10px #00ffff;
 }
 
-[data-theme="retro80s"] .journal-entry-filter-tag.active {
+[data-theme="NEON_A"] .journal-entry-filter-tag.active {
   background: linear-gradient(135deg, #ff00ff, #00ffff);
   color: #ffffff;
   border: 3px solid #ffff00;
   box-shadow: 0 0 15px #ffff00;
 }
 
-[data-theme="retro80s"] .journal-entry-clear-filters {
+[data-theme="NEON_A"] .journal-entry-clear-filters {
   background: #ff00ff;
   border: 2px solid #ffff00;
   color: #ffffff;
   text-shadow: 0 0 10px #00ffff;
 }
 
-[data-theme="retro80s"] .journal-entry-clear-filters:hover {
+[data-theme="NEON_A"] .journal-entry-clear-filters:hover {
   background: #00ffff;
   border-color: #ff00ff;
   box-shadow: 0 0 15px #00ffff;
 }
 
-[data-theme="retro80s"] .journal-list-sort select {
+[data-theme="NEON_A"] .journal-list-sort select {
   background: #1a0033;
   border: 2px solid #ff00ff;
   color: #00ffff;
   text-shadow: 0 0 5px #00ffff;
 }
 
-[data-theme="retro80s"] .journal-list-sort select:focus {
+[data-theme="NEON_A"] .journal-list-sort select:focus {
   box-shadow: 0 0 15px #ff00ff, inset 0 0 10px #00ffff;
   outline: 2px solid #ffff00;
 }
 
-[data-theme="retro80s"] .journal-list-empty {
+[data-theme="NEON_A"] .journal-list-empty {
   background: #000000;
   color: #660066;
   font-style: italic;
 }
 
-[data-theme="retro80s"] .journal-entries {
+[data-theme="NEON_A"] .journal-entries {
   background: transparent;
 }
 
-[data-theme="retro80s"] .journal-entry-item {
+[data-theme="NEON_A"] .journal-entry-item {
   background: #1a0033;
   border: 2px solid #ff00ff;
   color: #00ffff;
   text-shadow: 0 0 5px #00ffff;
 }
 
-[data-theme="retro80s"] .journal-entry-item:hover {
+[data-theme="NEON_A"] .journal-entry-item:hover {
   background: #330066;
   box-shadow: 0 0 10px #ff00ff, inset 0 0 10px #00ffff;
 }
 
-[data-theme="retro80s"] .journal-entry-item.selected {
+[data-theme="NEON_A"] .journal-entry-item.selected {
   background: linear-gradient(135deg, #ff00ff, #00ffff);
   color: #ffffff;
   border: 3px solid #ffff00;
   box-shadow: 0 0 20px #ffff00;
 }
 
-[data-theme="retro80s"] .journal-entry-item.bulk-edit-mode {
+[data-theme="NEON_A"] .journal-entry-item.bulk-edit-mode {
   background: #1a0033;
 }
 
-[data-theme="retro80s"] .journal-entry-item.bulk-selected {
+[data-theme="NEON_A"] .journal-entry-item.bulk-selected {
   background: linear-gradient(135deg, #ffff00, #ff00ff);
   color: #000000;
   border: 3px solid #00ffff;
   box-shadow: 0 0 20px #ffff00;
 }
 
-[data-theme="retro80s"] .entry-item-header {
+[data-theme="NEON_A"] .entry-item-header {
   background: transparent;
 }
 
-[data-theme="retro80s"] .entry-item-title {
+[data-theme="NEON_A"] .entry-item-title {
   color: inherit;
   text-shadow: 0 0 10px #00ffff;
 }
 
-[data-theme="retro80s"] .entry-item-meta {
+[data-theme="NEON_A"] .entry-item-meta {
   background: transparent;
 }
 
-[data-theme="retro80s"] .entry-time-range {
+[data-theme="NEON_A"] .entry-time-range {
   background: #1a0033;
   border: 2px solid #ff00ff;
   color: #00ffff;
   text-shadow: 0 0 5px #00ffff;
 }
 
-[data-theme="retro80s"] .entry-date {
+[data-theme="NEON_A"] .entry-date {
   color: inherit;
 }
 
-[data-theme="retro80s"] .entry-item-preview {
+[data-theme="NEON_A"] .entry-item-preview {
   color: inherit;
   text-shadow: 0 0 3px #00ffff;
 }
 
-[data-theme="retro80s"] .entry-item-tags {
+[data-theme="NEON_A"] .entry-item-tags {
   background: transparent;
 }
 
-[data-theme="retro80s"] .entry-tag {
+[data-theme="NEON_A"] .entry-tag {
   background: #ff00ff;
   border: 2px solid #ffff00;
   color: #ffffff;
   text-shadow: 0 0 5px #00ffff;
 }
 
-[data-theme="retro80s"] .entry-item-content {
+[data-theme="NEON_A"] .entry-item-content {
   background: transparent;
 }
 
-[data-theme="retro80s"] .entry-checkbox-wrapper {
+[data-theme="NEON_A"] .entry-checkbox-wrapper {
   background: transparent;
 }
 
-[data-theme="retro80s"] .entry-checkbox-wrapper input[type="checkbox"] {
+[data-theme="NEON_A"] .entry-checkbox-wrapper input[type="checkbox"] {
   width: 16px;
   height: 16px;
   border: 2px solid #ff00ff;
@@ -1099,220 +1099,220 @@
   accent-color: #ffff00;
 }
 
-[data-theme="retro80s"] .bulk-edit-actions {
+[data-theme="NEON_A"] .bulk-edit-actions {
   background: linear-gradient(135deg, #ffff00, #ff00ff);
   border-bottom: 3px solid #00ffff;
   box-shadow: 0 0 20px #ffff00;
 }
 
-[data-theme="retro80s"] .bulk-edit-selected-count {
+[data-theme="NEON_A"] .bulk-edit-selected-count {
   color: #000000;
   text-shadow: 0 0 5px #00ffff;
 }
 
-[data-theme="retro80s"] .bulk-delete-button {
+[data-theme="NEON_A"] .bulk-delete-button {
   background: #ff0000;
   border: 2px solid #ffff00;
   color: #ffffff;
   text-shadow: 0 0 10px #ff0000;
 }
 
-[data-theme="retro80s"] .bulk-delete-button:hover {
+[data-theme="NEON_A"] .bulk-delete-button:hover {
   background: #ff3333;
   box-shadow: 0 0 15px #ff0000;
 }
 
-[data-theme="retro80s"] .bulk-edit-select-all {
+[data-theme="NEON_A"] .bulk-edit-select-all {
   background: linear-gradient(135deg, #ff00ff, #00ffff);
   border-bottom: 3px solid #ffff00;
 }
 
-[data-theme="retro80s"] .bulk-edit-checkbox-label {
+[data-theme="NEON_A"] .bulk-edit-checkbox-label {
   color: #ffffff;
   text-shadow: 0 0 5px #00ffff;
 }
 
 /* Entry Edit Modal */
-[data-theme="retro80s"] .entry-edit-modal-overlay {
+[data-theme="NEON_A"] .entry-edit-modal-overlay {
   background: rgba(0, 0, 0, 0.95);
 }
 
-[data-theme="retro80s"] .entry-edit-modal {
+[data-theme="NEON_A"] .entry-edit-modal {
   background: #1a0033;
   border: 3px solid #ff00ff;
   color: #00ffff;
   box-shadow: 0 0 30px #ff00ff;
 }
 
-[data-theme="retro80s"] .modal-header {
+[data-theme="NEON_A"] .modal-header {
   background: linear-gradient(135deg, #ff00ff, #00ffff);
   border-bottom: 3px solid #ffff00;
 }
 
-[data-theme="retro80s"] .modal-header-top {
+[data-theme="NEON_A"] .modal-header-top {
   background: transparent;
 }
 
-[data-theme="retro80s"] .modal-header-top h3 {
+[data-theme="NEON_A"] .modal-header-top h3 {
   color: #ffffff;
   text-shadow: 0 0 10px #00ffff;
 }
 
-[data-theme="retro80s"] .modal-close-button {
+[data-theme="NEON_A"] .modal-close-button {
   background: #ff00ff;
   border: 2px solid #ffff00;
   color: #ffffff;
   text-shadow: 0 0 10px #00ffff;
 }
 
-[data-theme="retro80s"] .modal-close-button:hover {
+[data-theme="NEON_A"] .modal-close-button:hover {
   background: #00ffff;
   border-color: #ff00ff;
   box-shadow: 0 0 15px #00ffff;
 }
 
-[data-theme="retro80s"] .modal-entry-meta {
+[data-theme="NEON_A"] .modal-entry-meta {
   background: transparent;
 }
 
-[data-theme="retro80s"] .modal-entry-meta small {
+[data-theme="NEON_A"] .modal-entry-meta small {
   color: #660066;
 }
 
-[data-theme="retro80s"] .modal-content {
+[data-theme="NEON_A"] .modal-content {
   background: #1a0033;
   color: #00ffff;
   text-shadow: 0 0 3px #00ffff;
 }
 
-[data-theme="retro80s"] .modal-title-input {
-  background: #1a0033;
-  border: 2px solid #ff00ff;
-  color: #00ffff;
-  text-shadow: 0 0 3px #00ffff;
-}
-
-[data-theme="retro80s"] .modal-title-input:focus {
-  box-shadow: 0 0 15px #ff00ff, inset 0 0 10px #00ffff;
-  outline: 2px solid #ffff00;
-}
-
-[data-theme="retro80s"] .modal-content-input {
+[data-theme="NEON_A"] .modal-title-input {
   background: #1a0033;
   border: 2px solid #ff00ff;
   color: #00ffff;
   text-shadow: 0 0 3px #00ffff;
 }
 
-[data-theme="retro80s"] .modal-content-input:focus {
+[data-theme="NEON_A"] .modal-title-input:focus {
   box-shadow: 0 0 15px #ff00ff, inset 0 0 10px #00ffff;
   outline: 2px solid #ffff00;
 }
 
-[data-theme="retro80s"] .modal-tags-section {
+[data-theme="NEON_A"] .modal-content-input {
+  background: #1a0033;
+  border: 2px solid #ff00ff;
+  color: #00ffff;
+  text-shadow: 0 0 3px #00ffff;
+}
+
+[data-theme="NEON_A"] .modal-content-input:focus {
+  box-shadow: 0 0 15px #ff00ff, inset 0 0 10px #00ffff;
+  outline: 2px solid #ffff00;
+}
+
+[data-theme="NEON_A"] .modal-tags-section {
   background: transparent;
 }
 
-[data-theme="retro80s"] .modal-tags-input-container {
+[data-theme="NEON_A"] .modal-tags-input-container {
   background: transparent;
 }
 
-[data-theme="retro80s"] .modal-tag-input {
+[data-theme="NEON_A"] .modal-tag-input {
   background: #1a0033;
   border: 2px solid #ff00ff;
   color: #00ffff;
   text-shadow: 0 0 3px #00ffff;
 }
 
-[data-theme="retro80s"] .modal-tag-input:focus {
+[data-theme="NEON_A"] .modal-tag-input:focus {
   box-shadow: 0 0 15px #ff00ff, inset 0 0 10px #00ffff;
   outline: 2px solid #ffff00;
 }
 
-[data-theme="retro80s"] .modal-add-tag-button {
+[data-theme="NEON_A"] .modal-add-tag-button {
   background: #ff00ff;
   border: 2px solid #ffff00;
   color: #ffffff;
   text-shadow: 0 0 10px #00ffff;
 }
 
-[data-theme="retro80s"] .modal-add-tag-button:hover {
+[data-theme="NEON_A"] .modal-add-tag-button:hover {
   background: #00ffff;
   border-color: #ff00ff;
   box-shadow: 0 0 15px #00ffff;
 }
 
-[data-theme="retro80s"] .modal-tags-list {
+[data-theme="NEON_A"] .modal-tags-list {
   background: transparent;
 }
 
-[data-theme="retro80s"] .modal-tag {
+[data-theme="NEON_A"] .modal-tag {
   background: #ff00ff;
   border: 2px solid #ffff00;
   color: #ffffff;
   text-shadow: 0 0 5px #00ffff;
 }
 
-[data-theme="retro80s"] .modal-tag-remove {
+[data-theme="NEON_A"] .modal-tag-remove {
   background: transparent;
   border: none;
   color: #ffffff;
 }
 
-[data-theme="retro80s"] .modal-tag-remove:hover {
+[data-theme="NEON_A"] .modal-tag-remove:hover {
   background: #00ffff;
   color: #000000;
   box-shadow: 0 0 10px #00ffff;
 }
 
-[data-theme="retro80s"] .modal-footer {
+[data-theme="NEON_A"] .modal-footer {
   background: linear-gradient(135deg, #ff00ff, #00ffff);
   border-top: 3px solid #ffff00;
 }
 
-[data-theme="retro80s"] .modal-duplicate-button {
+[data-theme="NEON_A"] .modal-duplicate-button {
   background: #ff00ff;
   border: 2px solid #ffff00;
   color: #ffffff;
   text-shadow: 0 0 10px #00ffff;
 }
 
-[data-theme="retro80s"] .modal-duplicate-button:hover {
+[data-theme="NEON_A"] .modal-duplicate-button:hover {
   background: #00ffff;
   border-color: #ff00ff;
   box-shadow: 0 0 15px #00ffff;
 }
 
-[data-theme="retro80s"] .modal-delete-button {
+[data-theme="NEON_A"] .modal-delete-button {
   background: #ff0000;
   border: 2px solid #ffff00;
   color: #ffffff;
   text-shadow: 0 0 10px #ff0000;
 }
 
-[data-theme="retro80s"] .modal-delete-button:hover {
+[data-theme="NEON_A"] .modal-delete-button:hover {
   background: #ff3333;
   box-shadow: 0 0 15px #ff0000;
 }
 
-[data-theme="retro80s"] .modal-footer-actions {
+[data-theme="NEON_A"] .modal-footer-actions {
   background: transparent;
 }
 
-[data-theme="retro80s"] .modal-cancel-button {
+[data-theme="NEON_A"] .modal-cancel-button {
   background: #ff00ff;
   border: 2px solid #ffff00;
   color: #ffffff;
   text-shadow: 0 0 10px #00ffff;
 }
 
-[data-theme="retro80s"] .modal-cancel-button:hover {
+[data-theme="NEON_A"] .modal-cancel-button:hover {
   background: #00ffff;
   border-color: #ff00ff;
   box-shadow: 0 0 15px #00ffff;
 }
 
-[data-theme="retro80s"] .modal-save-button {
+[data-theme="NEON_A"] .modal-save-button {
   background: linear-gradient(135deg, #ff00ff, #00ffff);
   border: 3px solid #ffff00;
   color: #ffffff;
@@ -1320,11 +1320,11 @@
   box-shadow: 0 0 20px #ffff00;
 }
 
-[data-theme="retro80s"] .modal-save-button:hover:not(:disabled) {
+[data-theme="NEON_A"] .modal-save-button:hover:not(:disabled) {
   box-shadow: 0 0 30px #ffff00;
 }
 
-[data-theme="retro80s"] .modal-save-button:disabled {
+[data-theme="NEON_A"] .modal-save-button:disabled {
   background: #1a0033;
   color: #660066;
   border: 2px solid #330033;
@@ -1333,215 +1333,215 @@
 }
 
 /* Search View */
-[data-theme="retro80s"] .search-view {
+[data-theme="NEON_A"] .search-view {
   background: #000000;
   color: #00ffff;
 }
 
-[data-theme="retro80s"] .search-header {
+[data-theme="NEON_A"] .search-header {
   background: linear-gradient(135deg, #ff00ff, #00ffff);
   border-bottom: 3px solid #ffff00;
 }
 
-[data-theme="retro80s"] .search-input-container {
+[data-theme="NEON_A"] .search-input-container {
   background: transparent;
 }
 
-[data-theme="retro80s"] .search-input {
+[data-theme="NEON_A"] .search-input {
   background: #1a0033;
   border: 2px solid #ff00ff;
   color: #00ffff;
   text-shadow: 0 0 3px #00ffff;
 }
 
-[data-theme="retro80s"] .search-input:focus {
+[data-theme="NEON_A"] .search-input:focus {
   box-shadow: 0 0 15px #ff00ff, inset 0 0 10px #00ffff;
   outline: 2px solid #ffff00;
 }
 
-[data-theme="retro80s"] .search-filters-toggle {
+[data-theme="NEON_A"] .search-filters-toggle {
   background: #ff00ff;
   border: 2px solid #ffff00;
   color: #ffffff;
   text-shadow: 0 0 10px #00ffff;
 }
 
-[data-theme="retro80s"] .search-filters-toggle:hover {
+[data-theme="NEON_A"] .search-filters-toggle:hover {
   background: #00ffff;
   border-color: #ff00ff;
   box-shadow: 0 0 15px #00ffff;
 }
 
-[data-theme="retro80s"] .search-close-button {
+[data-theme="NEON_A"] .search-close-button {
   background: #ff00ff;
   border: 2px solid #ffff00;
   color: #ffffff;
   text-shadow: 0 0 10px #00ffff;
 }
 
-[data-theme="retro80s"] .search-close-button:hover {
+[data-theme="NEON_A"] .search-close-button:hover {
   background: #00ffff;
   border-color: #ff00ff;
   box-shadow: 0 0 15px #00ffff;
 }
 
-[data-theme="retro80s"] .search-filters {
+[data-theme="NEON_A"] .search-filters {
   background: linear-gradient(135deg, #ff00ff, #00ffff);
   border-bottom: 3px solid #ffff00;
 }
 
-[data-theme="retro80s"] .filter-group {
+[data-theme="NEON_A"] .filter-group {
   background: transparent;
 }
 
-[data-theme="retro80s"] .filter-group label {
+[data-theme="NEON_A"] .filter-group label {
   color: #ffffff;
   text-shadow: 0 0 10px #00ffff;
 }
 
-[data-theme="retro80s"] .filter-tags {
+[data-theme="NEON_A"] .filter-tags {
   background: transparent;
 }
 
-[data-theme="retro80s"] .filter-tag {
+[data-theme="NEON_A"] .filter-tag {
   background: #1a0033;
   border: 2px solid #ff00ff;
   color: #00ffff;
   text-shadow: 0 0 5px #00ffff;
 }
 
-[data-theme="retro80s"] .filter-tag:hover {
+[data-theme="NEON_A"] .filter-tag:hover {
   background: #330066;
   box-shadow: 0 0 10px #ff00ff, inset 0 0 10px #00ffff;
 }
 
-[data-theme="retro80s"] .filter-tag.active {
+[data-theme="NEON_A"] .filter-tag.active {
   background: linear-gradient(135deg, #ff00ff, #00ffff);
   color: #ffffff;
   border: 3px solid #ffff00;
   box-shadow: 0 0 15px #ffff00;
 }
 
-[data-theme="retro80s"] .filter-empty {
+[data-theme="NEON_A"] .filter-empty {
   color: #660066;
   font-style: italic;
 }
 
-[data-theme="retro80s"] .filter-time-ranges {
+[data-theme="NEON_A"] .filter-time-ranges {
   background: transparent;
 }
 
-[data-theme="retro80s"] .filter-time-range {
+[data-theme="NEON_A"] .filter-time-range {
   background: #1a0033;
   border: 2px solid #ff00ff;
   color: #00ffff;
   text-shadow: 0 0 5px #00ffff;
 }
 
-[data-theme="retro80s"] .filter-time-range:hover {
+[data-theme="NEON_A"] .filter-time-range:hover {
   background: #330066;
   box-shadow: 0 0 10px #ff00ff, inset 0 0 10px #00ffff;
 }
 
-[data-theme="retro80s"] .filter-time-range.active {
+[data-theme="NEON_A"] .filter-time-range.active {
   background: linear-gradient(135deg, #ff00ff, #00ffff);
   color: #ffffff;
   border: 3px solid #ffff00;
   box-shadow: 0 0 15px #ffff00;
 }
 
-[data-theme="retro80s"] .filter-date-range {
+[data-theme="NEON_A"] .filter-date-range {
   background: transparent;
 }
 
-[data-theme="retro80s"] .filter-date-range input {
+[data-theme="NEON_A"] .filter-date-range input {
   background: #1a0033;
   border: 2px solid #ff00ff;
   color: #00ffff;
   text-shadow: 0 0 3px #00ffff;
 }
 
-[data-theme="retro80s"] .filter-date-range input:focus {
+[data-theme="NEON_A"] .filter-date-range input:focus {
   box-shadow: 0 0 15px #ff00ff, inset 0 0 10px #00ffff;
   outline: 2px solid #ffff00;
 }
 
-[data-theme="retro80s"] .filter-sort {
+[data-theme="NEON_A"] .filter-sort {
   background: transparent;
 }
 
-[data-theme="retro80s"] .filter-sort select {
+[data-theme="NEON_A"] .filter-sort select {
   background: #1a0033;
   border: 2px solid #ff00ff;
   color: #00ffff;
   text-shadow: 0 0 5px #00ffff;
 }
 
-[data-theme="retro80s"] .filter-sort select:focus {
+[data-theme="NEON_A"] .filter-sort select:focus {
   box-shadow: 0 0 15px #ff00ff, inset 0 0 10px #00ffff;
   outline: 2px solid #ffff00;
 }
 
-[data-theme="retro80s"] .clear-filters-button {
+[data-theme="NEON_A"] .clear-filters-button {
   background: #ff00ff;
   border: 2px solid #ffff00;
   color: #ffffff;
   text-shadow: 0 0 10px #00ffff;
 }
 
-[data-theme="retro80s"] .clear-filters-button:hover {
+[data-theme="NEON_A"] .clear-filters-button:hover {
   background: #00ffff;
   border-color: #ff00ff;
   box-shadow: 0 0 15px #00ffff;
 }
 
-[data-theme="retro80s"] .search-results {
+[data-theme="NEON_A"] .search-results {
   background: #000000;
   color: #00ffff;
 }
 
-[data-theme="retro80s"] .search-loading,
-[data-theme="retro80s"] .search-empty {
+[data-theme="NEON_A"] .search-loading,
+[data-theme="NEON_A"] .search-empty {
   background: #000000;
   color: #660066;
   font-style: italic;
 }
 
-[data-theme="retro80s"] .search-results-count {
+[data-theme="NEON_A"] .search-results-count {
   color: #00ffff;
   text-shadow: 0 0 10px #00ffff;
 }
 
-[data-theme="retro80s"] .search-results-list {
+[data-theme="NEON_A"] .search-results-list {
   background: transparent;
 }
 
-[data-theme="retro80s"] .search-result-item {
+[data-theme="NEON_A"] .search-result-item {
   background: #1a0033;
   border: 2px solid #ff00ff;
   color: #00ffff;
   text-shadow: 0 0 5px #00ffff;
 }
 
-[data-theme="retro80s"] .search-result-item:hover {
+[data-theme="NEON_A"] .search-result-item:hover {
   background: #330066;
   box-shadow: 0 0 10px #ff00ff, inset 0 0 10px #00ffff;
 }
 
-[data-theme="retro80s"] .result-item-header {
+[data-theme="NEON_A"] .result-item-header {
   background: transparent;
 }
 
-[data-theme="retro80s"] .result-item-title {
+[data-theme="NEON_A"] .result-item-title {
   color: inherit;
   text-shadow: 0 0 10px #00ffff;
 }
 
-[data-theme="retro80s"] .result-item-meta {
+[data-theme="NEON_A"] .result-item-meta {
   background: transparent;
 }
 
-[data-theme="retro80s"] .result-time-range-badge {
+[data-theme="NEON_A"] .result-time-range-badge {
   background: linear-gradient(135deg, #ff00ff, #00ffff);
   color: #ffffff;
   border: 2px solid #ffff00;
@@ -1549,20 +1549,20 @@
   box-shadow: 0 0 15px #ffff00;
 }
 
-[data-theme="retro80s"] .result-date {
+[data-theme="NEON_A"] .result-date {
   color: inherit;
 }
 
-[data-theme="retro80s"] .result-item-content {
+[data-theme="NEON_A"] .result-item-content {
   color: inherit;
   text-shadow: 0 0 3px #00ffff;
 }
 
-[data-theme="retro80s"] .result-item-tags {
+[data-theme="NEON_A"] .result-item-tags {
   background: transparent;
 }
 
-[data-theme="retro80s"] .result-tag {
+[data-theme="NEON_A"] .result-tag {
   background: #ff00ff;
   border: 2px solid #ffff00;
   color: #ffffff;
@@ -1570,85 +1570,85 @@
 }
 
 /* Preferences */
-[data-theme="retro80s"] .preferences-container {
+[data-theme="NEON_A"] .preferences-container {
   background: #000000;
   color: #00ffff;
 }
 
-[data-theme="retro80s"] .preferences-loading {
+[data-theme="NEON_A"] .preferences-loading {
   background: #000000;
   color: #00ffff;
   text-shadow: 0 0 10px #00ffff;
 }
 
-[data-theme="retro80s"] .preferences-header {
+[data-theme="NEON_A"] .preferences-header {
   background: linear-gradient(135deg, #ff00ff, #00ffff);
   border-bottom: 3px solid #ffff00;
 }
 
-[data-theme="retro80s"] .preferences-header h1 {
+[data-theme="NEON_A"] .preferences-header h1 {
   color: #ffffff;
   text-shadow: 0 0 10px #00ffff;
 }
 
-[data-theme="retro80s"] .preferences-actions {
+[data-theme="NEON_A"] .preferences-actions {
   background: transparent;
 }
 
-[data-theme="retro80s"] .preferences-button {
+[data-theme="NEON_A"] .preferences-button {
   background: #ff00ff;
   border: 2px solid #ffff00;
   color: #ffffff;
   text-shadow: 0 0 10px #00ffff;
 }
 
-[data-theme="retro80s"] .preferences-button:hover {
+[data-theme="NEON_A"] .preferences-button:hover {
   background: #00ffff;
   border-color: #ff00ff;
   box-shadow: 0 0 15px #00ffff;
 }
 
-[data-theme="retro80s"] .preferences-content {
+[data-theme="NEON_A"] .preferences-content {
   background: #000000;
 }
 
-[data-theme="retro80s"] .preferences-section {
+[data-theme="NEON_A"] .preferences-section {
   background: #1a0033;
   border: 3px solid #ff00ff;
 }
 
-[data-theme="retro80s"] .preferences-section h2 {
+[data-theme="NEON_A"] .preferences-section h2 {
   color: #00ffff;
   text-shadow: 0 0 10px #00ffff;
   border-bottom: 3px solid #ff00ff;
 }
 
-[data-theme="retro80s"] .preference-item {
+[data-theme="NEON_A"] .preference-item {
   background: transparent;
 }
 
-[data-theme="retro80s"] .preference-item label {
+[data-theme="NEON_A"] .preference-item label {
   color: #00ffff;
   text-shadow: 0 0 5px #00ffff;
 }
 
-[data-theme="retro80s"] .preference-item input[type="text"],
-[data-theme="retro80s"] .preference-item input[type="number"],
-[data-theme="retro80s"] .preference-item select {
+[data-theme="NEON_A"] .preference-item input[type="text"],
+[data-theme="NEON_A"] .preference-item input[type="number"],
+[data-theme="NEON_A"] .preference-item select {
   background: #1a0033;
   border: 2px solid #ff00ff;
   color: #00ffff;
   text-shadow: 0 0 3px #00ffff;
 }
 
-[data-theme="retro80s"] .preference-item input[type="text"]:focus,
-[data-theme="retro80s"] .preference-item input[type="number"]:focus,
-[data-theme="retro80s"] .preference-item select:focus {
+[data-theme="NEON_A"] .preference-item input[type="text"]:focus,
+[data-theme="NEON_A"] .preference-item input[type="number"]:focus,
+[data-theme="NEON_A"] .preference-item select:focus {
   box-shadow: 0 0 15px #ff00ff, inset 0 0 10px #00ffff;
   outline: 2px solid #ffff00;
 }
 
-[data-theme="retro80s"] .preference-item input[type="checkbox"] {
+[data-theme="NEON_A"] .preference-item input[type="checkbox"] {
   width: 16px;
   height: 16px;
   border: 2px solid #ff00ff;
@@ -1656,241 +1656,241 @@
   accent-color: #ffff00;
 }
 
-[data-theme="retro80s"] .preference-item small {
+[data-theme="NEON_A"] .preference-item small {
   color: #660066;
 }
 
-[data-theme="retro80s"] .preference-note {
+[data-theme="NEON_A"] .preference-note {
   background: #330066;
   border-left: 3px solid #ffff00;
   color: #00ffff;
   text-shadow: 0 0 5px #00ffff;
 }
 
-[data-theme="retro80s"] .auto-save-indicator {
+[data-theme="NEON_A"] .auto-save-indicator {
   color: #00ffff;
   text-shadow: 0 0 10px #00ffff;
 }
 
-[data-theme="retro80s"] .export-toolbar {
+[data-theme="NEON_A"] .export-toolbar {
   background: transparent;
 }
 
-[data-theme="retro80s"] .export-controls {
+[data-theme="NEON_A"] .export-controls {
   background: transparent;
 }
 
-[data-theme="retro80s"] .export-controls select {
+[data-theme="NEON_A"] .export-controls select {
   background: #1a0033;
   border: 2px solid #ff00ff;
   color: #00ffff;
   text-shadow: 0 0 5px #00ffff;
 }
 
-[data-theme="retro80s"] .export-controls select:focus {
+[data-theme="NEON_A"] .export-controls select:focus {
   box-shadow: 0 0 15px #ff00ff, inset 0 0 10px #00ffff;
   outline: 2px solid #ffff00;
 }
 
-[data-theme="retro80s"] .about-section {
+[data-theme="NEON_A"] .about-section {
   background: #1a0033;
   border: 2px solid #ff00ff;
   color: #00ffff;
 }
 
-[data-theme="retro80s"] .about-section a {
+[data-theme="NEON_A"] .about-section a {
   color: #ffff00;
   text-decoration: underline;
   text-shadow: 0 0 10px #ffff00;
 }
 
-[data-theme="retro80s"] .about-section a:hover {
+[data-theme="NEON_A"] .about-section a:hover {
   color: #00ffff;
   text-shadow: 0 0 15px #00ffff;
 }
 
 /* About Page */
-[data-theme="retro80s"] .about-container {
+[data-theme="NEON_A"] .about-container {
   background: #000000;
   color: #00ffff;
 }
 
-[data-theme="retro80s"] .about-content {
+[data-theme="NEON_A"] .about-content {
   background: #1a0033;
   border: 3px solid #ff00ff;
   color: #00ffff;
   box-shadow: 0 0 30px #ff00ff;
 }
 
-[data-theme="retro80s"] .about-header {
+[data-theme="NEON_A"] .about-header {
   background: transparent;
   border-bottom: 3px solid #ff00ff;
 }
 
-[data-theme="retro80s"] .about-icon {
+[data-theme="NEON_A"] .about-icon {
   border: 3px solid #ff00ff;
 }
 
-[data-theme="retro80s"] .about-title-section h1 {
+[data-theme="NEON_A"] .about-title-section h1 {
   color: #00ffff;
   text-shadow: 0 0 10px #00ffff;
 }
 
-[data-theme="retro80s"] .about-description {
+[data-theme="NEON_A"] .about-description {
   color: #00ffff;
   text-shadow: 0 0 5px #00ffff;
 }
 
-[data-theme="retro80s"] .about-section {
+[data-theme="NEON_A"] .about-section {
   background: transparent;
   border-top: 2px solid #ff00ff;
 }
 
-[data-theme="retro80s"] .about-version {
+[data-theme="NEON_A"] .about-version {
   color: #00ffff;
   text-shadow: 0 0 5px #00ffff;
 }
 
-[data-theme="retro80s"] .about-note {
+[data-theme="NEON_A"] .about-note {
   color: #660066;
 }
 
-[data-theme="retro80s"] .about-credits h2 {
+[data-theme="NEON_A"] .about-credits h2 {
   color: #00ffff;
   text-shadow: 0 0 10px #00ffff;
 }
 
-[data-theme="retro80s"] .about-credits p {
+[data-theme="NEON_A"] .about-credits p {
   color: #00ffff;
   text-shadow: 0 0 5px #00ffff;
 }
 
-[data-theme="retro80s"] .about-link {
+[data-theme="NEON_A"] .about-link {
   color: #ffff00;
   text-decoration: underline;
   text-shadow: 0 0 10px #ffff00;
 }
 
-[data-theme="retro80s"] .about-link:hover {
+[data-theme="NEON_A"] .about-link:hover {
   color: #00ffff;
   text-shadow: 0 0 15px #00ffff;
 }
 
-[data-theme="retro80s"] .about-credits-detailed {
+[data-theme="NEON_A"] .about-credits-detailed {
   background: transparent;
 }
 
-[data-theme="retro80s"] .about-credits-detailed h2 {
+[data-theme="NEON_A"] .about-credits-detailed h2 {
   color: #00ffff;
   text-shadow: 0 0 10px #00ffff;
 }
 
-[data-theme="retro80s"] .credits-category {
+[data-theme="NEON_A"] .credits-category {
   background: transparent;
 }
 
-[data-theme="retro80s"] .credits-category h3 {
+[data-theme="NEON_A"] .credits-category h3 {
   color: #ffff00;
   text-shadow: 0 0 10px #ffff00;
 }
 
-[data-theme="retro80s"] .credits-category ul {
+[data-theme="NEON_A"] .credits-category ul {
   background: transparent;
 }
 
-[data-theme="retro80s"] .credits-category li {
+[data-theme="NEON_A"] .credits-category li {
   color: #00ffff;
   text-shadow: 0 0 5px #00ffff;
 }
 
-[data-theme="retro80s"] .credits-category li strong {
+[data-theme="NEON_A"] .credits-category li strong {
   color: #00ffff;
   text-shadow: 0 0 10px #00ffff;
 }
 
-[data-theme="retro80s"] .credits-category li em {
+[data-theme="NEON_A"] .credits-category li em {
   color: #660066;
   font-style: italic;
 }
 
-[data-theme="retro80s"] .credits-category p {
+[data-theme="NEON_A"] .credits-category p {
   color: #00ffff;
   text-shadow: 0 0 5px #00ffff;
 }
 
-[data-theme="retro80s"] .credits-note {
+[data-theme="NEON_A"] .credits-note {
   color: #660066;
   font-style: italic;
 }
 
 /* Loading Screen */
-[data-theme="retro80s"] .loading-screen {
+[data-theme="NEON_A"] .loading-screen {
   background: #000000;
   color: #00ffff;
 }
 
-[data-theme="retro80s"] .space-background {
+[data-theme="NEON_A"] .space-background {
   background: #000000;
 }
 
-[data-theme="retro80s"] .loading-content {
+[data-theme="NEON_A"] .loading-content {
   background: transparent;
   color: #00ffff;
 }
 
-[data-theme="retro80s"] .loading-title {
+[data-theme="NEON_A"] .loading-title {
   color: #00ffff;
   text-shadow: 0 0 20px #00ffff, 0 0 40px #00ffff;
 }
 
-[data-theme="retro80s"] .loading-message {
+[data-theme="NEON_A"] .loading-message {
   color: #00ffff;
   text-shadow: 0 0 10px #00ffff;
 }
 
-[data-theme="retro80s"] .loading-progress {
+[data-theme="NEON_A"] .loading-progress {
   background: transparent;
 }
 
-[data-theme="retro80s"] .loading-progress-bar {
+[data-theme="NEON_A"] .loading-progress-bar {
   background: #1a0033;
   border: 3px solid #ff00ff;
   box-shadow: 0 0 20px #ff00ff;
 }
 
-[data-theme="retro80s"] .loading-progress-fill {
+[data-theme="NEON_A"] .loading-progress-fill {
   background: linear-gradient(135deg, #ff00ff, #00ffff);
   box-shadow: 0 0 20px #ffff00;
 }
 
-[data-theme="retro80s"] .loading-progress-text {
+[data-theme="NEON_A"] .loading-progress-text {
   color: #00ffff;
   text-shadow: 0 0 10px #00ffff;
 }
 
 /* Global Timeline Minimap */
-[data-theme="retro80s"] .global-timeline-minimap {
+[data-theme="NEON_A"] .global-timeline-minimap {
   background: linear-gradient(135deg, #ff00ff, #00ffff);
   border-bottom: 3px solid #ffff00;
 }
 
-[data-theme="retro80s"] .minimap-container {
+[data-theme="NEON_A"] .minimap-container {
   background: #000000;
   border: 3px solid #ff00ff;
 }
 
-[data-theme="retro80s"] .radial-dial-center {
+[data-theme="NEON_A"] .radial-dial-center {
   background: linear-gradient(135deg, #ff00ff, #00ffff);
   border: 3px solid #ffff00;
   box-shadow: 0 0 30px #ffff00;
 }
 
-[data-theme="retro80s"] .radial-arrow {
+[data-theme="NEON_A"] .radial-arrow {
   color: #ffff00;
   text-shadow: 0 0 20px #ffff00;
 }
 
-[data-theme="retro80s"] .radial-label {
+[data-theme="NEON_A"] .radial-label {
   background: #1a0033;
   border: 2px solid #ff00ff;
   color: #00ffff;
@@ -1898,25 +1898,25 @@
   box-shadow: 0 0 15px #ff00ff;
 }
 
-[data-theme="retro80s"] .timeline-path {
+[data-theme="NEON_A"] .timeline-path {
   stroke: #ffff00;
   stroke-width: 3px;
   filter: drop-shadow(0 0 10px #ffff00);
 }
 
-[data-theme="retro80s"] .segment-indicator {
+[data-theme="NEON_A"] .segment-indicator {
   background: #ff00ff;
   border: 2px solid #ffff00;
   box-shadow: 0 0 15px #ff00ff;
 }
 
-[data-theme="retro80s"] .timeline-segment.current .segment-indicator {
+[data-theme="NEON_A"] .timeline-segment.current .segment-indicator {
   background: linear-gradient(135deg, #ff00ff, #00ffff);
   border: 3px solid #ffff00;
   box-shadow: 0 0 30px #ffff00;
 }
 
-[data-theme="retro80s"] .segment-label {
+[data-theme="NEON_A"] .segment-label {
   background: linear-gradient(135deg, #ff00ff, #00ffff);
   color: #ffffff;
   border: 2px solid #ffff00;
@@ -1924,85 +1924,85 @@
   box-shadow: 0 0 20px #ffff00;
 }
 
-[data-theme="retro80s"] .entry-indicator {
+[data-theme="NEON_A"] .entry-indicator {
   background: #ffff00;
   border: 2px solid #ff00ff;
   box-shadow: 0 0 15px #ffff00;
 }
 
-[data-theme="retro80s"] .scale-label {
+[data-theme="NEON_A"] .scale-label {
   color: #00ffff;
   text-shadow: 0 0 10px #00ffff;
 }
 
 /* Entry badges and cards - preserve time range colors, adapt backgrounds/text */
-[data-theme="retro80s"] .entry-decade {
+[data-theme="NEON_A"] .entry-decade {
   background: rgba(156, 39, 176, 0.25);
   color: #ff00ff;
   text-shadow: 0 0 5px #ff00ff;
 }
 
-[data-theme="retro80s"] .entry-year {
+[data-theme="NEON_A"] .entry-year {
   background: rgba(2, 119, 189, 0.25);
   color: #00ffff;
   text-shadow: 0 0 5px #00ffff;
 }
 
-[data-theme="retro80s"] .entry-month {
+[data-theme="NEON_A"] .entry-month {
   background: rgba(239, 108, 0, 0.25);
   color: #ffaa00;
   text-shadow: 0 0 5px #ffaa00;
 }
 
-[data-theme="retro80s"] .entry-week {
+[data-theme="NEON_A"] .entry-week {
   background: rgba(46, 125, 50, 0.25);
   color: #00ff00;
   text-shadow: 0 0 5px #00ff00;
 }
 
-[data-theme="retro80s"] .entry-day {
+[data-theme="NEON_A"] .entry-day {
   background: rgba(194, 24, 91, 0.25);
   color: #ff00aa;
   text-shadow: 0 0 5px #ff00aa;
 }
 
-[data-theme="retro80s"] .entry-card {
+[data-theme="NEON_A"] .entry-card {
   background: #1a0033 !important;
   border-color: #6600cc;
 }
 
-[data-theme="retro80s"] .entry-card-full {
+[data-theme="NEON_A"] .entry-card-full {
   background: #1a0033 !important;
   border-color: #6600cc;
 }
 
-[data-theme="retro80s"] .card-title,
-[data-theme="retro80s"] .card-title-full,
-[data-theme="retro80s"] .badge-title {
+[data-theme="NEON_A"] .card-title,
+[data-theme="NEON_A"] .card-title-full,
+[data-theme="NEON_A"] .badge-title {
   color: #00ffff;
   text-shadow: 0 0 5px #00ffff;
 }
 
-[data-theme="retro80s"] .entry-item-title {
+[data-theme="NEON_A"] .entry-item-title {
   color: #00ffff;
   text-shadow: 0 0 5px #00ffff;
 }
 
-[data-theme="retro80s"] .card-tag-full {
+[data-theme="NEON_A"] .card-tag-full {
   background: #330066;
   color: #00ffff;
   border: 1px solid #00ffff;
 }
 
-[data-theme="retro80s"] .card-content-full {
+[data-theme="NEON_A"] .card-content-full {
   color: #00ffff;
 }
 
-[data-theme="retro80s"] .card-date {
+[data-theme="NEON_A"] .card-date {
   color: #00ffff;
 }
 
-[data-theme="retro80s"] .time-range-badge {
+[data-theme="NEON_A"] .time-range-badge {
   background: #330066;
   color: #00ffff;
   border: 1px solid #00ffff;
