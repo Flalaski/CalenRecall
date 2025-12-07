@@ -138,22 +138,22 @@ export default function PreferencesComponent() {
   const updatePreference = <K extends keyof Preferences>(key: K, value: Preferences[K]) => {
     setPreferences(prev => ({ ...prev, [key]: value }));
     
-    // Auto-save immediately
+    // Apply theme and font size immediately if changed (before save for instant feedback)
+    if (key === 'theme') {
+      const theme = (value as any) || 'light';
+      applyTheme(theme);
+    }
+    if (key === 'fontSize') {
+      applyFontSize(value as string);
+    }
+    
+    // Note: We don't dispatch window events here because Preferences is in a separate BrowserWindow.
+    // The IPC handler in electron/ipc-handlers.ts will send an IPC message to the main window
+    // when setPreference is called, which will trigger the update in GlobalTimelineMinimap.
+    
+    // Auto-save immediately (after applying changes for instant feedback)
     if (window.electronAPI) {
-      window.electronAPI.setPreference(key, value).then(() => {
-        // Apply theme and font size immediately if changed
-        if (key === 'theme') {
-          const theme = (value as any) || 'light';
-          applyTheme(theme);
-        }
-        if (key === 'fontSize') {
-          applyFontSize(value as string);
-        }
-        // Dispatch event for preferences that need to update other components
-        if (key === 'minimapCrystalUseDefaultColors' || key === 'backgroundImage') {
-          window.dispatchEvent(new CustomEvent('preferences-updated'));
-        }
-      }).catch(error => {
+      window.electronAPI.setPreference(key, value).catch(error => {
         console.error('Error auto-saving preference:', error);
       });
     }

@@ -1,7 +1,7 @@
 import { app, BrowserWindow, ipcMain, Menu } from 'electron';
 import * as path from 'path';
 import { initDatabase, getAllPreferences, setPreference, closeDatabase } from './database';
-import { setupIpcHandlers } from './ipc-handlers';
+import { setupIpcHandlers, setMainWindow } from './ipc-handlers';
 
 let mainWindow: BrowserWindow | null = null;
 let preferencesWindow: BrowserWindow | null = null;
@@ -30,6 +30,9 @@ function createWindow() {
       icon: path.join(__dirname, '../assets/icon.png'),
     }),
   });
+  
+  // Register main window with IPC handlers so it can receive preference updates
+  setMainWindow(mainWindow);
 
   // Handle external links - open in custom browser window
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
@@ -86,6 +89,7 @@ function createWindow() {
   });
 
   mainWindow.on('closed', () => {
+    setMainWindow(null);
     mainWindow = null;
   });
 

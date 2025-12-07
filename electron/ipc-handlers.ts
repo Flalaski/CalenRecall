@@ -1,4 +1,4 @@
-import { ipcMain, dialog, app } from 'electron';
+import { ipcMain, dialog, app, BrowserWindow } from 'electron';
 import * as fs from 'fs';
 import * as path from 'path';
 import PDFDocument from 'pdfkit';
@@ -30,6 +30,12 @@ import {
 import { EntryVersion } from './types';
 import { JournalEntry, TimeRange, ExportFormat, EntryAttachment } from './types';
 import { EntryTemplate, getAllTemplates, getTemplate, saveTemplate, deleteTemplate } from './database';
+
+let mainWindowRef: Electron.BrowserWindow | null = null;
+
+export function setMainWindow(window: Electron.BrowserWindow | null) {
+  mainWindowRef = window;
+}
 
 export function setupIpcHandlers() {
   ipcMain.handle('get-entries', async (_event, startDate: string, endDate: string) => {
@@ -332,8 +338,24 @@ export function setupIpcHandlers() {
     return getPreference(key);
   });
 
-  ipcMain.handle('set-preference', async (_event, key: keyof Preferences, value: any) => {
+  ipcMain.handle('set-preference', async (event, key: keyof Preferences, value: any) => {
     setPreference(key, value);
+    
+    // Notify main window of preference changes that need immediate UI updates
+    // This allows the main window to update immediately without waiting for window events
+    // Use type assertion to check string keys since TypeScript can't narrow keyof types
+    const keyStr = key as string;
+    if (keyStr === 'minimapCrystalUseDefaultColors' || keyStr === 'backgroundImage') {
+      // Send to main window if it exists and is not the sender
+      if (mainWindowRef && !mainWindowRef.isDestroyed()) {
+        const senderWindow = BrowserWindow.fromWebContents(event.sender);
+        // Only send if the sender is not the main window (i.e., it's the preferences window)
+        if (senderWindow !== mainWindowRef) {
+          mainWindowRef.webContents.send('preference-updated', { key: keyStr, value });
+        }
+      }
+    }
+    
     return { success: true };
   });
 

@@ -120,6 +120,8 @@ declare global {
       selectBackgroundImage: () => Promise<{ success: boolean; canceled?: boolean; error?: string; message?: string; path?: string; fullPath?: string }>;
       clearBackgroundImage: () => Promise<{ success: boolean; error?: string; message?: string }>;
       getBackgroundImagePath: () => Promise<{ success: boolean; error?: string; message?: string; path?: string | null }>;
+      onPreferenceUpdated: (callback: (data: { key: string; value: any }) => void) => void;
+      removePreferenceUpdatedListener: () => void;
     };
   }
 }

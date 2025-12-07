@@ -1137,6 +1137,7 @@ export interface Preferences {
   showMultipleCalendars?: boolean; // Show date in multiple calendars simultaneously
   backgroundImage?: string; // Path to custom background image, or empty for procedural art
   enableProceduralArt?: boolean; // Enable procedural background art (default: true)
+  minimapCrystalUseDefaultColors?: boolean; // Override minimap crystal theming to always use default colors
 }
 
 const DEFAULT_PREFERENCES: Preferences = {

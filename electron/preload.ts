@@ -155,5 +155,14 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
   getBackgroundImagePath: (): Promise<{ success: boolean; error?: string; message?: string; path?: string | null }> =>
     ipcRenderer.invoke('get-background-image-path'),
+
+  // Listen for preference updates from main process
+  onPreferenceUpdated: (callback: (data: { key: string; value: any }) => void) => {
+    ipcRenderer.on('preference-updated', (_event, data) => callback(data));
+  },
+
+  removePreferenceUpdatedListener: () => {
+    ipcRenderer.removeAllListeners('preference-updated');
+  },
 });
 

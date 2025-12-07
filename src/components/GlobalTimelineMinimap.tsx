@@ -176,38 +176,86 @@ function hslToHex(hsl: string): string {
   }).join('')}`;
 }
 
+// Cache for theme entry indicator color to avoid repeated getComputedStyle calls
+let themeEntryIndicatorColorCache: { theme: string; color: string } | null = null;
+
 // Get theme's entry-indicator color from CSS
+// This function safely reads the active theme's entry-indicator background color
+// by creating a temporary element with the theme attribute and reading its computed style
+// OPTIMIZATION: Caches the result to avoid forced reflows when called in loops
 function getThemeEntryIndicatorColor(theme: string = 'light'): string {
+  // Check cache first
+  if (themeEntryIndicatorColorCache && themeEntryIndicatorColorCache.theme === theme) {
+    return themeEntryIndicatorColorCache.color;
+  }
+  
+  // Ensure we have a valid document context
+  if (typeof document === 'undefined' || !document.body) {
+    return '#4a90e2'; // Fallback to blue
+  }
+  
+  // Get the actual active theme from document if available, otherwise use provided theme
+  const activeTheme = document.documentElement.getAttribute('data-theme') || theme;
+  
+  // Check cache again with active theme
+  if (themeEntryIndicatorColorCache && themeEntryIndicatorColorCache.theme === activeTheme) {
+    return themeEntryIndicatorColorCache.color;
+  }
+  
   // Create a temporary element to get computed style
+  // This element will match the theme CSS selector [data-theme="..."] .entry-indicator
   const tempEl = document.createElement('div');
   tempEl.className = 'entry-indicator';
-  tempEl.setAttribute('data-theme', theme);
+  tempEl.setAttribute('data-theme', activeTheme);
   tempEl.style.position = 'absolute';
   tempEl.style.visibility = 'hidden';
   tempEl.style.pointerEvents = 'none';
+  tempEl.style.width = '1px';
+  tempEl.style.height = '1px';
+  
+  // Append to body to ensure CSS can be computed
   document.body.appendChild(tempEl);
   
-  const computedStyle = window.getComputedStyle(tempEl);
-  const bgColor = computedStyle.backgroundColor;
+  let color = '#4a90e2'; // Default fallback
   
-  document.body.removeChild(tempEl);
-  
-  // Convert rgb/rgba to hex if needed
-  if (bgColor.startsWith('rgb')) {
-    const matches = bgColor.match(/\d+/g);
-    if (matches && matches.length >= 3) {
-      const r = parseInt(matches[0]);
-      const g = parseInt(matches[1]);
-      const b = parseInt(matches[2]);
-      return `#${[r, g, b].map(x => {
-        const hex = x.toString(16);
-        return hex.length === 1 ? '0' + hex : hex;
-      }).join('')}`;
+  try {
+    const computedStyle = window.getComputedStyle(tempEl);
+    const bgColor = computedStyle.backgroundColor;
+    
+    // Remove the temporary element
+    document.body.removeChild(tempEl);
+    
+    // Convert rgb/rgba to hex if needed
+    if (bgColor && bgColor.startsWith('rgb')) {
+      const matches = bgColor.match(/\d+/g);
+      if (matches && matches.length >= 3) {
+        const r = parseInt(matches[0]);
+        const g = parseInt(matches[1]);
+        const b = parseInt(matches[2]);
+        color = `#${[r, g, b].map(x => {
+          const hex = x.toString(16);
+          return hex.length === 1 ? '0' + hex : hex;
+        }).join('')}`;
+      }
+    } else if (bgColor && bgColor !== 'rgba(0, 0, 0, 0)' && bgColor !== 'transparent') {
+      // Return as-is if already hex or other format
+      color = bgColor;
+    }
+  } catch (error) {
+    // If anything goes wrong, clean up and return fallback
+    try {
+      if (tempEl.parentNode) {
+        document.body.removeChild(tempEl);
+      }
+    } catch (cleanupError) {
+      // Ignore cleanup errors
     }
   }
   
-  // Return as-is if already hex or other format
-  return bgColor || '#4a90e2'; // Fallback to blue
+  // Cache the result
+  themeEntryIndicatorColorCache = { theme: activeTheme, color };
+  
+  return color;
 }
 
 export default function GlobalTimelineMinimap({
@@ -250,7 +298,21 @@ export default function GlobalTimelineMinimap({
   // This allows approximate viewport filtering without recalculating on every drag movement
   const throttledIndicatorPositionRef = useRef<number>(50); // Default to center
   const lastThrottleUpdateRef = useRef<number>(0);
+  // OPTIMIZATION: Cache bounding rect to avoid forced reflows during drag
+  const cachedBoundingRectRef = useRef<DOMRect | null>(null);
   
+  // Invalidate bounding rect cache on window resize
+  useEffect(() => {
+    const handleResize = () => {
+      cachedBoundingRectRef.current = null;
+    };
+    
+    window.addEventListener('resize', handleResize);
+    return () => {
+      window.removeEventListener('resize', handleResize);
+    };
+  }, []);
+
   // Load minimap crystal color preference and theme
   useEffect(() => {
     const loadPreference = async () => {
@@ -260,24 +322,71 @@ export default function GlobalTimelineMinimap({
         // When checkbox is checked, minimapCrystalUseDefaultColors is true (use calculated)
         // When checkbox is unchecked, minimapCrystalUseDefaultColors is false (use theme)
         const useDefaultColors = prefs.minimapCrystalUseDefaultColors !== false;
-        const theme = prefs.theme || 'light';
+        // Get the actual active theme from document (more reliable than stored preference)
+        const activeTheme = document.documentElement.getAttribute('data-theme') || prefs.theme || 'light';
+        
+        // Update state - this will trigger useMemo recalculation immediately
         setMinimapCrystalUseDefaultColors(useDefaultColors);
-        setCurrentTheme(theme);
-        // Force cache recalculation by updating timelineRangeKey
-        setTimelineRangeKey(prev => prev + 1);
+        setCurrentTheme(activeTheme);
       }
     };
     
     loadPreference();
     
-    // Listen for preference updates
-    const handlePreferenceUpdate = () => {
+    // Listen for preference updates - update immediately
+    const handlePreferenceUpdate = (event: Event) => {
+      const customEvent = event as CustomEvent<{ key: string; value: any }>;
+      
+      // If event has detail with the new value, use it directly (instant update)
+      if (customEvent.detail?.key === 'minimapCrystalUseDefaultColors') {
+        const newValue = customEvent.detail.value;
+        const useDefaultColors = newValue !== false;
+        const activeTheme = document.documentElement.getAttribute('data-theme') || 'light';
+        
+        // Invalidate theme color cache so new theme color is read
+        themeEntryIndicatorColorCache = null;
+        
+        // Update state immediately - no database read needed
+        setMinimapCrystalUseDefaultColors(useDefaultColors);
+        setCurrentTheme(activeTheme);
+        
+        // Force minimap refresh by updating timelineRangeKey
+        // This ensures entryPositions recalculates and crystals redraw
+        setTimelineRangeKey(prev => prev + 1);
+        return;
+      }
+      
+      // Fallback: load from database for other preference changes
+      themeEntryIndicatorColorCache = null;
       loadPreference();
     };
+    
+    // Listen for IPC messages from main process (for cross-window communication)
+    // This is needed because Preferences is in a separate BrowserWindow
+    let ipcCleanup: (() => void) | null = null;
+    if (window.electronAPI && 'onPreferenceUpdated' in window.electronAPI) {
+      (window.electronAPI as any).onPreferenceUpdated((data: { key: string; value: any }) => {
+        // Convert IPC message to event format for compatibility
+        const event = new CustomEvent('preferences-updated', { detail: data });
+        handlePreferenceUpdate(event);
+      });
+      ipcCleanup = () => {
+        if (window.electronAPI && 'removePreferenceUpdatedListener' in window.electronAPI) {
+          (window.electronAPI as any).removePreferenceUpdatedListener();
+        }
+      };
+    }
+    
+    // Also listen on window/document as fallback (for same-window events)
     window.addEventListener('preferences-updated', handlePreferenceUpdate);
+    document.addEventListener('preferences-updated', handlePreferenceUpdate);
     
     return () => {
       window.removeEventListener('preferences-updated', handlePreferenceUpdate);
+      document.removeEventListener('preferences-updated', handlePreferenceUpdate);
+      if (ipcCleanup) {
+        ipcCleanup();
+      }
     };
   }, []);
 
@@ -1864,10 +1973,13 @@ export default function GlobalTimelineMinimap({
       
       // Cache entry colors (moderate calculation)
       // Always recalculate when preference or theme changes (cache is rebuilt on dependency change)
+      // IMPORTANT: Always recalculate colors, don't check if already cached, to ensure
+      // colors update immediately when minimapCrystalUseDefaultColors or currentTheme changes
       if (entry.id) {
         const color = minimapCrystalUseDefaultColors 
           ? calculateEntryColor(entry)
           : getThemeEntryIndicatorColor(currentTheme);
+        // Always set (overwrite) to ensure new colors are used
         entryColorCache.set(entry.id, color);
       }
     }
@@ -2022,8 +2134,8 @@ export default function GlobalTimelineMinimap({
         clusterGroups.set(clusterKey, []);
       }
       // Get color for entry
-      // Priority: 1) Use cache if available (cache is rebuilt when preference changes)
-      //           2) Calculate on the fly for entries without IDs
+      // IMPORTANT: Always use current preference values, not just cache
+      // Cache is rebuilt when preference changes, but we want to ensure we use the latest values
       const getColorForEntry = (e: JournalEntry) => {
         if (minimapCrystalUseDefaultColors) {
           return calculateEntryColor(e);
@@ -2031,11 +2143,9 @@ export default function GlobalTimelineMinimap({
           return getThemeEntryIndicatorColor(currentTheme);
         }
       };
-      // Always prefer cache if entry has ID (cache is rebuilt with correct colors when preference changes)
-      // For entries without ID, calculate on the fly
-      const finalColor = entry.id 
-        ? (entryColorCache.get(entry.id) ?? getColorForEntry(entry))
-        : getColorForEntry(entry);
+      // Always use current preference values directly (not cache) to ensure immediate update
+      // when checkbox is toggled. The cache is for performance, but we want instant visual feedback.
+      const finalColor = getColorForEntry(entry);
       clusterGroups.get(clusterKey)!.push({
         entry,
         position: clampedPosition,
@@ -2289,6 +2399,8 @@ export default function GlobalTimelineMinimap({
     
     return result;
   }, [entries, timelineData, sectionHeights, entriesByYear, dateCache, entryColorCache, crystalSidesCache, viewMode, timelineRangeKey, minimapCrystalUseDefaultColors, currentTheme]);
+  // Note: minimapCrystalUseDefaultColors and currentTheme are in dependencies to ensure
+  // entryPositions recalculates when preference changes, even if cache reference is the same
 
   // OPTIMIZATION: Separate viewport filtering from base entry processing
   // This allows stable memoization of base processing while filtering by viewport separately
@@ -2786,7 +2898,9 @@ export default function GlobalTimelineMinimap({
       return;
     }
 
+    // Cache bounding rect to avoid forced reflows during drag
     const rect = containerRef.current.getBoundingClientRect();
+    cachedBoundingRectRef.current = rect;
     
     // Use the current selected date as the starting point for drag calculations
     // This prevents jumping when clicking far from center
@@ -3047,7 +3161,15 @@ export default function GlobalTimelineMinimap({
       }
 
       const now = Date.now();
-      const rect = containerRef.current.getBoundingClientRect();
+      // Use cached bounding rect to avoid forced reflows - only update if not cached
+      let rect = cachedBoundingRectRef.current;
+      if (!rect && containerRef.current) {
+        rect = containerRef.current.getBoundingClientRect();
+        cachedBoundingRectRef.current = rect;
+      }
+      if (!rect) {
+        return; // Can't proceed without bounding rect
+      }
       
       // Calculate total movement from start
       const totalHorizontalDelta = e.clientX - dragStartPositionRef.current.x;
@@ -3402,6 +3524,9 @@ export default function GlobalTimelineMinimap({
         sliderNoiseRef.current.stop();
         sliderNoiseRef.current = null;
       }
+      
+      // Clear cached bounding rect when dragging ends
+      cachedBoundingRectRef.current = null;
       
       // Timeline range remains locked - it only updates when viewMode changes
     };
