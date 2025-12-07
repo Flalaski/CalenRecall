@@ -164,5 +164,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
   removePreferenceUpdatedListener: () => {
     ipcRenderer.removeAllListeners('preference-updated');
   },
+
+  // Force main window to refresh theme (called from preferences window)
+  refreshMainWindowTheme: (): Promise<{ success: boolean; error?: string }> =>
+    ipcRenderer.invoke('refresh-main-window-theme'),
 });
 

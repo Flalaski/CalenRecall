@@ -153,9 +153,35 @@ export default function PreferencesComponent() {
     
     // Auto-save immediately (after applying changes for instant feedback)
     if (window.electronAPI) {
-      window.electronAPI.setPreference(key, value).catch(error => {
-        console.error('Error auto-saving preference:', error);
-      });
+      window.electronAPI.setPreference(key, value)
+        .then(() => {
+          console.log('[Preferences] Preference saved successfully:', key, value);
+          // For theme changes, explicitly force the main window to refresh
+          if (key === 'theme') {
+            // Give the preference save a moment to complete
+            setTimeout(() => {
+              console.log('[Preferences] 🔄 Forcing main window theme refresh...');
+              if (window.electronAPI && 'refreshMainWindowTheme' in window.electronAPI) {
+                (window.electronAPI as any).refreshMainWindowTheme()
+                  .then((result: { success: boolean; error?: string }) => {
+                    if (result.success) {
+                      console.log('[Preferences] ✅ Main window theme refresh successful');
+                    } else {
+                      console.error('[Preferences] ❌ Main window theme refresh failed:', result.error);
+                    }
+                  })
+                  .catch((error: any) => {
+                    console.error('[Preferences] ❌ Error calling refreshMainWindowTheme:', error);
+                  });
+              } else {
+                console.warn('[Preferences] ⚠️ refreshMainWindowTheme not available, falling back to IPC messages');
+              }
+            }, 100);
+          }
+        })
+        .catch(error => {
+          console.error('Error auto-saving preference:', error);
+        });
     }
   };
 

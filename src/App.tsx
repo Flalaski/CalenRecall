@@ -127,6 +127,33 @@ function App() {
         applyTheme(theme);
       }
       
+      // Force a reflow to ensure CSS is recalculated
+      void document.documentElement.offsetHeight;
+      
+      // Verify and re-apply if needed after a short delay
+      setTimeout(() => {
+        const appliedTheme = document.documentElement?.getAttribute('data-theme');
+        const expectedTheme = theme === 'auto' 
+          ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
+          : theme;
+        if (appliedTheme !== expectedTheme) {
+          console.warn('[App] Theme verification failed! Expected:', expectedTheme, 'Got:', appliedTheme);
+          console.log('[App] Force re-applying theme');
+          if (theme === 'auto') {
+            const cleanup = initializeTheme(theme);
+            if (themeCleanupRef.current) {
+              themeCleanupRef.current();
+            }
+            themeCleanupRef.current = cleanup;
+          } else {
+            applyTheme(theme);
+          }
+          void document.documentElement.offsetHeight;
+        } else {
+          console.log('[App] Theme verified successfully:', appliedTheme);
+        }
+      }, 50);
+      
       console.log('[App] After theme application, data-theme attribute:', document.documentElement.getAttribute('data-theme'));
       
       // Update preferences state to trigger re-render
@@ -284,26 +311,117 @@ function App() {
 
   // Set up IPC listener for preference updates from preferences window
   // This ensures the listener is always ready to receive updates
+  // Use a ref to store the latest updateSpecificPreference function so the listener doesn't need to be recreated
+  const updateSpecificPreferenceRef = useRef(updateSpecificPreference);
+  
+  // Keep the ref updated
   useEffect(() => {
-    if (!window.electronAPI || !('onPreferenceUpdated' in window.electronAPI)) {
-      console.warn('[App] IPC preference update listener not available');
-      return;
-    }
+    updateSpecificPreferenceRef.current = updateSpecificPreference;
+  }, [updateSpecificPreference]);
 
-    console.log('[App] Setting up IPC preference update listener');
-    (window.electronAPI as any).onPreferenceUpdated((data: { key: string; value: any }) => {
-      console.log('[App] Received preference update via IPC:', data);
-      // Update only the specific preference that changed
-      // updateSpecificPreference handles all preference types including showMinimap
-      updateSpecificPreference(data.key, data.value);
-    });
+  // Set up IPC listener IMMEDIATELY on mount, before anything else
+  // This must be set up as early as possible to catch all messages
+  useEffect(() => {
+    const setupListener = () => {
+      if (!window.electronAPI || !('onPreferenceUpdated' in window.electronAPI)) {
+        console.warn('[App] IPC preference update listener not available, will retry');
+        return false;
+      }
+
+      console.log('[App] Setting up IPC preference update listener');
+      const handlePreferenceUpdate = (data: { key: string; value: any }) => {
+        console.log('[App] ✅ Received preference update via IPC:', data);
+        // Use the ref to get the latest version of updateSpecificPreference
+        updateSpecificPreferenceRef.current(data.key, data.value);
+        
+        // For theme changes, verify it was applied correctly after a short delay
+        // This catches cases where the theme wasn't applied due to timing issues
+        if (data.key === 'theme') {
+          setTimeout(() => {
+            const appliedTheme = document.documentElement?.getAttribute('data-theme');
+            const expectedTheme = data.value === 'auto' 
+              ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
+              : data.value;
+            if (appliedTheme !== expectedTheme) {
+              console.warn('[App] ⚠️ Theme mismatch detected! Expected:', expectedTheme, 'Got:', appliedTheme);
+              console.log('[App] Re-applying theme to fix mismatch');
+              // Re-apply using the ref to get the latest function
+              updateSpecificPreferenceRef.current('theme', data.value);
+            } else {
+              console.log('[App] ✅ Theme verified correctly:', appliedTheme);
+            }
+          }, 300);
+        }
+      };
+      
+      (window.electronAPI as any).onPreferenceUpdated(handlePreferenceUpdate);
+      console.log('[App] ✅ IPC preference update listener is now active');
+      return true;
+    };
+
+    // Try to set up immediately
+    if (!setupListener()) {
+      // Retry after a short delay in case electronAPI isn't ready yet
+      const retryTimer = setTimeout(() => {
+        if (!setupListener()) {
+          // Try one more time after a longer delay
+          setTimeout(() => {
+            setupListener();
+          }, 500);
+        }
+      }, 100);
+      return () => clearTimeout(retryTimer);
+    }
 
     return () => {
       if (window.electronAPI && 'removePreferenceUpdatedListener' in window.electronAPI) {
         (window.electronAPI as any).removePreferenceUpdatedListener();
       }
     };
-  }, [updateSpecificPreference]); // Include updateSpecificPreference in deps
+  }, []); // Empty deps - listener is set up once and uses ref for latest function
+
+  // Check for theme changes when window gains focus or becomes visible (in case IPC message was missed)
+  useEffect(() => {
+    const checkAndApplyTheme = async () => {
+      if (window.electronAPI) {
+        try {
+          const prefs = await window.electronAPI.getAllPreferences();
+          const currentTheme = document.documentElement?.getAttribute('data-theme');
+          const expectedTheme = prefs.theme === 'auto' 
+            ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
+            : prefs.theme || 'light';
+          
+          if (currentTheme !== expectedTheme) {
+            console.log('[App] 🔄 Theme mismatch detected on focus/visibility, applying theme:', expectedTheme);
+            updateSpecificPreferenceRef.current('theme', prefs.theme || 'light');
+          }
+        } catch (error) {
+          console.error('[App] Error checking theme on focus/visibility:', error);
+        }
+      }
+    };
+
+    // Check when window gains focus
+    window.addEventListener('focus', checkAndApplyTheme);
+    // Check when window becomes visible (handles cases where preferences window was closed)
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden) {
+        checkAndApplyTheme();
+      }
+    });
+    
+    // Also periodically check for theme changes (every 2 seconds) as a safety net
+    // This ensures theme changes are picked up even if IPC messages are missed
+    const themeCheckInterval = setInterval(() => {
+      checkAndApplyTheme();
+    }, 2000);
+    
+    return () => {
+      window.removeEventListener('focus', checkAndApplyTheme);
+      document.removeEventListener('visibilitychange', checkAndApplyTheme);
+      clearInterval(themeCheckInterval);
+    };
+  }, []);
 
   // Cleanup theme listener on unmount
   useEffect(() => {

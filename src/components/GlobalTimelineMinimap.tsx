@@ -4069,6 +4069,17 @@ export default function GlobalTimelineMinimap({
             const gradientId = `separatorGradient${Math.min(idx + 1, 4)}`; // Use gradient 1-4
             const yPosFormatted = yPos + 0.5; // Add 0.5 for crisp pixel alignment
             
+            // Determine if this separator corresponds to the currently selected time tier
+            // Separator idx corresponds to the separator below the tier at that index
+            // For 'day' (last tier), use the last separator
+            const timeScaleOrder: TimeRange[] = ['decade', 'year', 'month', 'week', 'day'];
+            const currentScaleIndex = timeScaleOrder.indexOf(viewMode);
+            const isCurrentTierSeparator = idx === Math.min(currentScaleIndex, separatorPositions.length - 1);
+            
+            // Full opacity for current tier separator, faded for others
+            const baseOpacity = isCurrentTierSeparator ? "1.0" : "0.3";
+            const overlayOpacity = isCurrentTierSeparator ? "1.0" : "0.4";
+            
             return (
               <g key={`separator-${idx}`}>
                 {/* Base line with gradient - spans full width */}
@@ -4079,6 +4090,7 @@ export default function GlobalTimelineMinimap({
                   y2={yPosFormatted}
                   stroke={`url(#${gradientId})`}
                   strokeWidth="1"
+                  opacity={baseOpacity}
                   shapeRendering="crispEdges"
                 />
                 {/* Thicker center overlay for light-catching effect - spans full width */}
@@ -4089,7 +4101,7 @@ export default function GlobalTimelineMinimap({
                   y2={yPosFormatted}
                   stroke={activeColor}
                   strokeWidth="2"
-                  opacity="0.8"
+                  opacity={overlayOpacity}
                   shapeRendering="crispEdges"
                   style={{ 
                     filter: `drop-shadow(0 0 2px ${activeColor})`

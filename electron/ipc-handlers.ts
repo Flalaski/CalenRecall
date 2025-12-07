@@ -352,8 +352,75 @@ export function setupIpcHandlers() {
         const senderWindow = BrowserWindow.fromWebContents(event.sender);
         // Only send if the sender is not the main window (i.e., it's the preferences window)
         if (senderWindow !== mainWindowRef) {
-          console.log('[IPC] Sending preference-updated to main window:', keyStr, value);
-          mainWindowRef.webContents.send('preference-updated', { key: keyStr, value });
+          console.log('[IPC] 📤 Sending preference-updated to main window:', keyStr, value);
+          try {
+            // Send immediately
+            const sent = mainWindowRef.webContents.send('preference-updated', { key: keyStr, value });
+            console.log('[IPC] ✅ Message sent (send returns void, but no error thrown)');
+            
+            // For theme changes, send multiple fallback messages to ensure it's received
+            // This handles cases where the listener might not be ready or there are timing issues
+            if (keyStr === 'theme') {
+              // Send after short delays as fallbacks - more aggressive for theme changes
+              const sendFallback = (delay: number) => {
+                setTimeout(() => {
+                  if (mainWindowRef && !mainWindowRef.isDestroyed()) {
+                    console.log(`[IPC] 📤 Sending fallback preference-updated for theme (${delay}ms):`, value);
+                    try {
+                      mainWindowRef.webContents.send('preference-updated', { key: keyStr, value });
+                      console.log(`[IPC] ✅ Fallback message sent at ${delay}ms`);
+                    } catch (err) {
+                      console.error(`[IPC] ❌ Error sending fallback at ${delay}ms:`, err);
+                    }
+                  } else {
+                    console.log(`[IPC] ⚠️ Main window not available at ${delay}ms, skipping fallback`);
+                  }
+                }, delay);
+              };
+              
+              // Send multiple fallbacks at different intervals to ensure message is received
+              sendFallback(50);
+              sendFallback(100);
+              sendFallback(200);
+              sendFallback(300);
+              sendFallback(500);
+              sendFallback(1000);
+              
+              // Also try executing JavaScript directly as a last resort
+              setTimeout(() => {
+                if (mainWindowRef && !mainWindowRef.isDestroyed()) {
+                  try {
+                    console.log('[IPC] 🔧 Attempting direct theme application via executeJavaScript');
+                    mainWindowRef.webContents.executeJavaScript(`
+                      (function() {
+                        try {
+                          const theme = '${value}';
+                          const themeToApply = theme === 'auto' 
+                            ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
+                            : theme;
+                          document.documentElement.setAttribute('data-theme', themeToApply);
+                          void document.documentElement.offsetHeight; // Force reflow
+                          console.log('[IPC] ✅ Direct theme application complete:', themeToApply);
+                          return true;
+                        } catch (e) {
+                          console.error('[IPC] ❌ Error in direct theme application:', e);
+                          return false;
+                        }
+                      })();
+                    `).then((result) => {
+                      console.log('[IPC] ✅ executeJavaScript completed:', result);
+                    }).catch((err) => {
+                      console.error('[IPC] ❌ executeJavaScript failed:', err);
+                    });
+                  } catch (error) {
+                    console.error('[IPC] ❌ Error calling executeJavaScript:', error);
+                  }
+                }
+              }, 150);
+            }
+          } catch (error) {
+            console.error('[IPC] Error sending preference-updated message:', error);
+          }
         } else {
           console.log('[IPC] Sender is main window, not sending notification');
         }
@@ -372,6 +439,65 @@ export function setupIpcHandlers() {
   ipcMain.handle('reset-preferences', async () => {
     resetPreferences();
     return { success: true };
+  });
+
+  /**
+   * Force the main window to refresh its theme from preferences
+   * This is called directly from the preferences window to ensure reliable communication
+   */
+  ipcMain.handle('refresh-main-window-theme', async () => {
+    if (!mainWindowRef || mainWindowRef.isDestroyed()) {
+      console.log('[IPC] Main window not available for theme refresh');
+      return { success: false, error: 'main_window_not_available' };
+    }
+
+    try {
+      const prefs = getAllPreferences();
+      const theme = prefs.theme || 'light';
+      console.log('[IPC] 🔄 Forcing main window theme refresh to:', theme);
+      
+      // Method 1: Send IPC message
+      mainWindowRef.webContents.send('preference-updated', { key: 'theme', value: theme });
+      
+      // Method 2: Direct JavaScript execution as backup
+      const themeToApply = theme === 'auto' 
+        ? (mainWindowRef.webContents.getURL().includes('localhost') 
+            ? 'dark' // Default for dev, will be resolved by JS
+            : 'dark')
+        : theme;
+      
+      await mainWindowRef.webContents.executeJavaScript(`
+        (function() {
+          try {
+            const theme = '${theme}';
+            const themeToApply = theme === 'auto' 
+              ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
+              : theme;
+            
+            // Apply theme directly
+            document.documentElement.setAttribute('data-theme', themeToApply);
+            void document.documentElement.offsetHeight; // Force reflow
+            
+            // Also trigger the update function if it exists
+            if (window.electronAPI && window.electronAPI.onPreferenceUpdated) {
+              // The listener should handle this, but we can also manually trigger
+              console.log('[IPC] ✅ Theme refreshed via executeJavaScript:', themeToApply);
+            }
+            
+            return { success: true, theme: themeToApply };
+          } catch (e) {
+            console.error('[IPC] ❌ Error refreshing theme:', e);
+            return { success: false, error: e.message };
+          }
+        })();
+      `);
+      
+      console.log('[IPC] ✅ Main window theme refresh completed');
+      return { success: true };
+    } catch (error: any) {
+      console.error('[IPC] ❌ Error refreshing main window theme:', error);
+      return { success: false, error: error.message || 'unknown_error' };
+    }
   });
 
   /**
