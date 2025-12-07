@@ -27,6 +27,7 @@
 @import './themes/on-screen.css';
 @import './themes/aero-glass.css';
 @import './themes/galactic-basic.css';
+@import './themes/elite.css';
 
 /* Custom themes are automatically imported via themeLoader.ts */
 /* You can still manually add @import statements here if needed for explicit control */

@@ -91,6 +91,10 @@ const BUILT_IN_THEME_METADATA: Record<string, Omit<ThemeInfo, 'name'>> = {
   'on-screen': {
     displayName: 'ON SCREEN',
     description: 'Futuristic LCARS-inspired interface design with amber/orange active elements'
+  },
+  'elite': {
+    displayName: 'Elite',
+    description: 'Elite: Dangerous ship HUD theme with orange highlights and cyan data displays'
   }
 };
 
