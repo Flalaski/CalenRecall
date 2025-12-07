@@ -11,10 +11,12 @@ interface BackgroundArtProps {
 export default function BackgroundArt({ backgroundImage, className = '', theme }: BackgroundArtProps) {
   const containerRef = useRef<HTMLDivElement>(null);
 
-
   // Test image loading with a hidden img element to detect errors
   const [imageLoadError, setImageLoadError] = useState(false);
   const testImageRef = useRef<HTMLImageElement>(null);
+  
+  // Cache extracted colors to avoid re-extraction when only theme changes
+  const extractedColorsCacheRef = useRef<{ imageUrl: string; colors: Awaited<ReturnType<typeof extractColorsFromImage>> } | null>(null);
 
   // Extract colors from background image and apply them (only for default themes)
   // Also set data attribute to indicate custom image is present
@@ -25,31 +27,65 @@ export default function BackgroundArt({ backgroundImage, className = '', theme }
       document.documentElement.setAttribute('data-custom-background', 'true');
       
       const img = testImageRef.current;
-      img.src = backgroundImage;
-      img.onload = async () => {
-        setImageLoadError(false);
-        // Extract colors and apply them (only for light theme)
-        try {
-          const colors = await extractColorsFromImage(backgroundImage);
-          if (theme) {
-            applyBackgroundColors(colors, theme);
-          }
-        } catch (error) {
-          console.error('[BackgroundArt] Error extracting colors:', error);
-        }
-      };
+      const newSrc = backgroundImage;
+      
+      // Only extract colors if image changed or not cached
+      const needsColorExtraction = !extractedColorsCacheRef.current || extractedColorsCacheRef.current.imageUrl !== newSrc;
+      
+      // Set up error handler first
       img.onerror = () => {
         console.error('[BackgroundArt] Failed to load background image');
         setImageLoadError(true);
         clearBackgroundColors();
         document.documentElement.removeAttribute('data-custom-background');
+        extractedColorsCacheRef.current = null;
       };
+      
+      if (needsColorExtraction) {
+        // Extract colors only if image changed
+        img.onload = async () => {
+          setImageLoadError(false);
+          // Extract colors and cache them
+          try {
+            const colors = await extractColorsFromImage(newSrc);
+            extractedColorsCacheRef.current = { imageUrl: newSrc, colors };
+            // Apply colors if theme is available
+            if (theme) {
+              applyBackgroundColors(colors, theme);
+            }
+          } catch (error) {
+            console.error('[BackgroundArt] Error extracting colors:', error);
+            extractedColorsCacheRef.current = null;
+          }
+        };
+        // Only set src if we need to load/extract
+        if (img.src !== newSrc) {
+          img.src = newSrc;
+        }
+      } else {
+        // Use cached colors if available (image already loaded, just apply colors)
+        if (extractedColorsCacheRef.current && extractedColorsCacheRef.current.imageUrl === newSrc) {
+          if (theme) {
+            applyBackgroundColors(extractedColorsCacheRef.current.colors, theme);
+          }
+        }
+      }
     } else if (!backgroundImage) {
       setImageLoadError(false);
       clearBackgroundColors();
       document.documentElement.removeAttribute('data-custom-background');
+      extractedColorsCacheRef.current = null;
     }
-  }, [backgroundImage, theme]);
+  }, [backgroundImage]); // Removed theme from dependencies - handle theme changes separately
+
+  // Apply cached colors when theme changes (without re-extracting)
+  useEffect(() => {
+    if (backgroundImage && extractedColorsCacheRef.current && extractedColorsCacheRef.current.imageUrl === backgroundImage) {
+      if (theme) {
+        applyBackgroundColors(extractedColorsCacheRef.current.colors, theme);
+      }
+    }
+  }, [theme, backgroundImage]);
 
   // Only render if there's a background image
   if (!backgroundImage) {

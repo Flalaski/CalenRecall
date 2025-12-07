@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import TimelineView from './components/TimelineView';
 import JournalEditor from './components/JournalEditor';
 import EntryViewer from './components/EntryViewer';
@@ -36,6 +36,8 @@ function App() {
   const hasUserInteractedRef = useRef(false);
   // Track when an entry is being selected to prevent loadCurrentEntry from overwriting it
   const isSelectingEntryRef = useRef(false);
+  // Cache background image path to avoid unnecessary reloads
+  const backgroundImagePathRef = useRef<string | null>(null);
 
   // SUPREME OPTIMIZATION: Preload all entries at startup
   useEffect(() => {
@@ -96,6 +98,60 @@ function App() {
 
     preloadAllEntries();
   }, [setEntries, setIsLoading]);
+
+  // Optimized function to update specific preference without full reload
+  // Memoized with useCallback so IPC listener always has the latest version
+  const updateSpecificPreference = useCallback(async (key: string, value: any) => {
+    console.log('[App] updateSpecificPreference called:', key, value);
+    if (key === 'theme') {
+      // Apply theme immediately (synchronous for instant feedback)
+      const theme = (value || 'light') as any;
+      console.log('[App] Applying theme:', theme);
+      console.log('[App] Current document.documentElement:', document.documentElement);
+      console.log('[App] Current data-theme attribute:', document.documentElement.getAttribute('data-theme'));
+      applyTheme(theme);
+      console.log('[App] After applyTheme, data-theme attribute:', document.documentElement.getAttribute('data-theme'));
+      // Re-initialize theme listener for 'auto' theme
+      if (theme === 'auto') {
+        initializeTheme(theme);
+      }
+      // Update preferences state to trigger re-render
+      setPreferences(prev => {
+        console.log('[App] Updating preferences state, prev theme:', prev.theme, 'new theme:', value);
+        return { ...prev, theme: value };
+      });
+    } else if (key === 'fontSize') {
+      // Apply font size immediately (synchronous for instant feedback)
+      applyFontSize(value);
+      // Update preferences state
+      setPreferences(prev => ({ ...prev, fontSize: value }));
+    } else if (key === 'backgroundImage') {
+      // Only reload background image if it actually changed
+      const newPath = value || null;
+      if (newPath !== backgroundImagePathRef.current) {
+        backgroundImagePathRef.current = newPath;
+        if (newPath) {
+          // Load new background image
+          window.electronAPI?.getBackgroundImagePath().then((bgResult) => {
+            if (bgResult.success && bgResult.path) {
+              setBackgroundImagePath(bgResult.path);
+            } else {
+              setBackgroundImagePath(null);
+            }
+          }).catch(() => {
+            setBackgroundImagePath(null);
+          });
+        } else {
+          setBackgroundImagePath(null);
+        }
+      }
+      // Update preferences state
+      setPreferences(prev => ({ ...prev, backgroundImage: value }));
+    } else if (key === 'minimapCrystalUseDefaultColors') {
+      // Update preferences state only
+      setPreferences(prev => ({ ...prev, minimapCrystalUseDefaultColors: value }));
+    }
+  }, [setBackgroundImagePath]);
 
   // Load preferences on startup - ONLY ONCE, on initial mount
   useEffect(() => {
@@ -174,54 +230,55 @@ function App() {
     };
     
     loadPreferences();
-    
-    // Function to refresh preferences and background image
-    const refreshPreferences = async () => {
-      if (window.electronAPI) {
-        try {
-          const prefs = await window.electronAPI.getAllPreferences();
-          setPreferences(prefs);
-          // NEVER reset viewMode - user's current view should always be preserved
-          // Default view mode is ONLY applied on the very first load, never after
-          const theme = (prefs.theme || 'light') as any;
-          applyTheme(theme);
-          applyFontSize(prefs.fontSize);
-          // Update background image if changed
-          if (prefs.backgroundImage) {
-            const bgResult = await window.electronAPI.getBackgroundImagePath();
-            if (bgResult.success && bgResult.path) {
-              setBackgroundImagePath(bgResult.path);
-            } else {
-              setBackgroundImagePath(null);
-            }
-          } else {
-            setBackgroundImagePath(null);
-          }
-        } catch (error) {
-          console.error('Error refreshing preferences:', error);
+  }, []);
+
+  // Set up IPC listener in a separate effect that always runs
+  // This ensures the listener is always ready to receive updates
+  useEffect(() => {
+    if (!window.electronAPI || !('onPreferenceUpdated' in window.electronAPI)) {
+      console.warn('[App] IPC preference update listener not available');
+      return;
+    }
+
+    console.log('[App] Setting up IPC preference update listener');
+    (window.electronAPI as any).onPreferenceUpdated((data: { key: string; value: any }) => {
+      console.log('[App] Received preference update via IPC:', data);
+      // Update only the specific preference that changed
+      updateSpecificPreference(data.key, data.value);
+    });
+
+    return () => {
+      if (window.electronAPI && 'removePreferenceUpdatedListener' in window.electronAPI) {
+        (window.electronAPI as any).removePreferenceUpdatedListener();
+      }
+    };
+  }, [updateSpecificPreference]); // Include updateSpecificPreference in deps
+
+  // Listen for window events (fallback for same-window communication)
+  useEffect(() => {
+    const handlePreferencesUpdate = (event: Event) => {
+      const customEvent = event as CustomEvent<{ key?: string; value?: any }>;
+      if (customEvent.detail?.key) {
+        // Handle specific preference update
+        updateSpecificPreference(customEvent.detail.key, customEvent.detail.value);
+      } else {
+        // Fallback to full refresh if no key specified
+        if (window.electronAPI) {
+          window.electronAPI.getAllPreferences().then(prefs => {
+            setPreferences(prefs);
+            const theme = (prefs.theme || 'light') as any;
+            applyTheme(theme);
+            applyFontSize(prefs.fontSize);
+          }).catch(console.error);
         }
       }
     };
-
-    // Listen for immediate preference updates
-    const handlePreferencesUpdate = () => {
-      refreshPreferences();
-    };
+    
     window.addEventListener('preferences-updated', handlePreferencesUpdate);
-
-    // Check for preference updates periodically (when preferences window closes)
-    // NOTE: Do NOT reset viewMode to default - default view mode only applies on initial load
-    // Reduced frequency to 5 seconds to avoid excessive polling
-    const interval = setInterval(() => {
-      refreshPreferences();
-    }, 5000);
     
     return () => {
-      clearInterval(interval);
       window.removeEventListener('preferences-updated', handlePreferencesUpdate);
     };
-    // Empty dependency array - this effect ONLY runs once on mount
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Save last viewed position when date or view mode changes (if restoreLastView is enabled)

@@ -345,14 +345,20 @@ export function setupIpcHandlers() {
     // This allows the main window to update immediately without waiting for window events
     // Use type assertion to check string keys since TypeScript can't narrow keyof types
     const keyStr = key as string;
-    if (keyStr === 'minimapCrystalUseDefaultColors' || keyStr === 'backgroundImage') {
+    // Send notification for theme, fontSize, minimapCrystalUseDefaultColors, and backgroundImage
+    if (keyStr === 'theme' || keyStr === 'fontSize' || keyStr === 'minimapCrystalUseDefaultColors' || keyStr === 'backgroundImage') {
       // Send to main window if it exists and is not the sender
       if (mainWindowRef && !mainWindowRef.isDestroyed()) {
         const senderWindow = BrowserWindow.fromWebContents(event.sender);
         // Only send if the sender is not the main window (i.e., it's the preferences window)
         if (senderWindow !== mainWindowRef) {
+          console.log('[IPC] Sending preference-updated to main window:', keyStr, value);
           mainWindowRef.webContents.send('preference-updated', { key: keyStr, value });
+        } else {
+          console.log('[IPC] Sender is main window, not sending notification');
         }
+      } else {
+        console.log('[IPC] Main window not available or destroyed');
       }
     }
     
