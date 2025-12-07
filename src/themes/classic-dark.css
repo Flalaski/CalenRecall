@@ -2128,6 +2128,13 @@
 
 [data-theme="classic-dark"] .entry-indicator-wrapper {
   background: transparent;
+  width: max(9px, var(--entry-indicator-size, 16px));
+  height: max(9px, var(--entry-indicator-size, 16px));
+}
+
+[data-theme="classic-dark"] .entry-indicator-wrapper.in-cluster {
+  width: max(9px, var(--entry-indicator-size-cluster, 16px));
+  height: max(9px, var(--entry-indicator-size-cluster, 16px));
 }
 
 [data-theme="classic-dark"] .entry-indicator {

@@ -215,6 +215,16 @@
   border: 1px solid #d48728;
 }
 
+[data-theme="australian-desert"] .entry-indicator-wrapper {
+  width: max(9px, var(--entry-indicator-size, 16px));
+  height: max(9px, var(--entry-indicator-size, 16px));
+}
+
+[data-theme="australian-desert"] .entry-indicator-wrapper.in-cluster {
+  width: max(9px, var(--entry-indicator-size-cluster, 16px));
+  height: max(9px, var(--entry-indicator-size-cluster, 16px));
+}
+
 [data-theme="australian-desert"] .weekday-header {
   background: #7a4a35;
   border-bottom: 2px solid #a6734f;
@@ -1744,6 +1754,16 @@
 [data-theme="australian-desert"] .entry-indicator {
   background: #e49d38;
   border: 1px solid #d48728;
+}
+
+[data-theme="australian-desert"] .entry-indicator-wrapper {
+  width: max(9px, var(--entry-indicator-size, 16px));
+  height: max(9px, var(--entry-indicator-size, 16px));
+}
+
+[data-theme="australian-desert"] .entry-indicator-wrapper.in-cluster {
+  width: max(9px, var(--entry-indicator-size-cluster, 16px));
+  height: max(9px, var(--entry-indicator-size-cluster, 16px));
 }
 
 [data-theme="australian-desert"] .scale-label {

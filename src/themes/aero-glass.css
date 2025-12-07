@@ -1988,6 +1988,16 @@
   border: 1px solid #757575;
 }
 
+[data-theme="aero-glass"] .entry-indicator-wrapper {
+  width: max(9px, var(--entry-indicator-size, 16px));
+  height: max(9px, var(--entry-indicator-size, 16px));
+}
+
+[data-theme="aero-glass"] .entry-indicator-wrapper.in-cluster {
+  width: max(9px, var(--entry-indicator-size-cluster, 16px));
+  height: max(9px, var(--entry-indicator-size-cluster, 16px));
+}
+
 [data-theme="aero-glass"] .scale-label {
   color: #616161;
   text-shadow: none;

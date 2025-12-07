@@ -369,6 +369,16 @@
   border-radius: 0 !important;
 }
 
+[data-theme="bios"] .entry-indicator-wrapper {
+  width: max(9px, var(--entry-indicator-size, 16px));
+  height: max(9px, var(--entry-indicator-size, 16px));
+}
+
+[data-theme="bios"] .entry-indicator-wrapper.in-cluster {
+  width: max(9px, var(--entry-indicator-size-cluster, 16px));
+  height: max(9px, var(--entry-indicator-size-cluster, 16px));
+}
+
 [data-theme="bios"] .weekday-header {
   background: #000080;
   border: 1px solid #c0c0c0;

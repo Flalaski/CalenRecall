@@ -291,6 +291,16 @@
   border-radius: 0;
 }
 
+[data-theme="terminal"] .entry-indicator-wrapper {
+  width: max(9px, var(--entry-indicator-size, 16px));
+  height: max(9px, var(--entry-indicator-size, 16px));
+}
+
+[data-theme="terminal"] .entry-indicator-wrapper.in-cluster {
+  width: max(9px, var(--entry-indicator-size-cluster, 16px));
+  height: max(9px, var(--entry-indicator-size-cluster, 16px));
+}
+
 [data-theme="terminal"] .weekday-header {
   background: #000000;
   border-bottom: 1px solid #00ff00;

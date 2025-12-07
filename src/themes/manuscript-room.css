@@ -349,6 +349,16 @@
   border: 1px solid var(--accent-gold);
 }
 
+[data-theme="manuscript-room"] .entry-indicator-wrapper {
+  width: max(9px, var(--entry-indicator-size, 16px));
+  height: max(9px, var(--entry-indicator-size, 16px));
+}
+
+[data-theme="manuscript-room"] .entry-indicator-wrapper.in-cluster {
+  width: max(9px, var(--entry-indicator-size-cluster, 16px));
+  height: max(9px, var(--entry-indicator-size-cluster, 16px));
+}
+
 [data-theme="manuscript-room"] .weekday-header {
   background: var(--manuscript-bg-dark);
   border-bottom: 2px solid var(--border-gold);

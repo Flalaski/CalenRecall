@@ -236,6 +236,16 @@
   border-radius: 0;
 }
 
+[data-theme="vegas80s"] .entry-indicator-wrapper {
+  width: max(9px, var(--entry-indicator-size, 16px));
+  height: max(9px, var(--entry-indicator-size, 16px));
+}
+
+[data-theme="vegas80s"] .entry-indicator-wrapper.in-cluster {
+  width: max(9px, var(--entry-indicator-size-cluster, 16px));
+  height: max(9px, var(--entry-indicator-size-cluster, 16px));
+}
+
 [data-theme="vegas80s"] .weekday-header {
   background: linear-gradient(135deg, #ff1493, #ff1744);
   border-bottom: 3px solid #ffd700;

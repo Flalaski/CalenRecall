@@ -44,6 +44,17 @@
   opacity: 0.1;
 }
 
+/* Ensure entry indicators maintain minimum size across all themes */
+[data-theme] .entry-indicator-wrapper {
+  width: max(9px, var(--entry-indicator-size, 16px));
+  height: max(9px, var(--entry-indicator-size, 16px));
+}
+
+[data-theme] .entry-indicator-wrapper.in-cluster {
+  width: max(9px, var(--entry-indicator-size-cluster, 16px));
+  height: max(9px, var(--entry-indicator-size-cluster, 16px));
+}
+
 /* Auto theme handling */
 [data-theme="auto"] {
   @media (prefers-color-scheme: dark) {

@@ -236,6 +236,16 @@
   border-radius: 0;
 }
 
+[data-theme="NEON"] .entry-indicator-wrapper {
+  width: max(9px, var(--entry-indicator-size, 16px));
+  height: max(9px, var(--entry-indicator-size, 16px));
+}
+
+[data-theme="NEON"] .entry-indicator-wrapper.in-cluster {
+  width: max(9px, var(--entry-indicator-size-cluster, 16px));
+  height: max(9px, var(--entry-indicator-size-cluster, 16px));
+}
+
 [data-theme="NEON"] .weekday-header {
   background: linear-gradient(135deg, #ff00ff, #00ffff);
   border-bottom: 3px solid #ffff00;

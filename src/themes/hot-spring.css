@@ -243,6 +243,16 @@
   border: 1px solid #5db8a8;
 }
 
+[data-theme="hot-spring"] .entry-indicator-wrapper {
+  width: max(9px, var(--entry-indicator-size, 16px));
+  height: max(9px, var(--entry-indicator-size, 16px));
+}
+
+[data-theme="hot-spring"] .entry-indicator-wrapper.in-cluster {
+  width: max(9px, var(--entry-indicator-size-cluster, 16px));
+  height: max(9px, var(--entry-indicator-size-cluster, 16px));
+}
+
 [data-theme="hot-spring"] .weekday-header {
   background: #2d2535;
   border-bottom: 2px solid #5a4a6a;

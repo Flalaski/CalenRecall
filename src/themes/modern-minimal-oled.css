@@ -233,6 +233,16 @@
   border: none;
 }
 
+[data-theme="modern-minimal-oled"] .entry-indicator-wrapper {
+  width: max(9px, var(--entry-indicator-size, 16px));
+  height: max(9px, var(--entry-indicator-size, 16px));
+}
+
+[data-theme="modern-minimal-oled"] .entry-indicator-wrapper.in-cluster {
+  width: max(9px, var(--entry-indicator-size-cluster, 16px));
+  height: max(9px, var(--entry-indicator-size-cluster, 16px));
+}
+
 [data-theme="modern-minimal-oled"] .weekday-header {
   background: #0a0a0a;
   border-bottom: 1px solid #1a1a1a;

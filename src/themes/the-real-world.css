@@ -337,6 +337,16 @@
   height:11px;
 }
 
+[data-theme="the-real-world"] .entry-indicator-wrapper {
+  width: max(9px, var(--entry-indicator-size, 16px));
+  height: max(9px, var(--entry-indicator-size, 16px));
+}
+
+[data-theme="the-real-world"] .entry-indicator-wrapper.in-cluster {
+  width: max(9px, var(--entry-indicator-size-cluster, 16px));
+  height: max(9px, var(--entry-indicator-size-cluster, 16px));
+}
+
 [data-theme="the-real-world"] .weekday-header {
   background: #1a1a1a;
   border-bottom: 2px solid #7fbf7f;

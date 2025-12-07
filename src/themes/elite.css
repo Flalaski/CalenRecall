@@ -471,6 +471,16 @@
   width: 8px;
 }
 
+[data-theme="elite"] .entry-indicator-wrapper {
+  width: max(9px, var(--entry-indicator-size, 16px));
+  height: max(9px, var(--entry-indicator-size, 16px));
+}
+
+[data-theme="elite"] .entry-indicator-wrapper.in-cluster {
+  width: max(9px, var(--entry-indicator-size-cluster, 16px));
+  height: max(9px, var(--entry-indicator-size-cluster, 16px));
+}
+
 [data-theme="elite"] .weekday-header {
   background: rgba(0, 34, 68, 0.7);
   backdrop-filter: blur(8px);

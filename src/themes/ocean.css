@@ -224,6 +224,16 @@
   border: 1px solid #0277bd;
 }
 
+[data-theme="ocean"] .entry-indicator-wrapper {
+  width: max(9px, var(--entry-indicator-size, 16px));
+  height: max(9px, var(--entry-indicator-size, 16px));
+}
+
+[data-theme="ocean"] .entry-indicator-wrapper.in-cluster {
+  width: max(9px, var(--entry-indicator-size-cluster, 16px));
+  height: max(9px, var(--entry-indicator-size-cluster, 16px));
+}
+
 [data-theme="ocean"] .weekday-header {
   background: #003d6b;
   border-bottom: 2px solid #005a9e;

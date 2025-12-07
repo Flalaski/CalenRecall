@@ -503,6 +503,16 @@
   border: 3px solid var(--primary-blue-light);
 }
 
+[data-theme="reading-room"] .entry-indicator-wrapper {
+  width: max(9px, var(--entry-indicator-size, 16px));
+  height: max(9px, var(--entry-indicator-size, 16px));
+}
+
+[data-theme="reading-room"] .entry-indicator-wrapper.in-cluster {
+  width: max(9px, var(--entry-indicator-size-cluster, 16px));
+  height: max(9px, var(--entry-indicator-size-cluster, 16px));
+}
+
 [data-theme="reading-room"] .weekday-header {
   background: var(--primary-blue);
   border-bottom: 4px solid var(--primary-blue-dark);

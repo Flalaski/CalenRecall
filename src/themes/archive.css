@@ -280,6 +280,16 @@
   box-shadow: 0 1px 3px rgba(107, 45, 58, 0.5);
 }
 
+[data-theme="archive"] .entry-indicator-wrapper {
+  width: max(9px, var(--entry-indicator-size, 16px));
+  height: max(9px, var(--entry-indicator-size, 16px));
+}
+
+[data-theme="archive"] .entry-indicator-wrapper.in-cluster {
+  width: max(9px, var(--entry-indicator-size-cluster, 16px));
+  height: max(9px, var(--entry-indicator-size-cluster, 16px));
+}
+
 [data-theme="archive"] .weekday-header {
   background: var(--victorian-bg-tertiary);
   border-bottom: 2px solid var(--border-walnut);

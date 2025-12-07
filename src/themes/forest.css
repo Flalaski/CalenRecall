@@ -215,6 +215,16 @@
   border: 1px solid #4caf50;
 }
 
+[data-theme="forest"] .entry-indicator-wrapper {
+  width: max(9px, var(--entry-indicator-size, 16px));
+  height: max(9px, var(--entry-indicator-size, 16px));
+}
+
+[data-theme="forest"] .entry-indicator-wrapper.in-cluster {
+  width: max(9px, var(--entry-indicator-size-cluster, 16px));
+  height: max(9px, var(--entry-indicator-size-cluster, 16px));
+}
+
 [data-theme="forest"] .weekday-header {
   background: #2d5a2d;
   border-bottom: 2px solid #4a7c4a;

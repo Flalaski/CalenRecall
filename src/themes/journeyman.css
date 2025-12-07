@@ -339,6 +339,16 @@
     inset 0 0 3px rgba(255, 255, 255, 0.3);
 }
 
+[data-theme="journeyman"] .entry-indicator-wrapper {
+  width: max(9px, var(--entry-indicator-size, 16px));
+  height: max(9px, var(--entry-indicator-size, 16px));
+}
+
+[data-theme="journeyman"] .entry-indicator-wrapper.in-cluster {
+  width: max(9px, var(--entry-indicator-size-cluster, 16px));
+  height: max(9px, var(--entry-indicator-size-cluster, 16px));
+}
+
 [data-theme="journeyman"] .weekday-header {
   background: linear-gradient(180deg, #4A4A4A 0%, #3A3A3A 100%);
   border: 2px inset #5A5A5A;

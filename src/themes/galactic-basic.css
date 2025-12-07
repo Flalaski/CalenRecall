@@ -332,6 +332,16 @@
   border-radius: 0;
 }
 
+[data-theme="galactic-basic"] .entry-indicator-wrapper {
+  width: max(9px, var(--entry-indicator-size, 16px));
+  height: max(9px, var(--entry-indicator-size, 16px));
+}
+
+[data-theme="galactic-basic"] .entry-indicator-wrapper.in-cluster {
+  width: max(9px, var(--entry-indicator-size-cluster, 16px));
+  height: max(9px, var(--entry-indicator-size-cluster, 16px));
+}
+
 [data-theme="galactic-basic"] .weekday-header {
   background: #000011;
   border-bottom: 1px solid #00aaff;

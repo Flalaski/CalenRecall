@@ -215,6 +215,16 @@
   border: 1px solid #c95d35;
 }
 
+[data-theme="red-rock"] .entry-indicator-wrapper {
+  width: max(9px, var(--entry-indicator-size, 16px));
+  height: max(9px, var(--entry-indicator-size, 16px));
+}
+
+[data-theme="red-rock"] .entry-indicator-wrapper.in-cluster {
+  width: max(9px, var(--entry-indicator-size-cluster, 16px));
+  height: max(9px, var(--entry-indicator-size-cluster, 16px));
+}
+
 [data-theme="red-rock"] .weekday-header {
   background: #6b2e2a;
   border-bottom: 2px solid #9d5544;

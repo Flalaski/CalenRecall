@@ -227,6 +227,16 @@
   border: none;
 }
 
+[data-theme="modern-minimal"] .entry-indicator-wrapper {
+  width: max(9px, var(--entry-indicator-size, 16px));
+  height: max(9px, var(--entry-indicator-size, 16px));
+}
+
+[data-theme="modern-minimal"] .entry-indicator-wrapper.in-cluster {
+  width: max(9px, var(--entry-indicator-size-cluster, 16px));
+  height: max(9px, var(--entry-indicator-size-cluster, 16px));
+}
+
 [data-theme="modern-minimal"] .weekday-header {
   background: #ffffff;
   border-bottom: 1px solid #e0e0e0;
