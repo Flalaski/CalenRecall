@@ -127,6 +127,10 @@ const BUILT_IN_THEME_METADATA: Record<string, Omit<ThemeInfo, 'name'>> = {
   'temple-of-light': {
     displayName: 'Temple of Light',
     description: 'Light mode variant - Mormon temple aesthetic with marble interiors, custom carpets featuring diamond patterns and floral motifs, rich mahogany woodwork, and soft stained glass blues and greens - sacred and serene design'
+  },
+  'temple-of-darkness': {
+    displayName: 'Temple of Darkness',
+    description: 'Dark mode variant - Gothic temple aesthetic with aged stone walls, weathered ebony woodwork, oxidized bronze metals, and mystical torchlight - mysterious and arcane design'
   }
 };
 

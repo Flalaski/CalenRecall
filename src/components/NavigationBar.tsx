@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useMemo, useCallback } from 'react';
 import { TimeRange } from '../types';
 import { format, addMonths, addYears, addWeeks, addDays, differenceInDays, differenceInMonths, differenceInYears } from 'date-fns';
 import { playNavigationSound, playModeSelectionSound, playSettingsSound, playTabSound, playDateSubmitSound, playNavigationJourneySound, playTierNavigationSound } from '../utils/audioUtils';
@@ -7,6 +7,8 @@ import { CalendarSystem, CALENDAR_INFO } from '../utils/calendars/types';
 import { getTimeRangeLabelInCalendar } from '../utils/calendars/timeRangeConverter';
 import { CALENDAR_DESCRIPTIONS } from '../utils/calendars/calendarDescriptions';
 import { createDate } from '../utils/dateUtils';
+import { getDateEntryConfig } from '../utils/calendars/dateEntryConfig';
+import { calendarDateToDate } from '../utils/calendars/calendarConverter';
 import './NavigationBar.css';
 
 interface NavigationBarProps {
@@ -26,17 +28,23 @@ export default function NavigationBar({
   onOpenPreferences,
   onOpenSearch,
 }: NavigationBarProps) {
-  const { calendar, setCalendar } = useCalendar();
+  const { calendar, setCalendar, dateToCalendar } = useCalendar();
   const [isDefinitionExpanded, setIsDefinitionExpanded] = useState(false);
-  const [dateYear, setDateYear] = useState('');
-  const [dateMonth, setDateMonth] = useState('');
-  const [dateDay, setDateDay] = useState('');
+  
+  // Get date entry configuration for current calendar
+  const dateEntryConfig = useMemo(() => getDateEntryConfig(calendar), [calendar]);
+  
+  // Dynamic date input state - array of values for each field
+  // Initialize based on current calendar's field count
+  const [dateInputValues, setDateInputValues] = useState<string[]>(() => 
+    new Array(dateEntryConfig.fields.length).fill('')
+  );
   const [dateInputError, setDateInputError] = useState(false);
   const [isDateInputFocused, setIsDateInputFocused] = useState(false);
-  const yearInputRef = useRef<HTMLInputElement>(null);
-  const monthInputRef = useRef<HTMLInputElement>(null);
-  const dayInputRef = useRef<HTMLInputElement>(null);
-  const previousFocusedFieldRef = useRef<'year' | 'month' | 'day' | null>(null);
+  
+  // Dynamic refs for input fields
+  const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
+  const previousFocusedFieldRef = useRef<number | null>(null);
   
   // Use ref to access current onDateChange in keyboard handler
   const onDateChangeRef = useRef(onDateChange);
@@ -46,20 +54,74 @@ export default function NavigationBar({
     onDateChangeRef.current = onDateChange;
   }, [onDateChange]);
 
+  // Helper function to populate date input fields from selectedDate
+  const populateDateFields = useCallback(() => {
+    try {
+      const calendarDate = dateToCalendar(selectedDate);
+      const fieldCount = dateEntryConfig.fields.length;
+      const values: string[] = [];
+      
+      // Map calendar date components to input fields based on calendar type
+      if (calendar === 'mayan-longcount') {
+        // Decode Long Count components from the encoded day field
+        const baktun = calendarDate.year;
+        const katun = calendarDate.month;
+        const absDay = Math.abs(calendarDate.day);
+        const tun = Math.floor(absDay / 400);
+        const remainingAfterTun = absDay % 400;
+        const uinal = Math.floor(remainingAfterTun / 20);
+        const kin = remainingAfterTun % 20;
+        
+        values[0] = baktun.toString();
+        values[1] = katun.toString();
+        values[2] = tun.toString();
+        values[3] = uinal.toString();
+        values[4] = kin.toString();
+      } else {
+        // For all other calendars, use year/month/day directly
+        values[0] = calendarDate.year.toString();
+        if (fieldCount > 1) {
+          values[1] = calendarDate.month.toString();
+        }
+        if (fieldCount > 2) {
+          values[2] = calendarDate.day.toString();
+        }
+      }
+      
+      // Ensure array is properly sized
+      while (values.length < fieldCount) {
+        values.push('');
+      }
+      
+      return values.slice(0, fieldCount);
+    } catch (e) {
+      // If conversion fails, return empty array
+      return new Array(dateEntryConfig.fields.length).fill('');
+    }
+  }, [calendar, selectedDate, dateEntryConfig.fields.length, dateToCalendar]);
+
+  // Initialize and populate date input values when calendar changes
+  useEffect(() => {
+    const fieldCount = dateEntryConfig.fields.length;
+    const values = populateDateFields();
+    setDateInputValues(values);
+    setDateInputError(false);
+    // Resize refs array to match new field count
+    inputRefs.current = new Array(fieldCount).fill(null);
+    previousFocusedFieldRef.current = null;
+  }, [calendar, dateEntryConfig.fields.length, populateDateFields]);
+
   // Update input values when selectedDate changes externally
   useEffect(() => {
     const activeElement = document.activeElement;
-    const isAnyInputFocused = activeElement === yearInputRef.current || 
-                              activeElement === monthInputRef.current || 
-                              activeElement === dayInputRef.current;
+    const isAnyInputFocused = inputRefs.current.some(ref => ref === activeElement);
     
     if (!isAnyInputFocused) {
-      setDateYear('');
-      setDateMonth('');
-      setDateDay('');
+      const values = populateDateFields();
+      setDateInputValues(values);
       setDateInputError(false);
     }
-  }, [selectedDate]);
+  }, [selectedDate, populateDateFields]);
 
   const navigate = (direction: 'prev' | 'next', shiftPressed: boolean = false) => {
     // Play tier-aware navigation sound with direction and shift distinction
@@ -142,113 +204,72 @@ export default function NavigationBar({
     onDateChange(new Date());
   };
 
-  // Parse date from three separate fields
-  const parseDateFromFields = (year: string, month: string, day: string): Date | null => {
-    const yearTrimmed = year.trim();
-    const monthTrimmed = month.trim();
-    const dayTrimmed = day.trim();
-
-    // If all fields are empty, return null
-    if (!yearTrimmed && !monthTrimmed && !dayTrimmed) {
+  // Parse date from dynamic fields using calendar-specific parser
+  const parseDateFromFields = (values: string[]): Date | null => {
+    // Use calendar-specific parser
+    const parsed = dateEntryConfig.parseDate(values);
+    if (!parsed) {
       return null;
     }
 
-    // Parse year (required)
-    let parsedYear: number;
-    if (!yearTrimmed) {
-      return null;
-    }
+    // Convert calendar date to JavaScript Date
     try {
-      parsedYear = parseInt(yearTrimmed, 10);
-      if (isNaN(parsedYear)) {
-        return null;
-      }
-    } catch (e) {
-      return null;
-    }
-
-    // Parse month (optional, defaults to 0 if not provided)
-    let parsedMonth: number = 0;
-    if (monthTrimmed) {
-      try {
-        parsedMonth = parseInt(monthTrimmed, 10) - 1; // Convert to 0-indexed
-        if (isNaN(parsedMonth) || parsedMonth < 0 || parsedMonth > 11) {
-          return null;
-        }
-      } catch (e) {
-        return null;
-      }
-    }
-
-    // Parse day (optional, defaults to 1 if not provided)
-    let parsedDay: number = 1;
-    if (dayTrimmed) {
-      try {
-        parsedDay = parseInt(dayTrimmed, 10);
-        if (isNaN(parsedDay) || parsedDay < 1 || parsedDay > 31) {
-          return null;
-        }
-      } catch (e) {
-        return null;
-      }
-    }
-
-    // Validate the date
-    try {
-      const date = createDate(parsedYear, parsedMonth, parsedDay);
-      // Verify the date is valid (e.g., not Feb 30)
-      if (date.getFullYear() === parsedYear && 
-          date.getMonth() === parsedMonth && 
-          date.getDate() === parsedDay) {
-        return date;
-      }
-      return null;
+      const calendarDate = {
+        year: parsed.year,
+        month: parsed.month,
+        day: parsed.day,
+        calendar: calendar
+      };
+      return calendarDateToDate(calendarDate);
     } catch (e) {
       return null;
     }
   };
 
-  const handleYearChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value.replace(/[^-\d]/g, ''); // Only allow digits and minus
-    setDateYear(value);
+  // Dynamic input change handler
+  const handleFieldChange = (index: number) => (e: React.ChangeEvent<HTMLInputElement>) => {
+    const field = dateEntryConfig.fields[index];
+    let value = e.target.value;
+    
+    // Apply formatting if specified
+    if (field.formatValue) {
+      value = field.formatValue(value);
+    }
+    
+    // Apply validation if specified
+    if (field.validation && value !== '') {
+      if (!field.validation(value)) {
+        return; // Don't update if validation fails
+      }
+    }
+    
+    // Check max length
+    if (field.maxLength && value.length > field.maxLength) {
+      return;
+    }
+    
+    // Update the value
+    const newValues = [...dateInputValues];
+    newValues[index] = value;
+    setDateInputValues(newValues);
     setDateInputError(false);
   };
 
-  const handleMonthChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value.replace(/\D/g, ''); // Only allow digits
-    // Limit to 2 digits, allow any single digit, or valid 2-digit month (01-12)
-    if (value === '' || value.length === 1 || (value.length === 2 && parseInt(value, 10) >= 1 && parseInt(value, 10) <= 12)) {
-      setDateMonth(value);
-      setDateInputError(false);
-    }
-  };
-
-  const handleDayChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value.replace(/\D/g, ''); // Only allow digits
-    // Limit to 2 digits, allow any single digit, or valid 2-digit day (01-31)
-    if (value === '' || value.length === 1 || (value.length === 2 && parseInt(value, 10) >= 1 && parseInt(value, 10) <= 31)) {
-      setDateDay(value);
-      setDateInputError(false);
-    }
-  };
-
-  const handleDateInputFocus = (field: 'year' | 'month' | 'day') => {
+  const handleDateInputFocus = (index: number) => () => {
     setIsDateInputFocused(true);
     // Play a unique tab sound when tabbing between date input fields
     // Only play if coming from another date input field (not initial focus from outside)
-    if (previousFocusedFieldRef.current && previousFocusedFieldRef.current !== field) {
+    if (previousFocusedFieldRef.current !== null && previousFocusedFieldRef.current !== index) {
       playTabSound();
     }
-    previousFocusedFieldRef.current = field;
+    previousFocusedFieldRef.current = index;
   };
 
   const handleDateInputBlur = () => {
     setIsDateInputFocused(false);
     // Don't auto-submit on blur - only clear if all fields are empty
-    if (!dateYear.trim() && !dateMonth.trim() && !dateDay.trim()) {
-      setDateYear('');
-      setDateMonth('');
-      setDateDay('');
+    if (dateInputValues.every(v => !v.trim())) {
+      setDateInputValues(new Array(dateEntryConfig.fields.length).fill(''));
       setDateInputError(false);
       previousFocusedFieldRef.current = null;
     }
@@ -441,23 +462,19 @@ export default function NavigationBar({
   };
 
   const handleDateInputSubmit = () => {
-    if (!dateYear.trim()) {
-      setDateYear('');
-      setDateMonth('');
-      setDateDay('');
+    // Check if first field (usually year/cycle/baktun) is required and filled
+    const firstFieldValue = dateInputValues[0]?.trim();
+    if (!firstFieldValue) {
+      setDateInputValues(new Array(dateEntryConfig.fields.length).fill(''));
       return;
     }
 
-    const parsedDate = parseDateFromFields(dateYear, dateMonth, dateDay);
+    const parsedDate = parseDateFromFields(dateInputValues);
     if (parsedDate) {
       // Clear inputs and blur
-      setDateYear('');
-      setDateMonth('');
-      setDateDay('');
+      setDateInputValues(new Array(dateEntryConfig.fields.length).fill(''));
       setDateInputError(false);
-      yearInputRef.current?.blur();
-      monthInputRef.current?.blur();
-      dayInputRef.current?.blur();
+      inputRefs.current.forEach(ref => ref?.blur());
       
       // Navigation sound is already played in handleDateInputKeyDown for Enter
       // Navigate to target date with animated steps through time tiers
@@ -467,7 +484,7 @@ export default function NavigationBar({
     }
   };
 
-  const handleDateInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>, field: 'year' | 'month' | 'day') => {
+  const handleDateInputKeyDown = (index: number) => (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
       e.preventDefault();
       // Play unique date submit sound for Enter (date submission)
@@ -478,45 +495,31 @@ export default function NavigationBar({
       // Only play if tabbing to another date field (not away from date inputs)
       if (!e.shiftKey) {
         // Tab forward - check if next field is a date field
-        if (field === 'year' || field === 'month') {
+        if (index < dateEntryConfig.fields.length - 1) {
           playTabSound();
         }
       } else {
         // Shift+Tab backward - check if previous field is a date field
-        if (field === 'month' || field === 'day') {
+        if (index > 0) {
           playTabSound();
         }
       }
       // Let Tab work normally - don't prevent default
     } else if (e.key === 'Escape') {
-      setDateYear('');
-      setDateMonth('');
-      setDateDay('');
+      setDateInputValues(new Array(dateEntryConfig.fields.length).fill(''));
       setDateInputError(false);
-      yearInputRef.current?.blur();
-      monthInputRef.current?.blur();
-      dayInputRef.current?.blur();
+      inputRefs.current.forEach(ref => ref?.blur());
     } else if (e.key === 'ArrowLeft') {
       // Allow arrow left to move to previous field when at start of current field
-      if (e.currentTarget.selectionStart === 0) {
-        if (field === 'month') {
-          yearInputRef.current?.focus();
-          e.preventDefault();
-        } else if (field === 'day') {
-          monthInputRef.current?.focus();
-          e.preventDefault();
-        }
+      if (e.currentTarget.selectionStart === 0 && index > 0) {
+        inputRefs.current[index - 1]?.focus();
+        e.preventDefault();
       }
     } else if (e.key === 'Backspace') {
       // If backspace on empty field or at start, go to previous field
-      if (e.currentTarget.value === '' || e.currentTarget.selectionStart === 0) {
-        if (field === 'month') {
-          yearInputRef.current?.focus();
-          e.preventDefault();
-        } else if (field === 'day') {
-          monthInputRef.current?.focus();
-          e.preventDefault();
-        }
+      if ((e.currentTarget.value === '' || e.currentTarget.selectionStart === 0) && index > 0) {
+        inputRefs.current[index - 1]?.focus();
+        e.preventDefault();
       }
     }
     // Let Tab key work normally - don't intercept it
@@ -619,68 +622,52 @@ export default function NavigationBar({
             →
           </button>
           <h2 className={`date-label date-label-${viewMode}`}>{renderDateLabel()}</h2>
-          <div className="date-input-container">
+          <div className="date-input-container" key={`date-input-${calendar}`}>
             <div className="date-input-wrapper">
               <div className="date-input-fields" role="group" aria-label="Go to date">
-                <div className="date-field-group">
-                  <label htmlFor="date-input-year" className="date-field-label">Year</label>
-                  <input
-                    ref={yearInputRef}
-                    type="text"
-                    id="date-input-year"
-                    className={`date-input date-input-year ${dateInputError ? 'error' : ''}`}
-                    placeholder="YYYY"
-                    value={dateYear}
-                    onChange={handleYearChange}
-                    onKeyDown={(e) => handleDateInputKeyDown(e, 'year')}
-                    onFocus={() => handleDateInputFocus('year')}
-                    onBlur={handleDateInputBlur}
-                    aria-label="Year"
-                    aria-describedby="date-input-helper date-input-error"
-                    aria-invalid={dateInputError}
-                    maxLength={6}
-                  />
-                </div>
-                <div className="date-field-separator">/</div>
-                <div className="date-field-group">
-                  <label htmlFor="date-input-month" className="date-field-label">Month</label>
-                  <input
-                    ref={monthInputRef}
-                    type="text"
-                    id="date-input-month"
-                    className={`date-input date-input-month ${dateInputError ? 'error' : ''}`}
-                    placeholder="MM"
-                    value={dateMonth}
-                    onChange={handleMonthChange}
-                    onKeyDown={(e) => handleDateInputKeyDown(e, 'month')}
-                    onFocus={() => handleDateInputFocus('month')}
-                    onBlur={handleDateInputBlur}
-                    aria-label="Month"
-                    aria-describedby="date-input-helper date-input-error"
-                    aria-invalid={dateInputError}
-                    maxLength={2}
-                  />
-                </div>
-                <div className="date-field-separator">/</div>
-                <div className="date-field-group">
-                  <label htmlFor="date-input-day" className="date-field-label">Day</label>
-                  <input
-                    ref={dayInputRef}
-                    type="text"
-                    id="date-input-day"
-                    className={`date-input date-input-day ${dateInputError ? 'error' : ''}`}
-                    placeholder="DD"
-                    value={dateDay}
-                    onChange={handleDayChange}
-                    onKeyDown={(e) => handleDateInputKeyDown(e, 'day')}
-                    onFocus={() => handleDateInputFocus('day')}
-                    onBlur={handleDateInputBlur}
-                    aria-label="Day"
-                    aria-describedby="date-input-helper date-input-error"
-                    aria-invalid={dateInputError}
-                    maxLength={2}
-                  />
-                </div>
+                {dateEntryConfig.fields.map((field, index) => {
+                  // Ensure dateInputValues array is properly sized
+                  const fieldValue = index < dateInputValues.length ? dateInputValues[index] : '';
+                  
+                  return (
+                    <React.Fragment key={`${calendar}-${index}-${field.label}`}>
+                      <div className="date-field-group">
+                        <label 
+                          htmlFor={`date-input-${calendar}-${index}`} 
+                          className="date-field-label"
+                        >
+                          {field.label}
+                        </label>
+                        <input
+                          ref={(el) => {
+                            if (inputRefs.current.length <= index) {
+                              inputRefs.current.length = index + 1;
+                            }
+                            inputRefs.current[index] = el;
+                          }}
+                          type="text"
+                          id={`date-input-${calendar}-${index}`}
+                          className={`date-input date-input-${index} ${dateInputError ? 'error' : ''}`}
+                          placeholder={field.placeholder}
+                          value={fieldValue}
+                          onChange={handleFieldChange(index)}
+                          onKeyDown={handleDateInputKeyDown(index)}
+                          onFocus={handleDateInputFocus(index)}
+                          onBlur={handleDateInputBlur}
+                          aria-label={field.label}
+                          aria-describedby="date-input-helper date-input-error"
+                          aria-invalid={dateInputError}
+                          maxLength={field.maxLength}
+                        />
+                      </div>
+                      {index < dateEntryConfig.fields.length - 1 && (
+                        <div className="date-field-separator">
+                          {calendar === 'mayan-longcount' ? '.' : '/'}
+                        </div>
+                      )}
+                    </React.Fragment>
+                  );
+                })}
               </div>
               <span 
                 id="date-input-helper" 
@@ -688,7 +675,7 @@ export default function NavigationBar({
                 role="status"
                 aria-live="polite"
               >
-                Enter year (required), month and day (optional)
+                {dateEntryConfig.getHelperText()}
               </span>
               <span 
                 id="date-input-error" 
