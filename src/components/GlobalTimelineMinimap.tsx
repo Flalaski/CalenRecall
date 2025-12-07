@@ -1161,6 +1161,7 @@ export default function GlobalTimelineMinimap({
   }, [viewMode, minimapDimensions.scaleFactor]);
 
   // Build a crystalline, lightning-like branch path for a given scale and side
+  // More elbows create a more jagged lightning effect
   const buildInfinityBranchPath = (scale: TimeRange, direction: 'left' | 'right'): string => {
     const levelIndex = timeScaleOrder.indexOf(scale);
     const yTarget = scaleYPositions[scale];
@@ -1172,16 +1173,44 @@ export default function GlobalTimelineMinimap({
     // Deterministic jitter based on current date and scale, so the web shifts with movement
     const jitterSeed = `${scale}-${selectedDate.toISOString()}`;
     const jitter = hashToVerticalOffset(jitterSeed, 40); // -40..40
+    const jitter2 = hashToVerticalOffset(`${jitterSeed}-2`, 35);
+    const jitter3 = hashToVerticalOffset(`${jitterSeed}-3`, 30);
+    const jitter4 = hashToVerticalOffset(`${jitterSeed}-4`, 25);
 
-    // Intermediate "lightning" joints between center and target band
-    const midY1 = 100 + (yTarget - 100) * 0.33;
-    const midY2 = 100 + (yTarget - 100) * 0.66;
-
-    const midX1 = centerX + spread * 0.4 + jitter * 0.2;
-    const midX2 = centerX + spread * 0.8 - jitter * 0.2;
-    const endX = centerX + spread + jitter * 0.1;
-
-    return `M ${centerX},100 L ${midX1},${midY1} L ${midX2},${midY2} L ${endX},${yTarget}`;
+    // Create more intermediate "lightning" joints for more elbows
+    const segments = 6; // More segments = more elbows
+    const pathPoints: Array<{ x: number; y: number }> = [];
+    
+    // Start point
+    pathPoints.push({ x: centerX, y: 100 });
+    
+    // Generate multiple intermediate points with jitter for lightning effect
+    for (let i = 1; i < segments; i++) {
+      const t = i / segments;
+      const baseX = centerX + spread * t;
+      const baseY = 100 + (yTarget - 100) * t;
+      
+      // Add jitter that varies by segment for more natural lightning
+      const segmentJitter = i === 1 ? jitter * 0.3 :
+                           i === 2 ? jitter2 * 0.4 :
+                           i === 3 ? jitter3 * 0.35 :
+                           i === 4 ? jitter4 * 0.3 :
+                           jitter * 0.25;
+      
+      // Perpendicular offset for more dramatic lightning bends
+      const perpOffset = (i % 2 === 0 ? 1 : -1) * segmentJitter * 0.5;
+      
+      pathPoints.push({
+        x: baseX + segmentJitter * 0.2 + perpOffset,
+        y: baseY + segmentJitter * 0.15
+      });
+    }
+    
+    // End point
+    pathPoints.push({ x: centerX + spread + jitter * 0.1, y: yTarget });
+    
+    // Build path string with all points
+    return `M ${pathPoints[0].x},${pathPoints[0].y} ${pathPoints.slice(1).map(p => `L ${p.x},${p.y}`).join(' ')}`;
   };
 
   // Connection strategy types for adaptive extend variants
@@ -4438,9 +4467,10 @@ export default function GlobalTimelineMinimap({
             {timeScaleOrder.map((scale) => {
               const isActiveScale = scale === viewMode;
               const levelIndex = timeScaleOrder.indexOf(scale);
-              const baseOpacity = isActiveScale ? 0.9 : 0.35;
-              // Make active tier thicker and more visible
-              const thickness = isActiveScale ? 3.2 : 1.6;
+              // Make active tier much more pronounced
+              const baseOpacity = isActiveScale ? 1.0 : 0.35;
+              // Make active tier significantly thicker and more visible
+              const thickness = isActiveScale ? 4.5 : 1.6;
               
               // Get tier-specific colors
               const tierColor = getViewModeColor(scale);
@@ -4511,6 +4541,96 @@ export default function GlobalTimelineMinimap({
                     opacity={baseOpacity * 0.4}
                     className="infinity-tree-filament"
                   />
+
+                  {/* Sub-strands from branch lines to entry indicators - only for active tier */}
+                  {isActiveScale && visibleEntryPositions
+                    .filter(({ entry }) => entry.timeRange === scale)
+                    .slice(0, 50) // Limit to 50 entries per side for performance
+                    .map(({ entry, position, verticalOffset }, entryIdx) => {
+                      // Calculate entry position in SVG coordinates
+                      const entryX = (position / 100) * 1000;
+                      const baseYPosition = scaleYPositions[entry.timeRange];
+                      const entryY = baseYPosition + (verticalOffset || 0);
+                      
+                      // Determine which side the entry is on
+                      const isLeft = entryX < centerX;
+                      const direction = isLeft ? 'left' : 'right';
+                      
+                      // Calculate points along the branch path to find nearest connection point
+                      // Use same multi-elbow logic as buildInfinityBranchPath
+                      const baseSpread = 80 + levelIndex * 25;
+                      const spread = baseSpread * (direction === 'left' ? -1 : 1);
+                      const jitterSeed = `${scale}-${selectedDate.toISOString()}`;
+                      const jitter = hashToVerticalOffset(jitterSeed, 40);
+                      const jitter2 = hashToVerticalOffset(`${jitterSeed}-2`, 35);
+                      const jitter3 = hashToVerticalOffset(`${jitterSeed}-3`, 30);
+                      const jitter4 = hashToVerticalOffset(`${jitterSeed}-4`, 25);
+                      
+                      // Sample multiple points along branch to find closest to entry
+                      let nearestBranchX = centerX;
+                      let nearestBranchY = 100;
+                      let minDistance = Infinity;
+                      
+                      // Sample points along the multi-elbow branch path (matching buildInfinityBranchPath)
+                      const segments = 6;
+                      for (let i = 0; i <= segments; i++) {
+                        const t = i / segments;
+                        const baseX = centerX + spread * t;
+                        const baseY = 100 + (scaleYPositions[scale] - 100) * t;
+                        
+                        let sampleX: number, sampleY: number;
+                        if (i === 0) {
+                          sampleX = centerX;
+                          sampleY = 100;
+                        } else if (i === segments) {
+                          sampleX = centerX + spread + jitter * 0.1;
+                          sampleY = scaleYPositions[scale];
+                        } else {
+                          // Add jitter that varies by segment for more natural lightning
+                          const segmentJitter = i === 1 ? jitter * 0.3 :
+                                               i === 2 ? jitter2 * 0.4 :
+                                               i === 3 ? jitter3 * 0.35 :
+                                               i === 4 ? jitter4 * 0.3 :
+                                               jitter * 0.25;
+                          
+                          // Perpendicular offset for more dramatic lightning bends
+                          const perpOffset = (i % 2 === 0 ? 1 : -1) * segmentJitter * 0.5;
+                          
+                          sampleX = baseX + segmentJitter * 0.2 + perpOffset;
+                          sampleY = baseY + segmentJitter * 0.15;
+                        }
+                        
+                        const dist = Math.sqrt((entryX - sampleX) ** 2 + (entryY - sampleY) ** 2);
+                        if (dist < minDistance) {
+                          minDistance = dist;
+                          nearestBranchX = sampleX;
+                          nearestBranchY = sampleY;
+                        }
+                      }
+                      
+                      // Only draw if entry is reasonably close to the branch (within 250px)
+                      if (minDistance > 250) return null;
+                      
+                      // Create curved path from branch to entry with smooth arc
+                      const controlX = (nearestBranchX + entryX) / 2;
+                      const controlY = Math.min(nearestBranchY, entryY) - Math.abs(entryX - nearestBranchX) * 0.3;
+                      
+                      const strandPath = `M ${nearestBranchX},${nearestBranchY} Q ${controlX},${controlY} ${entryX},${entryY}`;
+                      
+                      return (
+                        <path
+                          key={`substrand-${scale}-${entry.id || entryIdx}-${direction}`}
+                          d={strandPath}
+                          stroke={tierColor}
+                          strokeWidth={isActiveScale ? 1.2 : 0.8}
+                          fill="none"
+                          strokeDasharray="3 4"
+                          opacity={isActiveScale ? 0.6 : 0.3}
+                          className="infinity-tree-substrand"
+                        />
+                      );
+                    })
+                    .filter(Boolean)}
                 </g>
               );
             })}

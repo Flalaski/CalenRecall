@@ -603,6 +603,13 @@
   opacity: 0.25;
 }
 
+.infinity-tree-substrand {
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
 /* Memory web connections - adaptive fractal webbing */
 .memory-web-connections {
   pointer-events: none;
