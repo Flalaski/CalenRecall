@@ -88,6 +88,26 @@ export default function NavigationBar({
     }
   };
 
+  // Render decade label with smaller "s"
+  const renderDateLabel = () => {
+    const label = getDateLabel();
+    if (viewMode === 'decade') {
+      // Parse decade label: "1990s CE" or "1990s" -> separate year and "s"
+      const match = label.match(/^(\d+)(s)(.*)$/);
+      if (match) {
+        const [, year, s, era] = match;
+        return (
+          <>
+            {year}
+            <span className="decade-suffix">{s}</span>
+            {era}
+          </>
+        );
+      }
+    }
+    return label;
+  };
+
   const goToToday = () => {
     playNavigationSound();
     onDateChange(new Date());
@@ -145,7 +165,7 @@ export default function NavigationBar({
           <button className="nav-button" onClick={() => navigate('next')}>
             →
           </button>
-          <h2 className={`date-label date-label-${viewMode}`}>{getDateLabel()}</h2>
+          <h2 className={`date-label date-label-${viewMode}`}>{renderDateLabel()}</h2>
         </div>
         <div className="right-controls">
           <div className="view-mode-selector">

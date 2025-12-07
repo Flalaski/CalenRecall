@@ -111,6 +111,11 @@
   color: #9c27b0;
 }
 
+.decade-suffix {
+  font-size: 0.6em;
+  vertical-align: baseline;
+}
+
 .date-label-year {
   color: #0277bd;
 }

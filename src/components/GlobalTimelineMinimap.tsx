@@ -4629,6 +4629,23 @@ export default function GlobalTimelineMinimap({
               const decadeDateTimestamp = mark.date ? mark.date.getTime() : Date.now() + idx;
               const decadeUniqueKey = `decade-label-${decadeDateTimestamp}-${labelPosition}-${idx}`;
               
+              // Parse decade label to render "s" smaller: "1990s" -> "1990" + smaller "s"
+              const renderDecadeLabel = () => {
+                const label = mark.label || '';
+                const match = label.match(/^(\d+)(s)(.*)$/);
+                if (match) {
+                  const [, year, s, rest] = match;
+                  return (
+                    <>
+                      {year}
+                      <span className="decade-suffix">{s}</span>
+                      {rest}
+                    </>
+                  );
+                }
+                return label;
+              };
+              
               return (
                 <div
                   key={decadeUniqueKey}
@@ -4637,7 +4654,7 @@ export default function GlobalTimelineMinimap({
                   data-position={labelPosition}
                   data-label={mark.label}
                 >
-                  {mark.label}
+                  {renderDecadeLabel()}
                 </div>
               );
             })}

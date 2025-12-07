@@ -1538,6 +1538,11 @@
   color: #9c27b0; /* Purple for decade */
 }
 
+.decade-suffix {
+  font-size: 0.6em;
+  vertical-align: baseline;
+}
+
 .scale-label.year-label {
   font-size: calc(var(--minimap-scale, 1) * 0.85rem); /* Increased base - will be overridden by inline style with magnification */
   font-weight: 400;
