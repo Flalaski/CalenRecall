@@ -1,42 +1,69 @@
 /**
  * Reading Room Theme
- * Traditional library reading room, quiet study space
- * Peaceful design perfect for focused reading and quiet research
+ * Primary school reading room with vibrant colors and geometric shapes
+ * Educational design perfect for learning and playful exploration
+ * 
+ * Creative Compositional Refactoring with Primary Colors & Shapes:
+ * - True primary colors: RED (#FF3333), BLUE (#0066FF), YELLOW (#FFD700)
+ * - Primary shapes: circles, squares, triangles, rectangles
+ * - Geometric design elements throughout
+ * - Bold, clear typography with educational appeal
+ * - Playful but organized layout
+ * - Shape-based badges, buttons, and decorative elements
  */
 
 /* ============================================
    COLOR PALETTE - CSS Custom Properties
    ============================================ */
 [data-theme="reading-room"] {
-  /* Backgrounds */
+  /* Backgrounds - Soft, welcoming cream tones */
   --reading-bg: #fefcf8;
   --reading-bg-secondary: #f9f7f3;
   --reading-bg-tertiary: #f5f3ef;
   --reading-bg-hover: #f0ede7;
+  --reading-bg-dark: #ebe8e0;
   
-  /* Text */
+  /* Text - Clear, readable dark charcoal */
   --text-primary: #2a2a2a;
   --text-secondary: #3a3a3a;
   --text-muted: #5a5a5a;
   
-  /* Accents */
-  --accent-green: #2d5016;
-  --accent-blue: #5a7a9a;
-  --accent-green-light: #3d6026;
+  /* PRIMARY COLORS - True primary school colors */
+  --primary-red: #FF3333;           /* True red - primary color */
+  --primary-red-light: #FF6666;     /* Lighter red for highlights */
+  --primary-red-dark: #CC0000;      /* Darker red for depth */
+  --primary-blue: #0066FF;          /* True blue - primary color */
+  --primary-blue-light: #3399FF;    /* Lighter blue for highlights */
+  --primary-blue-dark: #0052CC;     /* Darker blue for depth */
+  --primary-yellow: #FFD700;        /* True yellow (gold) - primary color */
+  --primary-yellow-light: #FFED4E;  /* Lighter yellow for highlights */
+  --primary-yellow-dark: #FFC700;   /* Darker yellow for depth */
   
-  /* Borders */
-  --border-warm: #8b8380;
-  --border-warm-light: #9b9390;
-  --border-warm-very-light: #b0a8a5;
+  /* Shape-based color assignments */
+  --shape-circle: var(--primary-red);      /* Circles = RED */
+  --shape-square: var(--primary-blue);     /* Squares = BLUE */
+  --shape-triangle: var(--primary-yellow); /* Triangles = YELLOW */
   
-  /* Highlights */
-  --highlight-blue: #6a8aaa;
-  --highlight-blue-dark: #5a7a9a;
+  /* Borders - Primary color borders */
+  --border-red: var(--primary-red);
+  --border-blue: var(--primary-blue);
+  --border-yellow: var(--primary-yellow);
+  --border-primary: var(--primary-blue);   /* Default border */
   
-  /* Base Typography */
+  /* Highlights - Primary color highlights */
+  --highlight-red: rgba(255, 51, 51, 0.2);
+  --highlight-blue: rgba(0, 102, 255, 0.2);
+  --highlight-yellow: rgba(255, 215, 0, 0.3);
+  
+  /* Accents for specific uses */
+  --accent-action: var(--primary-red);     /* Action buttons = RED */
+  --accent-info: var(--primary-blue);      /* Info/links = BLUE */
+  --accent-highlight: var(--primary-yellow); /* Highlights = YELLOW */
+  
+  /* Base Typography - Clear and readable */
   font-family: 'Georgia', 'Times New Roman', serif;
   font-size: 14px;
-  line-height: 1.6;
+  line-height: 1.7;                  /* More generous line height for reading comfort */
 }
 
 /* ============================================
@@ -47,11 +74,70 @@
   background: var(--reading-bg);
   color: var(--text-primary);
   --theme-body-bg: var(--reading-bg);
-  /* Peaceful reading room texture via gradient */
+  /* Primary school texture with primary colors - shapes in background */
   background-image: 
-    radial-gradient(circle at 20% 50%, rgba(45, 80, 22, 0.008) 0%, transparent 50%),
-    radial-gradient(circle at 80% 80%, rgba(90, 122, 154, 0.01) 0%, transparent 50%),
-    linear-gradient(135deg, #fefcf8 0%, #f9f7f3 50%, #f5f3ef 100%);
+    radial-gradient(circle at 20% 30%, rgba(255, 51, 51, 0.04) 0%, transparent 50%),
+    radial-gradient(circle at 80% 70%, rgba(0, 102, 255, 0.04) 0%, transparent 50%),
+    radial-gradient(circle at 50% 50%, rgba(255, 215, 0, 0.03) 0%, transparent 60%),
+    linear-gradient(135deg, #fefcf8 0%, #f9f7f3 48%, #f5f3ef 100%);
+  background-attachment: fixed;
+  position: relative;
+}
+
+/* Primary Shape Utilities */
+[data-theme="reading-room"] .shape-circle {
+  border-radius: 50%;
+  background: var(--shape-circle);
+  display: inline-block;
+}
+
+[data-theme="reading-room"] .shape-square {
+  border-radius: 0;
+  background: var(--shape-square);
+  display: inline-block;
+}
+
+[data-theme="reading-room"] .shape-triangle {
+  width: 0;
+  height: 0;
+  border-left: 8px solid transparent;
+  border-right: 8px solid transparent;
+  border-bottom: 14px solid var(--shape-triangle);
+  display: inline-block;
+}
+
+/* Shape decorators using pseudo-elements */
+[data-theme="reading-room"] .with-circle-accent::before {
+  content: '';
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--primary-red);
+  top: 4px;
+  right: 4px;
+}
+
+[data-theme="reading-room"] .with-square-accent::before {
+  content: '';
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  background: var(--primary-blue);
+  top: 4px;
+  right: 4px;
+}
+
+[data-theme="reading-room"] .with-triangle-accent::before {
+  content: '';
+  position: absolute;
+  width: 0;
+  height: 0;
+  border-left: 8px solid transparent;
+  border-right: 8px solid transparent;
+  border-bottom: 14px solid var(--primary-yellow);
+  top: 4px;
+  right: 4px;
 }
 
 [data-theme="reading-room"] #root {
@@ -73,10 +159,2444 @@
 
 [data-theme="reading-room"] .editor-section {
   background: var(--reading-bg);
-  border-left: 2px solid var(--border-warm);
+  border-left: 4px solid var(--primary-blue);
+  box-shadow: inset 4px 0 8px rgba(0, 102, 255, 0.12);
+  border-radius: 0;
+  position: relative;
 }
 
-/* NOTE: This theme file continues with comprehensive component styling.
-   Additional components will be added following the same pattern as 
-   Parchment Scholar theme, adapted to Reading Room color palette. */
+[data-theme="reading-room"] .editor-section::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--primary-red);
+  opacity: 0.3;
+  transform: translate(-10px, 10px);
+}
 
+/* ============================================
+   NAVIGATION BAR
+   ============================================ */
+[data-theme="reading-room"] .navigation-bar {
+  background: var(--reading-bg-secondary);
+  border-bottom: 4px solid var(--primary-blue);
+  box-shadow: 0 2px 8px rgba(0, 102, 255, 0.15);
+  position: relative;
+}
+
+[data-theme="reading-room"] .navigation-bar::before {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, 
+    var(--primary-red) 0%, 
+    var(--primary-blue) 33%,
+    var(--primary-yellow) 66%,
+    var(--primary-red) 100%);
+  opacity: 0.6;
+}
+
+[data-theme="reading-room"] .navigation-bar-top-row {
+  background: var(--reading-bg-secondary);
+  border-bottom: 1px solid var(--border-warm-light);
+}
+
+[data-theme="reading-room"] .nav-controls {
+  background: transparent;
+}
+
+[data-theme="reading-room"] .nav-button,
+[data-theme="reading-room"] .view-mode-button {
+  background: var(--reading-bg);
+  border: 3px solid var(--primary-blue);
+  border-radius: 0;  /* Square buttons - primary shape! */
+  color: var(--text-primary);
+  padding: 6px 14px;
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  transition: all 0.25s ease;
+  box-shadow: 0 2px 4px rgba(0, 102, 255, 0.2);
+  position: relative;
+}
+
+[data-theme="reading-room"] .nav-button::before,
+[data-theme="reading-room"] .view-mode-button::before {
+  content: '';
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;  /* Circle accent */
+  background: var(--primary-red);
+  opacity: 0.8;
+  transition: all 0.25s ease;
+}
+
+[data-theme="reading-room"] .nav-button:hover,
+[data-theme="reading-room"] .view-mode-button:hover {
+  background: var(--primary-yellow);
+  border-color: var(--primary-blue-dark);
+  color: var(--text-primary);
+  box-shadow: 0 4px 8px rgba(255, 215, 0, 0.3);
+  transform: translateY(-2px);
+}
+
+[data-theme="reading-room"] .nav-button:hover::before,
+[data-theme="reading-room"] .view-mode-button:hover::before {
+  opacity: 1;
+  transform: scale(1.2);
+}
+
+[data-theme="reading-room"] .nav-button:active,
+[data-theme="reading-room"] .view-mode-button:active {
+  background: var(--primary-yellow-dark);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
+  transform: translateY(0);
+}
+
+[data-theme="reading-room"] .view-mode-button.active {
+  background: var(--primary-red);
+  color: var(--reading-bg);
+  border-color: var(--primary-red-dark);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 4px 10px rgba(255, 51, 51, 0.4);
+  font-weight: 700;
+}
+
+[data-theme="reading-room"] .view-mode-button.active::before {
+  background: var(--primary-yellow);
+  opacity: 1;
+}
+
+[data-theme="reading-room"] .today-button {
+  background: var(--reading-bg);
+  border: 2px solid var(--border-green);
+  border-radius: 6px;
+  color: var(--text-primary);
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 13px;
+  font-weight: 500;
+  text-shadow: 0 1px 1px rgba(255, 255, 255, 0.7);
+  transition: all 0.25s ease;
+}
+
+[data-theme="reading-room"] .today-button:hover {
+  background: var(--highlight-green);
+  border-color: var(--accent-green);
+  color: var(--text-primary);
+  box-shadow: 0 3px 6px rgba(45, 80, 22, 0.15);
+}
+
+[data-theme="reading-room"] .date-label {
+  font-family: 'Georgia', 'Times New Roman', serif;
+  color: var(--text-primary);
+  text-shadow: 0 1px 2px rgba(255, 255, 255, 0.5);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+[data-theme="reading-room"] .view-mode-selector {
+  background: transparent;
+}
+
+[data-theme="reading-room"] .calendar-selector {
+  background: var(--reading-bg-secondary);
+}
+
+[data-theme="reading-room"] .calendar-select {
+  background: var(--reading-bg);
+  border: 2px solid var(--border-green);
+  border-radius: 6px;
+  color: var(--text-primary);
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 13px;
+  font-weight: 500;
+  padding: 5px 10px;
+  transition: all 0.2s ease;
+}
+
+[data-theme="reading-room"] .calendar-select:focus {
+  border-color: var(--accent-green);
+  outline: 3px solid rgba(45, 80, 22, 0.2);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px rgba(45, 80, 22, 0.1);
+}
+
+[data-theme="reading-room"] .calendar-info-panel {
+  background: var(--reading-bg-secondary);
+  border: 2px solid var(--border-green);
+  border-radius: 8px;
+  box-shadow: 0 2px 6px rgba(90, 122, 74, 0.1);
+}
+
+[data-theme="reading-room"] .calendar-definition-toggle {
+  background: var(--reading-bg);
+  border: 2px solid var(--border-green);
+  border-radius: 6px;
+  color: var(--text-primary);
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 5px 10px;
+  transition: all 0.2s ease;
+}
+
+[data-theme="reading-room"] .calendar-definition-toggle:hover {
+  background: var(--reading-bg-hover);
+  border-color: var(--accent-green);
+}
+
+[data-theme="reading-room"] .calendar-definition-drawer {
+  background: var(--reading-bg-secondary);
+  border: 2px solid var(--border-green);
+  border-radius: 8px;
+  box-shadow: 0 3px 8px rgba(90, 122, 74, 0.15);
+}
+
+/* ============================================
+   CALENDAR VIEW
+   ============================================ */
+[data-theme="reading-room"] .calendar-loading {
+  background: var(--reading-bg);
+  color: var(--text-secondary);
+}
+
+[data-theme="reading-room"] .calendar-grid {
+  background: var(--reading-bg-secondary);
+  border: 4px solid var(--primary-blue);
+  border-radius: 0;  /* Square border - primary shape! */
+  box-shadow: 0 4px 12px rgba(0, 102, 255, 0.2);
+  position: relative;
+  overflow: hidden;
+}
+
+[data-theme="reading-room"] .calendar-grid::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(circle at 50% 50%, rgba(106, 138, 170, 0.03) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+[data-theme="reading-room"] .calendar-cell {
+  background: var(--reading-bg-secondary);
+  border: 2px solid var(--border-warm-light);
+  border-radius: 6px;
+  color: var(--text-primary);
+  transition: all 0.25s ease;
+  position: relative;
+}
+
+[data-theme="reading-room"] .calendar-cell:hover {
+  background: var(--reading-bg-hover);
+  border-color: var(--accent-green);
+  box-shadow: 0 3px 6px rgba(45, 80, 22, 0.15);
+  transform: translateY(-2px) scale(1.02);
+}
+
+[data-theme="reading-room"] .calendar-cell.empty-cell {
+  background: var(--reading-bg);
+  cursor: default;
+  opacity: 0.5;
+}
+
+[data-theme="reading-room"] .calendar-cell.today {
+  background: var(--primary-yellow);
+  color: var(--text-primary);
+  border: 4px solid var(--primary-blue);
+  font-weight: 700;
+  box-shadow: 0 4px 10px rgba(255, 215, 0, 0.4);
+  position: relative;
+  border-radius: 0;  /* Square shape - primary! */
+}
+
+[data-theme="reading-room"] .calendar-cell.today::after {
+  content: '';
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;  /* Circle accent */
+  background: var(--primary-red);
+  box-shadow: 0 2px 4px rgba(255, 51, 51, 0.5);
+}
+
+[data-theme="reading-room"] .calendar-cell.selected {
+  background: var(--primary-red);
+  color: var(--reading-bg);
+  border-color: var(--primary-red-dark);
+  border-width: 4px;
+  box-shadow: 0 4px 12px rgba(255, 51, 51, 0.5);
+  font-weight: 700;
+  border-radius: 0;  /* Square shape - primary! */
+  position: relative;
+}
+
+[data-theme="reading-room"] .calendar-cell.selected::before {
+  content: '';
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  width: 10px;
+  height: 10px;
+  background: var(--primary-yellow);
+  clip-path: polygon(50% 0%, 0% 100%, 100% 100%);  /* Triangle shape! */
+}
+
+[data-theme="reading-room"] .calendar-cell.has-entry {
+  background: var(--reading-bg-secondary);
+  border: 3px solid var(--primary-blue);
+  border-radius: 0;  /* Square cells - primary shape! */
+  box-shadow: 0 2px 6px rgba(0, 102, 255, 0.3);
+  position: relative;
+}
+
+[data-theme="reading-room"] .calendar-cell.has-entry::after {
+  content: '';
+  position: absolute;
+  bottom: 4px;
+  right: 4px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;  /* Circle indicator */
+  background: var(--primary-blue);
+  box-shadow: 0 1px 3px rgba(0, 102, 255, 0.5);
+}
+
+[data-theme="reading-room"] .calendar-cell.has-entry.today {
+  background: var(--primary-yellow);
+  border-color: var(--primary-blue);
+  color: var(--text-primary);
+  border-width: 4px;
+}
+
+[data-theme="reading-room"] .cell-content {
+  color: inherit;
+}
+
+[data-theme="reading-room"] .cell-label {
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 13px;
+  color: inherit;
+  font-weight: 500;
+}
+
+[data-theme="reading-room"] .entry-indicator {
+  background: var(--primary-blue);
+  border-radius: 50%;  /* Circle - primary shape! */
+  box-shadow: 0 2px 6px rgba(0, 102, 255, 0.5);
+  border: 3px solid var(--primary-blue-light);
+}
+
+[data-theme="reading-room"] .weekday-header {
+  background: var(--primary-blue);
+  border-bottom: 4px solid var(--primary-blue-dark);
+  color: var(--reading-bg);
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-weight: 700;
+  text-transform: uppercase;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  letter-spacing: 0.1em;
+}
+
+[data-theme="reading-room"] .weekday-cell {
+  background: var(--reading-bg-dark);
+  border: 2px solid var(--border-green);
+  color: var(--text-primary);
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-weight: 700;
+}
+
+[data-theme="reading-room"] .day-number {
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 13px;
+  color: inherit;
+  font-weight: 500;
+}
+
+[data-theme="reading-room"] .day-name {
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 11px;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+[data-theme="reading-room"] .day-month {
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 10px;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+[data-theme="reading-room"] .day-header h2 {
+  color: var(--text-primary);
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-weight: 700;
+  text-shadow: 0 1px 2px rgba(255, 255, 255, 0.5);
+  letter-spacing: 0.02em;
+}
+
+/* ============================================
+   TIMELINE VIEW
+   ============================================ */
+[data-theme="reading-room"] .timeline-loading {
+  background: var(--reading-bg);
+  color: var(--text-secondary);
+}
+
+[data-theme="reading-room"] .timeline-grid {
+  background: var(--reading-bg-secondary);
+  border: 3px solid var(--border-green);
+  border-radius: 8px;
+  box-shadow: 0 3px 10px rgba(90, 122, 74, 0.12);
+}
+
+[data-theme="reading-room"] .timeline-cell {
+  background: var(--reading-bg-secondary);
+  border: 2px solid var(--border-warm-light);
+  border-radius: 6px;
+  color: var(--text-primary);
+  transition: all 0.25s ease;
+}
+
+[data-theme="reading-room"] .timeline-cell:hover {
+  background: var(--reading-bg-hover);
+  border-color: var(--accent-green);
+  box-shadow: 0 3px 6px rgba(45, 80, 22, 0.15);
+}
+
+[data-theme="reading-room"] .timeline-cell.today {
+  background: var(--highlight-yellow);
+  color: var(--text-primary);
+  border: 3px solid var(--accent-green);
+  font-weight: 700;
+  box-shadow: 0 3px 8px rgba(45, 80, 22, 0.2);
+}
+
+[data-theme="reading-room"] .timeline-month-view,
+[data-theme="reading-room"] .timeline-week-view {
+  background: var(--reading-bg);
+}
+
+[data-theme="reading-room"] .month-view-content {
+  background: var(--reading-bg);
+}
+
+[data-theme="reading-room"] .month-calendar-section {
+  background: var(--reading-bg);
+}
+
+[data-theme="reading-room"] .month-week-entries-section {
+  background: var(--reading-bg);
+  border-left: 3px solid var(--border-green);
+  box-shadow: inset 4px 0 8px rgba(90, 122, 74, 0.06);
+  border-radius: 0 8px 8px 0;
+}
+
+[data-theme="reading-room"] .month-entries-section {
+  border-bottom: 3px solid var(--border-green);
+}
+
+[data-theme="reading-room"] .month-entries-header {
+  background: var(--reading-bg-dark);
+  border-top: 3px solid var(--border-green);
+  border-left: 3px solid var(--border-green);
+  border-bottom: 2px solid var(--border-warm-light);
+  border-right: 2px solid var(--border-warm-light);
+  color: var(--text-primary);
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-weight: 700;
+  text-shadow: 0 1px 2px rgba(255, 255, 255, 0.5);
+  letter-spacing: 0.03em;
+}
+
+[data-theme="reading-room"] .month-entries-list {
+  background: var(--reading-bg);
+}
+
+[data-theme="reading-room"] .month-entry-item {
+  background: var(--reading-bg-secondary) !important;
+  border: 2px solid var(--border-green);
+  border-radius: 8px;
+  color: var(--text-primary);
+  box-shadow: 0 2px 5px rgba(90, 122, 74, 0.1);
+  transition: all 0.25s ease;
+}
+
+[data-theme="reading-room"] .month-entry-item:hover {
+  background: var(--reading-bg-hover) !important;
+  border-color: var(--accent-green);
+  box-shadow: 0 4px 8px rgba(45, 80, 22, 0.2);
+  transform: translateX(3px);
+}
+
+[data-theme="reading-room"] .month-entry-title {
+  color: var(--text-primary);
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-weight: 600;
+}
+
+[data-theme="reading-room"] .month-entry-preview {
+  color: var(--text-secondary);
+  font-family: 'Georgia', 'Times New Roman', serif;
+}
+
+[data-theme="reading-room"] .month-entry-empty {
+  color: var(--text-muted);
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-style: italic;
+}
+
+[data-theme="reading-room"] .week-entries-header {
+  background: var(--reading-bg-dark);
+  border-top: 3px solid var(--border-green);
+  border-left: 3px solid var(--border-green);
+  border-bottom: 2px solid var(--border-warm-light);
+  border-right: 2px solid var(--border-warm-light);
+  color: var(--text-primary);
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+}
+
+[data-theme="reading-room"] .week-entries-list {
+  background: var(--reading-bg);
+}
+
+[data-theme="reading-room"] .week-entry-group {
+  background: var(--reading-bg-secondary);
+  border: 2px solid var(--border-green);
+  border-radius: 8px;
+  box-shadow: 0 2px 6px rgba(90, 122, 74, 0.1);
+}
+
+[data-theme="reading-room"] .week-entry-group-header {
+  background: var(--reading-bg-dark);
+  border-bottom: 2px solid var(--border-warm-light);
+}
+
+[data-theme="reading-room"] .week-label {
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 13px;
+  color: var(--text-primary);
+  font-weight: 700;
+}
+
+[data-theme="reading-room"] .week-entry-count {
+  background: var(--accent-green);
+  color: var(--reading-bg);
+  border: 2px solid var(--accent-green-bright);
+  border-radius: 12px;
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  box-shadow: 0 2px 4px rgba(45, 80, 22, 0.2);
+}
+
+[data-theme="reading-room"] .week-entry-items {
+  background: transparent;
+}
+
+[data-theme="reading-room"] .week-entry-item {
+  background: var(--reading-bg);
+  border: 2px solid var(--border-warm-light);
+  border-radius: 8px;
+  border-left: 4px solid var(--accent-blue-bright);
+  transition: all 0.25s ease;
+}
+
+[data-theme="reading-room"] .week-entry-item:hover {
+  background: var(--reading-bg-hover);
+  border-color: var(--accent-green);
+  box-shadow: 0 3px 6px rgba(45, 80, 22, 0.15);
+}
+
+[data-theme="reading-room"] .week-entry-title {
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 13px;
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+[data-theme="reading-room"] .week-entry-empty {
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 12px;
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+/* ============================================
+   ENTRY VIEWER
+   ============================================ */
+[data-theme="reading-room"] .entry-viewer {
+  background: var(--reading-bg);
+}
+
+[data-theme="reading-room"] .viewer-header {
+  background: var(--reading-bg-secondary);
+  border-bottom: 3px solid var(--border-green);
+  box-shadow: 0 3px 8px rgba(90, 122, 74, 0.1);
+}
+
+[data-theme="reading-room"] .header-top {
+  background: transparent;
+}
+
+[data-theme="reading-room"] .viewer-header h3,
+[data-theme="reading-room"] .editor-header h3 {
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 16px;
+  color: var(--text-primary);
+  font-weight: 700;
+  text-shadow: 0 1px 2px rgba(255, 255, 255, 0.5);
+  letter-spacing: 0.02em;
+}
+
+[data-theme="reading-room"] .header-actions {
+  background: transparent;
+}
+
+[data-theme="reading-room"] .edit-button,
+[data-theme="reading-room"] .duplicate-button,
+[data-theme="reading-room"] .new-entry-button-header {
+  background: var(--reading-bg);
+  border: 3px solid var(--primary-blue);
+  border-radius: 0;  /* Square button - primary shape! */
+  color: var(--text-primary);
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 6px 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  transition: all 0.25s ease;
+  box-shadow: 0 2px 4px rgba(0, 102, 255, 0.2);
+  position: relative;
+}
+
+[data-theme="reading-room"] .edit-button::before,
+[data-theme="reading-room"] .duplicate-button::before,
+[data-theme="reading-room"] .new-entry-button-header::before {
+  content: '';
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;  /* Circle accent */
+  background: var(--primary-red);
+  opacity: 0.8;
+}
+
+[data-theme="reading-room"] .edit-button:hover,
+[data-theme="reading-room"] .duplicate-button:hover,
+[data-theme="reading-room"] .new-entry-button-header:hover {
+  background: var(--primary-yellow);
+  border-color: var(--primary-blue-dark);
+  color: var(--text-primary);
+  box-shadow: 0 4px 8px rgba(255, 215, 0, 0.3);
+  transform: translateY(-2px);
+}
+
+[data-theme="reading-room"] .edit-button:hover::before,
+[data-theme="reading-room"] .duplicate-button:hover::before,
+[data-theme="reading-room"] .new-entry-button-header:hover::before {
+  opacity: 1;
+  transform: scale(1.2);
+}
+
+[data-theme="reading-room"] .time-range-badge-viewer {
+  background: var(--primary-blue);
+  border: 3px solid var(--primary-blue-dark);
+  border-radius: 0;  /* Square badge - primary shape! */
+  color: var(--reading-bg);
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 12px;
+  box-shadow: 0 2px 6px rgba(0, 102, 255, 0.4);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  position: relative;
+}
+
+[data-theme="reading-room"] .time-range-badge-viewer::after {
+  content: '';
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;  /* Circle accent */
+  background: var(--primary-red);
+}
+
+[data-theme="reading-room"] .entry-date-display {
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 13px;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+[data-theme="reading-room"] .viewer-content {
+  background: var(--reading-bg-secondary);
+  color: var(--text-primary);
+  box-shadow: 0 3px 8px rgba(90, 122, 74, 0.1);
+  border-radius: 8px;
+}
+
+[data-theme="reading-room"] .viewer-title {
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-primary);
+  border-bottom: 3px solid var(--border-green);
+  padding-bottom: 10px;
+  margin-bottom: 14px;
+  letter-spacing: 0.01em;
+}
+
+[data-theme="reading-room"] .viewer-text {
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 14px;
+  color: var(--text-primary);
+  line-height: 1.8;
+}
+
+[data-theme="reading-room"] .viewer-tags {
+  background: transparent;
+  border-top: 2px solid var(--border-warm-light);
+  padding-top: 12px;
+}
+
+[data-theme="reading-room"] .viewer-tag {
+  background: var(--reading-bg-dark);
+  border: 2px solid var(--border-green);
+  border-radius: 12px;
+  color: var(--text-primary);
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 5px 10px;
+}
+
+[data-theme="reading-room"] .viewer-linked-entries {
+  background: transparent;
+  border-top: 2px solid var(--border-warm-light);
+  padding-top: 12px;
+}
+
+[data-theme="reading-room"] .viewer-linked-entries h4 {
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 8px;
+}
+
+[data-theme="reading-room"] .linked-entries-list {
+  background: transparent;
+}
+
+[data-theme="reading-room"] .linked-entry-item {
+  background: var(--reading-bg-secondary);
+  border: 2px solid var(--border-green);
+  border-radius: 8px;
+  color: var(--text-primary);
+  padding: 10px;
+  transition: all 0.25s ease;
+  box-shadow: 0 2px 5px rgba(90, 122, 74, 0.1);
+}
+
+[data-theme="reading-room"] .linked-entry-item:hover {
+  background: var(--reading-bg-hover);
+  border-color: var(--accent-green);
+  box-shadow: 0 4px 8px rgba(45, 80, 22, 0.2);
+  transform: translateX(2px);
+}
+
+[data-theme="reading-room"] .linked-entry-title {
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+[data-theme="reading-room"] .linked-entry-meta {
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+[data-theme="reading-room"] .linked-entry-date {
+  color: var(--text-secondary);
+}
+
+[data-theme="reading-room"] .linked-entry-time-range {
+  background: var(--accent-green);
+  border: 2px solid var(--accent-green-bright);
+  border-radius: 12px;
+  color: var(--reading-bg);
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 8px;
+}
+
+[data-theme="reading-room"] .viewer-empty {
+  background: var(--reading-bg);
+  color: var(--text-muted);
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 14px;
+  font-style: italic;
+}
+
+[data-theme="reading-room"] .viewer-loading {
+  background: var(--reading-bg);
+  color: var(--text-secondary);
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 14px;
+}
+
+/* ============================================
+   PERIOD ENTRIES & FILTERING
+   ============================================ */
+[data-theme="reading-room"] .period-entries-controls {
+  background: var(--reading-bg-dark);
+  border-top: 3px solid var(--border-green);
+  border-left: 3px solid var(--border-green);
+  border-bottom: 2px solid var(--border-warm-light);
+  border-right: 2px solid var(--border-warm-light);
+}
+
+[data-theme="reading-room"] .period-entries-filter,
+[data-theme="reading-room"] .period-entries-sort {
+  background: transparent;
+}
+
+[data-theme="reading-room"] .period-entries-filter label,
+[data-theme="reading-room"] .period-entries-sort label {
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 13px;
+  color: var(--text-primary);
+  font-weight: 700;
+}
+
+[data-theme="reading-room"] .period-entries-tags {
+  background: transparent;
+}
+
+[data-theme="reading-room"] .period-entry-filter-tag {
+  background: var(--reading-bg-secondary);
+  border: 2px solid var(--border-green);
+  border-radius: 12px;
+  color: var(--text-primary);
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 5px 12px;
+  transition: all 0.25s ease;
+}
+
+[data-theme="reading-room"] .period-entry-filter-tag:hover {
+  background: var(--reading-bg-hover);
+  border-color: var(--accent-green);
+}
+
+[data-theme="reading-room"] .period-entry-filter-tag.active {
+  background: var(--accent-green);
+  color: var(--reading-bg);
+  border-color: var(--accent-green-bright);
+  font-weight: 700;
+}
+
+[data-theme="reading-room"] .period-entry-clear-filters {
+  background: var(--reading-bg);
+  border: 2px solid var(--border-green);
+  border-radius: 6px;
+  color: var(--text-primary);
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 13px;
+  font-weight: 500;
+  padding: 6px 14px;
+}
+
+[data-theme="reading-room"] .period-entry-clear-filters:hover {
+  background: var(--reading-bg-hover);
+  border-color: var(--accent-green);
+}
+
+[data-theme="reading-room"] .period-entries-sort select {
+  background: var(--reading-bg-secondary);
+  border: 2px solid var(--border-green);
+  border-radius: 6px;
+  color: var(--text-primary);
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 13px;
+  font-weight: 500;
+  padding: 5px 10px;
+}
+
+[data-theme="reading-room"] .period-entries-sort select:focus {
+  border-color: var(--accent-green);
+  outline: 3px solid rgba(45, 80, 22, 0.2);
+  outline-offset: 2px;
+}
+
+[data-theme="reading-room"] .period-entries-list {
+  background: transparent;
+}
+
+[data-theme="reading-room"] .period-entry-item {
+  background: var(--reading-bg-secondary);
+  border: 2px solid var(--border-green);
+  border-radius: 8px;
+  color: var(--text-primary);
+  box-shadow: 0 2px 5px rgba(90, 122, 74, 0.1);
+  transition: all 0.25s ease;
+}
+
+[data-theme="reading-room"] .period-entry-item:hover {
+  background: var(--reading-bg-hover);
+  border-color: var(--accent-green);
+  box-shadow: 0 4px 8px rgba(45, 80, 22, 0.2);
+}
+
+[data-theme="reading-room"] .period-entry-header {
+  background: transparent;
+}
+
+[data-theme="reading-room"] .period-entry-title-row {
+  background: transparent;
+}
+
+[data-theme="reading-room"] .period-entry-title {
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+[data-theme="reading-room"] .period-entry-actions {
+  background: transparent;
+}
+
+[data-theme="reading-room"] .period-entry-edit-button {
+  background: var(--reading-bg);
+  border: 2px solid var(--border-green);
+  border-radius: 6px;
+  color: var(--text-primary);
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 5px 10px;
+}
+
+[data-theme="reading-room"] .period-entry-edit-button:hover {
+  background: var(--reading-bg-hover);
+  border-color: var(--accent-green);
+}
+
+[data-theme="reading-room"] .period-entry-badge {
+  background: var(--accent-green);
+  color: var(--reading-bg);
+  border: 2px solid var(--accent-green-bright);
+  border-radius: 12px;
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 8px;
+}
+
+[data-theme="reading-room"] .period-entry-meta {
+  background: transparent;
+}
+
+[data-theme="reading-room"] .period-entry-date {
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 12px;
+  color: var(--text-secondary);
+  text-decoration: underline;
+  font-weight: 500;
+}
+
+[data-theme="reading-room"] .period-entry-content {
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 13px;
+  color: var(--text-primary);
+  line-height: 1.8;
+}
+
+[data-theme="reading-room"] .period-entry-content-wrapper {
+  background: transparent;
+}
+
+[data-theme="reading-room"] .period-entry-tags {
+  background: transparent;
+  border-top: 2px solid var(--border-warm-light);
+  padding-top: 8px;
+}
+
+[data-theme="reading-room"] .period-entry-tag {
+  background: var(--reading-bg-dark);
+  border: 2px solid var(--border-green);
+  border-radius: 12px;
+  color: var(--text-primary);
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 11px;
+  font-weight: 500;
+  padding: 3px 8px;
+}
+
+/* ============================================
+   JOURNAL EDITOR
+   ============================================ */
+[data-theme="reading-room"] .journal-editor,
+[data-theme="reading-room"] .journal-editor-inline {
+  background: var(--reading-bg);
+}
+
+[data-theme="reading-room"] .editor-loading {
+  background: var(--reading-bg);
+  color: var(--text-secondary);
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 14px;
+}
+
+[data-theme="reading-room"] .editor-header {
+  background: var(--reading-bg-secondary);
+  border-bottom: 3px solid var(--border-green);
+  box-shadow: 0 3px 8px rgba(90, 122, 74, 0.1);
+}
+
+[data-theme="reading-room"] .editor-content {
+  background: var(--reading-bg-secondary);
+  color: var(--text-primary);
+  box-shadow: 0 3px 8px rgba(90, 122, 74, 0.1);
+}
+
+[data-theme="reading-room"] .view-mode-message {
+  background: var(--reading-bg);
+  color: var(--text-muted);
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 13px;
+  font-style: italic;
+}
+
+[data-theme="reading-room"] .title-input,
+[data-theme="reading-room"] .content-input,
+[data-theme="reading-room"] .tag-input {
+  background: var(--reading-bg);
+  border: 2px solid var(--border-green);
+  border-radius: 8px;
+  color: var(--text-primary);
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 14px;
+  padding: 10px;
+  transition: all 0.25s ease;
+  font-weight: 400;
+}
+
+[data-theme="reading-room"] .title-input:focus,
+[data-theme="reading-room"] .content-input:focus,
+[data-theme="reading-room"] .tag-input:focus {
+  border-color: var(--accent-green);
+  outline: 3px solid rgba(45, 80, 22, 0.2);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px rgba(45, 80, 22, 0.1);
+  background: var(--reading-bg-secondary);
+}
+
+[data-theme="reading-room"] .tags-section {
+  background: transparent;
+}
+
+[data-theme="reading-room"] .tags-input-container {
+  background: transparent;
+}
+
+[data-theme="reading-room"] .add-tag-button {
+  background: var(--reading-bg);
+  border: 2px solid var(--border-green);
+  border-radius: 6px;
+  color: var(--text-primary);
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 13px;
+  font-weight: 500;
+  padding: 6px 14px;
+}
+
+[data-theme="reading-room"] .add-tag-button:hover {
+  background: var(--reading-bg-hover);
+  border-color: var(--accent-green);
+}
+
+[data-theme="reading-room"] .tags-list {
+  background: transparent;
+}
+
+[data-theme="reading-room"] .tag {
+  background: var(--reading-bg-dark);
+  border: 2px solid var(--border-green);
+  border-radius: 12px;
+  color: var(--text-primary);
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 5px 10px;
+}
+
+[data-theme="reading-room"] .tag-remove {
+  background: transparent;
+  border: none;
+  color: var(--text-primary);
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 12px;
+  margin-left: 4px;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+[data-theme="reading-room"] .tag-remove:hover {
+  background: var(--accent-green);
+  color: var(--reading-bg);
+}
+
+[data-theme="reading-room"] .editor-footer {
+  background: var(--reading-bg-secondary);
+  border-top: 3px solid var(--border-green);
+}
+
+[data-theme="reading-room"] .footer-actions {
+  background: transparent;
+}
+
+[data-theme="reading-room"] .save-button {
+  background: var(--primary-blue);
+  border: 4px solid var(--primary-blue-dark);
+  border-radius: 0;  /* Square button - primary shape! */
+  color: var(--reading-bg);
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 12px 24px;
+  transition: all 0.25s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 4px 8px rgba(0, 102, 255, 0.4);
+  position: relative;
+}
+
+[data-theme="reading-room"] .save-button::before {
+  content: '';
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;  /* Circle accent */
+  background: var(--primary-yellow);
+  box-shadow: 0 2px 4px rgba(255, 215, 0, 0.6);
+}
+
+[data-theme="reading-room"] .save-button:hover:not(:disabled) {
+  background: var(--primary-blue-light);
+  box-shadow: 0 6px 12px rgba(0, 102, 255, 0.5);
+  transform: translateY(-2px);
+}
+
+[data-theme="reading-room"] .save-button:hover:not(:disabled)::before {
+  transform: scale(1.3);
+  background: var(--primary-red);
+}
+
+[data-theme="reading-room"] .save-button:disabled {
+  background: var(--border-warm-light);
+  color: var(--text-muted);
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+[data-theme="reading-room"] .cancel-button {
+  background: var(--reading-bg);
+  border: 2px solid var(--border-green);
+  border-radius: 6px;
+  color: var(--text-primary);
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 13px;
+  font-weight: 500;
+  padding: 10px 20px;
+}
+
+[data-theme="reading-room"] .cancel-button:hover {
+  background: var(--reading-bg-hover);
+  border-color: var(--accent-green);
+}
+
+[data-theme="reading-room"] .delete-button {
+  background: var(--reading-bg);
+  border: 4px solid var(--primary-red);
+  border-radius: 0;  /* Square button - primary shape! */
+  color: var(--text-primary);
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 12px 24px;
+  transition: all 0.25s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  box-shadow: 0 2px 4px rgba(255, 51, 51, 0.3);
+  position: relative;
+}
+
+[data-theme="reading-room"] .delete-button::before {
+  content: '';
+  position: absolute;
+  top: -6px;
+  left: -6px;
+  width: 0;
+  height: 0;
+  border-left: 10px solid transparent;
+  border-right: 10px solid transparent;
+  border-bottom: 18px solid var(--primary-yellow);  /* Triangle accent */
+  opacity: 0.8;
+  transition: all 0.25s ease;
+}
+
+[data-theme="reading-room"] .delete-button:hover {
+  background: var(--primary-red);
+  border-color: var(--primary-red-dark);
+  color: var(--reading-bg);
+  font-weight: 700;
+  box-shadow: 0 4px 10px rgba(255, 51, 51, 0.5);
+  transform: translateY(-2px);
+}
+
+[data-theme="reading-room"] .delete-button:hover::before {
+  opacity: 1;
+  border-bottom-color: var(--primary-blue);
+}
+
+[data-theme="reading-room"] .new-entry-button {
+  background: var(--primary-blue);
+  border: 4px solid var(--primary-blue-dark);
+  border-radius: 0;  /* Square button - primary shape! */
+  color: var(--reading-bg);
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 12px 24px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 4px 8px rgba(0, 102, 255, 0.4);
+  position: relative;
+  transition: all 0.25s ease;
+}
+
+[data-theme="reading-room"] .new-entry-button::before {
+  content: '';
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;  /* Circle accent */
+  background: var(--primary-yellow);
+  box-shadow: 0 2px 4px rgba(255, 215, 0, 0.6);
+}
+
+[data-theme="reading-room"] .new-entry-button:hover {
+  background: var(--primary-blue-light);
+  box-shadow: 0 6px 12px rgba(0, 102, 255, 0.5);
+  transform: translateY(-2px);
+}
+
+[data-theme="reading-room"] .new-entry-button:hover::before {
+  transform: scale(1.3);
+  background: var(--primary-red);
+}
+
+[data-theme="reading-room"] .confirm-dialog-overlay {
+  background: rgba(42, 42, 42, 0.7);
+}
+
+[data-theme="reading-room"] .confirm-dialog {
+  background: var(--reading-bg-secondary);
+  border: 3px solid var(--border-green);
+  border-radius: 12px;
+  color: var(--text-primary);
+  font-family: 'Georgia', 'Times New Roman', serif;
+  box-shadow: 0 5px 20px rgba(42, 42, 42, 0.4);
+}
+
+[data-theme="reading-room"] .confirm-dialog-buttons {
+  background: transparent;
+}
+
+/* ============================================
+   JOURNAL LIST
+   ============================================ */
+[data-theme="reading-room"] .journal-list {
+  background: var(--reading-bg);
+  border-right: 3px solid var(--border-green);
+}
+
+[data-theme="reading-room"] .journal-list-loading {
+  background: var(--reading-bg);
+  color: var(--text-secondary);
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 14px;
+}
+
+[data-theme="reading-room"] .journal-list-header {
+  background: var(--reading-bg-dark);
+  border-top: 3px solid var(--border-green);
+  border-left: 3px solid var(--border-green);
+  border-bottom: 2px solid var(--border-warm-light);
+  border-right: 2px solid var(--border-warm-light);
+}
+
+[data-theme="reading-room"] .journal-list-header h3 {
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: 0.03em;
+}
+
+[data-theme="reading-room"] .journal-list-header-actions {
+  background: transparent;
+}
+
+[data-theme="reading-room"] .journal-list-content {
+  background: var(--reading-bg);
+}
+
+[data-theme="reading-room"] .journal-list-controls {
+  background: var(--reading-bg-dark);
+  border-top: 3px solid var(--border-green);
+  border-left: 3px solid var(--border-green);
+  border-bottom: 2px solid var(--border-warm-light);
+  border-right: 2px solid var(--border-warm-light);
+}
+
+[data-theme="reading-room"] .journal-list-filter,
+[data-theme="reading-room"] .journal-list-sort {
+  background: transparent;
+}
+
+[data-theme="reading-room"] .journal-list-filter label,
+[data-theme="reading-room"] .journal-list-sort label {
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 13px;
+  color: var(--text-primary);
+  font-weight: 700;
+}
+
+[data-theme="reading-room"] .journal-list-tags {
+  background: transparent;
+}
+
+[data-theme="reading-room"] .journal-entry-filter-tag {
+  background: var(--reading-bg-secondary);
+  border: 2px solid var(--border-green);
+  border-radius: 12px;
+  color: var(--text-primary);
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 5px 12px;
+  transition: all 0.25s ease;
+}
+
+[data-theme="reading-room"] .journal-entry-filter-tag:hover {
+  background: var(--reading-bg-hover);
+  border-color: var(--accent-green);
+}
+
+[data-theme="reading-room"] .journal-entry-filter-tag.active {
+  background: var(--accent-green);
+  color: var(--reading-bg);
+  border-color: var(--accent-green-bright);
+  font-weight: 700;
+}
+
+[data-theme="reading-room"] .journal-entry-clear-filters {
+  background: var(--reading-bg);
+  border: 2px solid var(--border-green);
+  border-radius: 6px;
+  color: var(--text-primary);
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 13px;
+  font-weight: 500;
+  padding: 6px 14px;
+}
+
+[data-theme="reading-room"] .journal-entry-clear-filters:hover {
+  background: var(--reading-bg-hover);
+  border-color: var(--accent-green);
+}
+
+[data-theme="reading-room"] .journal-list-sort select {
+  background: var(--reading-bg-secondary);
+  border: 2px solid var(--border-green);
+  border-radius: 6px;
+  color: var(--text-primary);
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 13px;
+  font-weight: 500;
+  padding: 5px 10px;
+}
+
+[data-theme="reading-room"] .journal-list-empty {
+  background: var(--reading-bg);
+  color: var(--text-muted);
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 14px;
+  font-style: italic;
+}
+
+[data-theme="reading-room"] .journal-entries {
+  background: transparent;
+}
+
+[data-theme="reading-room"] .journal-entry-item {
+  background: var(--reading-bg-secondary);
+  border: 2px solid var(--border-green);
+  border-radius: 8px;
+  color: var(--text-primary);
+  box-shadow: 0 2px 5px rgba(90, 122, 74, 0.1);
+  transition: all 0.25s ease;
+}
+
+[data-theme="reading-room"] .journal-entry-item:hover {
+  background: var(--reading-bg-hover);
+  border-color: var(--accent-green);
+  box-shadow: 0 4px 8px rgba(45, 80, 22, 0.2);
+  transform: translateX(2px);
+}
+
+[data-theme="reading-room"] .journal-entry-item.selected {
+  background: var(--accent-green);
+  color: var(--reading-bg);
+  border-color: var(--accent-green-bright);
+  box-shadow: 0 4px 10px rgba(45, 80, 22, 0.3);
+  font-weight: 600;
+}
+
+[data-theme="reading-room"] .journal-entry-item.bulk-edit-mode {
+  background: var(--reading-bg-secondary);
+}
+
+[data-theme="reading-room"] .journal-entry-item.bulk-selected {
+  background: var(--highlight-yellow);
+  border: 3px solid var(--accent-green);
+}
+
+[data-theme="reading-room"] .entry-item-header {
+  background: transparent;
+}
+
+[data-theme="reading-room"] .entry-item-title {
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 14px;
+  font-weight: 600;
+  color: inherit;
+}
+
+[data-theme="reading-room"] .entry-item-meta {
+  background: transparent;
+}
+
+[data-theme="reading-room"] .entry-time-range {
+  background: var(--primary-blue);
+  border: 3px solid var(--primary-blue-dark);
+  border-radius: 0;  /* Square badge - primary shape! */
+  color: var(--reading-bg);
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 3px 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  box-shadow: 0 2px 4px rgba(0, 102, 255, 0.3);
+}
+
+[data-theme="reading-room"] .entry-date {
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 12px;
+  color: inherit;
+  font-weight: 500;
+}
+
+[data-theme="reading-room"] .entry-item-preview {
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 13px;
+  color: inherit;
+  line-height: 1.7;
+}
+
+[data-theme="reading-room"] .entry-item-tags {
+  background: transparent;
+}
+
+[data-theme="reading-room"] .entry-tag {
+  background: var(--reading-bg-dark);
+  border: 2px solid var(--border-green);
+  border-radius: 12px;
+  color: var(--text-primary);
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 11px;
+  font-weight: 500;
+  padding: 3px 8px;
+}
+
+[data-theme="reading-room"] .entry-item-content {
+  background: transparent;
+}
+
+[data-theme="reading-room"] .entry-checkbox-wrapper {
+  background: transparent;
+}
+
+[data-theme="reading-room"] .entry-checkbox-wrapper input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  border: 2px solid var(--border-green);
+  background: var(--reading-bg-secondary);
+  border-radius: 4px;
+  accent-color: var(--accent-green);
+}
+
+[data-theme="reading-room"] .bulk-edit-actions {
+  background: var(--highlight-yellow);
+  border-top: 3px solid var(--border-green);
+  border-left: 3px solid var(--border-green);
+  border-bottom: 2px solid var(--border-warm-light);
+  border-right: 2px solid var(--border-warm-light);
+}
+
+[data-theme="reading-room"] .bulk-edit-selected-count {
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+[data-theme="reading-room"] .bulk-delete-button {
+  background: var(--reading-bg);
+  border: 2px solid var(--border-green);
+  border-radius: 6px;
+  color: var(--text-primary);
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 13px;
+  font-weight: 500;
+  padding: 6px 14px;
+}
+
+[data-theme="reading-room"] .bulk-delete-button:hover {
+  background: var(--accent-red);
+  border-color: #b83a2a;
+  color: var(--reading-bg);
+}
+
+[data-theme="reading-room"] .bulk-edit-select-all {
+  background: var(--reading-bg-dark);
+  border-top: 3px solid var(--border-green);
+  border-left: 3px solid var(--border-green);
+  border-bottom: 2px solid var(--border-warm-light);
+  border-right: 2px solid var(--border-warm-light);
+}
+
+[data-theme="reading-room"] .bulk-edit-checkbox-label {
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 13px;
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+/* ============================================
+   ENTRY EDIT MODAL
+   ============================================ */
+[data-theme="reading-room"] .entry-edit-modal-overlay {
+  background: rgba(42, 42, 42, 0.7);
+}
+
+[data-theme="reading-room"] .entry-edit-modal {
+  background: var(--reading-bg-secondary);
+  border: 3px solid var(--border-green);
+  border-radius: 12px;
+  box-shadow: 0 5px 25px rgba(42, 42, 42, 0.5);
+}
+
+[data-theme="reading-room"] .modal-header {
+  background: var(--reading-bg-dark);
+  border-top: 3px solid var(--border-green);
+  border-left: 3px solid var(--border-green);
+  border-bottom: 2px solid var(--border-warm-light);
+  border-right: 2px solid var(--border-warm-light);
+}
+
+[data-theme="reading-room"] .modal-header-top {
+  background: transparent;
+}
+
+[data-theme="reading-room"] .modal-header-top h3 {
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+[data-theme="reading-room"] .modal-close-button {
+  background: var(--reading-bg);
+  border: 2px solid var(--border-green);
+  border-radius: 6px;
+  color: var(--text-primary);
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 13px;
+  font-weight: 500;
+  padding: 6px 14px;
+}
+
+[data-theme="reading-room"] .modal-close-button:hover {
+  background: var(--reading-bg-hover);
+  border-color: var(--accent-green);
+}
+
+[data-theme="reading-room"] .modal-entry-meta {
+  background: transparent;
+}
+
+[data-theme="reading-room"] .modal-entry-meta small {
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+[data-theme="reading-room"] .modal-content {
+  background: var(--reading-bg-secondary);
+  color: var(--text-primary);
+}
+
+[data-theme="reading-room"] .modal-title-input,
+[data-theme="reading-room"] .modal-content-input,
+[data-theme="reading-room"] .modal-tag-input {
+  background: var(--reading-bg);
+  border: 2px solid var(--border-green);
+  border-radius: 8px;
+  color: var(--text-primary);
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 14px;
+  padding: 10px;
+}
+
+[data-theme="reading-room"] .modal-title-input:focus,
+[data-theme="reading-room"] .modal-content-input:focus,
+[data-theme="reading-room"] .modal-tag-input:focus {
+  border-color: var(--accent-green);
+  outline: 3px solid rgba(45, 80, 22, 0.2);
+  outline-offset: 2px;
+}
+
+[data-theme="reading-room"] .modal-tags-section {
+  background: transparent;
+}
+
+[data-theme="reading-room"] .modal-tags-input-container {
+  background: transparent;
+}
+
+[data-theme="reading-room"] .modal-add-tag-button {
+  background: var(--reading-bg);
+  border: 2px solid var(--border-green);
+  border-radius: 6px;
+  color: var(--text-primary);
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 13px;
+  font-weight: 500;
+  padding: 6px 14px;
+}
+
+[data-theme="reading-room"] .modal-add-tag-button:hover {
+  background: var(--reading-bg-hover);
+  border-color: var(--accent-green);
+}
+
+[data-theme="reading-room"] .modal-tags-list {
+  background: transparent;
+}
+
+[data-theme="reading-room"] .modal-tag {
+  background: var(--reading-bg-dark);
+  border: 2px solid var(--border-green);
+  border-radius: 12px;
+  color: var(--text-primary);
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 5px 10px;
+}
+
+[data-theme="reading-room"] .modal-tag-remove {
+  background: transparent;
+  border: none;
+  color: var(--text-primary);
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 12px;
+  margin-left: 4px;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+[data-theme="reading-room"] .modal-tag-remove:hover {
+  background: var(--accent-green);
+  color: var(--reading-bg);
+}
+
+[data-theme="reading-room"] .modal-footer {
+  background: var(--reading-bg-secondary);
+  border-top: 3px solid var(--border-green);
+}
+
+[data-theme="reading-room"] .modal-duplicate-button,
+[data-theme="reading-room"] .modal-delete-button,
+[data-theme="reading-room"] .modal-cancel-button,
+[data-theme="reading-room"] .modal-save-button {
+  background: var(--reading-bg);
+  border: 2px solid var(--border-green);
+  border-radius: 6px;
+  color: var(--text-primary);
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 13px;
+  font-weight: 500;
+  padding: 10px 20px;
+}
+
+[data-theme="reading-room"] .modal-duplicate-button:hover,
+[data-theme="reading-room"] .modal-cancel-button:hover {
+  background: var(--reading-bg-hover);
+  border-color: var(--accent-green);
+}
+
+[data-theme="reading-room"] .modal-delete-button:hover {
+  background: var(--accent-red);
+  border-color: #b83a2a;
+  color: var(--reading-bg);
+}
+
+[data-theme="reading-room"] .modal-save-button {
+  background: var(--accent-green);
+  border: 2px solid var(--accent-green-bright);
+  color: var(--reading-bg);
+  font-weight: 700;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+[data-theme="reading-room"] .modal-save-button:hover:not(:disabled) {
+  background: var(--accent-green-light);
+  box-shadow: 0 4px 8px rgba(45, 80, 22, 0.35);
+}
+
+[data-theme="reading-room"] .modal-save-button:disabled {
+  background: var(--border-warm-light);
+  color: var(--text-muted);
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+[data-theme="reading-room"] .modal-footer-actions {
+  background: transparent;
+}
+
+/* ============================================
+   SEARCH VIEW
+   ============================================ */
+[data-theme="reading-room"] .search-view {
+  background: var(--reading-bg);
+  color: var(--text-primary);
+}
+
+[data-theme="reading-room"] .search-header {
+  background: var(--reading-bg-dark);
+  border-top: 3px solid var(--border-green);
+  border-left: 3px solid var(--border-green);
+  border-bottom: 2px solid var(--border-warm-light);
+  border-right: 2px solid var(--border-warm-light);
+}
+
+[data-theme="reading-room"] .search-input-container {
+  background: transparent;
+}
+
+[data-theme="reading-room"] .search-input {
+  background: var(--reading-bg-secondary);
+  border: 2px solid var(--border-green);
+  border-radius: 8px;
+  color: var(--text-primary);
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 14px;
+  font-weight: 400;
+  padding: 10px 14px;
+}
+
+[data-theme="reading-room"] .search-input:focus {
+  border-color: var(--accent-green);
+  outline: 3px solid rgba(45, 80, 22, 0.2);
+  outline-offset: 2px;
+  background: var(--reading-bg);
+}
+
+[data-theme="reading-room"] .search-filters-toggle,
+[data-theme="reading-room"] .search-close-button {
+  background: var(--reading-bg);
+  border: 2px solid var(--border-green);
+  border-radius: 6px;
+  color: var(--text-primary);
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 13px;
+  font-weight: 500;
+  padding: 6px 14px;
+}
+
+[data-theme="reading-room"] .search-filters-toggle:hover,
+[data-theme="reading-room"] .search-close-button:hover {
+  background: var(--reading-bg-hover);
+  border-color: var(--accent-green);
+}
+
+[data-theme="reading-room"] .search-filters {
+  background: var(--reading-bg-dark);
+  border-top: 3px solid var(--border-green);
+  border-left: 3px solid var(--border-green);
+  border-bottom: 2px solid var(--border-warm-light);
+  border-right: 2px solid var(--border-warm-light);
+}
+
+[data-theme="reading-room"] .filter-group {
+  background: transparent;
+}
+
+[data-theme="reading-room"] .filter-group label {
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+[data-theme="reading-room"] .filter-tags {
+  background: transparent;
+}
+
+[data-theme="reading-room"] .filter-tag,
+[data-theme="reading-room"] .filter-time-range {
+  background: var(--reading-bg-secondary);
+  border: 2px solid var(--border-green);
+  border-radius: 12px;
+  color: var(--text-primary);
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 5px 12px;
+  transition: all 0.25s ease;
+}
+
+[data-theme="reading-room"] .filter-tag:hover,
+[data-theme="reading-room"] .filter-time-range:hover {
+  background: var(--reading-bg-hover);
+  border-color: var(--accent-green);
+}
+
+[data-theme="reading-room"] .filter-tag.active,
+[data-theme="reading-room"] .filter-time-range.active {
+  background: var(--accent-green);
+  color: var(--reading-bg);
+  border-color: var(--accent-green-bright);
+  font-weight: 700;
+}
+
+[data-theme="reading-room"] .filter-empty {
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 12px;
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+[data-theme="reading-room"] .filter-time-ranges {
+  background: transparent;
+}
+
+[data-theme="reading-room"] .filter-date-range {
+  background: transparent;
+}
+
+[data-theme="reading-room"] .filter-date-range input {
+  background: var(--reading-bg-secondary);
+  border: 2px solid var(--border-green);
+  border-radius: 6px;
+  color: var(--text-primary);
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 13px;
+  font-weight: 400;
+  padding: 5px 10px;
+}
+
+[data-theme="reading-room"] .filter-sort {
+  background: transparent;
+}
+
+[data-theme="reading-room"] .filter-sort select {
+  background: var(--reading-bg-secondary);
+  border: 2px solid var(--border-green);
+  border-radius: 6px;
+  color: var(--text-primary);
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 13px;
+  font-weight: 400;
+  padding: 5px 10px;
+}
+
+[data-theme="reading-room"] .clear-filters-button {
+  background: var(--reading-bg);
+  border: 2px solid var(--border-green);
+  border-radius: 6px;
+  color: var(--text-primary);
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 13px;
+  font-weight: 500;
+  padding: 6px 14px;
+}
+
+[data-theme="reading-room"] .clear-filters-button:hover {
+  background: var(--reading-bg-hover);
+  border-color: var(--accent-green);
+}
+
+[data-theme="reading-room"] .search-results {
+  background: var(--reading-bg);
+  color: var(--text-primary);
+}
+
+[data-theme="reading-room"] .search-loading,
+[data-theme="reading-room"] .search-empty {
+  background: var(--reading-bg);
+  color: var(--text-muted);
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 14px;
+  font-style: italic;
+}
+
+[data-theme="reading-room"] .search-results-count {
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+[data-theme="reading-room"] .search-results-list {
+  background: transparent;
+}
+
+[data-theme="reading-room"] .search-result-item {
+  background: var(--reading-bg-secondary);
+  border: 2px solid var(--border-green);
+  border-radius: 8px;
+  color: var(--text-primary);
+  box-shadow: 0 2px 5px rgba(90, 122, 74, 0.1);
+  transition: all 0.25s ease;
+}
+
+[data-theme="reading-room"] .search-result-item:hover {
+  background: var(--reading-bg-hover);
+  border-color: var(--accent-green);
+  box-shadow: 0 4px 8px rgba(45, 80, 22, 0.2);
+  transform: translateX(2px);
+}
+
+[data-theme="reading-room"] .result-item-header {
+  background: transparent;
+}
+
+[data-theme="reading-room"] .result-item-title {
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+[data-theme="reading-room"] .result-item-meta {
+  background: transparent;
+}
+
+[data-theme="reading-room"] .result-time-range-badge {
+  background: var(--accent-green);
+  color: var(--reading-bg);
+  border: 2px solid var(--accent-green-bright);
+  border-radius: 12px;
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 8px;
+}
+
+[data-theme="reading-room"] .result-date {
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+[data-theme="reading-room"] .result-item-content {
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 13px;
+  color: var(--text-primary);
+  line-height: 1.7;
+}
+
+[data-theme="reading-room"] .result-item-tags {
+  background: transparent;
+}
+
+[data-theme="reading-room"] .result-tag {
+  background: var(--reading-bg-dark);
+  border: 2px solid var(--border-green);
+  border-radius: 12px;
+  color: var(--text-primary);
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 11px;
+  font-weight: 500;
+  padding: 3px 8px;
+}
+
+/* ============================================
+   PREFERENCES
+   ============================================ */
+[data-theme="reading-room"] .preferences-container {
+  background: var(--reading-bg);
+  color: var(--text-primary);
+}
+
+[data-theme="reading-room"] .preferences-loading {
+  background: var(--reading-bg);
+  color: var(--text-secondary);
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 14px;
+}
+
+[data-theme="reading-room"] .preferences-header {
+  background: var(--reading-bg-dark);
+  border-top: 3px solid var(--border-green);
+  border-left: 3px solid var(--border-green);
+  border-bottom: 2px solid var(--border-warm-light);
+  border-right: 2px solid var(--border-warm-light);
+}
+
+[data-theme="reading-room"] .preferences-header h1 {
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: 0.02em;
+}
+
+[data-theme="reading-room"] .preferences-actions {
+  background: transparent;
+}
+
+[data-theme="reading-room"] .preferences-button {
+  background: var(--reading-bg);
+  border: 2px solid var(--border-green);
+  border-radius: 6px;
+  color: var(--text-primary);
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 13px;
+  font-weight: 500;
+  padding: 6px 14px;
+}
+
+[data-theme="reading-room"] .preferences-button:hover {
+  background: var(--reading-bg-hover);
+  border-color: var(--accent-green);
+}
+
+[data-theme="reading-room"] .preferences-content {
+  background: var(--reading-bg);
+}
+
+[data-theme="reading-room"] .preferences-section {
+  background: var(--reading-bg-secondary);
+  border: 3px solid var(--border-green);
+  border-radius: 12px;
+  box-shadow: 0 3px 8px rgba(90, 122, 74, 0.1);
+}
+
+[data-theme="reading-room"] .preferences-section h2 {
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-primary);
+  border-bottom: 3px solid var(--border-green);
+  padding-bottom: 10px;
+  letter-spacing: 0.02em;
+}
+
+[data-theme="reading-room"] .preference-item {
+  background: transparent;
+}
+
+[data-theme="reading-room"] .preference-item label {
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 14px;
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+[data-theme="reading-room"] .preference-item input[type="text"],
+[data-theme="reading-room"] .preference-item input[type="number"],
+[data-theme="reading-room"] .preference-item select {
+  background: var(--reading-bg);
+  border: 2px solid var(--border-green);
+  border-radius: 6px;
+  color: var(--text-primary);
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 14px;
+  font-weight: 400;
+  padding: 7px 12px;
+}
+
+[data-theme="reading-room"] .preference-item input[type="text"]:focus,
+[data-theme="reading-room"] .preference-item input[type="number"]:focus,
+[data-theme="reading-room"] .preference-item select:focus {
+  border-color: var(--accent-green);
+  outline: 3px solid rgba(45, 80, 22, 0.2);
+  outline-offset: 2px;
+}
+
+[data-theme="reading-room"] .preference-item input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+  border: 2px solid var(--border-green);
+  background: var(--reading-bg-secondary);
+  border-radius: 4px;
+  accent-color: var(--accent-green);
+}
+
+[data-theme="reading-room"] .preference-item small {
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+[data-theme="reading-room"] .preference-note {
+  background: var(--highlight-yellow);
+  border-left: 4px solid var(--accent-green);
+  border-radius: 6px;
+  color: var(--text-primary);
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 13px;
+  font-weight: 500;
+  padding: 10px 14px;
+}
+
+[data-theme="reading-room"] .auto-save-indicator {
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 13px;
+  color: var(--accent-green);
+  font-weight: 600;
+}
+
+[data-theme="reading-room"] .export-toolbar {
+  background: transparent;
+}
+
+[data-theme="reading-room"] .export-controls {
+  background: transparent;
+}
+
+[data-theme="reading-room"] .export-controls select {
+  background: var(--reading-bg-secondary);
+  border: 2px solid var(--border-green);
+  border-radius: 6px;
+  color: var(--text-primary);
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 13px;
+  font-weight: 400;
+  padding: 6px 12px;
+}
+
+[data-theme="reading-room"] .about-section {
+  background: var(--reading-bg-secondary);
+  border: 3px solid var(--border-green);
+  border-radius: 12px;
+  box-shadow: 0 3px 8px rgba(90, 122, 74, 0.1);
+}
+
+[data-theme="reading-room"] .about-section a {
+  color: var(--accent-green);
+  text-decoration: underline;
+  font-weight: 600;
+}
+
+[data-theme="reading-room"] .about-section a:hover {
+  color: var(--accent-green-light);
+}
+
+/* ============================================
+   ABOUT PAGE
+   ============================================ */
+[data-theme="reading-room"] .about-container {
+  background: var(--reading-bg);
+  color: var(--text-primary);
+}
+
+[data-theme="reading-room"] .about-content {
+  background: var(--reading-bg-secondary);
+  border: 3px solid var(--border-green);
+  border-radius: 12px;
+  color: var(--text-primary);
+  box-shadow: 0 5px 20px rgba(42, 42, 42, 0.3);
+}
+
+[data-theme="reading-room"] .about-header {
+  background: transparent;
+  border-bottom: 3px solid var(--border-green);
+}
+
+[data-theme="reading-room"] .about-icon {
+  border: 3px solid var(--border-green);
+  border-radius: 8px;
+}
+
+[data-theme="reading-room"] .about-title-section h1 {
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: 0.02em;
+}
+
+[data-theme="reading-room"] .about-description {
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 14px;
+  color: var(--text-primary);
+  line-height: 1.7;
+}
+
+[data-theme="reading-room"] .about-section {
+  background: transparent;
+  border-top: 2px solid var(--border-warm-light);
+}
+
+[data-theme="reading-room"] .about-version {
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 13px;
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+[data-theme="reading-room"] .about-note {
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+[data-theme="reading-room"] .about-credits h2 {
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+[data-theme="reading-room"] .about-credits p {
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 14px;
+  color: var(--text-primary);
+  line-height: 1.7;
+}
+
+[data-theme="reading-room"] .about-link {
+  color: var(--accent-green);
+  text-decoration: underline;
+  font-weight: 600;
+}
+
+[data-theme="reading-room"] .about-link:hover {
+  color: var(--accent-green-light);
+}
+
+[data-theme="reading-room"] .about-credits-detailed {
+  background: transparent;
+}
+
+[data-theme="reading-room"] .credits-category {
+  background: transparent;
+}
+
+[data-theme="reading-room"] .credits-category h3 {
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--accent-green);
+}
+
+[data-theme="reading-room"] .credits-category ul {
+  background: transparent;
+}
+
+[data-theme="reading-room"] .credits-category li {
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 13px;
+  color: var(--text-primary);
+  line-height: 1.7;
+}
+
+[data-theme="reading-room"] .credits-category li strong {
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+[data-theme="reading-room"] .credits-category li em {
+  font-style: italic;
+  color: var(--text-muted);
+}
+
+[data-theme="reading-room"] .credits-category p {
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 13px;
+  color: var(--text-primary);
+  line-height: 1.7;
+}
+
+[data-theme="reading-room"] .credits-note {
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 12px;
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+/* ============================================
+   TIME RANGE BADGES
+   ============================================ */
+[data-theme="reading-room"] .entry-decade {
+  background: rgba(45, 80, 22, 0.15);
+  color: #1d3a0e;
+  border: 2px solid var(--accent-green);
+  border-radius: 12px;
+}
+
+[data-theme="reading-room"] .entry-year {
+  background: rgba(90, 122, 154, 0.2);
+  color: #2a3a4a;
+  border: 2px solid var(--accent-blue);
+  border-radius: 12px;
+}
+
+[data-theme="reading-room"] .entry-month {
+  background: rgba(107, 154, 199, 0.2);
+  color: #2a3a4a;
+  border: 2px solid var(--accent-blue-bright);
+  border-radius: 12px;
+}
+
+[data-theme="reading-room"] .entry-week {
+  background: rgba(90, 122, 154, 0.15);
+  color: #2a3a4a;
+  border: 2px solid var(--accent-blue);
+  border-radius: 12px;
+}
+
+[data-theme="reading-room"] .entry-day {
+  background: rgba(45, 80, 22, 0.15);
+  color: #1d3a0e;
+  border: 2px solid var(--accent-green);
+  border-radius: 12px;
+}
+
+[data-theme="reading-room"] .entry-card,
+[data-theme="reading-room"] .entry-card-full {
+  background: var(--reading-bg-secondary) !important;
+  border-color: var(--border-green);
+  border-width: 2px;
+  border-radius: 8px;
+  box-shadow: 0 3px 8px rgba(90, 122, 74, 0.1);
+}
+
+[data-theme="reading-room"] .card-title,
+[data-theme="reading-room"] .card-title-full,
+[data-theme="reading-room"] .badge-title {
+  color: var(--text-primary);
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-weight: 600;
+}
+
+/* ============================================
+   LOADING SCREEN
+   ============================================ */
+[data-theme="reading-room"] .loading-screen {
+  background: var(--reading-bg);
+  color: var(--text-primary);
+}
+
+[data-theme="reading-room"] .loading-message {
+  font-family: 'Georgia', 'Times New Roman', serif;
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+[data-theme="reading-room"] .loading-progress-bar {
+  background: var(--border-warm-light);
+  border-radius: 8px;
+  border: 2px solid var(--border-green);
+}
+
+[data-theme="reading-room"] .loading-progress-fill {
+  background: linear-gradient(90deg, var(--accent-green), var(--accent-blue-bright));
+  box-shadow: 0 0 12px rgba(45, 80, 22, 0.5);
+  border-radius: 8px;
+}
+
+/* ============================================
+   MINIMAP
+   ============================================ */
+[data-theme="reading-room"] .minimap-container {
+  background: var(--reading-bg-secondary);
+  border: 2px solid var(--border-green);
+  border-radius: 8px;
+}
+
+[data-theme="reading-room"] .minimap-timeline {
+  background: var(--reading-bg);
+}
+
+[data-theme="reading-room"] .entry-indicator-minimap {
+  background: var(--primary-blue);
+  border: 3px solid var(--primary-blue-light);
+  border-radius: 50%;  /* Circle - primary shape! */
+  box-shadow: 0 2px 6px rgba(0, 102, 255, 0.5);
+}
+
+[data-theme="reading-room"] .segment-indicator {
+  background: var(--border-warm-light);
+}
+
+[data-theme="reading-room"] .current-period-indicator {
+  background: var(--highlight-yellow);
+  border: 2px solid var(--accent-green);
+}
