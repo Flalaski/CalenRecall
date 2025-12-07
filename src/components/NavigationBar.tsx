@@ -55,8 +55,12 @@ export default function NavigationBar({
   }, [onDateChange]);
 
   // Helper function to populate date input fields from selectedDate
+  // All calendar conversions go through JDN (Julian Day Number), ensuring
+  // that the day/K'in values represent the same moment in time across all calendars
   const populateDateFields = useCallback(() => {
     try {
+      // Convert selectedDate (Gregorian Date) to current calendar format via JDN
+      // This ensures all calendars represent the same moment in time
       const calendarDate = dateToCalendar(selectedDate);
       const fieldCount = dateEntryConfig.fields.length;
       const values: string[] = [];
@@ -64,26 +68,30 @@ export default function NavigationBar({
       // Map calendar date components to input fields based on calendar type
       if (calendar === 'mayan-longcount') {
         // Decode Long Count components from the encoded day field
+        // The day field encodes: tun * 400 + uinal * 20 + kin
         const baktun = calendarDate.year;
         const katun = calendarDate.month;
         const absDay = Math.abs(calendarDate.day);
         const tun = Math.floor(absDay / 400);
         const remainingAfterTun = absDay % 400;
         const uinal = Math.floor(remainingAfterTun / 20);
-        const kin = remainingAfterTun % 20;
+        const kin = remainingAfterTun % 20; // This is the K'in (day) value
         
         values[0] = baktun.toString();
         values[1] = katun.toString();
         values[2] = tun.toString();
         values[3] = uinal.toString();
-        values[4] = kin.toString();
+        values[4] = kin.toString(); // K'in represents the same moment as day in other calendars
       } else {
         // For all other calendars, use year/month/day directly
+        // The day field represents the same moment in time across all calendars
+        // because all conversions go through JDN
         values[0] = calendarDate.year.toString();
         if (fieldCount > 1) {
           values[1] = calendarDate.month.toString();
         }
         if (fieldCount > 2) {
+          // This day/K'in value is synchronized across all calendars via JDN
           values[2] = calendarDate.day.toString();
         }
       }
@@ -96,6 +104,7 @@ export default function NavigationBar({
       return values.slice(0, fieldCount);
     } catch (e) {
       // If conversion fails, return empty array
+      console.error('Error populating date fields:', e);
       return new Array(dateEntryConfig.fields.length).fill('');
     }
   }, [calendar, selectedDate, dateEntryConfig.fields.length, dateToCalendar]);

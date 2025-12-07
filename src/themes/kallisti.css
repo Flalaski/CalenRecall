@@ -1,0 +1,1684 @@
+/**
+ * Kallisti Theme
+ * Inspired by Eris, the divine mother of chaos and goddess of discord
+ * 
+ * Eris Mythology:
+ * - Daughter of Nyx (Night) - primordial darkness and chaos
+ * - Mother of suffering personifications: Ponos (Toil), Lethe (Forgetfulness), Limos (Famine)
+ * - Uninvited to the wedding of Peleus and Thetis, she threw the golden apple inscribed "Kallisti"
+ *   (τῇ καλλίστῃ - "to the fairest"), sparking the dispute among Hera, Athena, and Aphrodite
+ * - This led to the Judgment of Paris and ultimately the Trojan War
+ * 
+ * Design Philosophy:
+ * - Deep void night backgrounds: Eris's connection to Nyx, representing primordial chaos before order
+ * - Golden apple radiance: The beautiful yet divisive "Kallisti" - beauty that sows discord
+ * - Discord purple/magenta: Strife, conflict, and the unpredictable nature of chaos
+ * - Asymmetrical chaotic patterns: Intentional imbalance reflecting discord and disorder
+ * - Elegant serif typography: Classical beauty juxtaposed with chaotic elements
+ * - Fractured textures: Broken patterns representing the fragmentation caused by discord
+ * 
+ * Unique Characteristics:
+ * - Darker than temple themes: True void black (#050308) vs stone grays
+ * - Warmer golds: Rich golden apple tones (#ffd764) vs bronze/orange metals
+ * - More vibrant discord colors: Bright magenta/purple (#c42a8b) vs muted purples
+ * - Asymmetrical patterns: Intentional imbalance vs structured stone textures
+ * - Golden glow effects: Apple radiance vs torchlight/candle glow
+ */
+
+/* ============================================
+   COLOR PALETTE - CSS Custom Properties
+   ============================================ */
+[data-theme="kallisti"] {
+  /* Backgrounds - Void night and primordial chaos (Eris is daughter of Nyx) */
+  --chaos-bg: #050308;                    /* Primary void night - darker than stone themes */
+  --chaos-bg-secondary: #080410;           /* Secondary void - deeper than temple darkness */
+  --chaos-bg-tertiary: #020105;           /* Tertiary absolute void - primordial chaos */
+  --chaos-bg-hover: #0d0618;              /* Hover state - slight purple hint */
+  --chaos-bg-dark: #010003;               /* Darkest void - near absolute black */
+  
+  /* Text - Golden apple warmth with glow */
+  --text-primary: var(--golden-apple);                /* Golden apple for primary text */
+  --text-secondary: var(--golden-apple-light);         /* Lighter gold for secondary text */
+  --text-muted: var(--golden-apple-dark);              /* Darker gold for muted text */
+  --text-entry-bright: #ffffff;                       /* Bright white for entry text */
+  --text-title-bright: #ffffff;                       /* Bright white for titles */
+  
+  /* Text glow effect - golden apple radiance */
+  --text-glow: 
+    0 0 6px rgba(255, 215, 100, 0.9),
+    0 0 12px rgba(255, 215, 100, 0.7),
+    0 0 18px rgba(255, 215, 100, 0.5),
+    0 1px 2px rgba(0, 0, 0, 0.9);
+  
+  /* Night Accents - Nyx's domain (Eris's mother) */
+  --night-deep: #050308;                /* Deepest night - Nyx's void */
+  --night-shadow: #0d0618;             /* Night shadow - primordial darkness */
+  --night-void: #020105;               /* Absolute void - before creation */
+  --night-vein: #1a0f2a;               /* Night vein - subtle purple hint */
+  --night-exclusion: #010003;          /* Exclusion shadow - uninvited darkness */
+  
+  /* Golden Apple - The legendary Kallisti (τῇ καλλίστῃ) */
+  --golden-apple: #ffd764;             /* Bright golden apple - warmer than bronze/orange */
+  --golden-apple-light: #ffe89a;      /* Luminous apple glow */
+  --golden-apple-dark: #d4b84a;       /* Apple shadow - rich gold */
+  --golden-apple-glow: #ffedb8;        /* Apple radiance - ethereal glow */
+  --golden-apple-shadow: #b8942a;      /* Apple depth - deep gold */
+  --golden-apple-inscription: #fff4d4; /* Inscription glow - "to the fairest" */
+  
+  /* Discord Purple - Strife and conflict (more vibrant than temple purples) */
+  --discord-purple: #8b2a8b;           /* Discord purple - strife personified */
+  --discord-purple-light: #ab4aab;     /* Lighter discord - active conflict */
+  --discord-purple-dark: #6b1a6b;      /* Darker discord - underlying tension */
+  --discord-magenta: #c42a8b;          /* Discord magenta - vibrant chaos */
+  --discord-magenta-light: #e44aab;    /* Bright discord - active strife */
+  --discord-magenta-dark: #a41a6b;     /* Deep discord - primordial conflict */
+  --discord-void: #2a0a3a;             /* Discord void - chaos in darkness */
+  
+  /* Chaos Accents - Swirling discord and suffering (Eris's children) */
+  --chaos-amber: #ff8b2a;              /* Chaos amber - Ponos (Toil) */
+  --chaos-amber-light: #ffab4a;        /* Light toil - active suffering */
+  --chaos-amber-dark: #d46b1a;        /* Dark toil - deep suffering */
+  --chaos-crimson: #c42a2a;            /* Chaos crimson - Limos (Famine) */
+  --chaos-crimson-light: #e44a4a;       /* Light famine - active hunger */
+  --chaos-crimson-dark: #a41a1a;       /* Dark famine - deep hunger */
+  --chaos-forgetfulness: #6b4a8b;      /* Lethe (Forgetfulness) - purple-gray */
+  
+  /* Borders - Golden and discord */
+  --border-golden: var(--golden-apple-dark);
+  --border-golden-light: var(--golden-apple);
+  --border-discord: var(--discord-purple);
+  --border-judgment: var(--discord-magenta);  /* Judgment of Paris border */
+  --border-uninvited: var(--night-exclusion); /* Uninvited shadow border */
+  
+  /* Highlights - Discord and beauty intertwined */
+  --highlight-golden: rgba(255, 215, 100, 0.25);      /* Golden apple radiance */
+  --highlight-discord: rgba(139, 42, 139, 0.25);      /* Discord strife - more vibrant */
+  --highlight-chaos: rgba(255, 139, 42, 0.2);         /* Chaos amber - Ponos */
+  --highlight-night: rgba(42, 10, 58, 0.4);          /* Night void - Nyx's domain */
+  --highlight-judgment: rgba(196, 42, 139, 0.15);   /* Judgment of Paris - conflict */
+  --highlight-uninvited: rgba(10, 3, 8, 0.5);         /* Uninvited - exclusion shadow */
+  
+  /* Base Typography - Elegant serif for mythological theme */
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+/* ============================================
+   BASE STYLES - Deep Night Background with Chaotic Texture
+   ============================================ */
+[data-theme="kallisti"] html,
+[data-theme="kallisti"] body {
+  background: var(--chaos-bg);
+  color: var(--text-primary);
+  text-shadow: var(--text-glow);
+  --theme-body-bg: var(--chaos-bg);
+  /* Chaotic swirling patterns - asymmetrical discord and beauty intertwined */
+  /* Intentional imbalance reflects Eris's nature - order disrupted by chaos */
+  background-image: 
+    /* Golden apple radiance - asymmetrical placement (uninvited beauty) */
+    radial-gradient(ellipse at 18% 28%, rgba(255, 215, 100, 0.14) 0%, transparent 45%),
+    radial-gradient(ellipse at 82% 72%, rgba(255, 232, 154, 0.08) 0%, transparent 55%),
+    /* Discord purple swirls - chaotic conflict patterns */
+    radial-gradient(ellipse at 75% 25%, rgba(139, 42, 139, 0.12) 0%, transparent 50%),
+    radial-gradient(ellipse at 25% 75%, rgba(196, 42, 139, 0.1) 0%, transparent 60%),
+    /* Fractured patterns - broken symmetry (discord fragments order) */
+    repeating-linear-gradient(47deg, transparent, transparent 3px, rgba(42, 10, 58, 0.08) 3px, rgba(42, 10, 58, 0.08) 6px),
+    repeating-linear-gradient(-43deg, transparent, transparent 4px, rgba(8, 4, 16, 0.05) 4px, rgba(8, 4, 16, 0.05) 8px),
+    repeating-linear-gradient(23deg, transparent, transparent 5px, rgba(26, 6, 42, 0.04) 5px, rgba(26, 6, 42, 0.04) 10px),
+    /* Void night base - primordial chaos (Nyx's domain) */
+    linear-gradient(142deg, #050308 0%, #080410 35%, #020105 65%, #050308 100%);
+  background-attachment: fixed;
+  position: relative;
+}
+
+[data-theme="kallisti"] #root {
+  background: var(--chaos-bg);
+}
+
+[data-theme="kallisti"] .app {
+  background: var(--chaos-bg);
+}
+
+[data-theme="kallisti"] .app-content {
+  background: var(--chaos-bg);
+  gap: 2px;
+}
+
+[data-theme="kallisti"] .timeline-section {
+  background: var(--chaos-bg);
+}
+
+[data-theme="kallisti"] .editor-section {
+  background: var(--chaos-bg-secondary);
+  border-left: 3px solid var(--golden-apple-dark);
+  box-shadow: 
+    inset 4px 0 12px rgba(0, 0, 0, 0.7), 
+    inset -2px 0 8px rgba(255, 215, 100, 0.18),
+    0 0 2px rgba(255, 215, 100, 0.1);
+  position: relative;
+  /* The golden apple's presence - beauty that disrupts */
+}
+
+/* Golden apple detail on editor section - the "Kallisti" inscription */
+[data-theme="kallisti"] .editor-section::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -3px;
+  width: 3px;
+  height: 100%;
+  background: linear-gradient(180deg, 
+    var(--golden-apple-shadow) 0%,
+    var(--golden-apple) 30%,
+    var(--golden-apple-inscription) 50%,
+    var(--golden-apple) 70%,
+    var(--golden-apple-shadow) 100%);
+  box-shadow: 
+    inset 0 0 8px rgba(255, 215, 100, 0.7),
+    0 0 4px rgba(255, 215, 100, 0.3);
+  /* Subtle pulsing glow - the apple's divisive beauty */
+  animation: kallisti-glow 4s ease-in-out infinite;
+}
+
+@keyframes kallisti-glow {
+  0%, 100% { 
+    box-shadow: 
+      inset 0 0 8px rgba(255, 215, 100, 0.7),
+      0 0 4px rgba(255, 215, 100, 0.3);
+  }
+  50% { 
+    box-shadow: 
+      inset 0 0 12px rgba(255, 215, 100, 0.9),
+      0 0 8px rgba(255, 215, 100, 0.5);
+  }
+}
+
+/* ============================================
+   NAVIGATION BAR - Night with golden accents
+   ============================================ */
+[data-theme="kallisti"] .navigation-bar {
+  background: var(--chaos-bg-secondary);
+  border-bottom: 3px solid var(--golden-apple-dark);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.7), inset 0 -1px 0 rgba(255, 215, 100, 0.25);
+  position: relative;
+}
+
+[data-theme="kallisti"] .navigation-bar::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  /* Asymmetrical gradient - discord disrupts symmetry */
+  background: linear-gradient(90deg, 
+    transparent 0%, 
+    var(--golden-apple) 15%, 
+    var(--discord-magenta) 35%,
+    var(--golden-apple) 55%,
+    var(--discord-purple) 75%,
+    var(--golden-apple) 90%, 
+    transparent 100%);
+  opacity: 0.45;
+  /* Subtle shimmer - the apple's allure */
+  animation: discord-shimmer 6s ease-in-out infinite;
+}
+
+@keyframes discord-shimmer {
+  0%, 100% { opacity: 0.45; }
+  50% { opacity: 0.6; }
+}
+
+[data-theme="kallisti"] .navigation-bar-top-row {
+  background: var(--chaos-bg-secondary);
+  border-bottom: 1px solid var(--border-discord);
+}
+
+[data-theme="kallisti"] .nav-controls {
+  background: transparent;
+}
+
+[data-theme="kallisti"] .view-mode-button.active {
+  background: var(--chaos-bg-secondary) !important;
+  color: var(--text-secondary) !important;
+  border-color: var(--border-golden-light) !important;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.5), 0 0 8px rgba(255, 215, 100, 0.3);
+  opacity: 0.9;
+}
+
+[data-theme="kallisti"] .date-label {
+  font-family: 'Georgia', 'Times New Roman', serif;
+  color: var(--text-primary) !important;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-shadow: var(--text-glow) !important;
+}
+
+/* Date Input Components */
+[data-theme="kallisti"] .date-input {
+  background: var(--chaos-bg-secondary);
+  border: 1px solid var(--border-discord);
+  border-radius: 4px;
+  color: var(--text-primary);
+  font-family: 'Georgia', 'Times New Roman', serif;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.4);
+}
+
+[data-theme="kallisti"] .date-input::placeholder {
+  color: var(--text-muted);
+}
+
+[data-theme="kallisti"] .date-input:hover {
+  background: var(--chaos-bg-hover);
+  border-color: var(--golden-apple-light);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 215, 100, 0.3);
+}
+
+[data-theme="kallisti"] .date-input:focus {
+  background: var(--chaos-bg);
+  border-color: var(--golden-apple);
+  box-shadow: 0 0 0 2px rgba(255, 215, 100, 0.4), inset 0 2px 4px rgba(0, 0, 0, 0.4);
+  outline: none;
+}
+
+[data-theme="kallisti"] .date-input.error {
+  border-color: var(--chaos-crimson);
+  background: rgba(196, 42, 42, 0.15);
+}
+
+[data-theme="kallisti"] .date-field-label {
+  color: var(--text-secondary) !important;
+  font-family: 'Georgia', 'Times New Roman', serif;
+  text-shadow: var(--text-glow) !important;
+}
+
+[data-theme="kallisti"] .date-field-separator {
+  color: var(--golden-apple);
+}
+
+/* ============================================
+   CALENDAR VIEW - Night with golden apple patterns
+   ============================================ */
+[data-theme="kallisti"] .calendar-grid {
+  background: var(--chaos-bg-secondary);
+  border: 2px solid var(--golden-apple-dark);
+  border-radius: 4px;
+  box-shadow: 
+    0 2px 10px rgba(0, 0, 0, 0.8), 
+    inset 0 1px 0 rgba(255, 215, 100, 0.25), 
+    0 0 14px rgba(255, 215, 100, 0.12),
+    inset 0 0 20px rgba(42, 10, 58, 0.3);
+  position: relative;
+  overflow: hidden;
+  /* The wedding feast - where the apple was thrown */
+}
+
+/* Chaotic pattern overlay - fractured, asymmetrical (discord fragments order) */
+[data-theme="kallisti"] .calendar-grid::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    /* Asymmetrical diagonal fractures - discord breaks symmetry */
+    repeating-linear-gradient(47deg, transparent, transparent 18px, rgba(139, 42, 139, 0.05) 18px, rgba(139, 42, 139, 0.05) 36px),
+    repeating-linear-gradient(-43deg, transparent, transparent 22px, rgba(196, 42, 139, 0.04) 22px, rgba(196, 42, 139, 0.04) 44px),
+    /* Golden apple radiance - off-center (uninvited beauty) */
+    radial-gradient(ellipse at 28% 32%, rgba(255, 215, 100, 0.08) 0%, transparent 45%),
+    radial-gradient(ellipse at 72% 68%, rgba(255, 232, 154, 0.05) 0%, transparent 55%);
+  pointer-events: none;
+  /* Subtle chaotic movement */
+  animation: discord-drift 20s ease-in-out infinite;
+}
+
+@keyframes discord-drift {
+  0%, 100% { 
+    transform: translate(0, 0) rotate(0deg);
+    opacity: 1;
+  }
+  33% { 
+    transform: translate(1px, -1px) rotate(0.2deg);
+    opacity: 0.95;
+  }
+  66% { 
+    transform: translate(-1px, 1px) rotate(-0.2deg);
+    opacity: 0.98;
+  }
+}
+
+[data-theme="kallisti"] .calendar-cell {
+  background: var(--chaos-bg);
+  border: 1px solid var(--border-discord);
+  border-radius: 2px;
+  color: var(--golden-apple) !important;
+  transition: all 0.25s ease;
+  position: relative;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.4);
+}
+
+/* Calendar cell text - golden apple with glow */
+[data-theme="kallisti"] .calendar-cell .cell-label,
+[data-theme="kallisti"] .calendar-cell .cell-content:not(:has(.entry-badge)) {
+  color: var(--golden-apple) !important;
+  text-shadow: 
+    0 0 6px rgba(255, 215, 100, 0.9),
+    0 0 12px rgba(255, 215, 100, 0.7),
+    0 0 18px rgba(255, 215, 100, 0.5),
+    0 1px 2px rgba(0, 0, 0, 0.9) !important;
+}
+
+[data-theme="kallisti"] .calendar-cell:hover {
+  background: var(--chaos-bg-hover);
+  border-color: var(--golden-apple);
+  box-shadow: 0 0 8px rgba(255, 215, 100, 0.3), inset 0 1px 2px rgba(0, 0, 0, 0.4);
+}
+
+[data-theme="kallisti"] .calendar-cell.today {
+  background: var(--highlight-golden);
+  border-color: var(--golden-apple);
+  box-shadow: 0 0 12px rgba(255, 215, 100, 0.5), inset 0 1px 2px rgba(0, 0, 0, 0.4);
+}
+
+[data-theme="kallisti"] .calendar-cell.selected {
+  background: var(--highlight-discord);
+  border-color: var(--discord-purple);
+  box-shadow: 
+    0 0 14px rgba(139, 42, 139, 0.6), 
+    0 0 8px rgba(196, 42, 139, 0.4),
+    inset 0 1px 2px rgba(0, 0, 0, 0.4);
+  /* Discord conflict - the strife Eris brings */
+}
+
+[data-theme="kallisti"] .calendar-cell.has-entry {
+  border-left: 3px solid var(--golden-apple);
+  /* Golden apple glow - the "Kallisti" presence */
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.4), 0 0 4px rgba(255, 215, 100, 0.2);
+}
+
+[data-theme="kallisti"] .calendar-cell.has-entry:hover {
+  border-left-color: var(--golden-apple-light);
+  box-shadow: 
+    0 0 12px rgba(255, 215, 100, 0.5), 
+    0 0 6px rgba(255, 232, 154, 0.3),
+    inset 0 1px 2px rgba(0, 0, 0, 0.4);
+  /* Subtle pulse - the apple's divisive allure */
+  animation: apple-pulse 2s ease-in-out infinite;
+}
+
+@keyframes apple-pulse {
+  0%, 100% { 
+    box-shadow: 
+      0 0 12px rgba(255, 215, 100, 0.5), 
+      0 0 6px rgba(255, 232, 154, 0.3),
+      inset 0 1px 2px rgba(0, 0, 0, 0.4);
+  }
+  50% { 
+    box-shadow: 
+      0 0 16px rgba(255, 215, 100, 0.7), 
+      0 0 10px rgba(255, 232, 154, 0.5),
+      inset 0 1px 2px rgba(0, 0, 0, 0.4);
+  }
+}
+
+/* Weekday Header - Day names in month view */
+[data-theme="kallisti"] .weekday-header {
+  background: var(--chaos-bg-dark);
+  border-bottom: 2px solid var(--golden-apple-dark);
+  color: var(--golden-apple) !important;
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-weight: 600;
+  text-shadow: 
+    0 0 6px rgba(255, 215, 100, 0.9),
+    0 0 12px rgba(255, 215, 100, 0.7),
+    0 0 18px rgba(255, 215, 100, 0.5),
+    0 1px 2px rgba(0, 0, 0, 0.9);
+  box-shadow: inset 0 -1px 0 rgba(255, 215, 100, 0.3);
+}
+
+[data-theme="kallisti"] .weekday-cell {
+  color: var(--golden-apple) !important;
+  text-shadow: 
+    0 0 6px rgba(255, 215, 100, 0.9),
+    0 0 12px rgba(255, 215, 100, 0.7),
+    0 0 18px rgba(255, 215, 100, 0.5),
+    0 1px 2px rgba(0, 0, 0, 0.9) !important;
+}
+
+[data-theme="kallisti"] .weekday-cell .day-number,
+[data-theme="kallisti"] .weekday-cell .day-name,
+[data-theme="kallisti"] .weekday-cell .day-month {
+  color: var(--golden-apple) !important;
+  text-shadow: 
+    0 0 6px rgba(255, 215, 100, 0.9),
+    0 0 12px rgba(255, 215, 100, 0.7),
+    0 0 18px rgba(255, 215, 100, 0.5),
+    0 1px 2px rgba(0, 0, 0, 0.9) !important;
+}
+
+/* ============================================
+   TIMELINE VIEW - Night with golden highlights
+   ============================================ */
+[data-theme="kallisti"] .timeline-view {
+  background: var(--chaos-bg);
+  color: var(--text-primary) !important;
+  text-shadow: var(--text-glow) !important;
+}
+
+[data-theme="kallisti"] .timeline-header {
+  background: var(--chaos-bg-dark);
+  border-bottom: 2px solid var(--golden-apple-dark);
+  box-shadow: inset 0 -1px 0 rgba(255, 215, 100, 0.25);
+}
+
+[data-theme="kallisti"] .timeline-content {
+  background: var(--chaos-bg);
+}
+
+/* Timeline Grid - Month tier view calendar grid */
+[data-theme="kallisti"] .timeline-grid,
+[data-theme="kallisti"] .month-grid {
+  background: var(--chaos-bg-secondary);
+  border: 2px solid var(--golden-apple-dark);
+  border-radius: 4px;
+  box-shadow: 
+    0 2px 10px rgba(0, 0, 0, 0.8), 
+    inset 0 1px 0 rgba(255, 215, 100, 0.25), 
+    0 0 14px rgba(255, 215, 100, 0.12),
+    inset 0 0 20px rgba(42, 10, 58, 0.3);
+}
+
+/* Timeline Cell - Individual day cells in month view */
+[data-theme="kallisti"] .timeline-cell {
+  background: var(--chaos-bg);
+  border: 1px solid var(--border-discord);
+  border-radius: 2px;
+  color: var(--text-primary);
+  transition: all 0.25s ease;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.4);
+}
+
+[data-theme="kallisti"] .timeline-cell:hover {
+  background: var(--highlight-golden);
+  border-color: var(--golden-apple);
+  box-shadow: 
+    0 2px 6px rgba(255, 215, 100, 0.4), 
+    0 0 4px rgba(255, 232, 154, 0.3);
+}
+
+[data-theme="kallisti"] .timeline-cell.today {
+  background: var(--highlight-golden);
+  color: var(--text-primary);
+  border: 2px solid var(--golden-apple);
+  font-weight: 600;
+  box-shadow: 
+    0 2px 8px rgba(255, 215, 100, 0.5), 
+    0 0 6px rgba(255, 232, 154, 0.4);
+}
+
+[data-theme="kallisti"] .timeline-cell.selected {
+  background: var(--highlight-discord);
+  color: var(--text-primary);
+  border-color: var(--discord-purple);
+  box-shadow: 
+    0 2px 10px rgba(139, 42, 139, 0.6), 
+    0 0 6px rgba(196, 42, 139, 0.4);
+}
+
+[data-theme="kallisti"] .timeline-cell.has-entries {
+  border-left: 3px solid var(--golden-apple);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.4), 0 0 4px rgba(255, 215, 100, 0.2);
+}
+
+[data-theme="kallisti"] .timeline-cell.has-entries:hover {
+  border-left-color: var(--golden-apple-light);
+  box-shadow: 
+    0 0 12px rgba(255, 215, 100, 0.5), 
+    0 0 6px rgba(255, 232, 154, 0.3),
+    inset 0 1px 2px rgba(0, 0, 0, 0.4);
+}
+
+/* Cell Date - Date number in timeline cells */
+[data-theme="kallisti"] .cell-date {
+  color: var(--golden-apple) !important;
+  text-shadow: 
+    0 0 6px rgba(255, 215, 100, 0.9),
+    0 0 12px rgba(255, 215, 100, 0.7),
+    0 0 18px rgba(255, 215, 100, 0.5),
+    0 1px 2px rgba(0, 0, 0, 0.9) !important;
+  font-weight: 600;
+}
+
+/* Cell Entries - Entry indicators in timeline cells */
+[data-theme="kallisti"] .cell-entries {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px;
+  margin-top: 4px;
+}
+
+/* Month View Container */
+[data-theme="kallisti"] .timeline-month-view {
+  background: var(--chaos-bg);
+  color: var(--text-primary) !important;
+  text-shadow: var(--text-glow) !important;
+}
+
+[data-theme="kallisti"] .month-view-content {
+  background: var(--chaos-bg);
+  gap: 1rem;
+}
+
+[data-theme="kallisti"] .month-calendar-section {
+  background: var(--chaos-bg);
+}
+
+[data-theme="kallisti"] .month-week-entries-section {
+  background: var(--chaos-bg-secondary);
+  border-left: 2px solid var(--golden-apple-dark);
+  box-shadow: inset 2px 0 8px rgba(255, 215, 100, 0.1);
+}
+
+[data-theme="kallisti"] .month-entries-section {
+  background: var(--chaos-bg);
+  border-bottom: 2px solid var(--golden-apple-dark);
+}
+
+[data-theme="kallisti"] .month-entries-header {
+  background: var(--chaos-bg-dark);
+  border-bottom: 2px solid var(--golden-apple-dark);
+  color: var(--text-primary) !important;
+  text-shadow: var(--text-glow) !important;
+  box-shadow: inset 0 -1px 0 rgba(255, 215, 100, 0.25);
+}
+
+[data-theme="kallisti"] .month-entries-list {
+  background: var(--chaos-bg);
+  padding: 0.5rem;
+}
+
+[data-theme="kallisti"] .month-entry-item {
+  background: var(--chaos-bg-secondary);
+  border: 1px solid var(--border-discord);
+  border-left: 4px solid var(--golden-apple-dark);
+  border-radius: 6px;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.4);
+  color: var(--text-entry-bright) !important;
+  transition: all 0.25s ease;
+}
+
+[data-theme="kallisti"] .month-entry-item:hover {
+  background: var(--highlight-golden);
+  border-color: var(--golden-apple);
+  box-shadow: 
+    0 2px 6px rgba(255, 215, 100, 0.4), 
+    0 0 4px rgba(255, 232, 154, 0.3);
+  transform: translateX(2px);
+}
+
+/* Week Entry Groups - Week entries in month sidebar */
+[data-theme="kallisti"] .week-entry-group {
+  background: var(--chaos-bg-secondary);
+  border: 1px solid var(--discord-purple);
+  border-radius: 4px;
+  box-shadow: 
+    0 2px 6px rgba(0, 0, 0, 0.6), 
+    inset 0 1px 0 rgba(139, 42, 139, 0.15);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Chaotic pattern on week entry groups */
+[data-theme="kallisti"] .week-entry-group::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    repeating-linear-gradient(47deg, transparent, transparent 15px, rgba(139, 42, 139, 0.05) 15px, rgba(139, 42, 139, 0.05) 16px),
+    repeating-linear-gradient(-43deg, transparent, transparent 15px, rgba(255, 215, 100, 0.04) 15px, rgba(255, 215, 100, 0.04) 16px);
+  pointer-events: none;
+}
+
+[data-theme="kallisti"] .week-entry-item {
+  background: var(--chaos-bg);
+  border: 1px solid var(--border-discord);
+  border-left: 3px solid var(--golden-apple-dark);
+  border-radius: 3px;
+  transition: all 0.25s ease;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.4);
+  color: var(--text-entry-bright) !important;
+}
+
+[data-theme="kallisti"] .week-entry-item:hover {
+  background: var(--highlight-golden);
+  border-color: var(--golden-apple);
+  box-shadow: 
+    0 2px 6px rgba(255, 215, 100, 0.4), 
+    0 0 4px rgba(255, 232, 154, 0.3);
+  transform: translateX(2px);
+}
+
+/* Week Entries Header */
+[data-theme="kallisti"] .week-entries-header {
+  background: var(--chaos-bg-dark);
+  border-bottom: 2px solid var(--golden-apple-dark);
+  color: var(--text-primary) !important;
+  text-shadow: var(--text-glow) !important;
+  box-shadow: inset 0 -1px 0 rgba(255, 215, 100, 0.25);
+}
+
+/* Week Label and Entry Count */
+[data-theme="kallisti"] .week-label {
+  color: var(--golden-apple) !important;
+  text-shadow: 
+    0 0 6px rgba(255, 215, 100, 0.9),
+    0 0 12px rgba(255, 215, 100, 0.7) !important;
+}
+
+[data-theme="kallisti"] .week-entry-count {
+  background: var(--chaos-bg-dark);
+  color: var(--golden-apple) !important;
+  border: 1px solid var(--golden-apple-dark);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.6);
+  text-shadow: 
+    0 0 4px rgba(255, 215, 100, 0.8),
+    0 0 8px rgba(255, 215, 100, 0.6) !important;
+}
+
+/* Week Entry Empty State */
+[data-theme="kallisti"] .week-entry-empty {
+  color: var(--text-muted) !important;
+  text-shadow: var(--text-glow) !important;
+}
+
+[data-theme="kallisti"] .journal-entry-item {
+  background: var(--chaos-bg-secondary);
+  border: 1px solid var(--border-discord);
+  border-left: 3px solid var(--golden-apple-dark);
+  border-radius: 3px;
+  transition: all 0.25s ease;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.4);
+  color: var(--text-entry-bright) !important;
+}
+
+[data-theme="kallisti"] .journal-entry-item:hover {
+  background: var(--highlight-golden);
+  border-color: var(--golden-apple);
+  box-shadow: 
+    0 2px 8px rgba(255, 215, 100, 0.5), 
+    0 0 4px rgba(255, 232, 154, 0.3),
+    inset 0 1px 0 rgba(255, 232, 154, 0.2);
+  /* The apple's allure - beauty that draws attention */
+}
+
+[data-theme="kallisti"] .journal-entry-item.selected {
+  background: var(--highlight-discord);
+  color: var(--text-primary);
+  border-color: var(--discord-purple);
+  box-shadow: 
+    0 2px 10px rgba(139, 42, 139, 0.7), 
+    0 0 6px rgba(196, 42, 139, 0.4),
+    inset 0 2px 4px rgba(0, 0, 0, 0.5);
+  /* Judgment of Paris - the conflict sparked by the apple */
+}
+
+/* Entry titles and previews - bright and legible */
+[data-theme="kallisti"] .entry-item-title {
+  color: var(--text-title-bright) !important;
+  font-weight: 600;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8), 0 0 8px rgba(0, 0, 0, 0.4);
+}
+
+[data-theme="kallisti"] .entry-item-preview {
+  color: var(--text-entry-bright) !important;
+  opacity: 0.9;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.7);
+}
+
+/* Week entry titles and previews - bright and legible */
+[data-theme="kallisti"] .week-entry-title {
+  color: var(--text-title-bright) !important;
+  font-weight: 500;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.7);
+}
+
+[data-theme="kallisti"] .week-entry-preview {
+  color: var(--text-entry-bright) !important;
+  opacity: 0.9;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+}
+
+/* Month entry titles and previews - bright and legible */
+[data-theme="kallisti"] .month-entry-title {
+  color: var(--text-title-bright) !important;
+  font-weight: 500;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.7);
+}
+
+[data-theme="kallisti"] .month-entry-preview {
+  color: var(--text-entry-bright) !important;
+  opacity: 0.9;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+}
+
+/* Period entry titles - bright and legible */
+[data-theme="kallisti"] .period-entry-title {
+  color: var(--text-title-bright) !important;
+  font-weight: 600;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8), 0 0 8px rgba(0, 0, 0, 0.3);
+}
+
+/* Period entry content - bright and legible */
+[data-theme="kallisti"] .period-entry-content {
+  color: var(--text-entry-bright) !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.7);
+  opacity: 1 !important;
+}
+
+/* Period entry date - bright and legible */
+[data-theme="kallisti"] .period-entry-date {
+  color: var(--text-entry-bright) !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.7);
+  text-decoration-color: var(--golden-apple) !important;
+}
+
+/* Period entry meta - bright */
+[data-theme="kallisti"] .period-entry-meta {
+  color: var(--text-entry-bright) !important;
+}
+
+/* Period entry edit button - dark and subtle */
+[data-theme="kallisti"] .period-entry-edit-button {
+  background: var(--chaos-bg-dark) !important;
+  color: var(--text-muted) !important;
+  border: 1px solid var(--border-discord) !important;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.6);
+  opacity: 0.8;
+}
+
+[data-theme="kallisti"] .period-entry-edit-button:hover {
+  background: var(--chaos-bg-secondary) !important;
+  color: var(--text-secondary) !important;
+  border-color: var(--border-golden-light) !important;
+  opacity: 0.9;
+}
+
+/* Period entry tags - dark and subtle */
+[data-theme="kallisti"] .period-entry-tag {
+  background: var(--chaos-bg-dark) !important;
+  color: var(--text-muted) !important;
+  border: 1px solid var(--border-discord) !important;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.6);
+  opacity: 0.7;
+}
+
+/* Period entry badge - subtle */
+[data-theme="kallisti"] .period-entry-badge {
+  background: var(--chaos-bg-dark) !important;
+  color: var(--text-muted) !important;
+  border: 1px solid var(--border-discord) !important;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.6);
+  opacity: 0.8;
+}
+
+/* Linked entry titles - bright and legible */
+[data-theme="kallisti"] .linked-entry-title {
+  color: var(--text-title-bright) !important;
+  font-weight: 500;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.7);
+}
+
+/* Entry meta and date display - bright */
+[data-theme="kallisti"] .entry-meta,
+[data-theme="kallisti"] .entry-meta small,
+[data-theme="kallisti"] .entry-date-display {
+  color: var(--text-entry-bright) !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.7);
+}
+
+/* Time range badge in viewer - subtle */
+[data-theme="kallisti"] .time-range-badge-viewer {
+  background: var(--chaos-bg-dark) !important;
+  color: var(--text-muted) !important;
+  border: 1px solid var(--border-discord) !important;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.6);
+  opacity: 0.8;
+}
+
+/* ============================================
+   EDITOR AND VIEWER - Night with golden effects
+   ============================================ */
+[data-theme="kallisti"] .journal-editor,
+[data-theme="kallisti"] .entry-viewer {
+  background: var(--chaos-bg);
+}
+
+[data-theme="kallisti"] .editor-header,
+[data-theme="kallisti"] .viewer-header {
+  background: var(--chaos-bg-secondary);
+  border-bottom: 3px solid var(--golden-apple-dark);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.6), inset 0 -1px 0 rgba(255, 215, 100, 0.25);
+}
+
+[data-theme="kallisti"] .viewer-header h3,
+[data-theme="kallisti"] .editor-header h3 {
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 16px;
+  color: var(--text-title-bright) !important;
+  font-weight: 600;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8), 0 0 8px rgba(0, 0, 0, 0.3);
+}
+
+[data-theme="kallisti"] .title-input,
+[data-theme="kallisti"] .content-input,
+[data-theme="kallisti"] .tag-input {
+  background: var(--chaos-bg-secondary);
+  border: 1px solid var(--border-discord);
+  border-radius: 3px;
+  color: var(--text-primary) !important;
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 14px;
+  padding: 8px;
+  transition: all 0.25s ease;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.4);
+  text-shadow: var(--text-glow) !important;
+}
+
+[data-theme="kallisti"] .title-input:focus,
+[data-theme="kallisti"] .content-input:focus,
+[data-theme="kallisti"] .tag-input:focus {
+  border-color: var(--golden-apple);
+  outline: 2px solid var(--golden-apple);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 3px rgba(255, 215, 100, 0.3), inset 0 2px 4px rgba(0, 0, 0, 0.4);
+}
+
+[data-theme="kallisti"] .viewer-content {
+  background: var(--chaos-bg-secondary);
+  color: var(--text-primary);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 215, 100, 0.1);
+  border-radius: 2px;
+}
+
+[data-theme="kallisti"] .viewer-title {
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary) !important;
+  border-bottom: 2px solid var(--golden-apple-dark);
+  padding-bottom: 8px;
+  margin-bottom: 12px;
+  text-shadow: var(--text-glow) !important;
+}
+
+[data-theme="kallisti"] .viewer-text {
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 14px;
+  color: var(--text-primary) !important;
+  line-height: 1.7;
+  text-shadow: var(--text-glow) !important;
+}
+
+/* ============================================
+   BUTTONS - Dark with golden accents (ALL BUTTONS)
+   ============================================ */
+/* Base button styles - ALL buttons must be dark */
+[data-theme="kallisti"] button,
+[data-theme="kallisti"] .edit-button,
+[data-theme="kallisti"] .save-button,
+[data-theme="kallisti"] .cancel-button,
+[data-theme="kallisti"] .delete-button,
+[data-theme="kallisti"] .new-entry-button,
+[data-theme="kallisti"] .nav-button,
+[data-theme="kallisti"] .view-mode-button,
+[data-theme="kallisti"] .today-button,
+[data-theme="kallisti"] .add-tag-button,
+[data-theme="kallisti"] .modal-save-button,
+[data-theme="kallisti"] .modal-cancel-button,
+[data-theme="kallisti"] .modal-delete-button,
+[data-theme="kallisti"] .modal-duplicate-button,
+[data-theme="kallisti"] .modal-close-button,
+[data-theme="kallisti"] .bulk-edit-toggle-button,
+[data-theme="kallisti"] .bulk-delete-button,
+[data-theme="kallisti"] .search-close-button,
+[data-theme="kallisti"] .search-filters-toggle,
+[data-theme="kallisti"] .clear-filters-button,
+[data-theme="kallisti"] .period-entry-clear-filters,
+[data-theme="kallisti"] .calendar-definition-toggle,
+[data-theme="kallisti"] .preferences-button,
+[data-theme="kallisti"] .reset-button,
+[data-theme="kallisti"] .tag-remove {
+  background: var(--chaos-bg-dark) !important;
+  border: 2px solid var(--border-discord) !important;
+  border-radius: 4px;
+  color: var(--text-muted) !important;
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 13px;
+  padding: 8px 16px;
+  transition: all 0.25s ease;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.6);
+  opacity: 0.8;
+}
+
+/* Small buttons (tag-remove, etc) */
+[data-theme="kallisti"] .tag-remove {
+  padding: 0;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  font-size: 1rem;
+}
+
+[data-theme="kallisti"] .save-button {
+  background: var(--chaos-bg-dark) !important;
+  color: var(--text-muted) !important;
+  border-color: var(--border-discord) !important;
+  font-weight: 600;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.7);
+  opacity: 0.85;
+}
+
+[data-theme="kallisti"] .save-button:hover:not(:disabled) {
+  background: var(--chaos-bg-secondary) !important;
+  color: var(--text-secondary) !important;
+  border-color: var(--border-golden-light) !important;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.5), 0 0 8px rgba(255, 215, 100, 0.3);
+  opacity: 0.9;
+}
+
+[data-theme="kallisti"] .delete-button:hover {
+  background: var(--chaos-bg-dark) !important;
+  border-color: var(--border-discord) !important;
+  color: var(--text-muted) !important;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.7);
+  opacity: 0.9;
+}
+
+/* All button hover states - golden glow */
+[data-theme="kallisti"] button:hover,
+[data-theme="kallisti"] .edit-button:hover,
+[data-theme="kallisti"] .new-entry-button:hover,
+[data-theme="kallisti"] .nav-button:hover,
+[data-theme="kallisti"] .view-mode-button:hover,
+[data-theme="kallisti"] .today-button:hover,
+[data-theme="kallisti"] .duplicate-button:hover,
+[data-theme="kallisti"] .add-tag-button:hover,
+[data-theme="kallisti"] .modal-save-button:hover,
+[data-theme="kallisti"] .modal-cancel-button:hover,
+[data-theme="kallisti"] .modal-delete-button:hover,
+[data-theme="kallisti"] .modal-duplicate-button:hover,
+[data-theme="kallisti"] .modal-close-button:hover,
+[data-theme="kallisti"] .bulk-edit-toggle-button:hover,
+[data-theme="kallisti"] .bulk-delete-button:hover,
+[data-theme="kallisti"] .search-close-button:hover,
+[data-theme="kallisti"] .search-filters-toggle:hover,
+[data-theme="kallisti"] .clear-filters-button:hover,
+[data-theme="kallisti"] .period-entry-clear-filters:hover,
+[data-theme="kallisti"] .calendar-definition-toggle:hover,
+[data-theme="kallisti"] .preferences-button:hover,
+[data-theme="kallisti"] .reset-button:hover,
+[data-theme="kallisti"] .tag-remove:hover {
+  background: var(--chaos-bg-secondary) !important;
+  border-color: var(--border-golden-light) !important;
+  color: var(--text-secondary) !important;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.5), 0 0 8px rgba(255, 215, 100, 0.3);
+  opacity: 0.9;
+}
+
+/* Active button states - golden glow */
+[data-theme="kallisti"] .bulk-edit-toggle-button.active,
+[data-theme="kallisti"] .view-mode-button.active {
+  background: var(--chaos-bg-secondary) !important;
+  color: var(--text-secondary) !important;
+  border-color: var(--border-golden-light) !important;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.5), 0 0 8px rgba(255, 215, 100, 0.3);
+  opacity: 0.9;
+}
+
+[data-theme="kallisti"] .bulk-edit-toggle-button.active:hover {
+  background: var(--chaos-bg-hover) !important;
+  opacity: 0.95;
+}
+
+/* Duplicate button - dark and subtle */
+[data-theme="kallisti"] .duplicate-button {
+  background: var(--chaos-bg-dark) !important;
+  border: 2px solid var(--border-discord) !important;
+  border-radius: 4px;
+  color: var(--text-muted) !important;
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 13px;
+  padding: 8px 16px;
+  transition: all 0.25s ease;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.6);
+  opacity: 0.8;
+}
+
+/* New entry button header - dark and subtle */
+[data-theme="kallisti"] .new-entry-button-header {
+  background: var(--chaos-bg-dark) !important;
+  border: 2px solid var(--border-discord) !important;
+  border-radius: 4px;
+  color: var(--text-muted) !important;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.6);
+  opacity: 0.8;
+}
+
+[data-theme="kallisti"] .new-entry-button-header:hover {
+  background: var(--chaos-bg-secondary) !important;
+  border-color: var(--border-golden-light) !important;
+  color: var(--text-secondary) !important;
+  opacity: 0.9;
+}
+
+/* Catch-all: Ensure NO buttons are bright - override any inline styles or missed classes */
+[data-theme="kallisti"] button:not([class*="entry-badge"]):not([class*="badge"]),
+[data-theme="kallisti"] [role="button"]:not([class*="entry-badge"]):not([class*="badge"]),
+[data-theme="kallisti"] [class*="button"]:not([class*="entry-badge"]):not([class*="badge"]) {
+  background: var(--chaos-bg-dark) !important;
+  color: var(--text-muted) !important;
+  border-color: var(--border-discord) !important;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.6) !important;
+  opacity: 0.8;
+}
+
+[data-theme="kallisti"] button:hover:not([class*="entry-badge"]):not([class*="badge"]),
+[data-theme="kallisti"] [role="button"]:hover:not([class*="entry-badge"]):not([class*="badge"]),
+[data-theme="kallisti"] [class*="button"]:hover:not([class*="entry-badge"]):not([class*="badge"]) {
+  background: var(--chaos-bg-secondary) !important;
+  color: var(--text-secondary) !important;
+  border-color: var(--border-golden-light) !important;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.5), 0 0 8px rgba(255, 215, 100, 0.3) !important;
+  opacity: 0.9;
+}
+
+/* ============================================
+   MODALS - Night with golden trim
+   ============================================ */
+[data-theme="kallisti"] .entry-edit-modal-overlay {
+  background-color: rgba(3, 1, 5, 0.9);
+}
+
+[data-theme="kallisti"] .entry-edit-modal {
+  background: var(--chaos-bg-secondary);
+  border: 3px solid var(--golden-apple-dark);
+  border-radius: 4px;
+  box-shadow: 
+    0 4px 24px rgba(0, 0, 0, 0.95), 
+    inset 0 1px 0 rgba(255, 215, 100, 0.25), 
+    0 0 24px rgba(255, 215, 100, 0.18),
+    inset 0 0 30px rgba(42, 10, 58, 0.2);
+  /* The Judgment of Paris - the moment of decision */
+}
+
+[data-theme="kallisti"] .modal-header {
+  background: var(--chaos-bg-dark);
+  border-bottom: 2px solid var(--golden-apple-dark);
+  box-shadow: 
+    inset 0 -1px 0 rgba(255, 215, 100, 0.3),
+    0 1px 0 rgba(42, 10, 58, 0.2);
+  /* The dispute - Hera, Athena, Aphrodite's conflict */
+}
+
+[data-theme="kallisti"] .modal-content {
+  background: var(--chaos-bg-secondary);
+}
+
+[data-theme="kallisti"] .modal-footer {
+  background: var(--chaos-bg-secondary);
+  border-top: 2px solid var(--golden-apple-dark);
+  box-shadow: inset 0 1px 0 rgba(255, 215, 100, 0.25);
+}
+
+/* ============================================
+   TAGS - Dark with golden accents (ALL TAG VARIATIONS)
+   ============================================ */
+/* Base tag styles - ALL tags must be dark */
+[data-theme="kallisti"] .tag,
+[data-theme="kallisti"] .viewer-tag,
+[data-theme="kallisti"] .modal-tag,
+[data-theme="kallisti"] .entry-tag,
+[data-theme="kallisti"] .month-entry-tag,
+[data-theme="kallisti"] .period-entry-tag,
+[data-theme="kallisti"] .period-entry-filter-tag,
+[data-theme="kallisti"] .journal-entry-filter-tag,
+[data-theme="kallisti"] .filter-tag,
+[data-theme="kallisti"] .result-tag,
+[data-theme="kallisti"] .badge-tag-count {
+  background: var(--chaos-bg-dark) !important;
+  color: var(--text-muted) !important;
+  border: 1px solid var(--border-discord) !important;
+  border-radius: 3px;
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 12px;
+  padding: 4px 8px;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.6);
+  opacity: 0.7;
+}
+
+/* Tag hover states - golden glow */
+[data-theme="kallisti"] .tag:hover,
+[data-theme="kallisti"] .viewer-tag:hover,
+[data-theme="kallisti"] .modal-tag:hover,
+[data-theme="kallisti"] .entry-tag:hover,
+[data-theme="kallisti"] .month-entry-tag:hover,
+[data-theme="kallisti"] .period-entry-tag:hover,
+[data-theme="kallisti"] .period-entry-filter-tag:hover,
+[data-theme="kallisti"] .journal-entry-filter-tag:hover,
+[data-theme="kallisti"] .filter-tag:hover,
+[data-theme="kallisti"] .result-tag:hover {
+  background: var(--chaos-bg-secondary) !important;
+  color: var(--text-secondary) !important;
+  border-color: var(--border-golden-light) !important;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.5), 0 0 6px rgba(255, 215, 100, 0.3);
+  opacity: 0.85;
+}
+
+/* Active tag states - golden glow */
+[data-theme="kallisti"] .period-entry-filter-tag.active,
+[data-theme="kallisti"] .journal-entry-filter-tag.active,
+[data-theme="kallisti"] .filter-tag.active {
+  background: var(--chaos-bg-secondary) !important;
+  color: var(--text-secondary) !important;
+  border-color: var(--border-golden-light) !important;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.5), 0 0 6px rgba(255, 215, 100, 0.3);
+  opacity: 0.85;
+}
+
+/* Catch-all: Ensure NO tags are bright */
+[data-theme="kallisti"] [class*="tag"]:not([class*="entry-badge"]):not([class*="badge-title"]) {
+  background: var(--chaos-bg-dark) !important;
+  color: var(--text-muted) !important;
+  border-color: var(--border-discord) !important;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.6) !important;
+  opacity: 0.7;
+}
+
+/* ============================================
+   SEARCH VIEW
+   ============================================ */
+[data-theme="kallisti"] .search-view {
+  background: var(--chaos-bg);
+  color: var(--text-primary) !important;
+  text-shadow: var(--text-glow) !important;
+}
+
+[data-theme="kallisti"] .search-header {
+  background: var(--chaos-bg-dark);
+  border-bottom: 2px solid var(--golden-apple-dark);
+  box-shadow: inset 0 -1px 0 rgba(255, 215, 100, 0.25);
+}
+
+[data-theme="kallisti"] .search-input {
+  background: var(--chaos-bg-secondary);
+  border: 1px solid var(--border-discord);
+  border-radius: 3px;
+  color: var(--text-primary) !important;
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 14px;
+  padding: 8px 12px;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.4);
+  text-shadow: var(--text-glow) !important;
+}
+
+[data-theme="kallisti"] .search-input:focus {
+  border-color: var(--golden-apple);
+  outline: 2px solid var(--golden-apple);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 3px rgba(255, 215, 100, 0.3), inset 0 2px 4px rgba(0, 0, 0, 0.4);
+}
+
+[data-theme="kallisti"] .search-result-item {
+  background: var(--chaos-bg-secondary);
+  border: 1px solid var(--border-discord);
+  border-left: 3px solid var(--golden-apple-dark);
+  border-radius: 3px;
+  transition: all 0.25s ease;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.4);
+}
+
+[data-theme="kallisti"] .search-result-item:hover {
+  background: var(--highlight-golden);
+  border-color: var(--golden-apple);
+  box-shadow: 0 2px 4px rgba(255, 215, 100, 0.4);
+}
+
+/* ============================================
+   PREFERENCES
+   ============================================ */
+[data-theme="kallisti"] .preferences-container {
+  background: var(--chaos-bg);
+  color: var(--text-primary) !important;
+  text-shadow: var(--text-glow) !important;
+}
+
+[data-theme="kallisti"] .preferences-header {
+  background: var(--chaos-bg-dark);
+  border-bottom: 2px solid var(--golden-apple-dark);
+  box-shadow: inset 0 -1px 0 rgba(255, 215, 100, 0.25);
+}
+
+[data-theme="kallisti"] .preferences-section {
+  background: var(--chaos-bg-secondary);
+  border: 2px solid var(--golden-apple-dark);
+  border-radius: 4px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 215, 100, 0.15), 0 0 12px rgba(255, 215, 100, 0.1);
+}
+
+[data-theme="kallisti"] .preference-item input,
+[data-theme="kallisti"] .preference-item select {
+  background: var(--chaos-bg);
+  border: 1px solid var(--border-discord);
+  border-radius: 3px;
+  color: var(--text-primary) !important;
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 14px;
+  padding: 6px 10px;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.4);
+  text-shadow: var(--text-glow) !important;
+}
+
+[data-theme="kallisti"] .preference-item input:focus,
+[data-theme="kallisti"] .preference-item select:focus {
+  border-color: var(--golden-apple);
+  outline: 2px solid var(--golden-apple);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 3px rgba(255, 215, 100, 0.3), inset 0 2px 4px rgba(0, 0, 0, 0.4);
+}
+
+/* ============================================
+   JOURNAL LIST
+   ============================================ */
+[data-theme="kallisti"] .journal-list {
+  background: var(--chaos-bg);
+  border-right: 3px solid var(--golden-apple-dark);
+  box-shadow: inset -1px 0 0 rgba(255, 215, 100, 0.15);
+  color: var(--text-primary) !important;
+  text-shadow: var(--text-glow) !important;
+}
+
+[data-theme="kallisti"] .journal-list-header {
+  background: var(--chaos-bg-dark);
+  border-bottom: 2px solid var(--golden-apple-dark);
+  box-shadow: inset 0 -1px 0 rgba(255, 215, 100, 0.25);
+}
+
+/* ============================================
+   LOADING SCREEN - Golden apple glow effect
+   ============================================ */
+[data-theme="kallisti"] .loading-screen {
+  background: var(--chaos-bg);
+  color: var(--text-primary);
+}
+
+[data-theme="kallisti"] .loading-progress-bar {
+  background: var(--night-vein);
+  border-radius: 4px;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+[data-theme="kallisti"] .loading-progress-fill {
+  background: linear-gradient(90deg, 
+    var(--golden-apple-shadow) 0%,
+    var(--golden-apple) 50%,
+    var(--golden-apple-inscription) 100%);
+  box-shadow: 
+    0 0 18px rgba(255, 215, 100, 0.9), 
+    0 0 10px rgba(255, 232, 154, 0.6),
+    inset 0 1px 0 rgba(255, 244, 212, 0.5);
+  /* The "Kallisti" inscription - beauty that sows discord */
+}
+
+/* ============================================
+   TIME RANGE BADGES - Golden and discord colors
+   ============================================ */
+[data-theme="kallisti"] .entry-decade {
+  background: var(--highlight-discord);
+  color: var(--discord-purple-light);
+  border: 1px solid var(--discord-purple);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.4);
+}
+
+[data-theme="kallisti"] .entry-year {
+  background: var(--highlight-golden);
+  color: var(--golden-apple-light);
+  border: 1px solid var(--golden-apple);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.4);
+}
+
+[data-theme="kallisti"] .entry-month {
+  background: var(--highlight-chaos);
+  color: var(--chaos-amber-light);
+  border: 1px solid var(--chaos-amber);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.4);
+}
+
+[data-theme="kallisti"] .entry-week {
+  background: var(--highlight-discord);
+  color: var(--discord-magenta-light);
+  border: 1px solid var(--discord-magenta);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.4);
+}
+
+[data-theme="kallisti"] .entry-day {
+  background: var(--highlight-golden);
+  color: var(--golden-apple-light);
+  border: 1px solid var(--golden-apple);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.4);
+}
+
+/* ============================================
+   DAY VIEW CALENDAR ENTRIES - Bright and legible
+   ============================================ */
+/* All entry badges in timeline cells - force bright text */
+[data-theme="kallisti"] .entry-badge {
+  color: var(--text-title-bright) !important;
+  text-shadow: 
+    0 1px 2px rgba(0, 0, 0, 0.9),
+    0 0 4px rgba(0, 0, 0, 0.8),
+    0 0 8px rgba(0, 0, 0, 0.6),
+    0 0 12px rgba(0, 0, 0, 0.4) !important;
+  border-left-width: 3px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+}
+
+/* Override all entry badge type colors to be bright */
+[data-theme="kallisti"] .entry-badge.entry-day,
+[data-theme="kallisti"] .entry-badge.entry-week,
+[data-theme="kallisti"] .entry-badge.entry-month,
+[data-theme="kallisti"] .entry-badge.entry-year,
+[data-theme="kallisti"] .entry-badge.entry-decade {
+  color: var(--text-title-bright) !important;
+  text-shadow: 
+    0 1px 2px rgba(0, 0, 0, 0.9),
+    0 0 4px rgba(0, 0, 0, 0.8),
+    0 0 8px rgba(0, 0, 0, 0.6),
+    0 0 12px rgba(0, 0, 0, 0.4) !important;
+}
+
+/* Badge title text - bright white with strong shadows */
+[data-theme="kallisti"] .entry-badge .badge-title {
+  color: var(--text-title-bright) !important;
+  font-weight: 600;
+  text-shadow: 
+    0 1px 2px rgba(0, 0, 0, 0.9),
+    0 0 4px rgba(0, 0, 0, 0.8),
+    0 0 8px rgba(0, 0, 0, 0.6),
+    0 0 12px rgba(0, 0, 0, 0.4) !important;
+}
+
+/* Badge tag count - dark and subtle */
+[data-theme="kallisti"] .entry-badge .badge-tag-count {
+  background: var(--chaos-bg-dark) !important;
+  color: var(--text-muted) !important;
+  border: 1px solid var(--border-discord) !important;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.6);
+  opacity: 0.7;
+  border-radius: 10px;
+  padding: 0.1rem 0.3rem;
+  font-size: 0.65rem;
+}
+
+/* More entries indicator - dark and subtle */
+[data-theme="kallisti"] .entry-badge.more-entries {
+  background: var(--chaos-bg-dark) !important;
+  color: var(--text-muted) !important;
+  border: 1px solid var(--border-discord) !important;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.6);
+  opacity: 0.7;
+}
+
+/* Cell date - golden apple with glow */
+[data-theme="kallisti"] .cell-date {
+  color: var(--golden-apple) !important;
+  text-shadow: 
+    0 0 6px rgba(255, 215, 100, 0.9),
+    0 0 12px rgba(255, 215, 100, 0.7),
+    0 0 18px rgba(255, 215, 100, 0.5),
+    0 1px 2px rgba(0, 0, 0, 0.9) !important;
+  border-bottom-color: var(--border-discord) !important;
+}
+
+/* Calendar month details and labels - golden apple with glow */
+[data-theme="kallisti"] .month-details,
+[data-theme="kallisti"] .month-days,
+[data-theme="kallisti"] .month-entry-count,
+[data-theme="kallisti"] .week-label,
+[data-theme="kallisti"] .week-entry-count {
+  color: var(--golden-apple) !important;
+  text-shadow: 
+    0 0 6px rgba(255, 215, 100, 0.9),
+    0 0 12px rgba(255, 215, 100, 0.7),
+    0 0 18px rgba(255, 215, 100, 0.5) !important;
+}
+
+/* Calendar loading text - golden apple */
+[data-theme="kallisti"] .calendar-loading {
+  color: var(--golden-apple) !important;
+  text-shadow: 
+    0 0 6px rgba(255, 215, 100, 0.9),
+    0 0 12px rgba(255, 215, 100, 0.7),
+    0 0 18px rgba(255, 215, 100, 0.5) !important;
+}
+
+/* ============================================
+   MINIMAP
+   ============================================ */
+[data-theme="kallisti"] .minimap-container {
+  background: var(--chaos-bg-secondary);
+  border: 1px solid var(--golden-apple-dark);
+  border-radius: 4px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 215, 100, 0.15);
+}
+
+[data-theme="kallisti"] .minimap-timeline {
+  background: var(--chaos-bg);
+}
+
+[data-theme="kallisti"] .entry-indicator-minimap {
+  background: var(--golden-apple-dark);
+  border: 1px solid var(--golden-apple);
+  box-shadow: 0 0 6px rgba(255, 215, 100, 0.5);
+}
+
+[data-theme="kallisti"] .current-period-indicator {
+  background: var(--highlight-golden);
+  border: 1px solid var(--golden-apple);
+  box-shadow: 0 0 8px rgba(255, 215, 100, 0.6);
+}
+
+/* ============================================
+   ADDITIONAL COMPONENTS
+   ============================================ */
+
+/* Calendar Info Panel */
+[data-theme="kallisti"] .calendar-info-panel {
+  background: var(--chaos-bg-secondary);
+  border: 2px solid var(--golden-apple-dark);
+  border-radius: 4px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.6), 0 0 12px rgba(255, 215, 100, 0.1);
+  color: var(--text-primary);
+}
+
+[data-theme="kallisti"] .calendar-definition-toggle {
+  background: var(--chaos-bg);
+  border: 1px solid var(--golden-apple-dark);
+  color: var(--text-primary);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.4);
+}
+
+[data-theme="kallisti"] .calendar-definition-toggle:hover {
+  background: var(--highlight-golden);
+  border-color: var(--golden-apple);
+}
+
+[data-theme="kallisti"] .calendar-definition-drawer {
+  background: var(--chaos-bg-dark);
+  border-top: 2px solid var(--golden-apple-dark);
+  color: var(--text-primary);
+}
+
+/* Calendar Selector */
+[data-theme="kallisti"] .calendar-select {
+  background: var(--chaos-bg-secondary);
+  border: 1px solid var(--border-discord);
+  color: var(--text-primary);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.4);
+}
+
+[data-theme="kallisti"] .calendar-select:focus {
+  border-color: var(--golden-apple);
+  outline: 2px solid var(--golden-apple);
+  outline-offset: 2px;
+}
+
+/* Period Entries */
+[data-theme="kallisti"] .period-entries-controls {
+  background: var(--chaos-bg-secondary);
+  border-bottom: 2px solid var(--golden-apple-dark);
+}
+
+[data-theme="kallisti"] .period-entry-item {
+  background: var(--chaos-bg);
+  border: 1px solid var(--border-discord);
+  border-left: 3px solid var(--golden-apple-dark);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.4);
+  color: var(--text-entry-bright);
+}
+
+[data-theme="kallisti"] .period-entry-item:hover {
+  background: var(--highlight-golden);
+  border-color: var(--golden-apple);
+}
+
+/* Linked Entries */
+[data-theme="kallisti"] .linked-entry-item {
+  background: var(--chaos-bg-secondary);
+  border: 1px solid var(--border-discord);
+  border-left: 3px solid var(--golden-apple-dark);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.4);
+  color: var(--text-entry-bright);
+}
+
+[data-theme="kallisti"] .linked-entry-item:hover {
+  background: var(--highlight-golden);
+  border-color: var(--golden-apple);
+}
+
+/* Bulk Edit */
+[data-theme="kallisti"] .bulk-edit-actions {
+  background: var(--chaos-bg-dark);
+  border-top: 2px solid var(--golden-apple-dark);
+  box-shadow: inset 0 1px 0 rgba(255, 215, 100, 0.25);
+}
+
+[data-theme="kallisti"] .journal-entry-item.bulk-selected {
+  background: var(--highlight-discord);
+  border-color: var(--discord-purple);
+}
+
+/* Loading States */
+[data-theme="kallisti"] .calendar-loading,
+[data-theme="kallisti"] .timeline-loading,
+[data-theme="kallisti"] .journal-list-loading {
+  color: var(--text-muted) !important;
+  text-shadow: var(--text-glow) !important;
+}
+
+/* Empty States */
+[data-theme="kallisti"] .viewer-empty,
+[data-theme="kallisti"] .journal-list-empty,
+[data-theme="kallisti"] .search-empty {
+  color: var(--text-muted) !important;
+  text-shadow: var(--text-glow) !important;
+}
+
+/* ============================================
+   GLOBAL TEXT - Golden Apple with Glow
+   Apply to ALL text except entry titles/text
+   ============================================ */
+/* Base text color and glow for all elements */
+[data-theme="kallisti"] {
+  color: var(--text-primary);
+}
+
+/* All text elements get golden apple with glow by default */
+[data-theme="kallisti"] p,
+[data-theme="kallisti"] span:not(.badge-title):not(.entry-item-title):not(.period-entry-title):not(.month-entry-title):not(.week-entry-title):not(.linked-entry-title):not(.entry-item-preview):not(.month-entry-preview):not(.period-entry-content),
+[data-theme="kallisti"] div:not([class*="entry-title"]):not([class*="badge-title"]):not([class*="viewer-title"]):not([class*="editor-header"]):not([class*="viewer-header"]):not([class*="entry-preview"]):not([class*="entry-content"]),
+[data-theme="kallisti"] h1,
+[data-theme="kallisti"] h2,
+[data-theme="kallisti"] h3:not(.viewer-header h3):not(.editor-header h3),
+[data-theme="kallisti"] h4,
+[data-theme="kallisti"] h5,
+[data-theme="kallisti"] h6,
+[data-theme="kallisti"] label,
+[data-theme="kallisti"] li,
+[data-theme="kallisti"] td,
+[data-theme="kallisti"] th {
+  color: var(--text-primary) !important;
+  text-shadow: var(--text-glow) !important;
+}
+
+/* Secondary text elements */
+[data-theme="kallisti"] .text-secondary,
+[data-theme="kallisti"] [class*="secondary"]:not([class*="entry"]):not([class*="badge"]) {
+  color: var(--text-secondary) !important;
+  text-shadow: var(--text-glow) !important;
+}
+
+/* Muted text elements */
+[data-theme="kallisti"] .text-muted,
+[data-theme="kallisti"] [class*="muted"]:not([class*="entry"]):not([class*="badge"]),
+[data-theme="kallisti"] small:not([class*="entry"]):not([class*="badge"]) {
+  color: var(--text-muted) !important;
+  text-shadow: var(--text-glow) !important;
+}
+
+/* Keep entry titles and text bright white (exclude from golden) */
+[data-theme="kallisti"] .entry-item-title,
+[data-theme="kallisti"] .period-entry-title,
+[data-theme="kallisti"] .month-entry-title,
+[data-theme="kallisti"] .week-entry-title,
+[data-theme="kallisti"] .linked-entry-title,
+[data-theme="kallisti"] .entry-item-preview,
+[data-theme="kallisti"] .month-entry-preview,
+[data-theme="kallisti"] .period-entry-content,
+[data-theme="kallisti"] .viewer-header h3,
+[data-theme="kallisti"] .editor-header h3,
+[data-theme="kallisti"] .badge-title {
+  color: var(--text-title-bright) !important;
+  text-shadow: 
+    0 1px 2px rgba(0, 0, 0, 0.9),
+    0 0 4px rgba(0, 0, 0, 0.8),
+    0 0 8px rgba(0, 0, 0, 0.6),
+    0 0 12px rgba(0, 0, 0, 0.4) !important;
+}
+
+/* About Page */
+[data-theme="kallisti"] .about-container {
+  background: var(--chaos-bg);
+  color: var(--text-primary) !important;
+  text-shadow: var(--text-glow) !important;
+}
+
+[data-theme="kallisti"] .about-section {
+  background: var(--chaos-bg-secondary);
+  border: 2px solid var(--golden-apple-dark);
+  border-radius: 4px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.6), 0 0 12px rgba(255, 215, 100, 0.1);
+}
+
+[data-theme="kallisti"] .about-link {
+  color: var(--golden-apple);
+}
+
+[data-theme="kallisti"] .about-link:hover {
+  color: var(--golden-apple-light);
+}
+

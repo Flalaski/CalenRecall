@@ -131,6 +131,10 @@ const BUILT_IN_THEME_METADATA: Record<string, Omit<ThemeInfo, 'name'>> = {
   'temple-of-darkness': {
     displayName: 'Temple of Darkness',
     description: 'Dark mode variant - Gothic temple aesthetic with aged stone walls, weathered ebony woodwork, oxidized bronze metals, and mystical torchlight - mysterious and arcane design'
+  },
+  'kallisti': {
+    displayName: 'Kallisti',
+    description: 'Inspired by Eris, the divine mother of chaos and goddess of discord - deep night backgrounds with golden apple highlights and discord purple accents, representing the legendary "Kallisti" (to the fairest) that sparked the Trojan War'
   }
 };
 

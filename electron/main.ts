@@ -48,6 +48,8 @@ const THEME_METADATA: Record<string, { displayName: string }> = {
   'manuscript-room': { displayName: 'Manuscript Room' },
   'reading-room': { displayName: 'Reading Room' },
   'temple-of-light': { displayName: 'Temple of Light' },
+  'temple-of-darkness': { displayName: 'Temple of Darkness' },
+  'kallisti': { displayName: 'Kallisti' },
 };
 
 /**
