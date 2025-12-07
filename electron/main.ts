@@ -457,6 +457,8 @@ function createMenu() {
   const themes = discoverThemes();
   const currentTheme = getAllPreferences().theme || 'light';
   
+  console.log(`[Main] Creating menu with ${themes.length} themes:`, themes.map(t => t.name));
+  
   // Build theme menu items
   const themeMenuItems: Electron.MenuItemConstructorOptions[] = themes.map(theme => ({
     label: theme.displayName,
@@ -815,7 +817,7 @@ app.whenReady().then(() => {
     updateMenu();
   });
   
-  // Create application menu
+  // Create application menu (will be updated after window loads to include custom themes)
   createMenu();
   
   // Handle opening preferences window
@@ -830,12 +832,20 @@ app.whenReady().then(() => {
     }
   });
   
-  // Handle menu update requests (called when preferences change)
+  // Handle menu update requests (called when preferences change or themes are added)
   ipcMain.handle('update-application-menu', () => {
+    console.log('[Main] Menu update requested via IPC');
     updateMenu();
   });
   
   createWindow();
+  
+  // Update menu after a delay to ensure custom themes folder is fully initialized
+  // This gives time for the folder to be created and any templates to be copied
+  setTimeout(() => {
+    console.log('[Main] Updating menu after initialization to include custom themes');
+    updateMenu();
+  }, 1000);
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {
