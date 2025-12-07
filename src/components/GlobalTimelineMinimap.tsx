@@ -338,6 +338,14 @@ export default function GlobalTimelineMinimap({
   const lastThrottleUpdateRef = useRef<number>(0);
   // OPTIMIZATION: Cache bounding rect to avoid forced reflows during drag
   const cachedBoundingRectRef = useRef<DOMRect | null>(null);
+  // OPTIMIZATION: Track last drag limits to prevent unnecessary state updates
+  const lastDragLimitsRef = useRef<{ 
+    deadZoneTop: number; 
+    deadZoneBottom: number; 
+    thresholdTop: number; 
+    thresholdBottom: number;
+    currentMovement?: number;
+  } | null>(null);
   
   // Invalidate bounding rect cache on window resize
   useEffect(() => {
@@ -3064,13 +3072,15 @@ export default function GlobalTimelineMinimap({
     setRadialDial({ x: e.clientX, y: e.clientY });
     
     // Initialize drag limits visualization
-    setDragLimits({
+    const initialDragLimits = {
       deadZoneTop: 0,
       deadZoneBottom: 0,
       thresholdTop: -88,
       thresholdBottom: 88,
       currentMovement: 0,
-    });
+    };
+    lastDragLimitsRef.current = initialDragLimits;
+    setDragLimits(initialDragLimits);
     
     setIsDragging(true);
     e.preventDefault();
@@ -3626,13 +3636,26 @@ export default function GlobalTimelineMinimap({
         // Calculate current vertical movement from start
         const currentVerticalMovement = verticalMovementAccumulatorRef.current;
         
-        setDragLimits({
+        // Only update state if values have actually changed to prevent infinite re-render loops
+        const newDragLimits = {
           deadZoneTop: deadZoneTop,
           deadZoneBottom: deadZoneBottom,
           thresholdTop: thresholdTop,
           thresholdBottom: thresholdBottom,
           currentMovement: currentVerticalMovement, // Track current position for visual feedback
-        });
+        };
+        
+        // Compare with last values - only update if something changed
+        const lastLimits = lastDragLimitsRef.current;
+        if (!lastLimits || 
+            lastLimits.deadZoneTop !== newDragLimits.deadZoneTop ||
+            lastLimits.deadZoneBottom !== newDragLimits.deadZoneBottom ||
+            lastLimits.thresholdTop !== newDragLimits.thresholdTop ||
+            lastLimits.thresholdBottom !== newDragLimits.thresholdBottom ||
+            lastLimits.currentMovement !== newDragLimits.currentMovement) {
+          lastDragLimitsRef.current = newDragLimits;
+          setDragLimits(newDragLimits);
+        }
       }
       
       // Handle vertical movement for scale changes with lock-in mechanism and dead zone
@@ -3871,6 +3894,7 @@ export default function GlobalTimelineMinimap({
       setHorizontalLocked(false);
       setRadialDial(null);
       setDragLimits(null);
+      lastDragLimitsRef.current = null; // Reset drag limits cache when dragging ends
       horizontalLockedRef.current = false;
       dragStartPositionRef.current = null;
       lastUpdateTimeRef.current = 0;
