@@ -333,8 +333,8 @@
 [data-theme="the-real-world"] .entry-indicator {
   background: #7fbf7f;
   border-radius: 0;
-  width: 6px;
-  height: 6px;
+  width: 9px;
+  height:11px;
 }
 
 [data-theme="the-real-world"] .weekday-header {
