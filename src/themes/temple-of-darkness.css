@@ -1,103 +1,117 @@
 /**
- * Temple of Darkness Theme
- * Dark mode variant of the Temple theme - Gothic temple aesthetic with aged stone walls,
- * weathered woodwork, oxidized metals, and mystical lighting
- * Mysterious and arcane design inspired by dark temple architecture and occult symbolism
+ * Temple of Darkness Theme - Textured Metal Bar Dungeon
+ * Industrial dungeon aesthetic with textured metal bars, rusted steel, and harsh lighting
+ * Prison-like design with metal bar patterns, industrial textures, and confined spaces
  * 
  * Design Elements:
- * - Aged stone textures: Dark basalt, weathered granite, cracked obsidian
- * - Weathered woodwork: Ancient ebony, aged mahogany, charred oak
- * - Oxidized metals: Tarnished bronze, rusted iron, dark copper
- * - Mystical lighting: Dim torchlight, candle glow, deep shadows
- * - Dark accents: Deep purples, blood reds, shadow grays
- * - Gothic architecture: Pointed arches, carved pillars, arcane symbols
+ * - Textured metal bars: Vertical and horizontal bar patterns, steel grids
+ * - Rusted metals: Weathered steel, oxidized iron, corroded surfaces
+ * - Industrial lighting: Harsh dim lights, flickering bulbs, deep shadows
+ * - Dark accents: Steel grays, rust oranges, industrial blues
+ * - Prison architecture: Metal bars, riveted panels, confined spaces
  */
 
 /* ============================================
    COLOR PALETTE - CSS Custom Properties
    ============================================ */
 [data-theme="temple-of-darkness"] {
-  /* Backgrounds - Aged stone tones (dark basalt, weathered granite) */
-  --temple-bg: #1a1815;                    /* Primary dark stone */
-  --temple-bg-secondary: #151310;           /* Secondary dark stone */
-  --temple-bg-tertiary: #0f0d0a;           /* Tertiary darkest stone */
-  --temple-bg-hover: #25221d;              /* Hover state */
-  --temple-bg-dark: #0a0805;               /* Darkest stone accent */
+  /* Backgrounds - Dark metal dungeon tones */
+  --temple-bg: #1a1a1a;                    /* Primary dark metal */
+  --temple-bg-secondary: #151515;           /* Secondary dark metal */
+  --temple-bg-tertiary: #0f0f0f;           /* Tertiary darkest metal */
+  --temple-bg-hover: #252525;              /* Hover state */
+  --temple-bg-dark: #0a0a0a;               /* Darkest metal accent */
   
-  /* Text - Maroon warmth with glow */
-  --text-primary: var(--maroon-warm);                /* Maroon warmth for primary text */
-  --text-secondary: var(--maroon-warm-light);         /* Lighter maroon for secondary text */
-  --text-muted: var(--maroon-warm-dark);              /* Darker maroon for muted text */
-  --text-entry-bright: #ffffff;                       /* Bright white for entry text */
-  --text-title-bright: #ffffff;                       /* Bright white for titles */
+  /* Text - Industrial steel tones */
+  --text-primary: #b0b0b0;                /* Steel gray for primary text */
+  --text-secondary: #c0c0c0;              /* Lighter steel for secondary text */
+  --text-muted: #808080;                  /* Darker steel for muted text */
+  --text-entry-bright: #e0e0e0;           /* Bright steel for entry text */
+  --text-title-bright: #f0f0f0;           /* Bright steel for titles */
   
-  /* Text glow effect */
+  /* Text shadow - Subtle industrial glow with Sith red accent */
   --text-glow: 
-    0 0 4px rgba(212, 122, 122, 0.8),
-    0 0 8px rgba(212, 122, 122, 0.6),
-    0 0 12px rgba(212, 122, 122, 0.4),
+    0 0 2px rgba(176, 176, 176, 0.3),
+    0 0 4px rgba(139, 0, 0, 0.2),
     0 1px 2px rgba(0, 0, 0, 0.8);
   
-  /* Stone Accents */
-  --stone-basalt: #1a1815;                /* Dark basalt */
-  --stone-granite: #2a2823;                /* Weathered granite */
-  --stone-obsidian: #0f0d0a;               /* Cracked obsidian */
-  --stone-vein: #3a352d;                  /* Stone vein highlight */
+  /* Metal Bar Colors */
+  --metal-bar: #3a3a3a;                   /* Metal bar color */
+  --metal-bar-light: #4a4a4a;            /* Lighter bar */
+  --metal-bar-dark: #2a2a2a;              /* Darker bar */
+  --metal-bar-shadow: #1a1a1a;           /* Bar shadow */
   
-  /* Woodwork - Ancient hardwoods */
-  --wood-ebony: #1a1610;                  /* Ancient ebony */
-  --wood-ebony-light: #2a2418;
-  --wood-ebony-dark: #0f0a05;
-  --wood-mahogany: #3a2a1a;               /* Aged mahogany */
-  --wood-oak: #2a1f15;                    /* Charred oak */
-  --wood-accent: var(--wood-ebony);
+  /* Steel Colors - Industrial metals */
+  --steel-dark: #2a2a2a;                  /* Dark steel */
+  --steel-medium: #3a3a3a;                /* Medium steel */
+  --steel-light: #4a4a4a;                 /* Light steel */
+  --steel-bright: #5a5a5a;                /* Bright steel */
   
-  /* Metals - Oxidized and tarnished */
-  --metal-bronze: #6b5a3a;                /* Tarnished bronze */
-  --metal-bronze-light: #8b7a5a;
-  --metal-bronze-dark: #4b3a1a;
-  --metal-iron: #4a4a4a;                  /* Rusted iron */
-  --metal-copper: #6b4a2a;                /* Dark copper */
+  /* Rust Colors - Oxidized metal */
+  --rust-dark: #5a3a2a;                   /* Dark rust */
+  --rust-medium: #7a4a3a;                 /* Medium rust */
+  --rust-light: #9a6a4a;                  /* Light rust */
+  --rust-accent: #8b5a3a;                 /* Rust accent */
   
-  /* Mystical Colors - Deep purples and blood reds */
-  --mystic-purple: #4a2a5a;               /* Deep purple */
-  --mystic-purple-light: #6a4a7a;
-  --mystic-purple-dark: #2a1a3a;
-  --blood-red: #6a2a2a;                   /* Blood red */
-  --blood-red-light: #8a4a4a;
-  --blood-red-dark: #4a1a1a;
-  --shadow-gray: #2a2823;                 /* Shadow gray */
+  /* Sith Red Colors - Dark side accent gradients */
+  --sith-red-dark: #4a0000;               /* Darkest Sith red */
+  --sith-red: #8b0000;                    /* Deep Sith red */
+  --sith-red-medium: #b00000;             /* Medium Sith red */
+  --sith-red-bright: #d40000;             /* Bright Sith red */
+  --sith-red-crimson: #c00000;            /* Crimson Sith red */
+  --sith-red-blood: #9a0000;              /* Blood red */
   
-  /* Torchlight - Dim mystical lighting */
-  --torch-orange: #8b5a2a;                /* Torch orange */
-  --torch-orange-light: #ab7a4a;
-  --torch-orange-dark: #6b3a0a;
-  --candle-glow: #9b7a5a;                 /* Candle glow */
+  /* Sith Red Gradients */
+  --sith-gradient-dark: linear-gradient(135deg, #4a0000 0%, #8b0000 50%, #4a0000 100%);
+  --sith-gradient: linear-gradient(135deg, #8b0000 0%, #b00000 50%, #8b0000 100%);
+  --sith-gradient-bright: linear-gradient(135deg, #b00000 0%, #d40000 50%, #b00000 100%);
+  --sith-gradient-vertical: linear-gradient(180deg, #4a0000 0%, #8b0000 50%, #4a0000 100%);
+  --sith-gradient-horizontal: linear-gradient(90deg, #4a0000 0%, #8b0000 50%, #4a0000 100%);
   
-  /* Maroon Warmth - Bright warm maroon for calendar text */
-  --maroon-warm: #d47a7a;                 /* Bright warm maroon */
-  --maroon-warm-light: #e89a9a;
-  --maroon-warm-dark: #b85a5a;
+  /* Industrial Colors - Harsh lighting */
+  --industrial-blue: #3a4a5a;             /* Industrial blue */
+  --industrial-blue-light: #4a5a6a;
+  --industrial-blue-dark: #2a3a4a;
+  --warning-orange: #8b6a3a;              /* Warning orange */
+  --warning-orange-light: #ab8a5a;
+  --warning-orange-dark: #6b4a1a;
   
-  /* Borders - Stone and metal */
-  --border-stone: var(--stone-granite);
-  --border-stone-light: var(--stone-vein);
-  --border-metal: var(--metal-bronze);
+  /* Metal Accents */
+  --metal-iron: #4a4a4a;                   /* Rusted iron */
+  --metal-iron-light: #5a5a5a;
+  --metal-iron-dark: #3a3a3a;
+  --metal-steel: #3a3a3a;                 /* Weathered steel */
+  --metal-steel-light: #4a4a4a;
+  --metal-steel-dark: #2a2a2a;
   
-  /* Highlights */
-  --highlight-torch: rgba(139, 90, 42, 0.2);
-  --highlight-purple: rgba(74, 42, 90, 0.15);
-  --highlight-blood: rgba(106, 42, 42, 0.15);
-  --highlight-metal: rgba(107, 90, 58, 0.2);
+  /* Borders - Metal bars and steel with Sith accents */
+  --border-metal: var(--metal-bar);
+  --border-metal-light: var(--metal-bar-light);
+  --border-steel: var(--steel-medium);
+  --border-rust: var(--rust-medium);
+  --border-sith: var(--sith-red);
   
-  /* Base Typography - Gothic serif */
-  font-family: 'Georgia', 'Times New Roman', serif;
+  /* Highlights with Sith red accents */
+  --highlight-metal: rgba(74, 74, 74, 0.3);
+  --highlight-rust: rgba(123, 90, 58, 0.2);
+  --highlight-steel: rgba(90, 90, 90, 0.25);
+  --highlight-industrial: rgba(58, 74, 90, 0.2);
+  --highlight-sith: rgba(139, 0, 0, 0.3);
+  --highlight-sith-bright: rgba(212, 0, 0, 0.2);
+  
+  /* Calendar Text - Steel with subtle rust accent */
+  --calendar-text: #b0b0b0;               /* Steel gray for calendar */
+  --calendar-text-light: #c0c0c0;
+  --calendar-text-dark: #808080;
+  
+  /* Base Typography - Industrial sans-serif */
+  font-family: 'Arial', 'Helvetica', sans-serif;
   font-size: 14px;
-  line-height: 1.7;
+  line-height: 1.6;
 }
 
 /* ============================================
-   BASE STYLES - Aged Stone Background with Texture
+   BASE STYLES - Textured Metal Bar Background
    ============================================ */
 [data-theme="temple-of-darkness"] html,
 [data-theme="temple-of-darkness"] body {
@@ -105,14 +119,39 @@
   color: var(--text-primary);
   text-shadow: var(--text-glow);
   --theme-body-bg: var(--temple-bg);
-  /* Aged stone texture with cracks, weathering, and mystical lighting */
+  /* Metal bar texture with vertical and horizontal bars, rust spots, and industrial lighting */
   background-image: 
-    radial-gradient(circle at 20% 30%, rgba(139, 90, 42, 0.08) 0%, transparent 50%),
-    radial-gradient(circle at 80% 70%, rgba(74, 42, 90, 0.06) 0%, transparent 50%),
-    radial-gradient(ellipse at 50% 50%, rgba(106, 42, 42, 0.04) 0%, transparent 60%),
-    repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(42, 40, 35, 0.05) 2px, rgba(42, 40, 35, 0.05) 4px),
-    repeating-linear-gradient(90deg, transparent, transparent 3px, rgba(15, 13, 10, 0.03) 3px, rgba(15, 13, 10, 0.03) 6px),
-    linear-gradient(135deg, #1a1815 0%, #151310 48%, #0f0d0a 100%);
+    /* Vertical metal bars */
+    repeating-linear-gradient(90deg, 
+      transparent 0px, 
+      transparent 8px, 
+      rgba(58, 58, 58, 0.15) 8px, 
+      rgba(58, 58, 58, 0.15) 9px,
+      transparent 9px,
+      transparent 17px
+    ),
+    /* Horizontal metal bars */
+    repeating-linear-gradient(0deg, 
+      transparent 0px, 
+      transparent 8px, 
+      rgba(58, 58, 58, 0.12) 8px, 
+      rgba(58, 58, 58, 0.12) 9px,
+      transparent 9px,
+      transparent 17px
+    ),
+    /* Rust spots and weathering */
+    radial-gradient(circle at 15% 25%, rgba(123, 90, 58, 0.08) 0%, transparent 40%),
+    radial-gradient(circle at 85% 75%, rgba(123, 90, 58, 0.06) 0%, transparent 40%),
+    radial-gradient(circle at 50% 50%, rgba(58, 74, 90, 0.04) 0%, transparent 50%),
+    /* Metal surface texture */
+    repeating-linear-gradient(45deg, 
+      transparent, 
+      transparent 1px, 
+      rgba(26, 26, 26, 0.1) 1px, 
+      rgba(26, 26, 26, 0.1) 2px
+    ),
+    /* Base metal gradient */
+    linear-gradient(135deg, #1a1a1a 0%, #151515 48%, #0f0f0f 100%);
   background-attachment: fixed;
   position: relative;
 }
@@ -136,12 +175,25 @@
 
 [data-theme="temple-of-darkness"] .editor-section {
   background: var(--temple-bg-secondary);
-  border-left: 3px solid var(--metal-bronze);
-  box-shadow: inset 4px 0 12px rgba(0, 0, 0, 0.5), inset -2px 0 8px rgba(139, 90, 42, 0.1);
+  border-left: 3px solid var(--sith-red);
+  box-shadow: inset 4px 0 12px rgba(0, 0, 0, 0.6), inset -2px 0 8px rgba(139, 0, 0, 0.3), 0 0 6px rgba(139, 0, 0, 0.15);
   position: relative;
+  /* Metal bar pattern overlay with Sith red tint */
+  background-image: 
+    repeating-linear-gradient(90deg, 
+      transparent 0px, 
+      transparent 8px, 
+      rgba(58, 58, 58, 0.1) 8px, 
+      rgba(58, 58, 58, 0.1) 9px
+    ),
+    linear-gradient(180deg, 
+      transparent 0%,
+      rgba(139, 0, 0, 0.03) 50%,
+      transparent 100%
+    );
 }
 
-/* Metal detail on editor section */
+/* Sith red metal bar detail on editor section */
 [data-theme="temple-of-darkness"] .editor-section::before {
   content: '';
   position: absolute;
@@ -149,21 +201,31 @@
   left: -3px;
   width: 3px;
   height: 100%;
-  background: linear-gradient(180deg, 
-    var(--metal-bronze-dark) 0%,
-    var(--metal-bronze) 50%,
-    var(--metal-bronze-dark) 100%);
-  box-shadow: inset 0 0 4px rgba(75, 58, 26, 0.5);
+  background: var(--sith-gradient-vertical);
+  box-shadow: inset 0 0 4px rgba(26, 0, 0, 0.8), 0 0 3px rgba(139, 0, 0, 0.5), 0 0 6px rgba(212, 0, 0, 0.2);
 }
 
 /* ============================================
-   NAVIGATION BAR - Ebony woodwork with bronze accents
+   NAVIGATION BAR - Metal bar with industrial accents
    ============================================ */
 [data-theme="temple-of-darkness"] .navigation-bar {
   background: var(--temple-bg-secondary);
-  border-bottom: 3px solid var(--metal-bronze);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.6), inset 0 -1px 0 rgba(139, 90, 42, 0.2);
+  border-bottom: 3px solid var(--sith-red);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.7), inset 0 -1px 0 rgba(139, 0, 0, 0.4), 0 0 8px rgba(139, 0, 0, 0.2);
   position: relative;
+  /* Horizontal metal bar pattern with Sith red tint */
+  background-image: 
+    repeating-linear-gradient(0deg, 
+      transparent 0px, 
+      transparent 8px, 
+      rgba(58, 58, 58, 0.15) 8px, 
+      rgba(58, 58, 58, 0.15) 9px
+    ),
+    linear-gradient(90deg, 
+      transparent 0%,
+      rgba(139, 0, 0, 0.05) 50%,
+      transparent 100%
+    );
 }
 
 [data-theme="temple-of-darkness"] .navigation-bar::before {
@@ -173,17 +235,14 @@
   left: 0;
   right: 0;
   height: 1px;
-  background: linear-gradient(90deg, 
-    transparent 0%, 
-    var(--torch-orange) 20%, 
-    var(--torch-orange) 80%, 
-    transparent 100%);
-  opacity: 0.3;
+  background: var(--sith-gradient-horizontal);
+  opacity: 0.6;
+  box-shadow: 0 1px 3px rgba(139, 0, 0, 0.5), 0 0 6px rgba(212, 0, 0, 0.3);
 }
 
 [data-theme="temple-of-darkness"] .navigation-bar-top-row {
   background: var(--temple-bg-secondary);
-  border-bottom: 1px solid var(--border-stone);
+  border-bottom: 1px solid var(--border-metal);
 }
 
 [data-theme="temple-of-darkness"] .nav-controls {
@@ -195,7 +254,7 @@
 [data-theme="temple-of-darkness"] .view-mode-button.active {
   background: var(--temple-bg-secondary) !important;
   color: var(--text-secondary) !important;
-  border-color: var(--border-stone-light) !important;
+  border-color: var(--border-metal-light) !important;
   box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.4);
   opacity: 0.9;
 }
@@ -203,21 +262,21 @@
 /* Today button is styled in the BUTTONS section above */
 
 [data-theme="temple-of-darkness"] .date-label {
-  font-family: 'Georgia', 'Times New Roman', serif;
+  font-family: 'Arial', 'Helvetica', sans-serif;
   color: var(--text-primary) !important;
   font-weight: 600;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.01em;
   text-shadow: var(--text-glow) !important;
 }
 
 /* Date Input Components */
 [data-theme="temple-of-darkness"] .date-input {
   background: var(--temple-bg-secondary);
-  border: 1px solid var(--border-stone);
-  border-radius: 4px;
+  border: 1px solid var(--border-metal);
+  border-radius: 2px;
   color: var(--text-primary);
-  font-family: 'Georgia', 'Times New Roman', serif;
-  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3);
+  font-family: 'Arial', 'Helvetica', sans-serif;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.4);
 }
 
 [data-theme="temple-of-darkness"] .date-input::placeholder {
@@ -226,45 +285,46 @@
 
 [data-theme="temple-of-darkness"] .date-input:hover {
   background: var(--temple-bg-hover);
-  border-color: var(--metal-bronze-light);
-  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(139, 90, 42, 0.2);
+  border-color: var(--metal-bar-light);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(74, 74, 74, 0.3);
 }
 
 [data-theme="temple-of-darkness"] .date-input:focus {
   background: var(--temple-bg);
-  border-color: var(--torch-orange);
-  box-shadow: 0 0 0 2px rgba(139, 90, 42, 0.3), inset 0 2px 4px rgba(0, 0, 0, 0.3);
+  border-color: var(--sith-red);
+  box-shadow: 0 0 0 2px rgba(139, 0, 0, 0.4), 0 0 6px rgba(212, 0, 0, 0.2), inset 0 2px 4px rgba(0, 0, 0, 0.4);
   outline: none;
 }
 
 [data-theme="temple-of-darkness"] .date-input.error {
-  border-color: var(--blood-red);
-  background: rgba(106, 42, 42, 0.1);
+  border-color: var(--rust-medium);
+  background: rgba(122, 74, 58, 0.15);
 }
 
 [data-theme="temple-of-darkness"] .date-field-label {
   color: var(--text-secondary) !important;
-  font-family: 'Georgia', 'Times New Roman', serif;
+  font-family: 'Arial', 'Helvetica', sans-serif;
   text-shadow: var(--text-glow) !important;
 }
 
 [data-theme="temple-of-darkness"] .date-field-separator {
-  color: var(--metal-bronze);
+  color: var(--sith-red);
+  text-shadow: 0 0 4px rgba(139, 0, 0, 0.5);
 }
 
 /* ============================================
-   CALENDAR VIEW - Dark stone with mystical patterns
+   CALENDAR VIEW - Metal bars with Sith red accents
    ============================================ */
 [data-theme="temple-of-darkness"] .calendar-grid {
   background: var(--temple-bg-secondary);
-  border: 2px solid var(--metal-bronze);
+  border: 2px solid var(--sith-red);
   border-radius: 4px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(139, 90, 42, 0.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.7), inset 0 1px 0 rgba(139, 0, 0, 0.3), 0 0 8px rgba(139, 0, 0, 0.2);
   position: relative;
   overflow: hidden;
 }
 
-/* Mystical pattern overlay */
+/* Sith red pattern overlay */
 [data-theme="temple-of-darkness"] .calendar-grid::before {
   content: '';
   position: absolute;
@@ -273,125 +333,118 @@
   right: 0;
   bottom: 0;
   background: 
-    repeating-linear-gradient(45deg, transparent, transparent 20px, rgba(74, 42, 90, 0.03) 20px, rgba(74, 42, 90, 0.03) 40px),
-    radial-gradient(circle at 30% 30%, rgba(139, 90, 42, 0.04) 0%, transparent 50%);
+    repeating-linear-gradient(45deg, transparent, transparent 20px, rgba(139, 0, 0, 0.04) 20px, rgba(139, 0, 0, 0.04) 40px),
+    radial-gradient(circle at 30% 30%, rgba(139, 0, 0, 0.06) 0%, transparent 50%);
   pointer-events: none;
 }
 
 [data-theme="temple-of-darkness"] .calendar-cell {
   background: var(--temple-bg);
-  border: 1px solid var(--border-stone);
+  border: 1px solid var(--border-metal);
   border-radius: 2px;
-  color: var(--maroon-warm) !important;
+  color: var(--calendar-text) !important;
   transition: all 0.25s ease;
   position: relative;
-  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.3);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.4);
 }
 
-/* Calendar cell text - maroon warmth with glow (but not entry badges) */
+/* Calendar cell text - steel with Sith red glow (but not entry badges) */
 [data-theme="temple-of-darkness"] .calendar-cell .cell-label,
 [data-theme="temple-of-darkness"] .calendar-cell .cell-content:not(:has(.entry-badge)) {
-  color: var(--maroon-warm) !important;
+  color: var(--calendar-text) !important;
   text-shadow: 
-    0 0 4px rgba(212, 122, 122, 0.8),
-    0 0 8px rgba(212, 122, 122, 0.6),
-    0 0 12px rgba(212, 122, 122, 0.4),
+    0 0 2px rgba(176, 176, 176, 0.3),
+    0 0 4px rgba(139, 0, 0, 0.4),
     0 1px 2px rgba(0, 0, 0, 0.8) !important;
 }
 
 [data-theme="temple-of-darkness"] .calendar-cell:hover {
-  background: var(--highlight-torch);
-  border-color: var(--torch-orange);
-  box-shadow: 0 2px 4px rgba(139, 90, 42, 0.3), inset 0 1px 2px rgba(0, 0, 0, 0.2);
+  background: var(--highlight-sith);
+  border-color: var(--sith-red);
+  box-shadow: 0 2px 4px rgba(139, 0, 0, 0.4), 0 0 6px rgba(212, 0, 0, 0.2), inset 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
 [data-theme="temple-of-darkness"] .calendar-cell.today {
-  background: var(--highlight-torch);
+  background: var(--sith-gradient-dark);
   color: var(--text-primary);
-  border: 2px solid var(--torch-orange);
+  border: 2px solid var(--sith-red-bright);
   font-weight: 600;
-  box-shadow: 0 2px 6px rgba(139, 90, 42, 0.4), inset 0 1px 2px rgba(171, 122, 74, 0.2);
+  box-shadow: 0 2px 6px rgba(139, 0, 0, 0.5), 0 0 8px rgba(212, 0, 0, 0.3), inset 0 1px 2px rgba(0, 0, 0, 0.4);
 }
 
 [data-theme="temple-of-darkness"] .calendar-cell.selected {
-  background: var(--metal-bronze-dark);
+  background: var(--sith-gradient);
   color: var(--text-primary);
-  border-color: var(--torch-orange);
-  box-shadow: 0 2px 8px rgba(139, 90, 42, 0.5), inset 0 2px 4px rgba(0, 0, 0, 0.4);
+  border-color: var(--sith-red-bright);
+  box-shadow: 0 2px 8px rgba(139, 0, 0, 0.6), 0 0 10px rgba(212, 0, 0, 0.3), inset 0 2px 4px rgba(0, 0, 0, 0.5);
 }
 
 [data-theme="temple-of-darkness"] .calendar-cell.has-entry {
   background: var(--highlight-purple);
-  border: 2px solid var(--mystic-purple);
+  border: 2px solid var(--sith-red);
   box-shadow: inset 0 1px 2px rgba(74, 42, 90, 0.2);
 }
 
 [data-theme="temple-of-darkness"] .weekday-header {
   background: var(--temple-bg-dark);
-  border-bottom: 2px solid var(--metal-bronze);
-  color: var(--maroon-warm) !important;
-  font-family: 'Georgia', 'Times New Roman', serif;
+  border-bottom: 2px solid var(--sith-red);
+  color: var(--calendar-text) !important;
+  font-family: 'Arial', 'Helvetica', sans-serif;
   font-weight: 600;
   text-shadow: 
-    0 0 4px rgba(212, 122, 122, 0.8),
-    0 0 8px rgba(212, 122, 122, 0.6),
-    0 0 12px rgba(212, 122, 122, 0.4),
+    0 0 2px rgba(176, 176, 176, 0.3),
+    0 0 4px rgba(139, 0, 0, 0.5),
     0 1px 2px rgba(0, 0, 0, 0.8);
-  box-shadow: inset 0 -1px 0 rgba(139, 90, 42, 0.2);
+  box-shadow: inset 0 -1px 0 rgba(139, 0, 0, 0.4), 0 1px 3px rgba(139, 0, 0, 0.2);
 }
 
-/* Calendar text elements - Bright maroon warmth with glow */
+/* Calendar text elements - Steel with Sith red glow */
 [data-theme="temple-of-darkness"] .cell-label,
 [data-theme="temple-of-darkness"] .cell-label.large,
 [data-theme="temple-of-darkness"] .cell-label.month-title,
 [data-theme="temple-of-darkness"] .calendar-cell.year-cell .cell-label {
-  color: var(--maroon-warm) !important;
+  color: var(--calendar-text) !important;
   text-shadow: 
-    0 0 4px rgba(212, 122, 122, 0.8),
-    0 0 8px rgba(212, 122, 122, 0.6),
-    0 0 12px rgba(212, 122, 122, 0.4),
+    0 0 2px rgba(176, 176, 176, 0.3),
+    0 0 4px rgba(139, 0, 0, 0.4),
     0 1px 2px rgba(0, 0, 0, 0.8) !important;
 }
 
 [data-theme="temple-of-darkness"] .day-number {
-  color: var(--maroon-warm) !important;
+  color: var(--calendar-text) !important;
   text-shadow: 
-    0 0 4px rgba(212, 122, 122, 0.8),
-    0 0 8px rgba(212, 122, 122, 0.6),
-    0 0 12px rgba(212, 122, 122, 0.4),
+    0 0 2px rgba(176, 176, 176, 0.3),
+    0 0 4px rgba(139, 0, 0, 0.4),
     0 1px 2px rgba(0, 0, 0, 0.8) !important;
 }
 
 [data-theme="temple-of-darkness"] .day-name {
-  color: var(--maroon-warm) !important;
+  color: var(--calendar-text) !important;
   text-shadow: 
-    0 0 4px rgba(212, 122, 122, 0.8),
-    0 0 8px rgba(212, 122, 122, 0.6),
-    0 0 12px rgba(212, 122, 122, 0.4),
+    0 0 2px rgba(176, 176, 176, 0.3),
+    0 0 4px rgba(139, 0, 0, 0.4),
     0 1px 2px rgba(0, 0, 0, 0.8) !important;
 }
 
 [data-theme="temple-of-darkness"] .day-month {
-  color: var(--maroon-warm) !important;
+  color: var(--calendar-text) !important;
   text-shadow: 
-    0 0 4px rgba(212, 122, 122, 0.8),
-    0 0 8px rgba(212, 122, 122, 0.6),
-    0 0 12px rgba(212, 122, 122, 0.4),
+    0 0 2px rgba(176, 176, 176, 0.3),
+    0 0 4px rgba(139, 0, 0, 0.4),
     0 1px 2px rgba(0, 0, 0, 0.8) !important;
 }
 
 [data-theme="temple-of-darkness"] .weekday-cell {
-  color: var(--maroon-warm) !important;
+  color: var(--calendar-text) !important;
 }
 
 [data-theme="temple-of-darkness"] .weekday-cell .day-number,
 [data-theme="temple-of-darkness"] .weekday-cell .day-name,
 [data-theme="temple-of-darkness"] .weekday-cell .day-month {
-  color: var(--maroon-warm) !important;
+  color: var(--calendar-text) !important;
   text-shadow: 
-    0 0 4px rgba(212, 122, 122, 0.8),
-    0 0 8px rgba(212, 122, 122, 0.6),
-    0 0 12px rgba(212, 122, 122, 0.4),
+    0 0 2px rgba(176, 176, 176, 0.3),
+    0 0 4px rgba(139, 0, 0, 0.4),
     0 1px 2px rgba(0, 0, 0, 0.8) !important;
 }
 
@@ -400,14 +453,14 @@
    ============================================ */
 [data-theme="temple-of-darkness"] .timeline-grid {
   background: var(--temple-bg-secondary);
-  border: 2px solid var(--metal-bronze);
+  border: 2px solid var(--sith-red);
   border-radius: 4px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(139, 90, 42, 0.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.7), inset 0 1px 0 rgba(139, 0, 0, 0.3), 0 0 8px rgba(139, 0, 0, 0.2);
 }
 
 [data-theme="temple-of-darkness"] .timeline-cell {
   background: var(--temple-bg);
-  border: 1px solid var(--border-stone);
+  border: 1px solid var(--border-metal);
   border-radius: 2px;
   color: var(--text-primary);
   transition: all 0.25s ease;
@@ -415,17 +468,17 @@
 }
 
 [data-theme="temple-of-darkness"] .timeline-cell:hover {
-  background: var(--highlight-torch);
-  border-color: var(--torch-orange);
-  box-shadow: 0 2px 4px rgba(139, 90, 42, 0.3);
+  background: var(--highlight-sith);
+  border-color: var(--sith-red);
+  box-shadow: 0 2px 4px rgba(139, 0, 0, 0.4), 0 0 6px rgba(212, 0, 0, 0.2);
 }
 
 [data-theme="temple-of-darkness"] .timeline-cell.today {
-  background: var(--highlight-torch);
+  background: var(--sith-gradient-dark);
   color: var(--text-primary);
-  border: 2px solid var(--torch-orange);
+  border: 2px solid var(--sith-red-bright);
   font-weight: 600;
-  box-shadow: 0 2px 6px rgba(139, 90, 42, 0.4);
+  box-shadow: 0 2px 6px rgba(139, 0, 0, 0.5), 0 0 8px rgba(212, 0, 0, 0.3);
 }
 
 /* ============================================
@@ -433,7 +486,7 @@
    ============================================ */
 [data-theme="temple-of-darkness"] .week-entry-group {
   background: var(--temple-bg-secondary);
-  border: 1px solid var(--mystic-purple);
+  border: 1px solid var(--sith-red);
   border-radius: 4px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(74, 42, 90, 0.1);
   position: relative;
@@ -456,11 +509,11 @@
 
 [data-theme="temple-of-darkness"] .week-entry-item {
   background: var(--temple-bg);
-  border: 1px solid var(--border-stone);
-  border-left: 3px solid var(--metal-bronze);
+  border: 1px solid var(--border-metal);
+  border-left: 3px solid var(--sith-red);
   border-radius: 3px;
   transition: all 0.25s ease;
-  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.3);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.4), 0 0 3px rgba(139, 0, 0, 0.1);
   color: var(--text-entry-bright);
 }
 
@@ -472,18 +525,18 @@
 }
 
 [data-theme="temple-of-darkness"] .week-entry-item:hover {
-  background: var(--highlight-torch);
-  border-color: var(--torch-orange);
-  box-shadow: 0 2px 4px rgba(139, 90, 42, 0.3);
+  background: var(--highlight-sith);
+  border-color: var(--sith-red);
+  box-shadow: 0 2px 4px rgba(139, 0, 0, 0.4), 0 0 6px rgba(212, 0, 0, 0.2);
 }
 
 [data-theme="temple-of-darkness"] .journal-entry-item {
   background: var(--temple-bg-secondary);
-  border: 1px solid var(--border-stone);
-  border-left: 3px solid var(--metal-bronze);
+  border: 1px solid var(--border-metal);
+  border-left: 3px solid var(--sith-red);
   border-radius: 3px;
   transition: all 0.25s ease;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(139, 90, 42, 0.05);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(139, 0, 0, 0.1), 0 0 3px rgba(139, 0, 0, 0.1);
   color: var(--text-entry-bright);
 }
 
@@ -531,7 +584,7 @@
 [data-theme="temple-of-darkness"] .period-entry-date {
   color: var(--text-entry-bright) !important;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.7);
-  text-decoration-color: var(--torch-orange) !important;
+  text-decoration-color: var(--sith-red) !important;
 }
 
 /* Period entry meta - bright */
@@ -551,7 +604,7 @@
 [data-theme="temple-of-darkness"] .period-entry-edit-button:hover {
   background: var(--temple-bg-secondary) !important;
   color: var(--text-secondary) !important;
-  border-color: var(--border-stone-light) !important;
+  border-color: var(--border-metal-light) !important;
   opacity: 0.9;
 }
 
@@ -598,16 +651,16 @@
 }
 
 [data-theme="temple-of-darkness"] .journal-entry-item:hover {
-  background: var(--highlight-torch);
-  border-color: var(--torch-orange);
-  box-shadow: 0 2px 6px rgba(139, 90, 42, 0.3), inset 0 1px 0 rgba(171, 122, 74, 0.1);
+  background: var(--highlight-sith);
+  border-color: var(--sith-red);
+  box-shadow: 0 2px 6px rgba(139, 0, 0, 0.4), 0 0 8px rgba(212, 0, 0, 0.2), inset 0 1px 0 rgba(139, 0, 0, 0.2);
 }
 
 [data-theme="temple-of-darkness"] .journal-entry-item.selected {
-  background: var(--metal-bronze-dark);
+  background: var(--sith-gradient);
   color: var(--text-primary);
-  border-color: var(--torch-orange);
-  box-shadow: 0 2px 8px rgba(139, 90, 42, 0.5), inset 0 2px 4px rgba(0, 0, 0, 0.4);
+  border-color: var(--sith-red-bright);
+  box-shadow: 0 2px 8px rgba(139, 0, 0, 0.6), 0 0 10px rgba(212, 0, 0, 0.3), inset 0 2px 4px rgba(0, 0, 0, 0.5);
 }
 
 /* ============================================
@@ -658,22 +711,22 @@
 [data-theme="temple-of-darkness"] .editor-header,
 [data-theme="temple-of-darkness"] .viewer-header {
   background: var(--temple-bg-secondary);
-  border-bottom: 3px solid var(--metal-bronze);
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5), inset 0 -1px 0 rgba(139, 90, 42, 0.2);
+  border-bottom: 3px solid var(--sith-red);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.6), inset 0 -1px 0 rgba(139, 0, 0, 0.4), 0 0 6px rgba(139, 0, 0, 0.2);
 }
 
 [data-theme="temple-of-darkness"] .viewer-header h3,
 [data-theme="temple-of-darkness"] .editor-header h3 {
-  font-family: 'Georgia', 'Times New Roman', serif;
+  font-family: 'Arial', 'Helvetica', sans-serif;
   font-size: 16px;
   color: var(--text-title-bright) !important;
   font-weight: 600;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8), 0 0 8px rgba(0, 0, 0, 0.3);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8), 0 0 4px rgba(139, 0, 0, 0.4);
 }
 
 [data-theme="temple-of-darkness"] .time-inputs-section {
   background: var(--temple-bg);
-  border: 1px solid var(--border-stone);
+  border: 1px solid var(--border-metal);
   border-radius: 3px;
   padding: 0.75rem;
   box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
@@ -704,7 +757,7 @@
 
 [data-theme="temple-of-darkness"] .time-input {
   background: var(--temple-bg-secondary);
-  border: 1px solid var(--border-stone);
+  border: 1px solid var(--border-metal);
   border-radius: 3px;
   color: var(--text-primary) !important;
   font-family: 'Georgia', 'Times New Roman', serif;
@@ -727,7 +780,7 @@
 
 [data-theme="temple-of-darkness"] .clear-time-button {
   background: var(--temple-bg-secondary);
-  border: 1px solid var(--border-stone);
+  border: 1px solid var(--border-metal);
   border-radius: 3px;
   color: var(--text-primary) !important;
   font-family: 'Georgia', 'Times New Roman', serif;
@@ -745,7 +798,7 @@
 /* Modal time inputs section - matching time-inputs-section styles */
 [data-theme="temple-of-darkness"] .modal-time-inputs-section {
   background: var(--temple-bg);
-  border: 1px solid var(--border-stone);
+  border: 1px solid var(--border-metal);
   border-radius: 3px;
   padding: 0.75rem;
   box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
@@ -776,7 +829,7 @@
 
 [data-theme="temple-of-darkness"] .modal-time-input {
   background: var(--temple-bg-secondary);
-  border: 1px solid var(--border-stone);
+  border: 1px solid var(--border-metal);
   border-radius: 3px;
   color: var(--text-primary) !important;
   font-family: 'Georgia', 'Times New Roman', serif;
@@ -799,7 +852,7 @@
 
 [data-theme="temple-of-darkness"] .modal-clear-time-button {
   background: var(--temple-bg-secondary);
-  border: 1px solid var(--border-stone);
+  border: 1px solid var(--border-metal);
   border-radius: 3px;
   color: var(--text-primary) !important;
   font-family: 'Georgia', 'Times New Roman', serif;
@@ -816,7 +869,7 @@
 
 [data-theme="temple-of-darkness"] .modal-now-time-button {
   background: var(--temple-bg-secondary);
-  border: 1px solid var(--border-stone);
+  border: 1px solid var(--border-metal);
   border-radius: 3px;
   color: var(--text-primary) !important;
   font-family: 'Georgia', 'Times New Roman', serif;
@@ -835,7 +888,7 @@
 [data-theme="temple-of-darkness"] .content-input,
 [data-theme="temple-of-darkness"] .tag-input {
   background: var(--temple-bg-secondary);
-  border: 1px solid var(--border-stone);
+  border: 1px solid var(--border-metal);
   border-radius: 3px;
   color: var(--text-primary) !important;
   font-family: 'Georgia', 'Times New Roman', serif;
@@ -849,10 +902,10 @@
 [data-theme="temple-of-darkness"] .title-input:focus,
 [data-theme="temple-of-darkness"] .content-input:focus,
 [data-theme="temple-of-darkness"] .tag-input:focus {
-  border-color: var(--torch-orange);
-  outline: 2px solid var(--torch-orange);
+  border-color: var(--sith-red);
+  outline: 2px solid var(--sith-red);
   outline-offset: 2px;
-  box-shadow: 0 0 0 3px rgba(139, 90, 42, 0.2), inset 0 2px 4px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 0 0 3px rgba(139, 0, 0, 0.3), 0 0 6px rgba(212, 0, 0, 0.2), inset 0 2px 4px rgba(0, 0, 0, 0.4);
 }
 
 [data-theme="temple-of-darkness"] .viewer-content {
@@ -863,21 +916,22 @@
 }
 
 [data-theme="temple-of-darkness"] .viewer-title {
-  font-family: 'Georgia', 'Times New Roman', serif;
+  font-family: 'Arial', 'Helvetica', sans-serif;
   font-size: 18px;
   font-weight: 600;
   color: var(--text-primary) !important;
-  border-bottom: 2px solid var(--metal-bronze);
+  border-bottom: 2px solid var(--sith-red);
   padding-bottom: 8px;
   margin-bottom: 12px;
   text-shadow: var(--text-glow) !important;
+  box-shadow: 0 1px 3px rgba(139, 0, 0, 0.2);
 }
 
 [data-theme="temple-of-darkness"] .viewer-text {
-  font-family: 'Georgia', 'Times New Roman', serif;
+  font-family: 'Arial', 'Helvetica', sans-serif;
   font-size: 14px;
   color: var(--text-primary) !important;
-  line-height: 1.7;
+  line-height: 1.6;
   text-shadow: var(--text-glow) !important;
 }
 
@@ -911,7 +965,7 @@
 [data-theme="temple-of-darkness"] .reset-button,
 [data-theme="temple-of-darkness"] .tag-remove {
   background: var(--temple-bg-dark) !important;
-  border: 2px solid var(--border-stone) !important;
+  border: 2px solid var(--border-metal) !important;
   border-radius: 4px;
   color: var(--text-muted) !important;
   font-family: 'Georgia', 'Times New Roman', serif;
@@ -934,7 +988,7 @@
 [data-theme="temple-of-darkness"] .save-button {
   background: var(--temple-bg-dark) !important;
   color: var(--text-muted) !important;
-  border-color: var(--border-stone) !important;
+  border-color: var(--border-metal) !important;
   font-weight: 600;
   box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.6);
   opacity: 0.85;
@@ -943,14 +997,14 @@
 [data-theme="temple-of-darkness"] .save-button:hover:not(:disabled) {
   background: var(--temple-bg-secondary) !important;
   color: var(--text-secondary) !important;
-  border-color: var(--border-stone-light) !important;
+  border-color: var(--border-metal-light) !important;
   box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.4);
   opacity: 0.9;
 }
 
 [data-theme="temple-of-darkness"] .delete-button:hover {
   background: var(--temple-bg-dark) !important;
-  border-color: var(--border-stone) !important;
+  border-color: var(--border-metal) !important;
   color: var(--text-muted) !important;
   box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.6);
   opacity: 0.9;
@@ -981,7 +1035,7 @@
 [data-theme="temple-of-darkness"] .reset-button:hover,
 [data-theme="temple-of-darkness"] .tag-remove:hover {
   background: var(--temple-bg-secondary) !important;
-  border-color: var(--border-stone-light) !important;
+  border-color: var(--border-metal-light) !important;
   color: var(--text-secondary) !important;
   box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.4);
   opacity: 0.9;
@@ -992,7 +1046,7 @@
 [data-theme="temple-of-darkness"] .view-mode-button.active {
   background: var(--temple-bg-secondary) !important;
   color: var(--text-secondary) !important;
-  border-color: var(--border-stone-light) !important;
+  border-color: var(--border-metal-light) !important;
   box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.4);
   opacity: 0.9;
 }
@@ -1005,7 +1059,7 @@
 /* Duplicate button - dark and subtle */
 [data-theme="temple-of-darkness"] .duplicate-button {
   background: var(--temple-bg-dark) !important;
-  border: 2px solid var(--border-stone) !important;
+  border: 2px solid var(--border-metal) !important;
   border-radius: 4px;
   color: var(--text-muted) !important;
   font-family: 'Georgia', 'Times New Roman', serif;
@@ -1019,7 +1073,7 @@
 /* New entry button header - dark and subtle */
 [data-theme="temple-of-darkness"] .new-entry-button-header {
   background: var(--temple-bg-dark) !important;
-  border: 2px solid var(--border-stone) !important;
+  border: 2px solid var(--border-metal) !important;
   border-radius: 4px;
   color: var(--text-muted) !important;
   box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.5);
@@ -1028,7 +1082,7 @@
 
 [data-theme="temple-of-darkness"] .new-entry-button-header:hover {
   background: var(--temple-bg-secondary) !important;
-  border-color: var(--border-stone-light) !important;
+  border-color: var(--border-metal-light) !important;
   color: var(--text-secondary) !important;
   opacity: 0.9;
 }
@@ -1039,7 +1093,7 @@
 [data-theme="temple-of-darkness"] [class*="button"]:not([class*="entry-badge"]):not([class*="badge"]) {
   background: var(--temple-bg-dark) !important;
   color: var(--text-muted) !important;
-  border-color: var(--border-stone) !important;
+  border-color: var(--border-metal) !important;
   box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.5) !important;
   opacity: 0.8;
 }
@@ -1049,7 +1103,7 @@
 [data-theme="temple-of-darkness"] [class*="button"]:hover:not([class*="entry-badge"]):not([class*="badge"]) {
   background: var(--temple-bg-secondary) !important;
   color: var(--text-secondary) !important;
-  border-color: var(--border-stone-light) !important;
+  border-color: var(--border-metal-light) !important;
   opacity: 0.9;
 }
 
@@ -1062,14 +1116,14 @@
 
 [data-theme="temple-of-darkness"] .entry-edit-modal {
   background: var(--temple-bg-secondary);
-  border: 3px solid var(--metal-bronze);
+  border: 3px solid var(--sith-red);
   border-radius: 4px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.8), inset 0 1px 0 rgba(139, 90, 42, 0.1);
 }
 
 [data-theme="temple-of-darkness"] .modal-header {
   background: var(--temple-bg-dark);
-  border-bottom: 2px solid var(--metal-bronze);
+  border-bottom: 2px solid var(--sith-red);
   box-shadow: inset 0 -1px 0 rgba(139, 90, 42, 0.2);
 }
 
@@ -1079,7 +1133,7 @@
 
 [data-theme="temple-of-darkness"] .modal-footer {
   background: var(--temple-bg-secondary);
-  border-top: 2px solid var(--metal-bronze);
+  border-top: 2px solid var(--sith-red);
   box-shadow: inset 0 1px 0 rgba(139, 90, 42, 0.2);
 }
 
@@ -1122,7 +1176,7 @@
 [data-theme="temple-of-darkness"] .result-tag:hover {
   background: var(--temple-bg-secondary) !important;
   color: var(--text-secondary) !important;
-  border-color: var(--border-stone-light) !important;
+  border-color: var(--border-metal-light) !important;
   opacity: 0.85;
 }
 
@@ -1132,7 +1186,7 @@
 [data-theme="temple-of-darkness"] .filter-tag.active {
   background: var(--temple-bg-secondary) !important;
   color: var(--text-secondary) !important;
-  border-color: var(--border-stone-light) !important;
+  border-color: var(--border-metal-light) !important;
   opacity: 0.85;
 }
 
@@ -1140,7 +1194,7 @@
 [data-theme="temple-of-darkness"] [class*="tag"]:not([class*="entry-badge"]):not([class*="badge-title"]) {
   background: var(--temple-bg-dark) !important;
   color: var(--text-muted) !important;
-  border-color: var(--border-stone) !important;
+  border-color: var(--border-metal) !important;
   box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.5) !important;
   opacity: 0.7;
 }
@@ -1156,13 +1210,13 @@
 
 [data-theme="temple-of-darkness"] .search-header {
   background: var(--temple-bg-dark);
-  border-bottom: 2px solid var(--metal-bronze);
-  box-shadow: inset 0 -1px 0 rgba(139, 90, 42, 0.2);
+  border-bottom: 2px solid var(--sith-red);
+  box-shadow: inset 0 -1px 0 rgba(139, 0, 0, 0.4), 0 1px 3px rgba(139, 0, 0, 0.2);
 }
 
 [data-theme="temple-of-darkness"] .search-input {
   background: var(--temple-bg-secondary);
-  border: 1px solid var(--border-stone);
+  border: 1px solid var(--border-metal);
   border-radius: 3px;
   color: var(--text-primary) !important;
   font-family: 'Georgia', 'Times New Roman', serif;
@@ -1173,25 +1227,25 @@
 }
 
 [data-theme="temple-of-darkness"] .search-input:focus {
-  border-color: var(--torch-orange);
-  outline: 2px solid var(--torch-orange);
+  border-color: var(--sith-red);
+  outline: 2px solid var(--sith-red);
   outline-offset: 2px;
-  box-shadow: 0 0 0 3px rgba(139, 90, 42, 0.2), inset 0 2px 4px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 0 0 3px rgba(139, 0, 0, 0.3), 0 0 6px rgba(212, 0, 0, 0.2), inset 0 2px 4px rgba(0, 0, 0, 0.4);
 }
 
 [data-theme="temple-of-darkness"] .search-result-item {
   background: var(--temple-bg-secondary);
-  border: 1px solid var(--border-stone);
-  border-left: 3px solid var(--metal-bronze);
+  border: 1px solid var(--border-metal);
+  border-left: 3px solid var(--sith-red);
   border-radius: 3px;
   transition: all 0.25s ease;
-  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.3);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.4), 0 0 3px rgba(139, 0, 0, 0.1);
 }
 
 [data-theme="temple-of-darkness"] .search-result-item:hover {
-  background: var(--highlight-torch);
-  border-color: var(--torch-orange);
-  box-shadow: 0 2px 4px rgba(139, 90, 42, 0.3);
+  background: var(--highlight-sith);
+  border-color: var(--sith-red);
+  box-shadow: 0 2px 4px rgba(139, 0, 0, 0.4), 0 0 6px rgba(212, 0, 0, 0.2);
 }
 
 /* ============================================
@@ -1205,21 +1259,21 @@
 
 [data-theme="temple-of-darkness"] .preferences-header {
   background: var(--temple-bg-dark);
-  border-bottom: 2px solid var(--metal-bronze);
-  box-shadow: inset 0 -1px 0 rgba(139, 90, 42, 0.2);
+  border-bottom: 2px solid var(--sith-red);
+  box-shadow: inset 0 -1px 0 rgba(139, 0, 0, 0.4), 0 1px 3px rgba(139, 0, 0, 0.2);
 }
 
 [data-theme="temple-of-darkness"] .preferences-section {
   background: var(--temple-bg-secondary);
-  border: 2px solid var(--metal-bronze);
+  border: 2px solid var(--sith-red);
   border-radius: 4px;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(139, 90, 42, 0.1);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(139, 0, 0, 0.2), 0 0 6px rgba(139, 0, 0, 0.15);
 }
 
 [data-theme="temple-of-darkness"] .preference-item input,
 [data-theme="temple-of-darkness"] .preference-item select {
   background: var(--temple-bg);
-  border: 1px solid var(--border-stone);
+  border: 1px solid var(--border-metal);
   border-radius: 3px;
   color: var(--text-primary) !important;
   font-family: 'Georgia', 'Times New Roman', serif;
@@ -1236,10 +1290,10 @@
 
 [data-theme="temple-of-darkness"] .preference-item input:focus,
 [data-theme="temple-of-darkness"] .preference-item select:focus {
-  border-color: var(--torch-orange);
-  outline: 2px solid var(--torch-orange);
+  border-color: var(--sith-red);
+  outline: 2px solid var(--sith-red);
   outline-offset: 2px;
-  box-shadow: 0 0 0 3px rgba(139, 90, 42, 0.2), inset 0 2px 4px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 0 0 3px rgba(139, 0, 0, 0.3), 0 0 6px rgba(212, 0, 0, 0.2), inset 0 2px 4px rgba(0, 0, 0, 0.4);
 }
 
 /* ============================================
@@ -1247,16 +1301,16 @@
    ============================================ */
 [data-theme="temple-of-darkness"] .journal-list {
   background: var(--temple-bg);
-  border-right: 3px solid var(--metal-bronze);
-  box-shadow: inset -1px 0 0 rgba(139, 90, 42, 0.1);
+  border-right: 3px solid var(--sith-red);
+  box-shadow: inset -1px 0 0 rgba(139, 0, 0, 0.2), 0 0 6px rgba(139, 0, 0, 0.1);
   color: var(--text-primary) !important;
   text-shadow: var(--text-glow) !important;
 }
 
 [data-theme="temple-of-darkness"] .journal-list-header {
   background: var(--temple-bg-dark);
-  border-bottom: 2px solid var(--metal-bronze);
-  box-shadow: inset 0 -1px 0 rgba(139, 90, 42, 0.2);
+  border-bottom: 2px solid var(--sith-red);
+  box-shadow: inset 0 -1px 0 rgba(139, 0, 0, 0.4), 0 1px 3px rgba(139, 0, 0, 0.2);
 }
 
 /* ============================================
@@ -1268,52 +1322,52 @@
 }
 
 [data-theme="temple-of-darkness"] .loading-progress-bar {
-  background: var(--border-stone);
+  background: var(--border-metal);
   border-radius: 4px;
   box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.4);
 }
 
 [data-theme="temple-of-darkness"] .loading-progress-fill {
-  background: linear-gradient(90deg, var(--metal-bronze-dark), var(--torch-orange));
-  box-shadow: 0 0 10px rgba(139, 90, 42, 0.6), inset 0 1px 0 rgba(171, 122, 74, 0.3);
+  background: var(--sith-gradient-horizontal);
+  box-shadow: 0 0 10px rgba(139, 0, 0, 0.7), 0 0 15px rgba(212, 0, 0, 0.4), inset 0 1px 0 rgba(212, 0, 0, 0.3);
 }
 
 /* ============================================
    TIME RANGE BADGES - Mystical colors
    ============================================ */
 [data-theme="temple-of-darkness"] .entry-decade {
-  background: var(--highlight-purple);
-  color: var(--mystic-purple-light);
-  border: 1px solid var(--mystic-purple);
-  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.3);
+  background: var(--sith-gradient-dark);
+  color: var(--text-entry-bright);
+  border: 1px solid var(--sith-red);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.4), 0 0 4px rgba(139, 0, 0, 0.3);
 }
 
 [data-theme="temple-of-darkness"] .entry-year {
-  background: var(--highlight-torch);
-  color: var(--torch-orange-light);
-  border: 1px solid var(--torch-orange);
-  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.3);
+  background: var(--sith-gradient);
+  color: var(--text-entry-bright);
+  border: 1px solid var(--sith-red-medium);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.4), 0 0 4px rgba(139, 0, 0, 0.3);
 }
 
 [data-theme="temple-of-darkness"] .entry-month {
-  background: var(--highlight-blood);
-  color: var(--blood-red-light);
-  border: 1px solid var(--blood-red);
-  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.3);
+  background: var(--sith-gradient-bright);
+  color: var(--text-entry-bright);
+  border: 1px solid var(--sith-red-bright);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.4), 0 0 4px rgba(212, 0, 0, 0.3);
 }
 
 [data-theme="temple-of-darkness"] .entry-week {
-  background: var(--highlight-purple);
-  color: var(--mystic-purple-light);
-  border: 1px solid var(--mystic-purple);
-  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.3);
+  background: var(--sith-gradient-dark);
+  color: var(--text-entry-bright);
+  border: 1px solid var(--sith-red);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.4), 0 0 4px rgba(139, 0, 0, 0.3);
 }
 
 [data-theme="temple-of-darkness"] .entry-day {
-  background: var(--highlight-torch);
-  color: var(--torch-orange-light);
-  border: 1px solid var(--torch-orange);
-  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.3);
+  background: var(--sith-gradient);
+  color: var(--text-entry-bright);
+  border: 1px solid var(--sith-red-medium);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.4), 0 0 4px rgba(139, 0, 0, 0.3);
 }
 
 /* ============================================
@@ -1377,38 +1431,35 @@
   opacity: 0.7;
 }
 
-/* Cell date - bright maroon warmth with glow */
+/* Cell date - steel with Sith red glow */
 [data-theme="temple-of-darkness"] .cell-date {
-  color: var(--maroon-warm) !important;
+  color: var(--calendar-text) !important;
   text-shadow: 
-    0 0 4px rgba(212, 122, 122, 0.8),
-    0 0 8px rgba(212, 122, 122, 0.6),
-    0 0 12px rgba(212, 122, 122, 0.4),
+    0 0 2px rgba(176, 176, 176, 0.3),
+    0 0 4px rgba(139, 0, 0, 0.4),
     0 1px 2px rgba(0, 0, 0, 0.8) !important;
-  border-bottom-color: var(--border-stone) !important;
+  border-bottom-color: var(--border-metal) !important;
 }
 
-/* Calendar month details and labels - maroon warmth with glow */
+/* Calendar month details and labels - steel with Sith red glow */
 [data-theme="temple-of-darkness"] .month-details,
 [data-theme="temple-of-darkness"] .month-days,
 [data-theme="temple-of-darkness"] .month-entry-count,
 [data-theme="temple-of-darkness"] .week-label,
 [data-theme="temple-of-darkness"] .week-entry-count {
-  color: var(--maroon-warm) !important;
+  color: var(--calendar-text) !important;
   text-shadow: 
-    0 0 4px rgba(212, 122, 122, 0.8),
-    0 0 8px rgba(212, 122, 122, 0.6),
-    0 0 12px rgba(212, 122, 122, 0.4),
+    0 0 2px rgba(176, 176, 176, 0.3),
+    0 0 4px rgba(139, 0, 0, 0.4),
     0 1px 2px rgba(0, 0, 0, 0.8) !important;
 }
 
-/* Calendar loading text - maroon warmth */
+/* Calendar loading text - steel with Sith red glow */
 [data-theme="temple-of-darkness"] .calendar-loading {
-  color: var(--maroon-warm) !important;
+  color: var(--calendar-text) !important;
   text-shadow: 
-    0 0 4px rgba(212, 122, 122, 0.8),
-    0 0 8px rgba(212, 122, 122, 0.6),
-    0 0 12px rgba(212, 122, 122, 0.4) !important;
+    0 0 2px rgba(176, 176, 176, 0.3),
+    0 0 4px rgba(139, 0, 0, 0.4) !important;
 }
 
 /* ============================================
@@ -1416,7 +1467,7 @@
    ============================================ */
 [data-theme="temple-of-darkness"] .minimap-container {
   background: var(--temple-bg-secondary);
-  border: 1px solid var(--metal-bronze);
+  border: 1px solid var(--sith-red);
   border-radius: 4px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(139, 90, 42, 0.1);
 }
@@ -1426,14 +1477,14 @@
 }
 
 [data-theme="temple-of-darkness"] .entry-indicator-minimap {
-  background: var(--metal-bronze);
-  border: 1px solid var(--torch-orange);
+  background: var(--sith-red);
+  border: 1px solid var(--sith-red);
   box-shadow: 0 0 4px rgba(139, 90, 42, 0.4);
 }
 
 [data-theme="temple-of-darkness"] .current-period-indicator {
-  background: var(--highlight-torch);
-  border: 1px solid var(--torch-orange);
+  background: var(--highlight-sith);
+  border: 1px solid var(--sith-red);
   box-shadow: 0 0 6px rgba(139, 90, 42, 0.5);
 }
 
@@ -1444,7 +1495,7 @@
 /* Calendar Info Panel */
 [data-theme="temple-of-darkness"] .calendar-info-panel {
   background: var(--temple-bg-secondary);
-  border: 2px solid var(--metal-bronze);
+  border: 2px solid var(--sith-red);
   border-radius: 4px;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
   color: var(--text-primary);
@@ -1452,26 +1503,26 @@
 
 [data-theme="temple-of-darkness"] .calendar-definition-toggle {
   background: var(--temple-bg);
-  border: 1px solid var(--metal-bronze);
+  border: 1px solid var(--sith-red);
   color: var(--text-primary);
   box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
 [data-theme="temple-of-darkness"] .calendar-definition-toggle:hover {
-  background: var(--highlight-torch);
-  border-color: var(--torch-orange);
+  background: var(--highlight-sith);
+  border-color: var(--sith-red);
 }
 
 [data-theme="temple-of-darkness"] .calendar-definition-drawer {
   background: var(--temple-bg-dark);
-  border-top: 2px solid var(--metal-bronze);
+  border-top: 2px solid var(--sith-red);
   color: var(--text-primary);
 }
 
 /* Calendar Selector */
 [data-theme="temple-of-darkness"] .calendar-select {
   background: var(--temple-bg-secondary);
-  border: 1px solid var(--border-stone);
+  border: 1px solid var(--border-metal);
   color: var(--text-primary);
   box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3);
 }
@@ -1482,28 +1533,28 @@
 }
 
 [data-theme="temple-of-darkness"] .calendar-select:focus {
-  border-color: var(--torch-orange);
-  outline: 2px solid var(--torch-orange);
+  border-color: var(--sith-red);
+  outline: 2px solid var(--sith-red);
   outline-offset: 2px;
 }
 
 /* Period Entries */
 [data-theme="temple-of-darkness"] .period-entries-controls {
   background: var(--temple-bg-secondary);
-  border-bottom: 2px solid var(--metal-bronze);
+  border-bottom: 2px solid var(--sith-red);
 }
 
 [data-theme="temple-of-darkness"] .period-entry-item {
   background: var(--temple-bg);
-  border: 1px solid var(--border-stone);
-  border-left: 3px solid var(--metal-bronze);
+  border: 1px solid var(--border-metal);
+  border-left: 3px solid var(--sith-red);
   box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.3);
   color: var(--text-entry-bright);
 }
 
 [data-theme="temple-of-darkness"] .period-entry-item:hover {
-  background: var(--highlight-torch);
-  border-color: var(--torch-orange);
+  background: var(--highlight-sith);
+  border-color: var(--sith-red);
 }
 
 /* Period entry filter tags are styled in the TAGS section above */
@@ -1511,27 +1562,27 @@
 /* Linked Entries */
 [data-theme="temple-of-darkness"] .linked-entry-item {
   background: var(--temple-bg-secondary);
-  border: 1px solid var(--border-stone);
-  border-left: 3px solid var(--metal-bronze);
+  border: 1px solid var(--border-metal);
+  border-left: 3px solid var(--sith-red);
   box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.3);
   color: var(--text-entry-bright);
 }
 
 [data-theme="temple-of-darkness"] .linked-entry-item:hover {
-  background: var(--highlight-torch);
-  border-color: var(--torch-orange);
+  background: var(--highlight-sith);
+  border-color: var(--sith-red);
 }
 
 /* Bulk Edit */
 [data-theme="temple-of-darkness"] .bulk-edit-actions {
   background: var(--temple-bg-dark);
-  border-top: 2px solid var(--metal-bronze);
+  border-top: 2px solid var(--sith-red);
   box-shadow: inset 0 1px 0 rgba(139, 90, 42, 0.2);
 }
 
 [data-theme="temple-of-darkness"] .journal-entry-item.bulk-selected {
   background: var(--highlight-purple);
-  border-color: var(--mystic-purple);
+  border-color: var(--sith-red);
 }
 
 /* Loading States */
@@ -1621,16 +1672,16 @@
 
 [data-theme="temple-of-darkness"] .about-section {
   background: var(--temple-bg-secondary);
-  border: 2px solid var(--metal-bronze);
+  border: 2px solid var(--sith-red);
   border-radius: 4px;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
 }
 
 [data-theme="temple-of-darkness"] .about-link {
-  color: var(--torch-orange);
+  color: var(--sith-red);
 }
 
 [data-theme="temple-of-darkness"] .about-link:hover {
-  color: var(--torch-orange-light);
+  color: var(--sith-red-bright);
 }
 
