@@ -49,26 +49,28 @@
   align-items: center;
   margin-top: 0.5rem;
   padding-top: 0.5rem;
-  border-top: 1px solid #e0e0e0;
+  border-top: 1px solid var(--border-color, #e0e0e0);
 }
 
 .astromonix-button {
   padding: 0.375rem 0.75rem;
-  background: #f5f5f5;
-  border: 1px solid #ddd;
+  background: var(--button-secondary-bg, #f5f5f5);
+  border: 1px solid var(--border-color, #ddd);
   border-radius: 4px;
   cursor: pointer;
   transition: all 0.2s;
   display: flex;
   align-items: center;
   justify-content: center;
+  color: var(--text-primary, #333);
 }
 
 .astromonix-button:hover {
-  background: #e8e8e8;
-  border-color: #bbb;
+  background: var(--button-secondary-hover, #e8e8e8);
+  border-color: var(--border-hover, #bbb);
   transform: translateY(-1px);
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  color: var(--text-primary, #333);
 }
 
 .astromonix-logo {
@@ -80,8 +82,8 @@
 .entry-astromonix-button-container {
   margin: 1.5rem 0;
   padding: 1rem 0;
-  border-top: 1px solid #e0e0e0;
-  border-bottom: 1px solid #e0e0e0;
+  border-top: 1px solid var(--border-color, #e0e0e0);
+  border-bottom: 1px solid var(--border-color, #e0e0e0);
 }
 
 .entry-astromonix-button {
@@ -94,7 +96,7 @@
 .entry-astromonix-button span {
   font-size: 0.9rem;
   font-weight: 500;
-  color: #333;
+  color: var(--text-primary, #333);
 }
 
 .edit-button {
