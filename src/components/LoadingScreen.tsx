@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useCallback } from 'react';
 import { useEntries } from '../contexts/EntriesContext';
 import { JournalEntry } from '../types';
 import { calculateEntryColor } from '../utils/entryColorUtils';
@@ -15,9 +15,9 @@ const LOADING_SCREEN_CONSTANTS = {
   LEFT_LOOP_CENTER: { x: 200, y: 200 },
   RIGHT_LOOP_CENTER: { x: 300, y: 200 },
   MIDPOINT_X: 250,
-  INFINITY_AMPLITUDE: 252.126,
-  INFINITY_SEGMENTS: 252.126,
-  BRANCHES_PER_SIDE: 9.338,
+  INFINITY_AMPLITUDE: 111,
+  INFINITY_SEGMENTS: 24,
+  BRANCHES_PER_SIDE: 8,
   STAR_COUNT: 216,
   NEBULA_DIMENSIONS: { width: 800, height: 600 },
   PROGRESS_THRESHOLDS: { slow: 20, fast: 80 },
@@ -25,10 +25,12 @@ const LOADING_SCREEN_CONSTANTS = {
   ORNAMENT_SIZE: 8,
   MAX_ANIMATION_DELAY: 1,
   OPACITY_DIVISORS: { infinity: 100, branch: 150 },
-  ANIMATION_INTERVAL_MS: 16, // ~60fps
+  ANIMATION_INTERVAL_MS: 13, // ~60fps
   POLARITY_PHASE_INCREMENT: 0.112358,
-  CAMERA_ZOOM: 1.369, // Higher = more zoomed in (1.0 = normal, 2.0 = 2x zoom, 0.5 = zoomed out)
-  CAMERA_DISTANCE: -0.5, // translateZ offset for camera position (negative = closer, positive = farther)
+  CAMERA_ZOOM: 1.5, // Higher = more zoomed in (1.0 = normal, 2.0 = 2x zoom, 0.5 = zoomed out)
+  CAMERA_DISTANCE: -200, // translateZ offset for camera position (negative = closer, positive = farther) - closer for better view
+  CAMERA_ROTATE_X: 0, // Rotation around X axis (degrees) - 0 for straight on (no tilt)
+  CAMERA_ROTATE_Y: 0, // Rotation around Y axis (degrees) - 0 for straight on front view
   SINGULARITY_CENTER: { x: 250, y: 200 }, // Center singularity point representing present moment
   TEMPORAL_DISTANCE_SCALE: 0.8888888888888888, // How much temporal distance affects spatial position (0-1 blend factor)
   MAX_TEMPORAL_DISTANCE_DAYS: 365 * 100, // 100 years - maximum temporal distance for scaling
@@ -70,6 +72,7 @@ function generateInfinityBranches3D(): Array<BranchSegment3D> {
   };
 
   // Helper to create 3D branch segments with fractal interpolation for perfect connections
+  // Branches curve to form infinity symbol shape: past curves left, future curves right
   const createVeinBranch3D = (
     startX: number, 
     startY: number,
@@ -79,22 +82,74 @@ function generateInfinityBranches3D(): Array<BranchSegment3D> {
     depth: number,
     maxDepth: number = 3,
     baseColor: string,
-    delay: number
+    delay: number,
+    isPastBranch?: boolean // Track if this is a past branch for infinity curve shaping
   ): { segments: BranchSegment3D[]; points: Array<{ x: number; y: number; z: number }> } => {
     if (depth > maxDepth) return { segments: [], points: [] };
     
+    // Constrain branches to their respective sides to prevent infiltration
+    const branchMidpoint = LOADING_SCREEN_CONSTANTS.MIDPOINT_X;
+    const bufferZone = 30; // Minimum distance from midpoint to prevent crossing
+    
     // Calculate endpoint with mathematical precision
-    const endX = startX + Math.cos(angle) * length;
-    const endY = startY + Math.sin(angle) * length;
-    // Vary Z depth based on branch depth for 3D structure
-    const endZ = startZ + (Math.random() - 0.5) * 200 * (depth + 11);
+    let endX = startX + Math.cos(angle) * length;
+    let endY = startY + Math.sin(angle) * length;
+    
+    if (isPastBranch !== undefined) {
+      // Past branches must stay on left side (x < branchMidpoint)
+      if (isPastBranch && endX > branchMidpoint - bufferZone) {
+        // Redirect endpoint to stay on left side
+        const maxX = branchMidpoint - bufferZone;
+        const distanceFromStart = Math.sqrt((endX - startX) ** 2 + (endY - startY) ** 2);
+        if (distanceFromStart > 0) {
+          const ratio = Math.abs((maxX - startX) / (endX - startX));
+          endX = Math.min(endX, maxX);
+          endY = startY + (endY - startY) * ratio;
+        } else {
+          endX = Math.min(endX, maxX);
+        }
+      }
+      // Future branches must stay on right side (x > branchMidpoint)
+      else if (!isPastBranch && endX < branchMidpoint + bufferZone) {
+        // Redirect endpoint to stay on right side
+        const minX = branchMidpoint + bufferZone;
+        const distanceFromStart = Math.sqrt((endX - startX) ** 2 + (endY - startY) ** 2);
+        if (distanceFromStart > 0) {
+          const ratio = Math.abs((minX - startX) / (endX - startX));
+          endX = Math.max(endX, minX);
+          endY = startY + (endY - startY) * ratio;
+        } else {
+          endX = Math.max(endX, minX);
+        }
+      }
+    }
+    
+    // Vary Z depth based on branch depth for 3D structure (reduced variation for less explosion)
+    const zVariation = depth === 0 ? 36 : 18; // Reduced Z variation: 36 for primary, 18 for sub-branches
+    const endZ = startZ + (Math.random() - 0.5) * zVariation;
     
     // Create control point for fractal interpolation (midpoint with slight offset)
+    // For infinity symbol shaping: past branches curve left, future curve right
     const midX = (startX + endX) / 2;
     const midY = (startY + endY) / 2;
     const midZ = (startZ + endZ) / 2;
+    
+    // Determine curve direction based on branch type and depth
+    // Primary branches (depth 0) curve more strongly toward infinity loops
+    // Past branches curve leftward (toward negative X), future curve rightward (toward positive X)
     const perpAngle = angle + Math.PI / 2;
-    const offset = length * 0.1 * (depth + 1) * 0.3;
+    let curveDirection = 1; // Default perpendicular
+    if (isPastBranch !== undefined && depth === 0) {
+      // Past branches curve left (toward left loop), future curve right (toward right loop)
+      curveDirection = isPastBranch ? 1 : -1;
+    } else if (isPastBranch !== undefined) {
+      // Sub-branches maintain parent direction with moderate strength
+      curveDirection = isPastBranch ? 0.4 : -0.4; // Moderate curve for organized flow
+    }
+    // Stronger curve for primary branches to shape infinity symbol
+    // Moderate curve for sub-branches - organized but still flowing
+    const curveStrength = depth === 0 ? 0.3 : 0.12; // Moderate curve for sub-branches
+    const offset = length * curveStrength * (depth + 1) * 0.3 * curveDirection;
     const controlX = midX + Math.cos(perpAngle) * offset;
     const controlY = midY + Math.sin(perpAngle) * offset;
     const controlZ = midZ;
@@ -140,12 +195,12 @@ function generateInfinityBranches3D(): Array<BranchSegment3D> {
     const allSegments = [segment];
     const allPoints = [...points];
     
-    // Create 2-3 sub-branches (like vein bifurcations) with fractal interpolation
+    // Create many sub-branches that extend far, but with controlled organization
     // Ensure branches connect perfectly to parent segment endpoints
-    const numBranches = depth === 0 ? 3 : 2;
+    const numBranches = depth === 0 ? 3 : (depth === 1 ? 2 : (depth === 2 ? 1 : 0)); // More branches, deeper levels
+    const subBranchMidpoint = LOADING_SCREEN_CONSTANTS.MIDPOINT_X;
+    
     for (let i = 0; i < numBranches; i++) {
-      const branchAngle = angle + (i - 1) * 0.6 + (Math.random() - 0.5) * 0.4;
-      const branchLength = length * (0.5 + Math.random() * 0.3);
       // For first sub-branch, start at the exact end of parent segment to ensure connection
       // For subsequent branches, use fractal interpolation along the parent segment
       const branchStartT = i === 0 ? 1.0 : (0.4 + Math.random() * 0.3);
@@ -173,6 +228,32 @@ function generateInfinityBranches3D(): Array<BranchSegment3D> {
         branchStartZ = interpolated.z;
       }
       
+      // Controlled angle spread - organized but still branching out
+      let branchAngle = angle + (i - (numBranches - 1) / 2) * 0.4 + (Math.random() - 0.5) * 0.1; // Organized spread
+      
+      // Constrain sub-branch angles to keep them on their respective sides
+      if (isPastBranch !== undefined) {
+        // Calculate where this branch would end up
+        const testLength = length * (0.6 + Math.random() * 0.3);
+        const testEndX = branchStartX + Math.cos(branchAngle) * testLength * 0.8;
+        
+        // If past branch would cross to right side, redirect it left
+        if (isPastBranch && testEndX > subBranchMidpoint - 20) {
+          // Redirect toward left side - constrain angle to point leftward
+          const targetAngle = Math.PI; // Point left (180 degrees)
+          branchAngle = targetAngle + (Math.random() - 0.5) * 0.3; // Small variation around left
+        }
+        // If future branch would cross to left side, redirect it right
+        else if (!isPastBranch && testEndX < subBranchMidpoint + 20) {
+          // Redirect toward right side - constrain angle to point rightward
+          const targetAngle = 0; // Point right (0 degrees)
+          branchAngle = targetAngle + (Math.random() - 0.5) * 0.3; // Small variation around right
+        }
+      }
+      
+      // Longer sub-branches that extend far
+      const branchLength = length * (0.6 + Math.random() * 0.3); // 60-90% of parent length - extends far
+      
       const subBranch = createVeinBranch3D(
         branchStartX, 
         branchStartY, 
@@ -182,7 +263,8 @@ function generateInfinityBranches3D(): Array<BranchSegment3D> {
         depth + 1, 
         maxDepth,
         baseColor,
-        delay + i * 0.05
+        delay + i * 0.05,
+        isPastBranch // Pass down the branch type for consistent curvature
       );
       allSegments.push(...subBranch.segments);
       allPoints.push(...subBranch.points);
@@ -200,33 +282,49 @@ function generateInfinityBranches3D(): Array<BranchSegment3D> {
     return value || fallback;
   };
 
-  // Left half branches (past/potential past) - emanating from left loop - uses theme color
-  for (let i = 0; i < LOADING_SCREEN_CONSTANTS.BRANCHES_PER_SIDE; i++) {
-    const baseAngle = (i / LOADING_SCREEN_CONSTANTS.BRANCHES_PER_SIDE) * Math.PI * 2;
-    const startX = LOADING_SCREEN_CONSTANTS.LEFT_LOOP_CENTER.x;
-    const startY = LOADING_SCREEN_CONSTANTS.LEFT_LOOP_CENTER.y;
-    const startZ = (Math.random() - 0.112358) * 369; // Random Z depth
-    const length = 88 + Math.random() * 216;
-    const baseColor = getBranchThemeColor('--loading-past-color', 'hsl(270, 70%, 60%)'); // Theme color for past
+  // All branches start from singularity point (present moment) and branch outward
+  // Forming a tree structure that abstractly shapes an infinity symbol
+  const singularity = LOADING_SCREEN_CONSTANTS.SINGULARITY_CENTER;
+  const totalBranches = LOADING_SCREEN_CONSTANTS.BRANCHES_PER_SIDE * 2;
+  
+  // Primary branches: half go left (past), half go right (future)
+  // These will curve to form the infinity symbol shape
+  for (let i = 0; i < totalBranches; i++) {
+    const isPast = i < LOADING_SCREEN_CONSTANTS.BRANCHES_PER_SIDE;
+    const branchIndex = isPast ? i : i - LOADING_SCREEN_CONSTANTS.BRANCHES_PER_SIDE;
     
+    // Calculate initial angle: past branches start leftward, future branches start rightward
+    // Wider spread for more branches, but still organized
+    const angleSpread = Math.PI * 0.7; // Increased back to 0.7 (70% of circle) for more coverage
+    const baseAngleOffset = isPast 
+      ? Math.PI - angleSpread / 2 // Start pointing left (180° - spread/2)
+      : -angleSpread / 2; // Start pointing right (0° - spread/2)
+    
+    // Distribute branches within the spread
+    const normalizedIndex = branchIndex / LOADING_SCREEN_CONSTANTS.BRANCHES_PER_SIDE;
+    const baseAngle = baseAngleOffset + normalizedIndex * angleSpread;
+    
+    // Controlled randomization - organized but with natural variation
+    const angleVariation = (Math.random() - 0.5) * 0.2; // Moderate variation for natural look
+    const finalAngle = baseAngle + angleVariation;
+    
+    // Start from singularity point
+    const startX = singularity.x;
+    const startY = singularity.y;
+    const startZ = (Math.random() - 0.5) * 36; // Random Z depth around center
+    
+    // Initial branch length - longer to extend far
+    const length = 120 + Math.random() * 40; // Increased from 90-110 to 120-160
+    
+    // Color based on time direction
+    const baseColor = isPast
+      ? getBranchThemeColor('--loading-past-color', 'hsl(270, 70%, 60%)')
+      : getBranchThemeColor('--loading-future-color', 'hsl(45, 85%, 55%)');
+    
+    // Create primary branch with many sub-branches that extend far
+    // Increased maxDepth to 3 for more branching, but with controlled organization
     const { segments: branchSegments } = createVeinBranch3D(
-      startX, startY, startZ, baseAngle, length, 0, 3, baseColor, i * 0.08
-    );
-    
-    segments.push(...branchSegments);
-  }
-
-  // Right half branches (future/potential future) - emanating from right loop - uses theme color
-  for (let i = 0; i < LOADING_SCREEN_CONSTANTS.BRANCHES_PER_SIDE; i++) {
-    const baseAngle = (i / LOADING_SCREEN_CONSTANTS.BRANCHES_PER_SIDE) * Math.PI * 2;
-    const startX = LOADING_SCREEN_CONSTANTS.RIGHT_LOOP_CENTER.x;
-    const startY = LOADING_SCREEN_CONSTANTS.RIGHT_LOOP_CENTER.y;
-    const startZ = (Math.random() - 0.112358) * 369; // Random Z depth
-    const length = 88 + Math.random() * 216;
-    const baseColor = getBranchThemeColor('--loading-future-color', 'hsl(45, 85%, 55%)'); // Theme color for future
-    
-    const { segments: branchSegments } = createVeinBranch3D(
-      startX, startY, startZ, baseAngle, length, 0, 3, baseColor, i * 0.08 + 0.06
+      startX, startY, startZ, finalAngle, length, 0, 3, baseColor, i * 0.08, isPast
     );
     
     segments.push(...branchSegments);
@@ -591,6 +689,83 @@ export default function LoadingScreen({ progress, message = 'Loading your journa
   // Generate 3D branch segments
   const branchSegments3D = useMemo(() => generateInfinityBranches3D(), []);
   
+  // Generate connection lines between branch segments to fill gaps (optimized)
+  const branchConnections3D = useMemo(() => {
+    const connections: Array<BranchSegment3D> = [];
+    const tolerance = 12; // pixels - maximum gap to connect
+    const maxConnections = 200; // Limit total connections for performance
+    const processedPairs = new Set<string>(); // Avoid duplicate connections
+    
+    // Use spatial grid to reduce O(n²) to approximate O(n)
+    const gridSize = 50; // Grid cell size
+    const grid = new Map<string, BranchSegment3D[]>();
+    
+    // Build spatial grid
+    branchSegments3D.forEach((segment) => {
+      const gridX = Math.floor(segment.endX / gridSize);
+      const gridY = Math.floor(segment.endY / gridSize);
+      const key = `${gridX},${gridY}`;
+      if (!grid.has(key)) {
+        grid.set(key, []);
+      }
+      grid.get(key)!.push(segment);
+    });
+    
+    // For each segment, only check nearby grid cells
+    branchSegments3D.forEach((segment) => {
+      if (connections.length >= maxConnections) return; // Performance limit
+      
+      const gridX = Math.floor(segment.endX / gridSize);
+      const gridY = Math.floor(segment.endY / gridSize);
+      
+      // Check current and adjacent grid cells only
+      for (let dx = -1; dx <= 1; dx++) {
+        for (let dy = -1; dy <= 1; dy++) {
+          const key = `${gridX + dx},${gridY + dy}`;
+          const nearbySegments = grid.get(key);
+          if (!nearbySegments) continue;
+          
+          nearbySegments.forEach((otherSegment) => {
+            if (connections.length >= maxConnections) return;
+            if (segment === otherSegment) return;
+            
+            // Quick distance check (avoid sqrt for performance)
+            const distX = segment.endX - otherSegment.startX;
+            const distY = segment.endY - otherSegment.startY;
+            const distZ = segment.endZ - otherSegment.startZ;
+            const distSq = distX * distX + distY * distY;
+            const toleranceSq = tolerance * tolerance;
+            
+            // Create unique key for this pair
+            const pairKey = segment.endX < otherSegment.startX 
+              ? `${segment.endX},${segment.endY},${otherSegment.startX},${otherSegment.startY}`
+              : `${otherSegment.startX},${otherSegment.startY},${segment.endX},${segment.endY}`;
+            
+            // If segments are close but not connected, create a connection line
+            if (distSq > 1 && distSq < toleranceSq && Math.abs(distZ) < 80 && !processedPairs.has(pairKey)) {
+              processedPairs.add(pairKey);
+              connections.push({
+                startX: segment.endX,
+                startY: segment.endY,
+                startZ: segment.endZ,
+                endX: otherSegment.startX,
+                endY: otherSegment.startY,
+                endZ: otherSegment.startZ,
+                thickness: Math.min(segment.thickness, otherSegment.thickness) * 0.6,
+                color: segment.color,
+                delay: segment.delay,
+                duration: segment.duration,
+                points: [],
+              });
+            }
+          });
+        }
+      }
+    });
+    
+    return connections;
+  }, [branchSegments3D]);
+  
   // Calculate average Z depth of branch segments for relative displacement
   const averageBranchZ = useMemo(() => {
     if (branchSegments3D.length === 0) return 0;
@@ -658,26 +833,29 @@ export default function LoadingScreen({ progress, message = 'Loading your journa
     };
   }, []);
 
-  // Generate 3D infinity symbol segments
+  // Generate 3D infinity symbol segments with mathematically accurate polarity alternation
   const infinitySegments3D = useMemo(() => {
     const segments: Array<{
       x1: number; y1: number; z1: number;
       x2: number; y2: number; z2: number;
       z: number;
+      t: number; // Store parametric parameter for polarity calculation
     }> = [];
     
-    // Sample the infinity curve using proper parametric equation
+    // Sample the infinity curve using proper parametric equation (lemniscate of Bernoulli)
+    // Parametric form: x = a * cos(t) / (1 + sin²(t)), y = a * sin(t) * cos(t) / (1 + sin²(t))
+    // Or alternative: x = a * sin(t), y = a * sin(t) * cos(t) / (1 + sin²(t))
     const sampleInfinityCurve = (t: number): { x: number; y: number } => {
-      // Parametric infinity curve: x = a * sin(t), y = a * sin(t) * cos(t) / (1 + sin^2(t))
       const a = LOADING_SCREEN_CONSTANTS.INFINITY_AMPLITUDE;
       const centerX = LOADING_SCREEN_CONSTANTS.MIDPOINT_X;
       const centerY = LOADING_SCREEN_CONSTANTS.LEFT_LOOP_CENTER.y;
-      const angle = t * Math.PI * 2;
+      const angle = t * Math.PI * 2; // t ∈ [0, 1] maps to angle ∈ [0, 2π]
       
       const sinT = Math.sin(angle);
       const cosT = Math.cos(angle);
       const sin2T = sinT * sinT;
       
+      // Lemniscate parametric equations
       const x = a * sinT;
       const y = (a * sinT * cosT) / (1 + sin2T);
       
@@ -686,6 +864,9 @@ export default function LoadingScreen({ progress, message = 'Loading your journa
         y: centerY + y,
       };
     };
+    
+    // Polarity alternation is calculated in infinitySegmentColors useMemo
+    // based on the parametric parameter t stored in each segment
     
     // Create segments with varying Z depth for true 3D structure
     // Use fractal interpolation for mathematically perfect smooth connections
@@ -707,6 +888,9 @@ export default function LoadingScreen({ progress, message = 'Loading your journa
       const extendedX2 = p1.x + dx * extensionFactor;
       const extendedY2 = p1.y + dy * extensionFactor;
       
+      // Store the parametric midpoint for polarity calculation
+      const tMid = (t1 + t2) / 2;
+      
       segments.push({
         x1: p1.x,
         y1: p1.y,
@@ -715,53 +899,123 @@ export default function LoadingScreen({ progress, message = 'Loading your journa
         y2: extendedY2,
         z2: z2,
         z: (z1 + z2) / 2,
+        t: tMid, // Store parametric parameter for polarity
       });
     }
     
     return segments;
   }, []);
 
-  // Get theme colors from CSS custom properties
-  const getThemeColor = (property: string, fallback: string): string => {
-    if (typeof window === 'undefined' || !document.documentElement) {
-      return fallback;
+  // Pre-calculate mathematically accurate polarity assignment based on parametric phase
+  // Uses the lemniscate's parametric structure to determine alternating polarities
+  const infinitySegmentColors = useMemo(() => {
+    const assignments: boolean[] = []; // true = past/purple, false = future/golden
+    
+    // Assign polarity based on parametric parameter t (mathematically accurate)
+    // The lemniscate has 4 distinct phases as t goes from 0 to 1
+    // We alternate polarity: [past, future, past, future] for the 4 lobes
+    infinitySegments3D.forEach((segment) => {
+      // Use the stored parametric parameter t to determine polarity
+      // Quadrants 0,2 = past (true), quadrants 1,3 = future (false)
+      const quadrant = Math.floor(segment.t * 4) % 4;
+      const isPast = quadrant % 2 === 0;
+      assignments.push(isPast);
+    });
+    
+    // Verify mathematical balance (should be exactly half each if numSegments is even)
+    const pastCount = assignments.filter(a => a).length;
+    const futureCount = assignments.length - pastCount;
+    
+    // If there's an imbalance due to rounding, adjust segments at phase boundaries
+    const imbalance = pastCount - futureCount;
+    if (Math.abs(imbalance) > 0) {
+      // Find segments at phase boundaries (where t is close to 0.25, 0.5, 0.75, or 1.0)
+      const phaseBoundaries = [0.25, 0.5, 0.75, 1.0];
+      const boundarySegments = infinitySegments3D.map((seg, idx) => ({
+        idx,
+        t: seg.t,
+        distToBoundary: Math.min(...phaseBoundaries.map(b => Math.abs(seg.t - b)))
+      })).sort((a, b) => a.distToBoundary - b.distToBoundary);
+      
+      // Flip segments at boundaries to balance
+      let flipsNeeded = Math.abs(imbalance);
+      for (const { idx } of boundarySegments) {
+        if (flipsNeeded === 0) break;
+        if (imbalance > 0 && assignments[idx]) {
+          assignments[idx] = false;
+          flipsNeeded--;
+        } else if (imbalance < 0 && !assignments[idx]) {
+          assignments[idx] = true;
+          flipsNeeded--;
+        }
+      }
     }
-    const value = getComputedStyle(document.documentElement).getPropertyValue(property).trim();
-    return value || fallback;
-  };
+    
+    return assignments;
+  }, [infinitySegments3D]);
 
-  // Get polarity colors from theme CSS variables
-  const pastColorBase = getThemeColor('--loading-past-color', 'hsl(270, 70%, 60%)');
-  const futureColorBase = getThemeColor('--loading-future-color', 'hsl(45, 85%, 55%)');
-  
-  // Parse HSL and apply phase animation for dynamic shifting
-  const parseHSL = (hsl: string): { h: number; s: number; l: number } | null => {
-    const match = hsl.match(/hsl\((\d+(?:\.\d+)?),\s*(\d+(?:\.\d+)?)%,\s*(\d+(?:\.\d+)?)%\)/);
-    if (!match) return null;
-    return {
-      h: parseFloat(match[1]),
-      s: parseFloat(match[2]),
-      l: parseFloat(match[3])
+  // Get theme colors from CSS custom properties (memoized for performance)
+  const themeColors = useMemo(() => {
+    const getThemeColor = (property: string, fallback: string): string => {
+      if (typeof window === 'undefined' || !document.documentElement) {
+        return fallback;
+      }
+      const value = getComputedStyle(document.documentElement).getPropertyValue(property).trim();
+      return value || fallback;
     };
-  };
 
-  // Calculate polarity colors with phase animation
-  const pastHSL = parseHSL(pastColorBase);
-  const futureHSL = parseHSL(futureColorBase);
+    const pastColorBase = getThemeColor('--loading-past-color', 'hsl(270, 70%, 60%)');
+    const futureColorBase = getThemeColor('--loading-future-color', 'hsl(45, 85%, 55%)');
+    
+    // Parse HSL once
+    const parseHSL = (hsl: string): { h: number; s: number; l: number } | null => {
+      const match = hsl.match(/hsl\((\d+(?:\.\d+)?),\s*(\d+(?:\.\d+)?)%,\s*(\d+(?:\.\d+)?)%\)/);
+      if (!match) return null;
+      return {
+        h: parseFloat(match[1]),
+        s: parseFloat(match[2]),
+        l: parseFloat(match[3])
+      };
+    };
+
+    return {
+      pastColorBase,
+      futureColorBase,
+      pastHSL: parseHSL(pastColorBase),
+      futureHSL: parseHSL(futureColorBase),
+    };
+  }, []); // Only recalculate if theme changes (could add theme dependency)
   
-  const leftColor = pastHSL
-    ? `hsl(${pastHSL.h + Math.sin(polarityPhase) * 20}, ${pastHSL.s}%, ${pastHSL.l + Math.sin(polarityPhase) * 20}%)`
-    : pastColorBase; // Fallback to raw value if not HSL
+  // Calculate polarity colors with phase animation (memoized per phase)
+  const { leftColor, rightColor } = useMemo(() => {
+    const pastHSL = themeColors.pastHSL;
+    const futureHSL = themeColors.futureHSL;
+    
+    const left = pastHSL
+      ? `hsl(${pastHSL.h + Math.sin(polarityPhase) * 20}, ${pastHSL.s}%, ${pastHSL.l + Math.sin(polarityPhase) * 20}%)`
+      : themeColors.pastColorBase;
+    
+    const right = futureHSL
+      ? `hsl(${futureHSL.h + Math.cos(polarityPhase) * 15}, ${futureHSL.s}%, ${futureHSL.l + Math.cos(polarityPhase) * 15}%)`
+      : themeColors.futureColorBase;
+    
+    return { leftColor: left, rightColor: right };
+  }, [polarityPhase, themeColors]);
   
-  const rightColor = futureHSL
-    ? `hsl(${futureHSL.h + Math.cos(polarityPhase) * 15}, ${futureHSL.s}%, ${futureHSL.l + Math.cos(polarityPhase) * 15}%)`
-    : futureColorBase; // Fallback to raw value if not HSL
-  
-  // Helper function to create cylindrical gradient from HSL color
-  const createCylindricalGradient = (hslColor: string): string => {
+  // Helper function to create cylindrical gradient from HSL color (with caching)
+  const gradientCache = useMemo(() => new Map<string, string>(), []);
+  const createCylindricalGradient = useCallback((hslColor: string): string => {
+    // Cache gradients to avoid recalculating
+    if (gradientCache.has(hslColor)) {
+      return gradientCache.get(hslColor)!;
+    }
+    
     // Parse HSL color: hsl(h, s%, l%)
     const match = hslColor.match(/hsl\((\d+(?:\.\d+)?),\s*(\d+(?:\.\d+)?)%,\s*(\d+(?:\.\d+)?)%\)/);
-    if (!match) return hslColor; // Fallback if parsing fails
+    if (!match) {
+      gradientCache.set(hslColor, hslColor);
+      return hslColor; // Fallback if parsing fails
+    }
     
     const h = parseFloat(match[1]);
     const s = parseFloat(match[2]);
@@ -775,8 +1029,10 @@ export default function LoadingScreen({ progress, message = 'Loading your journa
     const shadowColor = `hsl(${h}, ${s}%, ${shadowL}%)`;
     
     // Radial gradient: highlight in center, base color in middle, shadow on edges
-    return `radial-gradient(ellipse at center, ${highlightColor} 0%, ${hslColor} 35%, ${shadowColor} 100%)`;
-  };
+    const gradient = `radial-gradient(ellipse at center, ${highlightColor} 0%, ${hslColor} 35%, ${shadowColor} 100%)`;
+    gradientCache.set(hslColor, gradient);
+    return gradient;
+  }, [gradientCache]);
 
   return (
     <div className="loading-screen">
@@ -806,10 +1062,15 @@ export default function LoadingScreen({ progress, message = 'Loading your journa
       </div>
       <div className="loading-content">
         <div className="loading-logo">
-          <div 
+            <div 
             className="camera-wrapper"
             style={{
-              transform: `translateZ(${LOADING_SCREEN_CONSTANTS.CAMERA_DISTANCE}px) scale(${LOADING_SCREEN_CONSTANTS.CAMERA_ZOOM})`,
+              transform: `
+                translateZ(${LOADING_SCREEN_CONSTANTS.CAMERA_DISTANCE}px) 
+                rotateX(${LOADING_SCREEN_CONSTANTS.CAMERA_ROTATE_X}deg) 
+                rotateY(${LOADING_SCREEN_CONSTANTS.CAMERA_ROTATE_Y}deg) 
+                scale(${LOADING_SCREEN_CONSTANTS.CAMERA_ZOOM})
+              `,
             }}
           >
             <div className="infinity-3d-container">
@@ -818,7 +1079,8 @@ export default function LoadingScreen({ progress, message = 'Loading your journa
             {/* Infinity symbol core - 3D cylindrical forms - wrapped in rotating container */}
             <div className="infinity-rotating-wrapper">
             {infinitySegments3D.map((seg, idx) => {
-              const isLeft = seg.x1 < LOADING_SCREEN_CONSTANTS.MIDPOINT_X;
+              // Use pre-calculated balanced color assignment
+              const isLeft = infinitySegmentColors[idx];
               const baseColor = isLeft ? leftColor : rightColor;
               const dx = seg.x2 - seg.x1;
               const dy = seg.y2 - seg.y1;
@@ -830,29 +1092,35 @@ export default function LoadingScreen({ progress, message = 'Loading your journa
               const segmentCenterX = (seg.x1 + seg.x2) / 2;
               const segmentCenterY = (seg.y1 + seg.y2) / 2;
               
-              // Calculate gravitational pull from entry ornaments
+              // Calculate gravitational pull from entry ornaments (optimized)
               // Each entry exerts a gravitational force on the infinity segment
               let gravitationalX = 0;
               let gravitationalY = 0;
               const gravitationalConstant = 0.8; // Strength of gravitational pull
               const maxGravitationalDistance = 888; // Maximum distance for gravitational effect
+              const maxGravitationalDistanceSq = maxGravitationalDistance * maxGravitationalDistance; // Pre-calculate squared
               
-              visibleEntries.forEach(({ x: entryX, y: entryY }) => {
-                // Calculate distance from segment center to entry
+              // Limit number of entries to check for performance
+              const maxEntriesToCheck = 100;
+              const entriesToCheck = visibleEntries.slice(0, maxEntriesToCheck);
+              
+              entriesToCheck.forEach(({ x: entryX, y: entryY }) => {
+                // Calculate distance from segment center to entry (avoid sqrt until needed)
                 const distX = entryX - segmentCenterX;
                 const distY = entryY - segmentCenterY;
-                const distance2D = Math.sqrt(distX * distX + distY * distY);
+                const distance2DSq = distX * distX + distY * distY;
                 
-                // Only apply gravity if within range
-                if (distance2D < maxGravitationalDistance && distance2D > 0) {
+                // Only apply gravity if within range (using squared distance for performance)
+                if (distance2DSq < maxGravitationalDistanceSq && distance2DSq > 0.1) {
                   // Inverse square law for gravitational pull (weakened for subtlety)
-                  const gravitationalStrength = gravitationalConstant / (1 + distance2D * distance2D / 1000);
+                  const gravitationalStrength = gravitationalConstant / (1 + distance2DSq / 1000);
                   const pullAngle = Math.atan2(distY, distX) * (180 / Math.PI);
                   
                   // Adjust pull direction based on rotation angle
                   const adjustedAngle = pullAngle + rotationAngle;
-                  gravitationalX += gravitationalStrength * Math.cos(adjustedAngle * Math.PI / 180);
-                  gravitationalY += gravitationalStrength * Math.sin(adjustedAngle * Math.PI / 180);
+                  const angleRad = adjustedAngle * Math.PI / 180;
+                  gravitationalX += gravitationalStrength * Math.cos(angleRad);
+                  gravitationalY += gravitationalStrength * Math.sin(angleRad);
                 }
               });
               
@@ -930,6 +1198,82 @@ export default function LoadingScreen({ progress, message = 'Loading your journa
               );
             })}
             </div>
+            
+            {/* Branch connection lines - fill gaps between segments */}
+            {branchConnections3D.map((connection, idx) => {
+              const isLeft = connection.startX < LOADING_SCREEN_CONSTANTS.MIDPOINT_X;
+              const color = isLeft ? leftColor : rightColor;
+              // Calculate with mathematical precision
+              const dx = connection.endX - connection.startX;
+              const dy = connection.endY - connection.startY;
+              const length = Math.sqrt(dx * dx + dy * dy);
+              const angle = Math.atan2(dy, dx) * (180 / Math.PI);
+              // Smooth Z interpolation along connection
+              const avgZ = (connection.startZ + connection.endZ) / 2;
+              
+              // Ensure minimum opacity
+              const baseOpacity = 0.3; // Slightly more transparent than main segments
+              const zOpacityFactor = Math.abs(avgZ) / LOADING_SCREEN_CONSTANTS.OPACITY_DIVISORS.branch;
+              const finalOpacity = Math.max(0.12, baseOpacity - zOpacityFactor);
+              
+              // Create cylindrical gradient
+              const cylindricalGradient = createCylindricalGradient(color);
+              
+              // Cylinder dimensions
+              const cylinderRadius = connection.thickness / 2;
+              const cylinderLength = length;
+              
+              return (
+                <div
+                  key={`branch-conn-${idx}`}
+                  className="branch-segment-3d-cylinder"
+                  style={{
+                    left: `${connection.startX}px`,
+                    top: `${connection.startY}px`,
+                    transform: `translateZ(${avgZ}px) rotateZ(${angle}deg)`,
+                    opacity: finalOpacity,
+                    animationDelay: `${connection.delay}s`,
+                    animationDuration: `${connection.duration}s`,
+                  }}
+                >
+                  {/* Cylinder body */}
+                  <div 
+                    className="cylinder-body"
+                    style={{
+                      width: `${cylinderLength}px`,
+                      height: `${cylinderRadius * 2}px`,
+                      background: cylindricalGradient,
+                      borderRadius: `${cylinderRadius}px`,
+                      boxShadow: `inset 0 0 ${cylinderRadius}px rgba(0, 0, 0, 0.2), 0 0 ${cylinderRadius}px rgba(0, 0, 0, 0.1)`,
+                    }}
+                  />
+                  {/* Cylinder start cap */}
+                  <div 
+                    className="cylinder-cap cylinder-cap-start"
+                    style={{
+                      width: `${cylinderRadius * 2}px`,
+                      height: `${cylinderRadius * 2}px`,
+                      background: `radial-gradient(circle, ${color}, ${color}dd)`,
+                      borderRadius: '50%',
+                      transform: `translateX(-${cylinderRadius}px) translateZ(${cylinderRadius}px)`,
+                      boxShadow: `0 0 ${cylinderRadius}px rgba(0, 0, 0, 0.2)`,
+                    }}
+                  />
+                  {/* Cylinder end cap */}
+                  <div 
+                    className="cylinder-cap cylinder-cap-end"
+                    style={{
+                      width: `${cylinderRadius * 2}px`,
+                      height: `${cylinderRadius * 2}px`,
+                      background: `radial-gradient(circle, ${color}, ${color}dd)`,
+                      borderRadius: '50%',
+                      transform: `translateX(${cylinderLength - cylinderRadius}px) translateZ(${cylinderRadius}px)`,
+                      boxShadow: `0 0 ${cylinderRadius}px rgba(0, 0, 0, 0.2)`,
+                    }}
+                  />
+                </div>
+              );
+            })}
             
             {/* Branch segments - 3D cylindrical forms */}
             {branchSegments3D.map((segment, idx) => {
