@@ -676,7 +676,7 @@ export default function NavigationBar({
         // Large distance: step by years
         const yearsToCheckpoint = Math.abs(differenceInYears(to, current));
         // Base step size, then apply aggressive bell curve multiplier (much larger steps in middle)
-        const baseStepSize = Math.max(1, Math.floor(yearsToCheckpoint / 10)); // Base: max 10 steps
+        const baseStepSize = Math.max(1, Math.floor(yearsToCheckpoint / 22)); // Base: max 15 steps for smoother animation
         // Bell multiplier creates 1x to 10x larger steps in middle (very aggressive)
         const dynamicStepSize = Math.max(1, Math.floor(baseStepSize * (1 + bellMultiplier * 9)));
         
@@ -691,7 +691,7 @@ export default function NavigationBar({
       } else if (daysToCheckpoint > 30) {
         // Medium distance: step by months
         const monthsToCheckpoint = Math.abs(differenceInMonths(to, current));
-        const baseStepSize = Math.max(1, Math.floor(monthsToCheckpoint / 10));
+        const baseStepSize = Math.max(1, Math.floor(monthsToCheckpoint / 22)); // More steps for smoother animation
         // Bell multiplier creates 1x to 8x larger steps in middle
         const dynamicStepSize = Math.max(1, Math.floor(baseStepSize * (1 + bellMultiplier * 7)));
         
@@ -706,7 +706,7 @@ export default function NavigationBar({
       } else if (daysToCheckpoint > 7) {
         // Small distance: step by weeks
         const weeksToCheckpoint = Math.floor(daysToCheckpoint / 7);
-        const baseStepSize = Math.max(1, Math.floor(weeksToCheckpoint / 6));
+        const baseStepSize = Math.max(1, Math.floor(weeksToCheckpoint / 22)); // More steps for smoother animation
         // Bell multiplier creates 1x to 5x larger steps in middle
         const dynamicStepSize = Math.max(1, Math.floor(baseStepSize * (1 + bellMultiplier * 4)));
         
@@ -737,6 +737,30 @@ export default function NavigationBar({
           }
           steps.push({ date: new Date(current), viewMode: 'day' });
           daysStepped += stepSize;
+        }
+      }
+      
+      // Add a few more intermediate steps near the checkpoint for smooth arrival
+      // This creates a gentle deceleration as we approach each checkpoint
+      if (steps.length > 0) {
+        const lastStep = steps[steps.length - 1];
+        const remainingDays = Math.abs(differenceInDays(lastStep.date, to));
+        
+        // Add 2-4 smaller steps for final approach if there's still distance
+        if (remainingDays > 0 && remainingDays <= 30) {
+          const finalSteps = Math.min(4, remainingDays);
+          let finalCurrent = new Date(lastStep.date);
+          
+          for (let i = 0; i < finalSteps; i++) {
+            if (Math.abs(differenceInDays(finalCurrent, to)) <= 1) break;
+            
+            if (isFuture) {
+              finalCurrent = addDays(finalCurrent, 1);
+            } else {
+              finalCurrent = addDays(finalCurrent, -1);
+            }
+            steps.push({ date: new Date(finalCurrent), viewMode: 'day' });
+          }
         }
       }
       
