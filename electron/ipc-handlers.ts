@@ -2,6 +2,16 @@ import { ipcMain, dialog, app, BrowserWindow, shell } from 'electron';
 import * as fs from 'fs';
 import * as path from 'path';
 import PDFDocument from 'pdfkit';
+import { validatePath, sanitizeFileName, safePathJoin } from './utils/pathValidation';
+import {
+  isValidTimeRange,
+  isValidExportFormat,
+  isValidPreferenceKey,
+  isValidDateString,
+  isValidEntryId,
+  validateJournalEntry,
+  validateExportMetadata,
+} from './utils/inputValidation';
 
 interface ThemeColors {
   background: string;
@@ -9,6 +19,14 @@ interface ThemeColors {
   accent: string;
   border: string;
   secondary: string;
+  // Extended palette for richer themes
+  cardBg?: string;        // Card/entry background
+  cardBorder?: string;    // Card border color
+  headerBg?: string;      // Header/nav background
+  selected?: string;      // Selected/highlight color (e.g., green for tabletop)
+  gold?: string;          // Gold/yellow accent (e.g., #ffd700 for tabletop)
+  lightBg?: string;       // Light background variant
+  darkBg?: string;        // Dark background variant
 }
 
 interface ThemeStyles {
@@ -117,7 +135,7 @@ function extractThemeStyles(themeName: string): ThemeStyles {
   try {
     const cssContent = fs.readFileSync(themePath, 'utf-8');
     
-    // Extract colors using regex patterns
+    // Extract colors using regex patterns - comprehensive extraction
     // Look for body background and color
     const bodyBgMatch = cssContent.match(/\[data-theme=["']?[^"']*["']?\]\s*body\s*\{[^}]*background:\s*([^;]+);/i);
     const bodyColorMatch = cssContent.match(/\[data-theme=["']?[^"']*["']?\]\s*body\s*\{[^}]*color:\s*([^;]+);/i);
@@ -128,6 +146,26 @@ function extractThemeStyles(themeName: string): ThemeStyles {
     
     // Look for border colors
     const borderMatch = cssContent.match(/border(?:-bottom)?:\s*\d+px\s+(?:solid|dashed)\s+([^;]+);/i);
+    
+    // Extract extended palette colors - theme-agnostic patterns
+    // Card/entry backgrounds (timeline-cell, journal-entry-item, etc.) - any theme
+    const cardBgMatch = cssContent.match(/(?:timeline-cell|journal-entry-item|\.entry-item|\.period-entry-item)[^}]*background[^:]*:\s*([^;]+);/i) ||
+                       cssContent.match(/\.timeline-cell\s*\{[^}]*background:\s*([^;]+);/i) ||
+                       cssContent.match(/\.journal-entry-item\s*\{[^}]*background:\s*([^;]+);/i);
+    
+    // Selected/highlight colors (selected cells, active states) - any color, not just green
+    const selectedMatch = cssContent.match(/\.selected[^}]*background[^:]*:\s*([^;]+);/i) ||
+                         cssContent.match(/\.timeline-cell\.selected[^}]*background:\s*([^;]+);/i) ||
+                         cssContent.match(/\.active[^}]*background[^:]*:\s*([^;]+);/i);
+    
+    // Gold/yellow accents (today, highlights) - look for any gold/yellow color, not just specific hex codes
+    const goldMatch = cssContent.match(/(?:#ffd700|#ffed4e|#ffb347|#ffff00|gold|yellow)[^;]*/i) ||
+                     cssContent.match(/\.today[^}]*background[^:]*:\s*([^;]+);/i);
+    
+    // Header/nav backgrounds - any theme
+    const headerBgMatch = cssContent.match(/\.navigation-bar[^}]*background[^:]*:\s*([^;]+);/i) ||
+                         cssContent.match(/\.navigation-bar-top-row[^}]*background:\s*([^;]+);/i) ||
+                         cssContent.match(/\.nav-controls[^}]*background[^:]*:\s*([^;]+);/i);
     
     // Helper to extract hex/rgb from CSS value
     const extractColor = (value: string): string | null => {
@@ -160,6 +198,40 @@ function extractThemeStyles(themeName: string): ThemeStyles {
     const background = extractColor(bodyBgMatch?.[1] || '') || defaultColors.background;
     const text = extractColor(bodyColorMatch?.[1] || '') || defaultColors.text;
     const accent = extractColor(accentMatch?.[1] || '') || defaultColors.accent;
+    
+    // Extract extended palette - all optional, with fallbacks (works for ANY theme)
+    const cardBg = extractColor(cardBgMatch?.[1] || '') ?? undefined;
+    
+    // Extract selected color - try to get hex from match, or extract from background property
+    // This works for any theme that has .selected or .active states
+    let selected: string | undefined = undefined;
+    if (selectedMatch) {
+      const extracted = extractColor(selectedMatch[1] || '');
+      selected = extracted ?? undefined;
+      // If extraction failed, try to find any hex color in the matched line
+      if (!selected && selectedMatch[0]) {
+        const hexInMatch = selectedMatch[0].match(/#[0-9a-fA-F]{3,6}/i);
+        if (hexInMatch) selected = hexInMatch[0];
+      }
+    }
+    
+    // Extract gold/yellow color - try to get from .today background or find gold hex
+    // This works for any theme that uses gold/yellow for highlights
+    let gold: string | undefined = undefined;
+    if (goldMatch) {
+      // If it's a background match, extract the color
+      if (goldMatch[1]) {
+        const extracted = extractColor(goldMatch[1]);
+        gold = extracted ?? undefined;
+      }
+      // Otherwise, try to find hex color in the match
+      if (!gold && goldMatch[0]) {
+        const hexInMatch = goldMatch[0].match(/#[0-9a-fA-F]{3,6}/i);
+        if (hexInMatch) gold = hexInMatch[0];
+      }
+    }
+    
+    const headerBg = extractColor(headerBgMatch?.[1] || '') ?? undefined;
     const border = extractColor(borderMatch?.[1] || '') || defaultColors.border;
     const secondary = defaultColors.secondary;
     
@@ -207,6 +279,11 @@ function extractThemeStyles(themeName: string): ThemeStyles {
         accent,
         border,
         secondary,
+        // Extended palette (all optional - will use fallbacks if not found)
+        cardBg,
+        headerBg,
+        selected,
+        gold,
       },
       fontFamily,
       fontSize,
@@ -249,24 +326,47 @@ export function setupIpcHandlers() {
   });
 
   ipcMain.handle('get-entry', async (_event, date: string, timeRange: TimeRange) => {
+    // Validate input
+    if (!isValidDateString(date)) {
+      return null;
+    }
+    if (!isValidTimeRange(timeRange)) {
+      return null;
+    }
     return getEntry(date, timeRange);
   });
 
   ipcMain.handle('get-entry-by-id', async (_event, id: number) => {
+    // Validate input
+    if (!isValidEntryId(id)) {
+      return null;
+    }
     const { getEntryById } = require('./database');
     return getEntryById(id);
   });
 
   ipcMain.handle('get-entry-versions', async (_event, entryId: number) => {
+    // Validate input
+    if (!isValidEntryId(entryId)) {
+      return [];
+    }
     return getEntryVersions(entryId);
   });
 
   ipcMain.handle('archive-entry', async (_event, id: number) => {
+    // Validate input
+    if (!isValidEntryId(id)) {
+      return { success: false, error: 'Invalid entry ID' };
+    }
     archiveEntry(id);
     return { success: true };
   });
 
   ipcMain.handle('unarchive-entry', async (_event, id: number) => {
+    // Validate input
+    if (!isValidEntryId(id)) {
+      return { success: false, error: 'Invalid entry ID' };
+    }
     unarchiveEntry(id);
     return { success: true };
   });
@@ -276,11 +376,19 @@ export function setupIpcHandlers() {
   });
 
   ipcMain.handle('pin-entry', async (_event, id: number) => {
+    // Validate input
+    if (!isValidEntryId(id)) {
+      return { success: false, error: 'Invalid entry ID' };
+    }
     pinEntry(id);
     return { success: true };
   });
 
   ipcMain.handle('unpin-entry', async (_event, id: number) => {
+    // Validate input
+    if (!isValidEntryId(id)) {
+      return { success: false, error: 'Invalid entry ID' };
+    }
     unpinEntry(id);
     return { success: true };
   });
@@ -312,6 +420,14 @@ export function setupIpcHandlers() {
    * Copies the file to the attachments directory and updates the entry.
    */
   ipcMain.handle('add-entry-attachment', async (_event, entryId: number) => {
+    // Validate input
+    if (!isValidEntryId(entryId)) {
+      return {
+        success: false,
+        error: 'invalid_entry_id',
+        message: 'Invalid entry ID',
+      };
+    }
     const { canceled, filePaths } = await dialog.showOpenDialog({
       title: 'Select File to Attach',
       properties: ['openFile'],
@@ -342,12 +458,29 @@ export function setupIpcHandlers() {
         fs.mkdirSync(attachmentsDir, { recursive: true });
       }
 
-      // Generate unique filename
+      // Generate unique filename with sanitization
       const fileExt = path.extname(sourcePath);
       const fileName = path.basename(sourcePath);
+      const sanitizedFileName = sanitizeFileName(fileName);
+      if (!sanitizedFileName) {
+        return {
+          success: false,
+          error: 'invalid_filename',
+          message: 'Invalid filename provided',
+        };
+      }
+      
       const uniqueId = `${Date.now()}-${Math.random().toString(36).substring(7)}`;
       const destFileName = `${entryId}-${uniqueId}${fileExt}`;
-      const destPath = path.join(attachmentsDir, destFileName);
+      const destPath = safePathJoin(attachmentsDir, destFileName);
+      
+      if (!destPath || !validatePath(destPath, attachmentsDir)) {
+        return {
+          success: false,
+          error: 'invalid_path',
+          message: 'Invalid file path detected',
+        };
+      }
 
       // Copy file
       fs.copyFileSync(sourcePath, destPath);
@@ -373,12 +506,13 @@ export function setupIpcHandlers() {
       saveEntry(entry);
 
       return { success: true, attachment };
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error adding attachment:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Failed to add attachment';
       return {
         success: false,
         error: 'add_failed',
-        message: error.message || 'Failed to add attachment',
+        message: errorMessage,
       };
     }
   });
@@ -387,6 +521,21 @@ export function setupIpcHandlers() {
    * Remove an attachment from an entry.
    */
   ipcMain.handle('remove-entry-attachment', async (_event, entryId: number, attachmentId: string) => {
+    // Validate input
+    if (!isValidEntryId(entryId)) {
+      return {
+        success: false,
+        error: 'invalid_entry_id',
+        message: 'Invalid entry ID',
+      };
+    }
+    if (typeof attachmentId !== 'string' || attachmentId.trim() === '') {
+      return {
+        success: false,
+        error: 'invalid_attachment_id',
+        message: 'Invalid attachment ID',
+      };
+    }
     const { getEntryById, saveEntry } = require('./database');
     const entry = getEntryById(entryId);
 
@@ -402,7 +551,18 @@ export function setupIpcHandlers() {
         return { success: false, error: 'attachment_not_found', message: 'Attachment not found' };
       }
 
-      // Delete file
+      // Validate and delete file
+      const userDataPath = app.getPath('userData');
+      const attachmentsDir = path.join(userDataPath, 'attachments');
+      
+      if (!validatePath(attachment.filePath, attachmentsDir)) {
+        return {
+          success: false,
+          error: 'invalid_path',
+          message: 'Invalid attachment path detected',
+        };
+      }
+      
       if (fs.existsSync(attachment.filePath)) {
         fs.unlinkSync(attachment.filePath);
       }
@@ -412,20 +572,29 @@ export function setupIpcHandlers() {
       saveEntry(entry);
 
       return { success: true };
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error removing attachment:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Failed to remove attachment';
       return {
         success: false,
         error: 'remove_failed',
-        message: error.message || 'Failed to remove attachment',
+        message: errorMessage,
       };
     }
   });
 
   /**
    * Get attachment file path for opening.
+   * Validates the path to prevent path traversal attacks.
    */
   ipcMain.handle('get-attachment-path', async (_event, entryId: number, attachmentId: string) => {
+    // Validate input
+    if (!isValidEntryId(entryId)) {
+      return { success: false, error: 'invalid_entry_id' };
+    }
+    if (typeof attachmentId !== 'string' || attachmentId.trim() === '') {
+      return { success: false, error: 'invalid_attachment_id' };
+    }
     const { getEntryById } = require('./database');
     const entry = getEntryById(entryId);
 
@@ -434,7 +603,23 @@ export function setupIpcHandlers() {
     }
 
     const attachment = entry.attachments.find((a: EntryAttachment) => a.id === attachmentId);
-    if (!attachment || !fs.existsSync(attachment.filePath)) {
+    if (!attachment) {
+      return { success: false, error: 'not_found' };
+    }
+
+    // Validate attachment path to prevent path traversal
+    const userDataPath = app.getPath('userData');
+    const attachmentsDir = path.join(userDataPath, 'attachments');
+    
+    if (!validatePath(attachment.filePath, attachmentsDir)) {
+      return {
+        success: false,
+        error: 'invalid_path',
+        message: 'Invalid attachment path detected',
+      };
+    }
+
+    if (!fs.existsSync(attachment.filePath)) {
       return { success: false, error: 'not_found' };
     }
 
@@ -442,11 +627,28 @@ export function setupIpcHandlers() {
   });
 
   ipcMain.handle('get-entries-by-date-range', async (_event, date: string, timeRange: TimeRange) => {
+    // Validate input
+    if (!isValidDateString(date)) {
+      return [];
+    }
+    if (!isValidTimeRange(timeRange)) {
+      return [];
+    }
     return getEntriesByDateAndRange(date, timeRange);
   });
 
   ipcMain.handle('save-entry', async (_event, entry: JournalEntry) => {
     try {
+      // Validate input
+      const validation = validateJournalEntry(entry);
+      if (!validation.valid) {
+        return {
+          success: false,
+          entry,
+          error: validation.error || 'Invalid entry data',
+        };
+      }
+      
       console.log('═══════════════════════════════════════════════════════════');
       console.log('[IPC] 📥 save-entry handler RECEIVED entry from renderer');
       console.log('[IPC] Entry Details:', {
@@ -523,10 +725,21 @@ export function setupIpcHandlers() {
   });
 
   ipcMain.handle('delete-entry', async (_event, id: number) => {
+    // Validate input
+    if (!isValidEntryId(id)) {
+      throw new Error('Invalid entry ID');
+    }
     deleteEntry(id);
   });
 
   ipcMain.handle('delete-entry-by-date-range', async (_event, date: string, timeRange: TimeRange) => {
+    // Validate input
+    if (!isValidDateString(date)) {
+      throw new Error('Invalid date string');
+    }
+    if (!isValidTimeRange(timeRange)) {
+      throw new Error('Invalid time range');
+    }
     deleteEntryByDateAndRange(date, timeRange);
   });
 
@@ -535,6 +748,13 @@ export function setupIpcHandlers() {
   });
 
   ipcMain.handle('get-entries-by-range', async (_event, range: TimeRange, value: number) => {
+    // Validate input
+    if (!isValidTimeRange(range)) {
+      return [];
+    }
+    if (typeof value !== 'number' || !Number.isFinite(value)) {
+      return [];
+    }
     return getEntriesByRange(range, value);
   });
 
@@ -544,6 +764,29 @@ export function setupIpcHandlers() {
    * formats the content with metadata, and writes it to disk.
    */
   ipcMain.handle('export-entries', async (_event, format: ExportFormat, metadata?: ExportMetadata) => {
+    // Validate input
+    if (!isValidExportFormat(format)) {
+      return {
+        success: false,
+        canceled: false,
+        error: 'invalid_format',
+        message: 'Invalid export format',
+      };
+    }
+    
+    // Validate metadata if provided
+    if (metadata !== undefined) {
+      const metadataValidation = validateExportMetadata(metadata);
+      if (!metadataValidation.valid) {
+        return {
+          success: false,
+          canceled: false,
+          error: 'invalid_metadata',
+          message: metadataValidation.error || 'Invalid export metadata',
+        };
+      }
+    }
+    
     const entries = getAllEntries();
     console.log('[Export] Retrieved entries for export:', entries.length);
     if (entries.length > 0) {
@@ -617,13 +860,52 @@ export function setupIpcHandlers() {
         fs.writeFileSync(filePath, content, { encoding: 'utf-8' });
       }
       
-      // Open the folder containing the exported file
-      shell.showItemInFolder(filePath);
+      // Verify file was written successfully
+      if (!fs.existsSync(filePath)) {
+        console.error('[Export] File was not created:', filePath);
+        return { 
+          success: false, 
+          canceled: false, 
+          error: 'write_failed', 
+          message: 'File was not created. Check disk space and permissions.' 
+        };
+      }
+      
+      // Open the folder containing the exported file (non-blocking - don't fail export if this fails)
+      try {
+        shell.showItemInFolder(filePath);
+      } catch (showError) {
+        console.warn('[Export] Could not show file in folder (export still succeeded):', showError);
+        // Don't fail the export if showing the file fails
+      }
       
       return { success: true, canceled: false, path: filePath };
-    } catch (error: any) {
-      console.error('Error exporting entries:', error);
-      return { success: false, canceled: false, error: 'write_failed' };
+    } catch (error: unknown) {
+      console.error('[Export] Error exporting entries:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      const errorCode = error instanceof Error && 'code' in error ? String(error.code) : undefined;
+      
+      // Provide more specific error messages
+      let userMessage = errorMessage;
+      if (errorCode === 'ENOSPC') {
+        userMessage = 'Not enough disk space to export file.';
+      } else if (errorCode === 'EACCES' || errorCode === 'EPERM') {
+        userMessage = 'Permission denied. Check file permissions.';
+      } else if (errorCode === 'ENOENT') {
+        userMessage = 'Directory does not exist.';
+      } else if (errorMessage.includes('ENOSPC')) {
+        userMessage = 'Not enough disk space to export file.';
+      } else if (errorMessage.includes('EACCES') || errorMessage.includes('EPERM')) {
+        userMessage = 'Permission denied. Check file permissions.';
+      }
+      
+      return { 
+        success: false, 
+        canceled: false, 
+        error: 'write_failed', 
+        message: userMessage,
+        details: errorMessage 
+      };
     }
   });
 
@@ -632,7 +914,14 @@ export function setupIpcHandlers() {
     return getPreference(key);
   });
 
-  ipcMain.handle('set-preference', async (event, key: keyof Preferences, value: any) => {
+  ipcMain.handle('set-preference', async (event, key: keyof Preferences, value: Preferences[keyof Preferences]) => {
+    // Validate input
+    if (!isValidPreferenceKey(key)) {
+      return {
+        success: false,
+        error: 'Invalid preference key',
+      };
+    }
     console.log('[IPC] set-preference called:', key, value, 'type:', typeof value);
     setPreference(key, value);
     
@@ -788,9 +1077,10 @@ export function setupIpcHandlers() {
     try {
       await shell.openExternal(url);
       return { success: true };
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error opening external URL in browser:', error);
-      return { success: false, error: error.message || 'unknown_error' };
+      const errorMessage = error instanceof Error ? error.message : 'unknown_error';
+      return { success: false, error: errorMessage };
     }
   });
 
@@ -888,9 +1178,10 @@ export function setupIpcHandlers() {
       
       console.log('[IPC] ✅ Main window theme refresh completed');
       return { success: true };
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('[IPC] ❌ Error refreshing main window theme:', error);
-      return { success: false, error: error.message || 'unknown_error' };
+      const errorMessage = error instanceof Error ? error.message : 'unknown_error';
+      return { success: false, error: errorMessage };
     }
   });
 
@@ -985,18 +1276,20 @@ export function setupIpcHandlers() {
         skipped,
         total: entries.length,
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error importing entries:', error);
+      const importErrorMessage = error instanceof Error ? error.message : 'Unknown error';
       event.sender.send('import-progress', {
         stage: 'error',
         progress: 0,
-        message: `Import failed: ${error.message || 'Unknown error'}`,
+        message: `Import failed: ${importErrorMessage}`,
       });
+      const readErrorMessage = error instanceof Error ? error.message : 'Failed to read file';
       return {
         success: false,
         canceled: false,
         error: 'read_failed',
-        message: error.message || 'Failed to read file',
+        message: readErrorMessage,
       };
     }
   });
@@ -1027,13 +1320,14 @@ export function setupIpcHandlers() {
     try {
       fs.copyFileSync(dbPath, filePath);
       return { success: true, canceled: false, path: filePath };
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error backing up database:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       return {
         success: false,
         canceled: false,
         error: 'backup_failed',
-        message: error.message || 'Failed to backup database',
+        message: errorMessage,
       };
     }
   });
@@ -1083,8 +1377,9 @@ export function setupIpcHandlers() {
       initDatabase();
 
       return { success: true, canceled: false };
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error restoring database:', error);
+      const restoreErrorMessage = error instanceof Error ? error.message : 'Failed to restore database';
       
       // Try to reinitialize database even if restore failed
       try {
@@ -1098,7 +1393,7 @@ export function setupIpcHandlers() {
         success: false,
         canceled: false,
         error: 'restore_failed',
-        message: error.message || 'Failed to restore database',
+        message: restoreErrorMessage,
       };
     }
   });
@@ -1165,13 +1460,14 @@ export function setupIpcHandlers() {
         path: relativePath,
         fullPath: destPath,
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error copying background image:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       return {
         success: false,
         canceled: false,
         error: 'copy_failed',
-        message: error.message || 'Failed to copy background image',
+        message: errorMessage,
       };
     }
   });
@@ -1183,12 +1479,13 @@ export function setupIpcHandlers() {
     try {
       setPreference('backgroundImage', '');
       return { success: true };
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error clearing background image:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Failed to clear background image';
       return {
         success: false,
         error: 'clear_failed',
-        message: error.message || 'Failed to clear background image',
+        message: errorMessage,
       };
     }
   });
@@ -1227,7 +1524,14 @@ export function setupIpcHandlers() {
         }
         
         try {
-          const cssPath = path.join(customThemesDir, file);
+          // Validate theme file path to prevent path traversal
+          const safePath = safePathJoin(customThemesDir, file);
+          if (!safePath || !validatePath(safePath, customThemesDir)) {
+            console.error(`[IPC] Invalid theme file path detected: ${file}`);
+            continue;
+          }
+          
+          const cssPath = safePath;
           const cssContent = fs.readFileSync(cssPath, 'utf-8');
           themes.push({ name: themeName, css: cssContent });
         } catch (error) {
@@ -1236,12 +1540,13 @@ export function setupIpcHandlers() {
       }
       
       return { success: true, themes };
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('[IPC] Error getting custom themes:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Failed to get custom themes';
       return {
         success: false,
         error: 'get_failed',
-        message: error.message || 'Failed to get custom themes',
+        message: errorMessage,
         themes: [],
       };
     }
@@ -1261,7 +1566,19 @@ export function setupIpcHandlers() {
       }
       const userDataPath = app.getPath('userData');
       console.log('[IPC] User data path:', userDataPath);
-      const fullPath = path.join(userDataPath, bgImage);
+      
+      // Validate and sanitize the background image path
+      const safePath = safePathJoin(userDataPath, bgImage);
+      if (!safePath || !validatePath(safePath, userDataPath)) {
+        console.error('[IPC] Invalid background image path detected:', bgImage);
+        return {
+          success: false,
+          error: 'invalid_path',
+          message: 'Invalid background image path',
+        };
+      }
+      
+      const fullPath = safePath;
       console.log('[IPC] Full path:', fullPath);
       
       // Check if file exists
@@ -1296,20 +1613,22 @@ export function setupIpcHandlers() {
         
         console.log('[IPC] Converted image to data URL, size:', dataUrl.length, 'chars');
         return { success: true, path: dataUrl };
-      } catch (readError: any) {
+      } catch (readError: unknown) {
         console.error('[IPC] Error reading image file:', readError);
+        const readErrorMessage = readError instanceof Error ? readError.message : 'Unknown error';
         return {
           success: false,
           error: 'read_failed',
-          message: `Failed to read image file: ${readError.message || 'Unknown error'}`,
+          message: `Failed to read image file: ${readErrorMessage}`,
         };
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('[IPC] Error getting background image path:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Failed to get background image path';
       return {
         success: false,
         error: 'get_path_failed',
-        message: error.message || 'Failed to get background image path',
+        message: errorMessage,
       };
     }
   });
@@ -2151,7 +2470,7 @@ async function exportEntriesAsPdf(entries: JournalEntry[], filePath: string, met
       const colors = themeStyles.colors;
       
       const doc = new PDFDocument({ 
-        margin: 50,
+        margin: 40,
         size: 'LETTER',
       });
       const stream = fs.createWriteStream(filePath);
@@ -2159,6 +2478,8 @@ async function exportEntriesAsPdf(entries: JournalEntry[], filePath: string, met
       doc.pipe(stream);
       
       // Set font family from theme (PDFKit supports limited fonts, so we'll map common ones)
+      // PDFKit built-in fonts: Helvetica, Courier, Times-Roman
+      // Variants: Helvetica-Bold, Helvetica-Oblique, Courier-Bold, Courier-Oblique, Times-Bold, Times-Italic
       const fontFamily = themeStyles.fontFamily.toLowerCase();
       let pdfFont = 'Helvetica'; // Default
       if (fontFamily.includes('courier') || fontFamily.includes('mono')) {
@@ -2166,134 +2487,362 @@ async function exportEntriesAsPdf(entries: JournalEntry[], filePath: string, met
       } else if (fontFamily.includes('times')) {
         pdfFont = 'Times-Roman';
       }
-      // Note: PDFKit doesn't support custom fonts like 'Antonio' directly, but we can use Helvetica-Bold for emphasis
+      
+      // Helper function to get correct font variant names for PDFKit
+      const getFontVariant = (baseFont: string, variant: 'bold' | 'oblique' | 'italic'): string => {
+        if (baseFont === 'Times-Roman') {
+          return variant === 'bold' ? 'Times-Bold' : 'Times-Italic';
+        } else if (baseFont === 'Helvetica') {
+          return variant === 'bold' ? 'Helvetica-Bold' : 'Helvetica-Oblique';
+        } else if (baseFont === 'Courier') {
+          return variant === 'bold' ? 'Courier-Bold' : 'Courier-Oblique';
+        }
+        return variant === 'bold' ? 'Helvetica-Bold' : 'Helvetica-Oblique';
+      };
+      
+      // Helper function to convert hex to RGB
+      const hexToRgb = (hex: string): [number, number, number] | null => {
+        const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+        return result ? [
+          parseInt(result[1], 16),
+          parseInt(result[2], 16),
+          parseInt(result[3], 16)
+        ] : null;
+      };
+      
+      // Helper function to calculate relative luminance (for contrast calculation)
+      const getLuminance = (r: number, g: number, b: number): number => {
+        const [rs, gs, bs] = [r, g, b].map(val => {
+          val = val / 255;
+          return val <= 0.03928 ? val / 12.92 : Math.pow((val + 0.055) / 1.055, 2.4);
+        });
+        return 0.2126 * rs + 0.7152 * gs + 0.0722 * bs;
+      };
+      
+      // Helper function to calculate contrast ratio between two colors
+      const getContrastRatio = (color1: string, color2: string): number => {
+        const rgb1 = hexToRgb(color1);
+        const rgb2 = hexToRgb(color2);
+        if (!rgb1 || !rgb2) return 4.5; // Default to acceptable contrast
+        
+        const lum1 = getLuminance(rgb1[0], rgb1[1], rgb1[2]);
+        const lum2 = getLuminance(rgb2[0], rgb2[1], rgb2[2]);
+        const lighter = Math.max(lum1, lum2);
+        const darker = Math.min(lum1, lum2);
+        return (lighter + 0.05) / (darker + 0.05);
+      };
+      
+      // Helper function to get readable text color for a background
+      const getReadableTextColor = (bgColor: string, lightText: string = '#ffffff', darkText: string = '#000000'): string => {
+        const bgRgb = hexToRgb(bgColor);
+        if (!bgRgb) return darkText;
+        
+        const bgLum = getLuminance(bgRgb[0], bgRgb[1], bgRgb[2]);
+        // If background is dark (luminance < 0.5), use light text, otherwise dark text
+        return bgLum < 0.5 ? lightText : darkText;
+      };
+      
+      // Helper function to lighten or darken a color
+      const adjustColorBrightness = (hex: string, percent: number): string => {
+        const rgb = hexToRgb(hex);
+        if (!rgb) return hex;
+        
+        const [r, g, b] = rgb.map(val => {
+          const newVal = Math.max(0, Math.min(255, val + (percent * 255 / 100)));
+          return Math.round(newVal);
+        });
+        
+        return `#${[r, g, b].map(x => {
+          const hex = x.toString(16);
+          return hex.length === 1 ? '0' + hex : hex;
+        }).join('')}`;
+      };
+      
+      // Calculate card background color - use theme's card color if available, otherwise adjust
+      // This works for ANY theme - if cardBg is found, use it; otherwise create a contrasting variant
+      let cardBgColor: string;
+      if (colors.cardBg) {
+        cardBgColor = colors.cardBg;
+      } else {
+        // Fallback: create a contrasting card background from theme background
+        const bgLum = hexToRgb(colors.background) ? getLuminance(...hexToRgb(colors.background)!) : 0.5;
+        cardBgColor = bgLum > 0.5 
+          ? adjustColorBrightness(colors.background, -10) // Darken light backgrounds
+          : adjustColorBrightness(colors.background, 10); // Lighten dark backgrounds
+      }
+      
+      // Ensure card text is readable
+      const cardTextColor = getReadableTextColor(cardBgColor, colors.text, colors.text);
       
       // Helper function to draw background on each page
       const drawPageBackground = () => {
-        // Draw a rectangle covering the entire page as background
-        (doc as any).fillColor(colors.background);
-        (doc as any).rect(0, 0, doc.page.width, doc.page.height);
-        (doc as any).fill();
-        // Reset fill color to text color for subsequent content
-        (doc as any).fillColor(colors.text);
+        doc.fillColor(colors.background);
+        doc.rect(0, 0, doc.page.width, doc.page.height);
+        doc.fill();
+        doc.fillColor(colors.text);
+      };
+      
+      // Helper function to draw a card/box with border and proper colors
+      const drawCard = (x: number, y: number, width: number, height: number, padding: number = 0) => {
+        // Card background - use theme's card color
+        doc.fillColor(cardBgColor);
+        doc.rect(x, y, width, height);
+        doc.fill();
+        
+        // Card border - use theme border color or card border if available
+        const borderColor = colors.cardBorder || colors.border || adjustColorBrightness(cardBgColor, -20);
+        doc.strokeColor(borderColor);
+        doc.rect(x, y, width, height);
+        doc.stroke();
+        
+        return { x: x + padding, y: y + padding, width: width - (padding * 2), height: height - (padding * 2) };
+      };
+      
+      // Helper function to get text width (using type assertion for PDFKit methods)
+      const getTextWidth = (text: string): number => {
+        return (doc as any).widthOfString(text) || text.length * 6; // Fallback estimate
+      };
+      
+      // Helper function to draw a badge/tag with proper contrast
+      const drawBadge = (x: number, y: number, text: string, bgColor: string, textColor: string) => {
+        const padding = 6;
+        const fontSize = 8;
+        doc.fontSize(fontSize);
+        doc.font(pdfFont);
+        const textWidth = getTextWidth(text);
+        const badgeWidth = textWidth + (padding * 2);
+        const badgeHeight = fontSize + (padding * 2);
+        
+        // Ensure badge text color has proper contrast
+        const readableBadgeText = getContrastRatio(textColor, bgColor) >= 4.5 
+          ? textColor 
+          : getReadableTextColor(bgColor);
+        
+        // Badge background
+        doc.fillColor(bgColor);
+        doc.rect(x, y, badgeWidth, badgeHeight);
+        doc.fill();
+        
+        // Badge border for definition
+        doc.strokeColor(adjustColorBrightness(bgColor, -20));
+        doc.rect(x, y, badgeWidth, badgeHeight);
+        doc.stroke();
+        
+        // Badge text
+        doc.fillColor(readableBadgeText);
+        doc.text(text, x + padding, y + padding);
+        
+        return badgeWidth + 4; // Return width plus spacing
       };
       
       // Draw background on first page
       drawPageBackground();
 
+      // Header section - styled like navigation bar with theme colors
+      const headerY = doc.page.margins.top;
+      const headerHeight = 80;
+      const headerWidth = doc.page.width - (doc.page.margins.left * 2);
+      const headerX = doc.page.margins.left;
+      
+      // Header background - use theme's header color if available, otherwise accent or adjusted background
+      const headerBgColor = colors.headerBg || colors.accent || adjustColorBrightness(colors.background, -15);
+      const headerTextColor = getReadableTextColor(headerBgColor);
+      
+      // Draw header background
+      doc.fillColor(headerBgColor);
+      doc.rect(headerX, headerY, headerWidth, headerHeight);
+      doc.fill();
+      
+      // Header border
+      doc.strokeColor(colors.border || adjustColorBrightness(headerBgColor, -20));
+      doc.rect(headerX, headerY, headerWidth, headerHeight);
+      doc.stroke();
+      
+      const headerPadding = 15;
+      doc.y = headerY + headerPadding;
+      
       const title = metadata?.projectTitle || metadata?.exportName || 'CalenRecall Storybook Export';
-      doc.fontSize(20);
-      doc.font(`${pdfFont}-Bold`);
-      (doc as any).fillColor(colors.text);
-      doc.text(title, { align: 'center' });
-      doc.moveDown();
+      doc.fontSize(24);
+      doc.font(getFontVariant(pdfFont, 'bold'));
+      doc.fillColor(headerTextColor);
+      doc.text(title, headerX + headerPadding, doc.y, { align: 'center', width: headerWidth - (headerPadding * 2) });
+      
+      doc.moveDown(0.5);
       doc.fontSize(10);
-      (doc as any).fillColor(colors.secondary);
-      doc.text(`Exported at: ${metadata?.exportDate || new Date().toISOString()}`, { align: 'center' });
+      doc.font(pdfFont);
+      doc.fillColor(adjustColorBrightness(headerTextColor, -20)); // Slightly dimmed for secondary text
+      const exportDate = metadata?.exportDate || new Date().toISOString();
+      doc.text(`Exported: ${exportDate}`, headerX + headerPadding, doc.y, { align: 'center', width: headerWidth - (headerPadding * 2) });
       
-      // Add metadata section
-      if (metadata) {
-        doc.moveDown();
-        let metadataLines: string[] = [];
-        if (metadata.author) metadataLines.push(`Author: ${metadata.author}`);
-        if (metadata.organization) metadataLines.push(`Organization: ${metadata.organization}`);
-        if (metadata.department) metadataLines.push(`Department: ${metadata.department}`);
-        if (metadata.version) metadataLines.push(`Version: ${metadata.version}`);
-        if (metadata.purpose) metadataLines.push(`Purpose: ${metadata.purpose}`);
-        if (metadata.exportPurpose) metadataLines.push(`Export Purpose: ${metadata.exportPurpose}`);
-        if (metadata.classification) metadataLines.push(`Classification: ${metadata.classification}`);
+      // Metadata section - if provided (use theme colors)
+      if (metadata && (metadata.author || metadata.organization || metadata.version || metadata.keywords)) {
+        doc.y = headerY + headerHeight + 20;
+        const metadataY = doc.y;
+        const metadataHeight = 60;
+        const metadataCard = drawCard(headerX, metadataY, headerWidth, metadataHeight, 12);
+        doc.y = metadataCard.y;
+        
+        let metadataText: string[] = [];
+        if (metadata.author) metadataText.push(`Author: ${metadata.author}`);
+        if (metadata.organization) metadataText.push(`Organization: ${metadata.organization}`);
+        if (metadata.version) metadataText.push(`Version: ${metadata.version}`);
         if (metadata.keywords && metadata.keywords.length > 0) {
-          metadataLines.push(`Keywords: ${metadata.keywords.join(', ')}`);
+          metadataText.push(`Keywords: ${metadata.keywords.join(', ')}`);
         }
-        if (metadata.copyright) metadataLines.push(`Copyright: ${metadata.copyright}`);
-        if (metadata.license) metadataLines.push(`License: ${metadata.license}`);
         
-        if (metadataLines.length > 0) {
+        if (metadataText.length > 0) {
           doc.fontSize(9);
-          (doc as any).fillColor(colors.secondary);
-          doc.text(metadataLines.join(' | '), { align: 'center' });
-        }
-        
-        if (metadata.description) {
-          doc.moveDown();
-          doc.fontSize(10);
           doc.font(pdfFont);
-          (doc as any).fillColor(colors.text);
-          doc.text(metadata.description, { align: 'left' });
+          // Use readable text color for metadata
+          const metadataTextColor = getReadableTextColor(cardBgColor, colors.text, colors.text);
+          doc.fillColor(metadataTextColor);
+          doc.text(metadataText.join(' • '), metadataCard.x, doc.y, { width: metadataCard.width, align: 'left' });
         }
         
-        if (metadata.context || metadata.background) {
-          doc.moveDown();
-          if (metadata.context) {
-            doc.fontSize(9);
-            doc.font(`${pdfFont}-Oblique`);
-            (doc as any).fillColor(colors.accent);
-            doc.text('Context:', { align: 'left' });
-            doc.fontSize(9);
-            doc.font(pdfFont);
-            (doc as any).fillColor(colors.text);
-            doc.text(metadata.context, { align: 'left' });
-          }
-          if (metadata.background) {
-            doc.moveDown(0.5);
-            doc.fontSize(9);
-            doc.font(`${pdfFont}-Oblique`);
-            (doc as any).fillColor(colors.accent);
-            doc.text('Background:', { align: 'left' });
-            doc.fontSize(9);
-            doc.font(pdfFont);
-            (doc as any).fillColor(colors.text);
-            doc.text(metadata.background, { align: 'left' });
-          }
-        }
+        doc.y = metadataY + metadataHeight + 20;
+      } else {
+        doc.y = headerY + headerHeight + 20;
       }
-      
-      doc.moveDown(2);
 
-      for (const entry of entries) {
+      // Entries section - each entry as a card
+      for (let i = 0; i < entries.length; i++) {
+        const entry = entries[i];
+        
+        // Check if we need a new page
+        const cardPadding = 20;
+        const estimatedCardHeight = 150; // Will adjust based on content
+        if (doc.y + estimatedCardHeight > doc.page.height - doc.page.margins.bottom) {
+          doc.addPage();
+          drawPageBackground();
+          doc.y = doc.page.margins.top;
+        }
+        
+        const cardX = doc.page.margins.left;
+        const cardY = doc.y;
+        const cardWidth = doc.page.width - (doc.page.margins.left * 2);
+        const cardStartY = cardY;
+        
+        // Estimate card height (will adjust later)
+        const estimatedHeight = 200;
+        const cardContent = drawCard(cardX, cardY, cardWidth, estimatedHeight, cardPadding);
+        doc.y = cardContent.y;
+        
+        // Entry header section
         const timeStr = formatEntryTime(entry);
         const dateTimeStr = timeStr ? `${entry.date} ${timeStr}` : entry.date;
-        const titleLine = `${dateTimeStr} (${entry.timeRange}) — ${entry.title}`;
-        doc.fontSize(14).font('Helvetica-Bold');
-        (doc as any).fillColor(colors.text);
-        doc.text(titleLine);
-
+        
+        // Title row - use accent or gold color for emphasis
+        doc.fontSize(16);
+        doc.font(getFontVariant(pdfFont, 'bold'));
+        const titleColor = colors.gold || colors.accent || cardTextColor;
+        // Ensure title color contrasts with card background
+        const readableTitleColor = getContrastRatio(titleColor, cardBgColor) >= 4.5 
+          ? titleColor 
+          : getReadableTextColor(cardBgColor);
+        doc.fillColor(readableTitleColor);
+        const titleStartY = doc.y;
+        doc.text(entry.title, cardContent.x, doc.y, { width: cardContent.width });
+        const titleEndY = doc.y;
+        const titleHeight = titleEndY - titleStartY;
+        doc.y = titleEndY + 8; // Move down after title with spacing
+        
+        // Meta information row (date, time, time range)
+        const metaY = doc.y;
+        doc.fontSize(9);
+        doc.font(pdfFont);
+        
+        // Date with accent or selected color (ensure contrast)
+        const dateColor = colors.selected || colors.accent || cardTextColor;
+        const readableDateColor = getContrastRatio(dateColor, cardBgColor) >= 4.5 
+          ? dateColor 
+          : getReadableTextColor(cardBgColor);
+        doc.fillColor(readableDateColor);
+        doc.text(dateTimeStr, cardContent.x, doc.y);
+        
+        // Time range badge - use theme colors with contrast
+        const timeRangeX = cardContent.x + getTextWidth(dateTimeStr) + 10;
+        const badgeBg = colors.border || adjustColorBrightness(cardBgColor, -15);
+        const badgeTextColor = getReadableTextColor(badgeBg);
+        const badgeText = entry.timeRange.toUpperCase();
+        const badgeHeight = 20; // Height for badge
+        drawBadge(timeRangeX, metaY - 2, badgeText, badgeBg, badgeTextColor);
+        
+        doc.y = metaY + badgeHeight + 8; // Proper spacing after meta row
+        
+        // Content section - use readable text color with proper spacing
+        doc.fontSize(11);
+        doc.font(pdfFont);
+        doc.fillColor(cardTextColor);
+        const contentY = doc.y;
+        // Use PDFKit's text method which automatically handles wrapping and returns height
+        // Store current Y, draw text, then calculate how much Y moved
+        const contentStartY = doc.y;
+        doc.text(entry.content, cardContent.x, doc.y, { width: cardContent.width, align: 'left' });
+        const contentEndY = doc.y;
+        const contentHeight = contentEndY - contentStartY;
+        // Ensure minimum spacing
+        doc.y = contentEndY + 12; // Move down after content
+        
+        // Tags section
         if (entry.tags && entry.tags.length > 0) {
-          doc.moveDown(0.3);
-          doc.fontSize(10);
-          doc.font(`${pdfFont}-Oblique`);
-          (doc as any).fillColor(colors.accent);
-          doc.text(`Tags: ${entry.tags.join(', ')}`);
+          const tagsStartY = doc.y;
+          let tagX = cardContent.x;
+          const tagY = doc.y;
+          
+          doc.fontSize(8);
+          doc.font(pdfFont);
+          
+          for (const tag of entry.tags) {
+            // Use theme colors for tags - prefer selected/green, then accent, then gold
+            let tagBg: string;
+            if (colors.selected) {
+              tagBg = adjustColorBrightness(colors.selected, 60); // Lighten green
+            } else if (colors.gold) {
+              tagBg = adjustColorBrightness(colors.gold, 70); // Lighten gold
+            } else {
+              tagBg = colors.accent || '#4a90e2';
+              tagBg = adjustColorBrightness(tagBg, 80); // Lighten for background
+            }
+            const tagTextColor = getReadableTextColor(tagBg, '#ffffff', '#000000');
+            const tagWidth = drawBadge(tagX, tagY, tag, tagBg, tagTextColor);
+            tagX += tagWidth + 4;
+            
+            // Wrap to next line if needed
+            if (tagX + 50 > cardContent.x + cardContent.width) {
+              tagX = cardContent.x;
+              doc.y += 25; // More spacing for wrapped tags
+            }
+          }
+          
+          // Ensure proper spacing after tags
+          if (entry.tags && entry.tags.length > 0) {
+            doc.y = Math.max(doc.y, tagsStartY + 25);
+          }
         }
-
-        doc.moveDown(0.5);
-        doc.fontSize(12);
-        doc.font(pdfFont); // Use theme font
-        (doc as any).fillColor(colors.text);
-        doc.text(entry.content, { align: 'left' });
-        doc.moveDown(1);
-
-        // Add a separator using theme border color
-        doc.moveTo(doc.page.margins.left, doc.y)
-          .lineTo(doc.page.width - doc.page.margins.right, doc.y)
-          .strokeColor(colors.border)
-          .stroke();
-
-        doc.moveDown(1);
-
-        // Start a new page if we're near the bottom
-        if (doc.y > doc.page.height - doc.page.margins.bottom - 100) {
-          doc.addPage();
-          // Draw background on new page
-          drawPageBackground();
-        }
+        
+        // Redraw card with actual height (draw border over content area)
+        const actualCardHeight = doc.y - cardStartY + cardPadding;
+        doc.strokeColor(colors.border || '#e0e0e0');
+        doc.rect(cardX, cardStartY, cardWidth, actualCardHeight);
+        doc.stroke();
+        
+        // Spacing between cards
+        doc.y += 20;
       }
 
       doc.end();
 
-      stream.on('finish', () => resolve());
-      stream.on('error', (err) => reject(err));
+      stream.on('finish', () => {
+        console.log('[Export] PDF file written successfully:', filePath);
+        resolve();
+      });
+      stream.on('error', (err: Error) => {
+        console.error('[Export] PDF stream error:', err);
+        reject(err);
+      });
+      // PDFDocument errors are typically caught by the stream error handler or the try-catch block
     } catch (error) {
+      console.error('[Export] PDF export error:', error);
       reject(error);
     }
   });

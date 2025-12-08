@@ -2,6 +2,17 @@ import Database from 'better-sqlite3';
 import * as path from 'path';
 import { app } from 'electron';
 import { JournalEntry, TimeRange, ExportFormat, ExportMetadata } from './types';
+import {
+  JournalEntryRow,
+  EntryVersionRow,
+  PreferenceRow,
+  EntryTemplateRow,
+  TableInfoRow,
+  SynchronousPragma,
+  JournalModePragma,
+  SqliteMasterRow,
+  TimeFields,
+} from './database-types';
 
 /**
  * Safely formats a date to ISO date string (YYYY-MM-DD) that works with negative years.
@@ -76,8 +87,11 @@ function calculateJDNFromDateString(dateStr: string): number | null {
 /**
  * Helper function to extract time fields from a database row.
  * Ensures consistent handling: hour can be null, minute/second default to 0 if null/undefined.
+ * 
+ * @param row - Database row with time fields
+ * @returns Extracted time fields with proper defaults
  */
-function extractTimeFields(row: any): { hour: number | null; minute: number; second: number } {
+function extractTimeFields(row: JournalEntryRow): TimeFields {
   return {
     hour: row.hour !== null && row.hour !== undefined ? row.hour : null,
     minute: row.minute !== null && row.minute !== undefined ? row.minute : 0,
@@ -89,7 +103,7 @@ let db: Database.Database | null = null;
 
 function checkColumnExists(database: Database.Database, tableName: string, columnName: string): boolean {
   try {
-    const result = database.prepare(`PRAGMA table_info(${tableName})`).all() as any[];
+    const result = database.prepare(`PRAGMA table_info(${tableName})`).all() as TableInfoRow[];
     return result.some(col => col.name === columnName);
   } catch {
     return false;
@@ -290,6 +304,24 @@ function migrateDatabase(database: Database.Database) {
   }
 }
 
+/**
+ * Initializes the SQLite database connection.
+ * Creates the database file if it doesn't exist and runs migrations.
+ * Configures database for optimal performance and data integrity.
+ * 
+ * @returns The database instance
+ * @throws Error if database initialization fails
+ * 
+ * @example
+ * ```typescript
+ * try {
+ *   const db = initDatabase();
+ *   console.log('Database initialized successfully');
+ * } catch (error) {
+ *   console.error('Failed to initialize database:', error);
+ * }
+ * ```
+ */
 export function initDatabase() {
   const userDataPath = app.getPath('userData');
   const dbPath = path.join(userDataPath, 'calenrecall.db');
@@ -316,8 +348,8 @@ export function initDatabase() {
     db.exec('PRAGMA foreign_keys = ON');
     
     // Verify settings were applied
-    const syncResult = db.prepare('PRAGMA synchronous').get() as any;
-    const journalResult = db.prepare('PRAGMA journal_mode').get() as any;
+    const syncResult = db.prepare('PRAGMA synchronous').get() as SynchronousPragma | undefined;
+    const journalResult = db.prepare('PRAGMA journal_mode').get() as JournalModePragma | undefined;
     console.log('[Database Init] Verified settings - synchronous:', syncResult?.synchronous, 'journal_mode:', journalResult?.journal_mode);
     
     console.log('[Database Init] ✅ Database persistence settings configured');
@@ -352,7 +384,7 @@ export function initDatabase() {
       const indexes = db.prepare(`
         SELECT name, sql FROM sqlite_master 
         WHERE type='index' AND tbl_name='journal_entries' AND (sql LIKE '%UNIQUE%' OR name = 'idx_date_time_range')
-      `).all() as Array<{ name: string; sql: string | null }>;
+      `).all() as Array<Pick<SqliteMasterRow, 'name' | 'sql'>>;
       
       for (const idx of indexes) {
         // Check if it's the unique index on date/time_range or if it's named idx_date_time_range
@@ -375,7 +407,7 @@ export function initDatabase() {
       if (hasOldUniqueConstraint) {
         console.log('Recreating table to fix unique constraint issue');
         // Backup entries
-        const oldEntries = db.prepare('SELECT * FROM journal_entries').all() as any[];
+        const oldEntries = db.prepare('SELECT * FROM journal_entries').all() as JournalEntryRow[];
         // Drop and recreate
         db.exec('DROP TABLE IF EXISTS journal_entries');
         // Recreate with new schema
@@ -420,7 +452,7 @@ export function initDatabase() {
       // Backup old data if possible, then recreate
       try {
         // Try to backup entries
-        const oldEntries = db.prepare('SELECT * FROM journal_entries').all() as any[];
+        const oldEntries = db.prepare('SELECT * FROM journal_entries').all() as JournalEntryRow[];
         // Drop and recreate
         db.exec('DROP TABLE IF EXISTS journal_entries');
         // Recreate with new schema
@@ -490,7 +522,7 @@ export function initDatabase() {
               sql.match(/unique\s*\(\s*date\s*,\s*time_range\s*\)/i)) {
             console.log('Table has UNIQUE constraint in definition - recreating table');
             // Backup entries
-            const oldEntries = db.prepare('SELECT * FROM journal_entries').all() as any[];
+            const oldEntries = db.prepare('SELECT * FROM journal_entries').all() as JournalEntryRow[];
             // Drop and recreate
             db.exec('DROP TABLE IF EXISTS journal_entries');
             // Recreate with new schema
@@ -676,13 +708,13 @@ export function getAllEntries(includeArchived: boolean = false): JournalEntry[] 
     ORDER BY date ASC, time_range ASC, created_at ASC
   `);
 
-  const rows = stmt.all() as any[];
+  const rows = stmt.all() as JournalEntryRow[];
   return rows.map(row => {
     const timeFields = extractTimeFields(row);
     return {
       id: row.id,
       date: row.date,
-      timeRange: row.time_range || 'day',
+      timeRange: (row.time_range || 'day') as TimeRange,
       hour: timeFields.hour,
       minute: timeFields.minute,
       second: timeFields.second,
@@ -708,13 +740,13 @@ export function getEntries(startDate: string, endDate: string, includeArchived: 
     ORDER BY date DESC
   `);
   
-  const rows = stmt.all(startDate, endDate) as any[];
+  const rows = stmt.all(startDate, endDate) as JournalEntryRow[];
   return rows.map(row => {
     const timeFields = extractTimeFields(row);
     return {
       id: row.id,
       date: row.date,
-      timeRange: row.time_range || 'day', // Default to 'day' for backward compatibility
+      timeRange: (row.time_range || 'day') as TimeRange, // Default to 'day' for backward compatibility
       hour: timeFields.hour,
       minute: timeFields.minute,
       second: timeFields.second,
@@ -736,7 +768,7 @@ export function getEntry(date: string, timeRange: 'decade' | 'year' | 'month' | 
 export function getEntryById(id: number): JournalEntry | null {
   const database = getDatabase();
   const stmt = database.prepare('SELECT * FROM journal_entries WHERE id = ?');
-  const row = stmt.get(id) as any;
+  const row = stmt.get(id) as JournalEntryRow | undefined;
   
   if (!row) {
     return null;
@@ -753,7 +785,7 @@ export function getEntryById(id: number): JournalEntry | null {
   return {
     id: row.id,
     date: row.date,
-    timeRange: row.time_range || 'day',
+      timeRange: (row.time_range || 'day') as TimeRange,
     hour: timeFields.hour,
     minute: timeFields.minute,
     second: timeFields.second,
@@ -789,13 +821,13 @@ export function getEntryVersions(entryId: number): EntryVersion[] {
     WHERE entry_id = ? 
     ORDER BY version_created_at DESC
   `);
-  const rows = stmt.all(entryId) as any[];
+  const rows = stmt.all(entryId) as EntryVersionRow[];
   
   return rows.map(row => ({
     id: row.id,
     entryId: row.entry_id,
     date: row.date,
-    timeRange: row.time_range || 'day',
+    timeRange: (row.time_range || 'day') as TimeRange,
     title: row.title,
     content: row.content,
     tags: row.tags ? JSON.parse(row.tags) : [],
@@ -809,14 +841,14 @@ export function getEntriesByDateAndRange(date: string, timeRange: 'decade' | 'ye
   const database = getDatabase();
   const archivedClause = includeArchived ? '' : 'AND archived = 0';
   const stmt = database.prepare(`SELECT * FROM journal_entries WHERE date = ? AND time_range = ? ${archivedClause} ORDER BY created_at DESC`);
-  const rows = stmt.all(date, timeRange) as any[];
+  const rows = stmt.all(date, timeRange) as JournalEntryRow[];
   
   return rows.map(row => {
     const timeFields = extractTimeFields(row);
     return {
       id: row.id,
       date: row.date,
-      timeRange: row.time_range || 'day',
+      timeRange: (row.time_range || 'day') as TimeRange,
       hour: timeFields.hour,
       minute: timeFields.minute,
       second: timeFields.second,
@@ -865,7 +897,7 @@ export function saveEntry(entry: JournalEntry): JournalEntry {
   
   try {
     // Verify time columns exist
-    const tableInfo = database.prepare('PRAGMA table_info(journal_entries)').all() as any[];
+    const tableInfo = database.prepare('PRAGMA table_info(journal_entries)').all() as TableInfoRow[];
     const hasHour = tableInfo.some(col => col.name === 'hour');
     const hasMinute = tableInfo.some(col => col.name === 'minute');
     const hasSecond = tableInfo.some(col => col.name === 'second');
@@ -994,7 +1026,7 @@ export function saveEntry(entry: JournalEntry): JournalEntry {
       // Verify the save by reading back the entry
       console.log('[Database] ✅ UPDATE statement executed. Verifying saved values...');
       const verifyStmt = database.prepare('SELECT hour, minute, second FROM journal_entries WHERE id = ?');
-      const verifyRow = verifyStmt.get(entry.id) as any;
+      const verifyRow = verifyStmt.get(entry.id) as Pick<JournalEntryRow, 'hour' | 'minute' | 'second'> | undefined;
       console.log('[Database] ✅✅✅ VERIFIED: Entry updated successfully. Values in database:', { 
         hour: verifyRow?.hour, 
         minute: verifyRow?.minute, 
@@ -1104,7 +1136,7 @@ export function saveEntry(entry: JournalEntry): JournalEntry {
       const lastInsertId = database.prepare('SELECT last_insert_rowid() as id').get() as { id: number };
       if (lastInsertId) {
         const verifyStmt = database.prepare('SELECT hour, minute, second FROM journal_entries WHERE id = ?');
-        const verifyRow = verifyStmt.get(lastInsertId.id) as any;
+        const verifyRow = verifyStmt.get(lastInsertId.id) as Pick<JournalEntryRow, 'hour' | 'minute' | 'second'> | undefined;
         console.log('[Database] ✅✅✅ VERIFIED: Entry inserted successfully. Values in database:', { 
           id: lastInsertId.id,
           hour: verifyRow?.hour, 
@@ -1125,12 +1157,14 @@ export function saveEntry(entry: JournalEntry): JournalEntry {
     
     // For updates, return the entry with existing ID
     return entry;
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('═══════════════════════════════════════════════════════════');
     console.error('[Database] ❌❌❌ ERROR in saveEntry:', error);
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    const errorStack = error instanceof Error ? error.stack : undefined;
     console.error('[Database] Error details:', {
-      message: error instanceof Error ? error.message : String(error),
-      stack: error instanceof Error ? error.stack : undefined,
+      message: errorMessage,
+      stack: errorStack,
       entryId: entry.id,
       entryDate: entry.date,
     });
@@ -1145,7 +1179,7 @@ function fixDatabaseSchema(database: Database.Database): void {
   console.log('Fixing database schema...');
   
   // Backup all entries
-  const oldEntries = database.prepare('SELECT * FROM journal_entries').all() as any[];
+  const oldEntries = database.prepare('SELECT * FROM journal_entries').all() as JournalEntryRow[];
   console.log(`Backing up ${oldEntries.length} entries`);
   
   // Drop the old table
@@ -1203,13 +1237,13 @@ export function getArchivedEntries(): JournalEntry[] {
     ORDER BY date DESC, created_at DESC
   `);
   
-  const rows = stmt.all() as any[];
+  const rows = stmt.all() as JournalEntryRow[];
   return rows.map(row => {
     const timeFields = extractTimeFields(row);
     return {
       id: row.id,
       date: row.date,
-      timeRange: row.time_range || 'day',
+      timeRange: (row.time_range || 'day') as TimeRange,
       hour: timeFields.hour,
       minute: timeFields.minute,
       second: timeFields.second,
@@ -1245,13 +1279,13 @@ export function getPinnedEntries(): JournalEntry[] {
     ORDER BY date DESC, created_at DESC
   `);
   
-  const rows = stmt.all() as any[];
+  const rows = stmt.all() as JournalEntryRow[];
   return rows.map(row => {
     const timeFields = extractTimeFields(row);
     return {
       id: row.id,
       date: row.date,
-      timeRange: row.time_range || 'day',
+      timeRange: (row.time_range || 'day') as TimeRange,
       hour: timeFields.hour,
       minute: timeFields.minute,
       second: timeFields.second,
@@ -1285,7 +1319,7 @@ export function getAllTemplates(): EntryTemplate[] {
     ORDER BY name ASC
   `);
   
-  const rows = stmt.all() as any[];
+  const rows = stmt.all() as EntryTemplateRow[];
   return rows.map(row => ({
     id: row.id,
     name: row.name,
@@ -1301,7 +1335,7 @@ export function getAllTemplates(): EntryTemplate[] {
 export function getTemplate(id: number): EntryTemplate | null {
   const database = getDatabase();
   const stmt = database.prepare('SELECT * FROM entry_templates WHERE id = ?');
-  const row = stmt.get(id) as any;
+  const row = stmt.get(id) as EntryTemplateRow | undefined;
   
   if (!row) {
     return null;
@@ -1377,13 +1411,13 @@ export function searchEntries(query: string, includeArchived: boolean = false): 
     ORDER BY date DESC
   `);
   
-  const rows = stmt.all(searchTerm, searchTerm) as any[];
+  const rows = stmt.all(searchTerm, searchTerm) as JournalEntryRow[];
   return rows.map(row => {
     const timeFields = extractTimeFields(row);
     return {
       id: row.id,
       date: row.date,
-      timeRange: row.time_range || 'day',
+      timeRange: (row.time_range || 'day') as TimeRange,
       hour: timeFields.hour,
       minute: timeFields.minute,
       second: timeFields.second,
@@ -1535,6 +1569,7 @@ export function getEntriesByRange(range: 'decade' | 'year' | 'month' | 'week' | 
 }
 
 // Preferences functions
+// Preferences interface - exported for use in other modules
 export interface Preferences {
   defaultViewMode?: 'decade' | 'year' | 'month' | 'week' | 'day';
   windowWidth?: number;
@@ -1614,7 +1649,7 @@ export function setPreference<K extends keyof Preferences>(key: K, value: Prefer
 export function getAllPreferences(): Preferences {
   const database = getDatabase();
   const stmt = database.prepare('SELECT key, value FROM preferences');
-  const rows = stmt.all() as Array<{ key: string; value: string }>;
+  const rows = stmt.all() as PreferenceRow[];
   
   console.log(`[Database] Loading preferences from database: ${rows.length} rows found`);
   rows.forEach(row => {
@@ -1630,7 +1665,7 @@ export function getAllPreferences(): Preferences {
   ];
   
   // Helper function to validate and fix size values
-  const validateSize = (key: string, value: any, defaultValue: Preferences['fontSize']): Preferences['fontSize'] => {
+  const validateSize = (key: string, value: unknown, defaultValue: Preferences['fontSize']): Preferences['fontSize'] => {
     if (value === undefined || value === null || value === '') {
       return defaultValue;
     }
@@ -1654,11 +1689,13 @@ export function getAllPreferences(): Preferences {
       
       // Validate size values if they're being set
       if (key === 'fontSize') {
-        (prefs as any)[key] = validateSize('fontSize', parsedValue, DEFAULT_PREFERENCES.fontSize!);
+        prefs.fontSize = validateSize('fontSize', parsedValue, DEFAULT_PREFERENCES.fontSize!);
       } else if (key === 'minimapSize') {
-        (prefs as any)[key] = validateSize('minimapSize', parsedValue, DEFAULT_PREFERENCES.minimapSize!);
+        prefs.minimapSize = validateSize('minimapSize', parsedValue, DEFAULT_PREFERENCES.minimapSize!);
       } else {
-        (prefs as any)[key] = parsedValue;
+        // Type-safe assignment for known preference keys
+        const typedKey = key as keyof Preferences;
+        (prefs as Record<string, unknown>)[typedKey] = parsedValue;
       }
     } catch {
       // If JSON parsing fails, try to use the raw value
@@ -1667,27 +1704,28 @@ export function getAllPreferences(): Preferences {
       
       // Special handling for size values - validate them
       if (key === 'fontSize') {
-        (prefs as any)[key] = validateSize('fontSize', rawValue, DEFAULT_PREFERENCES.fontSize!);
+        prefs.fontSize = validateSize('fontSize', rawValue, DEFAULT_PREFERENCES.fontSize!);
       } else if (key === 'minimapSize') {
-        (prefs as any)[key] = validateSize('minimapSize', rawValue, DEFAULT_PREFERENCES.minimapSize!);
+        prefs.minimapSize = validateSize('minimapSize', rawValue, DEFAULT_PREFERENCES.minimapSize!);
       } else {
         // Try to infer the correct type based on the default value (if it exists)
         const defaultValue = DEFAULT_PREFERENCES[key];
+        const typedKey = key as keyof Preferences;
         if (defaultValue !== undefined) {
           if (typeof defaultValue === 'number') {
-            (prefs as any)[key] = parseFloat(rawValue) || defaultValue;
+            (prefs as Record<string, unknown>)[typedKey] = parseFloat(rawValue) || defaultValue;
           } else if (typeof defaultValue === 'boolean') {
-            (prefs as any)[key] = rawValue === 'true';
+            (prefs as Record<string, unknown>)[typedKey] = rawValue === 'true';
           } else {
-            (prefs as any)[key] = rawValue;
+            (prefs as Record<string, unknown>)[typedKey] = rawValue;
           }
         } else {
           // If no default exists, try to infer type from the value itself
           // For strings, use as-is; for empty strings, use undefined
           if (rawValue === '' || rawValue === 'null') {
-            (prefs as any)[key] = undefined;
+            (prefs as Record<string, unknown>)[typedKey] = undefined;
           } else {
-            (prefs as any)[key] = rawValue;
+            (prefs as Record<string, unknown>)[typedKey] = rawValue;
           }
         }
       }

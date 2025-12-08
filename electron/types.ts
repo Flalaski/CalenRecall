@@ -96,3 +96,6 @@ export interface EntryVersion {
   versionCreatedAt: string;
 }
 
+// Preferences interface is defined in database.ts
+// Import it directly from there when needed
+

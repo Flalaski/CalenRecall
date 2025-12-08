@@ -571,7 +571,13 @@ function App() {
         if (result.success) {
           console.log('Export successful:', result.path);
         } else if (!result.canceled) {
-          console.error('Export failed:', result.error);
+          const errorMsg = result.message || result.error || 'Unknown error';
+          console.error('Export failed:', errorMsg);
+          if (result.details) {
+            console.error('Error details:', result.details);
+          }
+          // Show user-friendly error message
+          alert(`Export failed: ${errorMsg}`);
         }
       }
       setPendingExportFormat(null);

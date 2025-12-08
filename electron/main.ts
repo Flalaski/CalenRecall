@@ -1,8 +1,13 @@
 import { app, BrowserWindow, ipcMain, Menu, shell } from 'electron';
 import * as path from 'path';
 import * as fs from 'fs';
+import { config } from 'dotenv';
 import { initDatabase, getAllPreferences, setPreference, closeDatabase } from './database';
 import { setupIpcHandlers, setMainWindow, setMenuUpdateCallback } from './ipc-handlers';
+
+// Load environment variables from .env file (if it exists)
+// This allows configuration without hardcoding values
+config();
 
 let mainWindow: BrowserWindow | null = null;
 let preferencesWindow: BrowserWindow | null = null;
