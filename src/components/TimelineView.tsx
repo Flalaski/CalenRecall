@@ -10,6 +10,7 @@ import { dateToCalendarDate } from '../utils/calendars/calendarConverter';
 import { formatCalendarDate } from '../utils/calendars/calendarConverter';
 import { deleteJournalEntry } from '../services/journalService';
 import { filterEntriesByDateRange } from '../utils/entryFilterUtils';
+import { buildEntryLookup, getDayEntriesOptimized, getMonthEntriesOptimized, getAllEntriesForYearOptimized, getAllEntriesForMonthOptimized, filterEntriesByDateRangeOptimized } from '../utils/entryLookupUtils';
 import './TimelineView.css';
 
 interface TimelineViewProps {
@@ -30,7 +31,7 @@ export default function TimelineView({
   weekStartsOn = 0,
 }: TimelineViewProps) {
   const { calendar } = useCalendar();
-  const { entries: allEntries } = useEntries();
+  const { entries: allEntries, entryLookup: contextEntryLookup, entryColors } = useEntries();
   const [preferences, setPreferences] = useState<Preferences>({});
   const [bulkEditMode, setBulkEditMode] = useState(false);
   const [selectedEntryIds, setSelectedEntryIds] = useState<Set<number>>(new Set());
@@ -46,7 +47,17 @@ export default function TimelineView({
     loadPreferences();
   }, []);
 
-  // OPTIMIZATION: Filter entries from global context instead of querying database
+  // OPTIMIZATION: Use lookup from context (stable across renders) or build with weekStartsOn if different
+  const entryLookup = useMemo(() => {
+    // If weekStartsOn is 0 (default), use context lookup directly
+    if (weekStartsOn === 0) {
+      return contextEntryLookup;
+    }
+    // Otherwise rebuild with custom weekStartsOn
+    return buildEntryLookup(allEntries, weekStartsOn);
+  }, [contextEntryLookup, allEntries, weekStartsOn]);
+
+  // OPTIMIZATION: Filter entries using optimized lookup instead of O(n) filtering
   const entries = useMemo(() => {
     let startDate: Date;
     let endDate: Date;
@@ -91,8 +102,9 @@ export default function TimelineView({
       }
     }
     
-    return filterEntriesByDateRange(allEntries, startDate, endDate);
-  }, [allEntries, selectedDate, viewMode]);
+    // Use optimized lookup-based filtering instead of O(n) array filtering
+    return filterEntriesByDateRangeOptimized(entryLookup, startDate, endDate, weekStartsOn);
+  }, [entryLookup, selectedDate, viewMode, weekStartsOn]);
 
   useEffect(() => {
     // Clear bulk selection when changing date/view
@@ -121,97 +133,37 @@ export default function TimelineView({
     }
   };
 
-  // Memoize getEntriesForDate to avoid recalculating on every render
+  // OPTIMIZATION: Use optimized lookup instead of filtering
   const getEntriesForDate = useCallback((date: Date, forViewMode?: TimeRange): JournalEntry[] => {
-    const dateStr = formatDate(date);
-    const checkYear = date.getFullYear();
-    const checkMonth = date.getMonth();
+    const effectiveViewMode = forViewMode || viewMode;
     
-    // Determine which entries to return based on the view mode
-    return entries.filter(entry => {
-      // Parse entry date as local date (YYYY-MM-DD or -YYYY-MM-DD format)
-      const entryDate = parseISODate(entry.date);
-      const entryYear = entryDate.getFullYear();
-      const entryMonth = entryDate.getMonth();
-      
-      // For decade view, show year entries in their year cells
-      if (forViewMode === 'decade' || viewMode === 'decade') {
-        if (entry.timeRange === 'year') {
-          return entryYear === checkYear;
-        }
-        // Don't show other entry types in decade view cells
-        return false;
-      }
-      
-      // For year view, show month entries in their month cells
-      if (forViewMode === 'year' || viewMode === 'year') {
-        if (entry.timeRange === 'month') {
-          return entryYear === checkYear && entryMonth === checkMonth;
-        }
-        // Don't show other entry types in year view cells
-        return false;
-      }
-      
-      // For month/week/day views, only show day entries in calendar cells
-      // Week/month/year/decade entries are shown in the right panel
-      if (entry.timeRange === 'day') {
-        return entry.date === dateStr;
-      }
-      
-      return false;
-    });
-  }, [entries, viewMode]);
+    // For month/week/day views, only show day entries in calendar cells
+    if (effectiveViewMode === 'month' || effectiveViewMode === 'week' || effectiveViewMode === 'day') {
+      return getDayEntriesOptimized(entryLookup, date);
+    }
+    
+    // For year view, show month entries
+    if (effectiveViewMode === 'year') {
+      return getMonthEntriesOptimized(entryLookup, date.getFullYear(), date.getMonth());
+    }
+    
+    // For decade view, show year entries
+    if (effectiveViewMode === 'decade') {
+      const year = date.getFullYear();
+      return entryLookup.byYear.get(year) || [];
+    }
+    
+    return [];
+  }, [entryLookup, viewMode]);
 
-  // Get all entries for a specific year (for pixel map)
-  const getAllEntriesForYear = (year: number): JournalEntry[] => {
-    return entries.filter(entry => {
-      const entryDate = parseISODate(entry.date);
-      const entryYear = entryDate.getFullYear();
-      
-      // Check if entry falls within this year
-      if (entry.timeRange === 'day' || entry.timeRange === 'week' || entry.timeRange === 'month') {
-        return entryYear === year;
-      } else if (entry.timeRange === 'year') {
-        return entryYear === year;
-      } else if (entry.timeRange === 'decade') {
-        const entryDecade = Math.floor(entryYear / 10) * 10;
-        const yearDecade = Math.floor(year / 10) * 10;
-        return entryDecade === yearDecade;
-      }
-      return false;
-    });
-  };
+  // OPTIMIZATION: Use optimized lookup functions instead of O(n) filtering
+  const getAllEntriesForYear = useCallback((year: number): JournalEntry[] => {
+    return getAllEntriesForYearOptimized(entryLookup, year, weekStartsOn);
+  }, [entryLookup, weekStartsOn]);
 
-  // Get all entries for a specific month (for pixel map)
-  const getAllEntriesForMonth = (year: number, month: number): JournalEntry[] => {
-    return entries.filter(entry => {
-      const entryDate = parseISODate(entry.date);
-      const entryYear = entryDate.getFullYear();
-      const entryMonth = entryDate.getMonth();
-      
-      // Check if entry falls within this month
-      if (entry.timeRange === 'day') {
-        return entryYear === year && entryMonth === month;
-      } else if (entry.timeRange === 'week') {
-        // Check if week overlaps with this month
-        const weekStart = getWeekStart(entryDate, weekStartsOn);
-        const weekEnd = new Date(weekStart);
-        weekEnd.setDate(weekEnd.getDate() + 6);
-        const monthStart = new Date(year, month, 1);
-        const monthEnd = new Date(year, month + 1, 0);
-        return weekStart <= monthEnd && weekEnd >= monthStart;
-      } else if (entry.timeRange === 'month') {
-        return entryYear === year && entryMonth === month;
-      } else if (entry.timeRange === 'year') {
-        return entryYear === year;
-      } else if (entry.timeRange === 'decade') {
-        const entryDecade = Math.floor(entryYear / 10) * 10;
-        const yearDecade = Math.floor(year / 10) * 10;
-        return entryDecade === yearDecade;
-      }
-      return false;
-    });
-  };
+  const getAllEntriesForMonth = useCallback((year: number, month: number): JournalEntry[] => {
+    return getAllEntriesForMonthOptimized(entryLookup, year, month, weekStartsOn);
+  }, [entryLookup, weekStartsOn]);
 
   // Create pixel map for a year (12 months x ~30 days = 360 pixels, but we'll use 12x30 grid)
   const createYearPixelMap = (yearEntries: JournalEntry[]): string[] => {
@@ -277,41 +229,26 @@ export default function TimelineView({
     // General formula: (firstDay - weekStartsOn + 7) % 7
     const adjustedFirstDay = (firstDay - weekStartsOn + 7) % 7;
     
-    // Get month entries for the current month
-    const monthEntries: JournalEntry[] = [];
+    // OPTIMIZATION: Use lookup to get month entries
+    const monthKey = `${selectedDate.getFullYear()}-${String(selectedDate.getMonth() + 1).padStart(2, '0')}`;
+    const monthEntries = entryLookup.byMonth.get(monthKey) || [];
+    
+    // OPTIMIZATION: Get week entries using lookup
     const monthStart = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1);
     const monthEnd = new Date(selectedDate.getFullYear(), selectedDate.getMonth() + 1, 0);
-    entries.forEach(entry => {
-      if (entry.timeRange === 'month') {
-        const entryDate = parseISODate(entry.date);
-        if (entryDate >= monthStart && entryDate <= monthEnd) {
-          monthEntries.push(entry);
-        }
-      }
-    });
-    
-    // Get week entries for the month and group them by week
     const weekEntriesByWeek = new Map<string, JournalEntry[]>();
-    entries.forEach(entry => {
-      if (entry.timeRange === 'week') {
-        // Parse entry date to get the week start
-        const entryDate = parseISODate(entry.date);
-        const weekStart = getWeekStart(entryDate, weekStartsOn);
-        const weekKey = formatDate(weekStart);
-        
-        // Check if this week is within the current month
-        const weekEnd = new Date(weekStart);
-        weekEnd.setDate(weekEnd.getDate() + 6);
-        
-        // Only include weeks that overlap with the current month
-        if (weekStart <= monthEnd && weekEnd >= monthStart) {
-          if (!weekEntriesByWeek.has(weekKey)) {
-            weekEntriesByWeek.set(weekKey, []);
-          }
-          weekEntriesByWeek.get(weekKey)!.push(entry);
-        }
+    
+    // Get all week entries that overlap with this month
+    for (const [weekKey, weekEntries] of entryLookup.byWeekStart.entries()) {
+      const weekStart = parseISODate(weekKey);
+      const weekEnd = new Date(weekStart);
+      weekEnd.setDate(weekEnd.getDate() + 6);
+      
+      // Only include weeks that overlap with the current month
+      if (weekStart <= monthEnd && weekEnd >= monthStart) {
+        weekEntriesByWeek.set(weekKey, weekEntries);
       }
-    });
+    }
     
     // Get unique weeks in the month
     const weeksInMonth: Date[] = [];
@@ -366,7 +303,7 @@ export default function TimelineView({
                     <div className="cell-date">{day.getDate()}</div>
                     <div className="cell-entries">
                       {dayEntries.slice(0, 3).map((entry, eIdx) => {
-                        const entryColor = calculateEntryColor(entry);
+                        const entryColor = entry.id !== undefined && entryColors?.get(entry.id) || calculateEntryColor(entry);
                         return (
                           <div
                             key={eIdx}
@@ -469,7 +406,7 @@ export default function TimelineView({
                         {weekEntries.length > 0 ? (
                           <div className="week-entry-items">
                             {weekEntries.map((entry, eIdx) => {
-                              const entryColor = calculateEntryColor(entry);
+                              const entryColor = entry.id !== undefined && entryColors?.get(entry.id) || calculateEntryColor(entry);
                               return (
                                 <div
                                   key={eIdx}
@@ -569,7 +506,7 @@ export default function TimelineView({
                             {formatTime(entry.hour, entry.minute, entry.second, preferences.timeFormat || '12h')}
                           </span>
                         )}
-                        {onEditEntry && (
+                        {onEditEntry && entry.timeRange === viewMode && (
                           <button
                             className="card-edit-button-small"
                             onClick={(e) => {
@@ -747,7 +684,7 @@ export default function TimelineView({
                 <div className="card-header">
                   <div className="card-title-full">{entry.title}</div>
                   <div className="card-meta">
-                    {onEditEntry && !bulkEditMode && (
+                    {onEditEntry && !bulkEditMode && entry.timeRange === viewMode && (
                       <button
                         className="card-edit-button"
                         onClick={(e) => {

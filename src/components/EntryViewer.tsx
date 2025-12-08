@@ -676,7 +676,7 @@ export default function EntryViewer({
                   <div className="period-entry-title-row">
                     <span className="period-entry-title">{periodEntry.title}</span>
                     <div className="period-entry-actions">
-                      {onEditEntry && (
+                      {onEditEntry && periodEntry.timeRange === viewMode && (
                         <button
                           className="period-entry-edit-button"
                           onClick={(e) => {

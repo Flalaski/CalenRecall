@@ -22,12 +22,12 @@ import {
 import { isSameDay, isSameMonth, isSameYear } from 'date-fns';
 import { JournalEntry } from '../types';
 import { playCalendarSelectionSound } from '../utils/audioUtils';
-import { getEntryColorForDate } from '../utils/entryColorUtils';
 import { useCalendar } from '../contexts/CalendarContext';
 import { useEntries } from '../contexts/EntriesContext';
 import { dateToCalendarDate } from '../utils/calendars/calendarConverter';
 import { formatCalendarDate } from '../utils/calendars/calendarConverter';
-import { filterEntriesByDateRange, hasEntryForDate, filterEntriesForRange } from '../utils/entryFilterUtils';
+import { buildEntryLookup, hasEntryForDateOptimized, getDayEntriesOptimized, getEntriesWithTimeOptimized, filterEntriesByDateRangeOptimized } from '../utils/entryLookupUtils';
+import { getEntryColorForDateOptimized } from '../utils/entryColorUtils';
 import './CalendarView.css';
 
 interface CalendarViewProps {
@@ -44,7 +44,7 @@ export default function CalendarView({
   weekStartsOn = 0,
 }: CalendarViewProps) {
   const { calendar } = useCalendar();
-  const { entries: allEntries } = useEntries();
+  const { entries: allEntries, entryLookup: contextEntryLookup, entryColors } = useEntries();
   const [preferences, setPreferences] = useState<Preferences>({});
 
   // Load preferences for time format
@@ -58,7 +58,17 @@ export default function CalendarView({
     loadPreferences();
   }, []);
 
-  // OPTIMIZATION: Filter entries from global context instead of querying database
+  // OPTIMIZATION: Use lookup from context (stable across renders) or build with weekStartsOn if different
+  const entryLookup = useMemo(() => {
+    // If weekStartsOn is 0 (default), use context lookup directly
+    if (weekStartsOn === 0) {
+      return contextEntryLookup;
+    }
+    // Otherwise rebuild with custom weekStartsOn
+    return buildEntryLookup(allEntries, weekStartsOn);
+  }, [contextEntryLookup, allEntries, weekStartsOn]);
+
+  // OPTIMIZATION: Filter entries using optimized lookup instead of O(n) filtering
   const entries = useMemo(() => {
     let startDate: Date;
     let endDate: Date;
@@ -104,8 +114,9 @@ export default function CalendarView({
       }
     }
     
-    return filterEntriesByDateRange(allEntries, startDate, endDate);
-  }, [allEntries, selectedDate, viewMode]);
+    // Use optimized lookup-based filtering instead of O(n) array filtering
+    return filterEntriesByDateRangeOptimized(entryLookup, startDate, endDate, weekStartsOn);
+  }, [entryLookup, selectedDate, viewMode, weekStartsOn]);
 
   // Removed loadEntries - now using EntriesContext with memoized filtering
 
@@ -128,10 +139,10 @@ export default function CalendarView({
     }
   };
 
-  // OPTIMIZATION: Use optimized hasEntryForDate utility
+  // OPTIMIZATION: Use optimized hasEntryForDate utility with lookup
   const hasEntry = useCallback((date: Date): boolean => {
-    return hasEntryForDate(entries, date);
-  }, [entries]);
+    return hasEntryForDateOptimized(entryLookup, date, weekStartsOn);
+  }, [entryLookup, weekStartsOn]);
 
   const renderDecadeView = () => {
     const years = getYearsInDecade(selectedDate);
@@ -139,11 +150,12 @@ export default function CalendarView({
       <div className="calendar-grid decade-view">
         {years.map((year, idx) => {
           const yearGradientColor = getZodiacGradientColorForYear(year.getFullYear());
-          const entryColor = hasEntry(year) ? getEntryColorForDate(entries, year, 'year') : null;
+          const hasEntryForYear = hasEntry(year);
+          const entryColor = hasEntryForYear ? getEntryColorForDateOptimized(entryLookup, year, 'year', weekStartsOn, entryColors) : null;
           return (
             <div
               key={idx}
-              className={`calendar-cell year-cell ${isSelected(year) ? 'selected' : ''} ${hasEntry(year) ? 'has-entry' : ''}`}
+              className={`calendar-cell year-cell ${isSelected(year) ? 'selected' : ''} ${hasEntryForYear ? 'has-entry' : ''}`}
               onClick={() => {
                 playCalendarSelectionSound();
                 onTimePeriodSelect(year, 'year');
@@ -161,7 +173,7 @@ export default function CalendarView({
                     }
                   })()}
                 </div>
-                {hasEntry(year) && entryColor && (
+                {hasEntryForYear && entryColor && (
                   <div 
                     className="entry-indicator"
                     style={{ backgroundColor: entryColor }}
@@ -187,29 +199,31 @@ export default function CalendarView({
           // Use the 15th of each month as representative for the zodiac color
           const monthMidpoint = createDate(month.getFullYear(), month.getMonth(), 15);
           const zodiacColor = getZodiacColor(monthMidpoint);
-          const entryColor = hasEntry(month) ? getEntryColorForDate(entries, month, 'month') : null;
+          const hasEntryForMonth = hasEntry(month);
+          const entryColor = hasEntryForMonth ? getEntryColorForDateOptimized(entryLookup, month, 'month', weekStartsOn, entryColors) : null;
           
           // Get number of days in this month
           const daysInMonth = getDaysInMonth(month).length;
           
-          // Count entries for this month (including day, week, and month entries)
+          // OPTIMIZATION: Count entries using lookup instead of filtering
           const monthStart = getMonthStart(month);
           const monthEnd = getMonthEnd(month);
           monthEnd.setHours(23, 59, 59, 999);
-          const monthEntries = entries.filter(entry => {
-            try {
-              const entryDate = parseISODate(entry.date);
-              return entryDate >= monthStart && entryDate <= monthEnd;
-            } catch {
-              return false;
-            }
-          });
-          const entryCount = monthEntries.length;
+          // Count entries more efficiently using lookup
+          let entryCount = 0;
+          const monthKey = `${month.getFullYear()}-${String(month.getMonth() + 1).padStart(2, '0')}`;
+          entryCount += entryLookup.byMonth.get(monthKey)?.length || 0;
+          // Count day entries in month (approximate - could be optimized further)
+          for (let day = 1; day <= daysInMonth; day++) {
+            const dayDate = createDate(month.getFullYear(), month.getMonth(), day);
+            const dayStr = formatDate(dayDate);
+            entryCount += entryLookup.byDateString.get(dayStr)?.length || 0;
+          }
           
           return (
             <div
               key={idx}
-              className={`calendar-cell month-cell ${isSelected(month) ? 'selected' : ''} ${hasEntry(month) ? 'has-entry' : ''}`}
+              className={`calendar-cell month-cell ${isSelected(month) ? 'selected' : ''} ${hasEntryForMonth ? 'has-entry' : ''}`}
               onClick={() => {
                 playCalendarSelectionSound();
                 onTimePeriodSelect(month, 'month');
@@ -224,7 +238,7 @@ export default function CalendarView({
                     <div className="month-entry-count">{entryCount} {entryCount === 1 ? 'entry' : 'entries'}</div>
                   )}
                 </div>
-                {hasEntry(month) && entryColor && (
+                {hasEntryForMonth && entryColor && (
                   <div 
                     className="entry-indicator"
                     style={{ backgroundColor: entryColor }}
@@ -260,15 +274,16 @@ export default function CalendarView({
           ))}
           {days.map((day, idx) => {
             const gradientColor = getZodiacGradientColor(day);
-            const entryColor = hasEntry(day) ? getEntryColorForDate(entries, day, 'day') : null;
-            const dayEntries = filterEntriesForRange(entries, 'day', day);
-            const entriesWithTime = dayEntries.filter(e => e.hour !== undefined && e.hour !== null);
+            // OPTIMIZATION: Use optimized lookup instead of filtering
+            const hasEntryForDay = hasEntry(day);
+            const entryColor = hasEntryForDay ? getEntryColorForDateOptimized(entryLookup, day, 'day', weekStartsOn, entryColors) : null;
+            const entriesWithTime = getEntriesWithTimeOptimized(entryLookup, day);
             const timeFormat = preferences.timeFormat || '12h';
             
             return (
               <div
                 key={idx}
-                className={`calendar-cell day-cell ${isToday(day) ? 'today' : ''} ${isSelected(day) ? 'selected' : ''} ${hasEntry(day) ? 'has-entry' : ''}`}
+                className={`calendar-cell day-cell ${isToday(day) ? 'today' : ''} ${isSelected(day) ? 'selected' : ''} ${hasEntryForDay ? 'has-entry' : ''}`}
                 onClick={() => {
                   playCalendarSelectionSound();
                   onTimePeriodSelect(day, 'day');
@@ -277,7 +292,7 @@ export default function CalendarView({
               >
                 <div className="cell-content">
                   <div className="cell-label">{day.getDate()}</div>
-                  {hasEntry(day) && entryColor && (
+                  {hasEntryForDay && entryColor && (
                     <div 
                       className="entry-indicator"
                       style={{ backgroundColor: entryColor }}
@@ -331,15 +346,16 @@ export default function CalendarView({
         <div className="calendar-grid week-view">
           {days.map((day, idx) => {
             const gradientColor = getZodiacGradientColor(day);
-            const entryColor = hasEntry(day) ? getEntryColorForDate(entries, day, 'day') : null;
-            const dayEntries = filterEntriesForRange(entries, 'day', day);
-            const entriesWithTime = dayEntries.filter(e => e.hour !== undefined && e.hour !== null);
+            // OPTIMIZATION: Use optimized lookup instead of filtering
+            const hasEntryForDay = hasEntry(day);
+            const entryColor = hasEntryForDay ? getEntryColorForDateOptimized(entryLookup, day, 'day', weekStartsOn, entryColors) : null;
+            const entriesWithTime = getEntriesWithTimeOptimized(entryLookup, day);
             const timeFormat = preferences.timeFormat || '12h';
             
             return (
               <div
                 key={idx}
-                className={`calendar-cell day-cell week-day-cell ${isToday(day) ? 'today' : ''} ${isSelected(day) ? 'selected' : ''} ${hasEntry(day) ? 'has-entry' : ''}`}
+                className={`calendar-cell day-cell week-day-cell ${isToday(day) ? 'today' : ''} ${isSelected(day) ? 'selected' : ''} ${hasEntryForDay ? 'has-entry' : ''}`}
                 onClick={() => {
                   playCalendarSelectionSound();
                   onTimePeriodSelect(day, 'day');
@@ -347,7 +363,7 @@ export default function CalendarView({
                 style={{ '--zodiac-gradient': gradientColor } as React.CSSProperties}
               >
                 <div className="cell-content">
-                  {hasEntry(day) && entryColor && (
+                  {hasEntryForDay && entryColor && (
                     <div 
                       className="entry-indicator"
                       style={{ backgroundColor: entryColor }}
