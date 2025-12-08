@@ -93,6 +93,16 @@ export default function AboutComponent() {
               GitHub Repository
             </a>
           </p>
+          <p>
+            <a 
+              href="https://github.com/flalaski/CalenRecall/issues" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="about-link"
+            >
+              Report Issues or Provide Feedback
+            </a>
+          </p>
         </div>
 
         <div className="about-section about-credits-detailed">
