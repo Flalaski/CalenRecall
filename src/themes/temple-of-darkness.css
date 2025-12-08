@@ -484,6 +484,38 @@
 /* ============================================
    ENTRY CARDS AND LISTS - Dark stone textures
    ============================================ */
+/* Month week entries section - container for week entries in month view */
+[data-theme="temple-of-darkness"] .month-week-entries-section {
+  background: var(--temple-bg);
+  border-left: 3px solid var(--sith-red);
+  box-shadow: inset -1px 0 0 rgba(139, 0, 0, 0.2), 0 0 6px rgba(139, 0, 0, 0.1);
+  color: var(--text-primary) !important;
+  text-shadow: var(--text-glow) !important;
+}
+
+/* Week entries header - section header */
+[data-theme="temple-of-darkness"] .week-entries-header {
+  background: var(--temple-bg-dark);
+  border-bottom: 2px solid var(--sith-red);
+  color: var(--calendar-text) !important;
+  font-family: 'Arial', 'Helvetica', sans-serif;
+  font-weight: 600;
+  text-shadow: 
+    0 0 2px rgba(176, 176, 176, 0.3),
+    0 0 4px rgba(139, 0, 0, 0.5),
+    0 1px 2px rgba(0, 0, 0, 0.8);
+  box-shadow: inset 0 -1px 0 rgba(139, 0, 0, 0.4), 0 1px 3px rgba(139, 0, 0, 0.2);
+}
+
+/* Week entries list - container for week entry groups */
+[data-theme="temple-of-darkness"] .week-entries-list {
+  background: var(--temple-bg);
+  padding: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
 [data-theme="temple-of-darkness"] .week-entry-group {
   background: var(--temple-bg-secondary);
   border: 1px solid var(--sith-red);
@@ -491,6 +523,25 @@
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(74, 42, 90, 0.1);
   position: relative;
   overflow: hidden;
+}
+
+/* Week entry group header - header within each week group */
+[data-theme="temple-of-darkness"] .week-entry-group-header {
+  background: transparent;
+  border-bottom: 1px solid var(--border-metal);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+  padding-bottom: 0.5rem;
+}
+
+/* Week entry items - container for items within a week group */
+[data-theme="temple-of-darkness"] .week-entry-items {
+  background: transparent;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
 }
 
 /* Arcane pattern on entry groups */
@@ -517,11 +568,46 @@
   color: var(--text-entry-bright);
 }
 
+/* Week entry header - header within each week entry item */
+[data-theme="temple-of-darkness"] .week-entry-header {
+  background: transparent;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+}
+
 /* Week entry titles - bright and legible */
 [data-theme="temple-of-darkness"] .week-entry-title {
   color: var(--text-title-bright) !important;
   font-weight: 500;
   text-shadow: 0 1px 3px rgba(0, 0, 0, 0.7);
+}
+
+/* Week entry time - time display for week entries */
+[data-theme="temple-of-darkness"] .week-entry-time {
+  color: var(--calendar-text) !important;
+  font-size: 0.7rem;
+  font-weight: 500;
+  white-space: nowrap;
+  flex-shrink: 0;
+  text-shadow: 
+    0 0 2px rgba(176, 176, 176, 0.3),
+    0 0 4px rgba(139, 0, 0, 0.4),
+    0 1px 2px rgba(0, 0, 0, 0.8) !important;
+  font-family: 'Arial', 'Helvetica', sans-serif;
+}
+
+/* Week entry empty - empty state message */
+[data-theme="temple-of-darkness"] .week-entry-empty {
+  color: var(--text-muted) !important;
+  font-size: 0.8rem;
+  font-style: italic;
+  text-align: center;
+  padding: 0.5rem;
+  text-shadow: var(--text-glow) !important;
+  font-family: 'Arial', 'Helvetica', sans-serif;
 }
 
 [data-theme="temple-of-darkness"] .week-entry-item:hover {
@@ -1441,6 +1527,14 @@
   border-bottom-color: var(--border-metal) !important;
 }
 
+/* Calendar month view container */
+[data-theme="temple-of-darkness"] .calendar-month-view {
+  background: var(--temple-bg);
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
 /* Calendar month details and labels - steel with Sith red glow */
 [data-theme="temple-of-darkness"] .month-details,
 [data-theme="temple-of-darkness"] .month-days,
@@ -1452,6 +1546,50 @@
     0 0 2px rgba(176, 176, 176, 0.3),
     0 0 4px rgba(139, 0, 0, 0.4),
     0 1px 2px rgba(0, 0, 0, 0.8) !important;
+}
+
+/* Cell time information container */
+[data-theme="temple-of-darkness"] .cell-time-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  margin-top: 0.25rem;
+  width: 100%;
+  align-items: center;
+}
+
+/* Cell time badges - Sith red with dark metal styling */
+[data-theme="temple-of-darkness"] .cell-time-badge {
+  font-size: 0.65rem;
+  padding: 0.15rem 0.35rem;
+  background: var(--sith-gradient-dark);
+  color: var(--text-title-bright) !important;
+  border: 1px solid var(--sith-red);
+  border-radius: 3px;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+  box-shadow: 
+    inset 0 1px 2px rgba(0, 0, 0, 0.5),
+    0 0 3px rgba(139, 0, 0, 0.3);
+  text-shadow: 
+    0 1px 2px rgba(0, 0, 0, 0.9),
+    0 0 4px rgba(0, 0, 0, 0.8) !important;
+  font-family: 'Arial', 'Helvetica', sans-serif;
+}
+
+/* Cell time more indicator - steel with Sith red glow */
+[data-theme="temple-of-darkness"] .cell-time-more {
+  font-size: 0.6rem;
+  color: var(--calendar-text) !important;
+  font-weight: 500;
+  text-shadow: 
+    0 0 2px rgba(176, 176, 176, 0.3),
+    0 0 4px rgba(139, 0, 0, 0.4),
+    0 1px 2px rgba(0, 0, 0, 0.8) !important;
+  font-family: 'Arial', 'Helvetica', sans-serif;
 }
 
 /* Calendar loading text - steel with Sith red glow */
