@@ -139,6 +139,10 @@ const BUILT_IN_THEME_METADATA: Record<string, Omit<ThemeInfo, 'name'>> = {
   'aero': {
     displayName: 'Aero',
     description: 'Windows Aero-inspired glassmorphism theme with translucent effects and smooth gradients'
+  },
+  'tabletop': {
+    displayName: 'Tabletop',
+    description: 'Classic board game aesthetic with wood grain textures, felt surfaces, and game piece styling - the minimap looks like a game board with grid lines and markers'
   }
 };
 
