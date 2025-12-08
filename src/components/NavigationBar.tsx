@@ -121,7 +121,13 @@ export default function NavigationBar({
   }, [calendar, dateEntryConfig.fields.length, populateDateFields]);
 
   // Update input values when selectedDate changes externally
+  // Use ref to prevent updates during navigation animation
   useEffect(() => {
+    // Skip update if navigation is in progress
+    if (isNavigatingRef.current) {
+      return;
+    }
+    
     const activeElement = document.activeElement;
     const isAnyInputFocused = inputRefs.current.some(ref => ref === activeElement);
     
@@ -272,6 +278,15 @@ export default function NavigationBar({
       playTabSound();
     }
     previousFocusedFieldRef.current = index;
+    
+    // Automatically select all text when field is focused
+    // Use setTimeout to ensure selection happens after focus event completes
+    setTimeout(() => {
+      const input = inputRefs.current[index];
+      if (input) {
+        input.select();
+      }
+    }, 0);
   };
 
   const handleDateInputBlur = () => {
@@ -284,8 +299,18 @@ export default function NavigationBar({
     }
   };
 
+  // Track if navigation is in progress to prevent overlapping navigations
+  const isNavigatingRef = useRef(false);
+
   // Navigate to target date with animated steps, transitioning through time tiers
   const navigateToDateWithSteps = (targetDate: Date) => {
+    // Prevent multiple simultaneous navigations
+    if (isNavigatingRef.current) {
+      return;
+    }
+    
+    isNavigatingRef.current = true;
+    
     const startDate = new Date(selectedDate);
     const timeDiff = Math.abs(differenceInDays(startDate, targetDate));
     const isFuture = targetDate > startDate;
@@ -420,49 +445,69 @@ export default function NavigationBar({
     let stepIndex = 0;
     let currentViewMode = viewMode;
     
+    // Store timeout ID to allow cancellation
+    let timeoutId: NodeJS.Timeout | null = null;
+    
     const executeStep = () => {
-      if (stepIndex >= optimizedSteps.length) {
-        return;
-      }
-      
-      const step = optimizedSteps[stepIndex];
-      
-      // Play procedurally generated navigation sound based on time tier
-      // Each tier has a unique sound reflecting the journey through time scales
-      playNavigationJourneySound(step.viewMode);
-      
-      // Update view mode if it changed
-      if (step.viewMode !== currentViewMode) {
-        if (step.viewMode === 'day') {
-          playModeSelectionSound();
+      try {
+        if (stepIndex >= optimizedSteps.length) {
+          // Reset navigation flag
+          isNavigatingRef.current = false;
+          return;
         }
-        onViewModeChange(step.viewMode);
-        currentViewMode = step.viewMode;
-      }
-      
-      // Update date
-      onDateChange(step.date);
-      
-      stepIndex++;
-      
-      // Calculate delay: faster pacing for smoother navigation
-      // Decade steps: 80ms, Year steps: 60ms, Month steps: 40ms, Week steps: 30ms, Day steps: 20ms
-      let delay = 40;
-      if (step.viewMode === 'decade') delay = 8;
-      else if (step.viewMode === 'year') delay = 6;
-      else if (step.viewMode === 'month') delay = 4;
-      else if (step.viewMode === 'week') delay = 3;
-      else if (step.viewMode === 'day') delay = 2;
-      
-      if (stepIndex < optimizedSteps.length) {
-        setTimeout(executeStep, delay);
-      } else {
-        // Final step - ensure we're at target with day view
-        if (currentViewMode !== 'day') {
-          playModeSelectionSound();
-          onViewModeChange('day');
+        
+        const step = optimizedSteps[stepIndex];
+        
+        // Play procedurally generated navigation sound based on time tier
+        // Each tier has a unique sound reflecting the journey through time scales
+        playNavigationJourneySound(step.viewMode);
+        
+        // Update view mode if it changed
+        if (step.viewMode !== currentViewMode) {
+          if (step.viewMode === 'day') {
+            playModeSelectionSound();
+          }
+          onViewModeChange(step.viewMode);
+          currentViewMode = step.viewMode;
         }
-        onDateChange(targetDate);
+        
+        // Update date
+        onDateChange(step.date);
+        
+        stepIndex++;
+        
+        // Calculate delay: faster pacing for smoother navigation
+        // Decade steps: 80ms, Year steps: 60ms, Month steps: 40ms, Week steps: 30ms, Day steps: 20ms
+        let delay = 40;
+        if (step.viewMode === 'decade') delay = 8;
+        else if (step.viewMode === 'year') delay = 6;
+        else if (step.viewMode === 'month') delay = 4;
+        else if (step.viewMode === 'week') delay = 3;
+        else if (step.viewMode === 'day') delay = 2;
+        
+        if (stepIndex < optimizedSteps.length) {
+          timeoutId = setTimeout(executeStep, delay);
+        } else {
+          // Final step - ensure we're at target with day view
+          if (currentViewMode !== 'day') {
+            playModeSelectionSound();
+            onViewModeChange('day');
+          }
+          onDateChange(targetDate);
+          // Reset navigation flag after a short delay to allow final update to complete
+          timeoutId = setTimeout(() => {
+            isNavigatingRef.current = false;
+            timeoutId = null;
+          }, 100);
+        }
+      } catch (error) {
+        // Reset navigation flag on error
+        console.error('Error during navigation:', error);
+        isNavigatingRef.current = false;
+        if (timeoutId) {
+          clearTimeout(timeoutId);
+          timeoutId = null;
+        }
       }
     };
     
@@ -471,6 +516,11 @@ export default function NavigationBar({
   };
 
   const handleDateInputSubmit = () => {
+    // Prevent submission if navigation is already in progress
+    if (isNavigatingRef.current) {
+      return;
+    }
+    
     // Check if first field (usually year/cycle/baktun) is required and filled
     const firstFieldValue = dateInputValues[0]?.trim();
     if (!firstFieldValue) {

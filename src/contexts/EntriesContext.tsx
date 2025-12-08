@@ -32,8 +32,28 @@ export function EntriesProvider({ children }: { children: ReactNode }) {
   
   // Build stable lookup structure - only rebuild when entries actually change
   const entryLookup = useMemo(() => {
+    // Early return if entries array is empty
+    if (entries.length === 0) {
+      if (lookupRef.current === null) {
+        // Create empty lookup structure
+        const emptyLookup = buildEntryLookup([], 0);
+        lookupRef.current = emptyLookup;
+        return emptyLookup;
+      }
+      return lookupRef.current;
+    }
+    
     // Create a simple hash from entry IDs and dates to detect changes
-    const entriesHash = entries.map(e => `${e.id || 'new'}-${e.date}`).join('|');
+    // Use a more efficient hash calculation for large arrays
+    let entriesHash: string;
+    if (entries.length > 1000) {
+      // For large arrays, use a faster hash (first 10 + last 10 + length)
+      const first = entries.slice(0, 10).map(e => `${e.id || 'new'}-${e.date}`).join('|');
+      const last = entries.slice(-10).map(e => `${e.id || 'new'}-${e.date}`).join('|');
+      entriesHash = `${first}|...|${last}|${entries.length}`;
+    } else {
+      entriesHash = entries.map(e => `${e.id || 'new'}-${e.date}`).join('|');
+    }
     
     // Only rebuild if entries actually changed (not just reference)
     if (entriesHash === prevEntriesHashRef.current && 
