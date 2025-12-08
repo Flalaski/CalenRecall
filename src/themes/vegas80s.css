@@ -490,7 +490,8 @@
 }
 
 [data-theme="vegas80s"] .edit-button,
-[data-theme="vegas80s"] .duplicate-button {
+[data-theme="vegas80s"] .duplicate-button,
+[data-theme="vegas80s"] .astromonix-button {
   background: #ff1493;
   border: 2px solid #ffd700;
   color: #ffffff;
@@ -498,7 +499,8 @@
 }
 
 [data-theme="vegas80s"] .edit-button:hover,
-[data-theme="vegas80s"] .duplicate-button:hover {
+[data-theme="vegas80s"] .duplicate-button:hover,
+[data-theme="vegas80s"] .astromonix-button:hover {
   background: #ff1744;
   border-color: #ff1493;
   box-shadow: 0 0 15px #ff1744, 0 0 25px rgba(255, 23, 68, 0.6);

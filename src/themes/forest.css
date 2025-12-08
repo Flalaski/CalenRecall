@@ -442,14 +442,16 @@
 }
 
 [data-theme="forest"] .edit-button,
-[data-theme="forest"] .duplicate-button {
+[data-theme="forest"] .duplicate-button,
+[data-theme="forest"] .astromonix-button {
   background: #2d5a2d;
   border: 1px solid #4a7c4a;
   color: #c8e6c9;
 }
 
 [data-theme="forest"] .edit-button:hover,
-[data-theme="forest"] .duplicate-button:hover {
+[data-theme="forest"] .duplicate-button:hover,
+[data-theme="forest"] .astromonix-button:hover {
   background: #3d6a3d;
   border-color: #5a8c5a;
 }

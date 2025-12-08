@@ -442,14 +442,16 @@
 }
 
 [data-theme="red-rock"] .edit-button,
-[data-theme="red-rock"] .duplicate-button {
+[data-theme="red-rock"] .duplicate-button,
+[data-theme="red-rock"] .astromonix-button {
   background: #6b2e2a;
   border: 1px solid #9d5544;
   color: #f5d5b8;
 }
 
 [data-theme="red-rock"] .edit-button:hover,
-[data-theme="red-rock"] .duplicate-button:hover {
+[data-theme="red-rock"] .duplicate-button:hover,
+[data-theme="red-rock"] .astromonix-button:hover {
   background: #7b3f38;
   border-color: #ad6e5f;
 }

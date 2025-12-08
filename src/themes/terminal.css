@@ -561,7 +561,8 @@
 }
 
 [data-theme="terminal"] .edit-button,
-[data-theme="terminal"] .duplicate-button {
+[data-theme="terminal"] .duplicate-button,
+[data-theme="terminal"] .astromonix-button {
   background: #000000;
   border: 1px solid #00ff00;
   color: #00ff00;
@@ -570,7 +571,8 @@
 }
 
 [data-theme="terminal"] .edit-button:hover,
-[data-theme="terminal"] .duplicate-button:hover {
+[data-theme="terminal"] .duplicate-button:hover,
+[data-theme="terminal"] .astromonix-button:hover {
   background: #003300;
   
 }

@@ -350,7 +350,8 @@
 [data-theme="your-theme-name"] .save-button,
 [data-theme="your-theme-name"] .cancel-button,
 [data-theme="your-theme-name"] .delete-button,
-[data-theme="your-theme-name"] .new-entry-button {
+[data-theme="your-theme-name"] .new-entry-button,
+[data-theme="your-theme-name"] .astromonix-button {
   background: #your-button-background;
   border: 1px solid #your-border-color;
   color: #your-button-text-color;
@@ -368,8 +369,10 @@
 
 [data-theme="your-theme-name"] .edit-button:hover,
 [data-theme="your-theme-name"] .save-button:hover,
-[data-theme="your-theme-name"] .new-entry-button:hover {
+[data-theme="your-theme-name"] .new-entry-button:hover,
+[data-theme="your-theme-name"] .astromonix-button:hover {
   background: #your-button-hover-background;
+  border-color: #your-hover-border-color;
 }
 
 /* Modals */

@@ -476,7 +476,8 @@
 }
 
 [data-theme="modern-minimal-oled"] .edit-button,
-[data-theme="modern-minimal-oled"] .duplicate-button {
+[data-theme="modern-minimal-oled"] .duplicate-button,
+[data-theme="modern-minimal-oled"] .astromonix-button {
   background: transparent;
   border: 1px solid transparent;
   color: #808080;
@@ -484,7 +485,8 @@
 }
 
 [data-theme="modern-minimal-oled"] .edit-button:hover,
-[data-theme="modern-minimal-oled"] .duplicate-button:hover {
+[data-theme="modern-minimal-oled"] .duplicate-button:hover,
+[data-theme="modern-minimal-oled"] .astromonix-button:hover {
   background: #151515;
   border-color: #1a1a1a;
 }

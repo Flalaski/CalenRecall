@@ -522,7 +522,8 @@
 }
 
 [data-theme="aero"] .edit-button,
-[data-theme="aero"] .duplicate-button {
+[data-theme="aero"] .duplicate-button,
+[data-theme="aero"] .astromonix-button {
   background: rgba(255, 255, 255, 0.4);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
@@ -533,7 +534,8 @@
 }
 
 [data-theme="aero"] .edit-button:hover,
-[data-theme="aero"] .duplicate-button:hover {
+[data-theme="aero"] .duplicate-button:hover,
+[data-theme="aero"] .astromonix-button:hover {
   background: rgba(255, 255, 255, 0.6);
   border-color: rgba(100, 181, 246, 0.8);
   box-shadow: 0 2px 8px rgba(21, 101, 192, 0.3);

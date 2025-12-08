@@ -630,7 +630,8 @@
 }
 
 [data-theme="the-real-world"] .edit-button,
-[data-theme="the-real-world"] .duplicate-button {
+[data-theme="the-real-world"] .duplicate-button,
+[data-theme="the-real-world"] .astromonix-button {
   background: #1a1a1a;
   border: 1px solid #7fbf7f;
   color: #7fbf7f;
@@ -641,7 +642,8 @@
 }
 
 [data-theme="the-real-world"] .edit-button:hover,
-[data-theme="the-real-world"] .duplicate-button:hover {
+[data-theme="the-real-world"] .duplicate-button:hover,
+[data-theme="the-real-world"] .astromonix-button:hover {
   background: #333333;
   border-color: #9fcf9f;
   color: #9fcf9f;

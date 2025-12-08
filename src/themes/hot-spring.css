@@ -472,14 +472,16 @@
 }
 
 [data-theme="hot-spring"] .edit-button,
-[data-theme="hot-spring"] .duplicate-button {
+[data-theme="hot-spring"] .duplicate-button,
+[data-theme="hot-spring"] .astromonix-button {
   background: #2d2535;
   border: 1px solid #5a4a6a;
   color: #f0e8e8;
 }
 
 [data-theme="hot-spring"] .edit-button:hover,
-[data-theme="hot-spring"] .duplicate-button:hover {
+[data-theme="hot-spring"] .duplicate-button:hover,
+[data-theme="hot-spring"] .astromonix-button:hover {
   background: #4d3559;
   border-color: #7a6a85;
 }

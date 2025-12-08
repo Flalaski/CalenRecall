@@ -493,7 +493,8 @@
 }
 
 [data-theme="high-contrast"] .edit-button,
-[data-theme="high-contrast"] .duplicate-button {
+[data-theme="high-contrast"] .duplicate-button,
+[data-theme="high-contrast"] .astromonix-button {
   background: #000000;
   border: 2px solid #ffffff;
   color: #ffffff;
@@ -501,7 +502,8 @@
 }
 
 [data-theme="high-contrast"] .edit-button:hover,
-[data-theme="high-contrast"] .duplicate-button:hover {
+[data-theme="high-contrast"] .duplicate-button:hover,
+[data-theme="high-contrast"] .astromonix-button:hover {
   background: #ffffff;
   color: #000000;
   border: 3px solid #ffff00;

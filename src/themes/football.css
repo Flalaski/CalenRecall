@@ -458,14 +458,16 @@
 }
 
 [data-theme="football"] .edit-button,
-[data-theme="football"] .duplicate-button {
+[data-theme="football"] .duplicate-button,
+[data-theme="football"] .astromonix-button {
   background: #3a6b1f;
   border: 1px solid #ffffff;
   color: #ffffff;
 }
 
 [data-theme="football"] .edit-button:hover,
-[data-theme="football"] .duplicate-button:hover {
+[data-theme="football"] .duplicate-button:hover,
+[data-theme="football"] .astromonix-button:hover {
   background: #4a7c2a;
   border-color: #ffffff;
 }

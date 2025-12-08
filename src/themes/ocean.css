@@ -451,14 +451,16 @@
 }
 
 [data-theme="ocean"] .edit-button,
-[data-theme="ocean"] .duplicate-button {
+[data-theme="ocean"] .duplicate-button,
+[data-theme="ocean"] .astromonix-button {
   background: #003d6b;
   border: 1px solid #005a9e;
   color: #b3e5fc;
 }
 
 [data-theme="ocean"] .edit-button:hover,
-[data-theme="ocean"] .duplicate-button:hover {
+[data-theme="ocean"] .duplicate-button:hover,
+[data-theme="ocean"] .astromonix-button:hover {
   background: #004d7b;
   border-color: #006aae;
 }

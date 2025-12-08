@@ -853,7 +853,8 @@
 }
 
 [data-theme="elite"] .edit-button,
-[data-theme="elite"] .duplicate-button {
+[data-theme="elite"] .duplicate-button,
+[data-theme="elite"] .astromonix-button {
   background: rgba(0, 34, 68, 0.6);
   backdrop-filter: blur(4px);
   -webkit-backdrop-filter: blur(4px);
@@ -869,7 +870,8 @@
 }
 
 [data-theme="elite"] .edit-button:hover,
-[data-theme="elite"] .duplicate-button:hover {
+[data-theme="elite"] .duplicate-button:hover,
+[data-theme="elite"] .astromonix-button:hover {
   background: rgba(255, 153, 0, 0.2);
   border-color: rgba(255, 153, 0, 0.8);
   color: #FF9900;

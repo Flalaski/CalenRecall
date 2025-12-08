@@ -868,7 +868,8 @@
 }
 
 [data-theme="journeyman"] .edit-button,
-[data-theme="journeyman"] .duplicate-button {
+[data-theme="journeyman"] .duplicate-button,
+[data-theme="journeyman"] .astromonix-button {
   background: linear-gradient(180deg, #5A5A5A 0%, #4A4A4A 100%);
   border: 2px outset #6A6A6A;
   border-radius: 2px;
@@ -883,13 +884,15 @@
 }
 
 [data-theme="journeyman"] .edit-button:hover,
-[data-theme="journeyman"] .duplicate-button:hover {
+[data-theme="journeyman"] .duplicate-button:hover,
+[data-theme="journeyman"] .astromonix-button:hover {
   background: linear-gradient(180deg, #6A6A6A 0%, #5A5A5A 100%);
   border: 2px outset #7A7A7A;
 }
 
 [data-theme="journeyman"] .edit-button:active,
-[data-theme="journeyman"] .duplicate-button:active {
+[data-theme="journeyman"] .duplicate-button:active,
+[data-theme="journeyman"] .astromonix-button:active {
   background: linear-gradient(180deg, #3A3A3A 0%, #2A2A2A 100%);
   border: 2px inset #4A4A4A;
   box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.5);

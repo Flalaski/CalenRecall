@@ -487,7 +487,8 @@
 }
 
 [data-theme="NEON"] .edit-button,
-[data-theme="NEON"] .duplicate-button {
+[data-theme="NEON"] .duplicate-button,
+[data-theme="NEON"] .astromonix-button {
   background: #ff00ff;
   border: 2px solid #ffff00;
   color: #ffffff;
@@ -495,7 +496,8 @@
 }
 
 [data-theme="NEON"] .edit-button:hover,
-[data-theme="NEON"] .duplicate-button:hover {
+[data-theme="NEON"] .duplicate-button:hover,
+[data-theme="NEON"] .astromonix-button:hover {
   background: #00ffff;
   border-color: #ff00ff;
   box-shadow: 0 0 15px #00ffff;

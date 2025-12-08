@@ -848,7 +848,8 @@
 
 [data-theme="reading-room"] .edit-button,
 [data-theme="reading-room"] .duplicate-button,
-[data-theme="reading-room"] .new-entry-button-header {
+[data-theme="reading-room"] .new-entry-button-header,
+[data-theme="reading-room"] .astromonix-button {
   background: var(--reading-bg);
   border: 3px solid var(--primary-blue);
   border-radius: 0;  /* Square button - primary shape! */
@@ -866,7 +867,8 @@
 
 [data-theme="reading-room"] .edit-button::before,
 [data-theme="reading-room"] .duplicate-button::before,
-[data-theme="reading-room"] .new-entry-button-header::before {
+[data-theme="reading-room"] .new-entry-button-header::before,
+[data-theme="reading-room"] .astromonix-button::before {
   content: '';
   position: absolute;
   top: -4px;
@@ -880,7 +882,8 @@
 
 [data-theme="reading-room"] .edit-button:hover,
 [data-theme="reading-room"] .duplicate-button:hover,
-[data-theme="reading-room"] .new-entry-button-header:hover {
+[data-theme="reading-room"] .new-entry-button-header:hover,
+[data-theme="reading-room"] .astromonix-button:hover {
   background: var(--primary-yellow);
   border-color: var(--primary-blue-dark);
   color: var(--text-primary);
@@ -890,7 +893,8 @@
 
 [data-theme="reading-room"] .edit-button:hover::before,
 [data-theme="reading-room"] .duplicate-button:hover::before,
-[data-theme="reading-room"] .new-entry-button-header:hover::before {
+[data-theme="reading-room"] .new-entry-button-header:hover::before,
+[data-theme="reading-room"] .astromonix-button:hover::before {
   opacity: 1;
   transform: scale(1.2);
 }

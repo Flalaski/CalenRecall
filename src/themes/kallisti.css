@@ -1112,7 +1112,8 @@
 [data-theme="kallisti"] .calendar-definition-toggle,
 [data-theme="kallisti"] .preferences-button,
 [data-theme="kallisti"] .reset-button,
-[data-theme="kallisti"] .tag-remove {
+[data-theme="kallisti"] .tag-remove,
+[data-theme="kallisti"] .astromonix-button {
   background: var(--chaos-bg-dark) !important;
   border: 2px solid var(--border-discord) !important;
   border-radius: 4px;
@@ -1167,6 +1168,7 @@
 [data-theme="kallisti"] .view-mode-button:hover,
 [data-theme="kallisti"] .today-button:hover,
 [data-theme="kallisti"] .duplicate-button:hover,
+[data-theme="kallisti"] .astromonix-button:hover,
 [data-theme="kallisti"] .add-tag-button:hover,
 [data-theme="kallisti"] .modal-save-button:hover,
 [data-theme="kallisti"] .modal-cancel-button:hover,

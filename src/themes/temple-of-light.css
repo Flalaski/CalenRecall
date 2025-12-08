@@ -648,7 +648,8 @@
 [data-theme="temple-of-light"] .save-button,
 [data-theme="temple-of-light"] .cancel-button,
 [data-theme="temple-of-light"] .delete-button,
-[data-theme="temple-of-light"] .new-entry-button {
+[data-theme="temple-of-light"] .new-entry-button,
+[data-theme="temple-of-light"] .astromonix-button {
   background: var(--temple-bg);
   border: 2px solid var(--wood-mahogany);
   border-radius: 4px;
@@ -679,7 +680,8 @@
 }
 
 [data-theme="temple-of-light"] .edit-button:hover,
-[data-theme="temple-of-light"] .new-entry-button:hover {
+[data-theme="temple-of-light"] .new-entry-button:hover,
+[data-theme="temple-of-light"] .astromonix-button:hover {
   background: var(--highlight-gold);
   border-color: var(--wood-mahogany-dark);
 }

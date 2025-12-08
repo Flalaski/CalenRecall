@@ -442,14 +442,16 @@
 }
 
 [data-theme="australian-desert"] .edit-button,
-[data-theme="australian-desert"] .duplicate-button {
+[data-theme="australian-desert"] .duplicate-button,
+[data-theme="australian-desert"] .astromonix-button {
   background: #7a4a35;
   border: 1px solid #a6734f;
   color: #f4e4c1;
 }
 
 [data-theme="australian-desert"] .edit-button:hover,
-[data-theme="australian-desert"] .duplicate-button:hover {
+[data-theme="australian-desert"] .duplicate-button:hover,
+[data-theme="australian-desert"] .astromonix-button:hover {
   background: #8a5a45;
   border-color: #b6896f;
 }

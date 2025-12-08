@@ -610,7 +610,8 @@
 
 [data-theme="scholar"] .edit-button,
 [data-theme="scholar"] .duplicate-button,
-[data-theme="scholar"] .new-entry-button-header {
+[data-theme="scholar"] .new-entry-button-header,
+[data-theme="scholar"] .astromonix-button {
   background: var(--parchment-bg);
   border: 1px solid var(--border-aged);
   border-radius: 3px;
@@ -623,7 +624,8 @@
 
 [data-theme="scholar"] .edit-button:hover,
 [data-theme="scholar"] .duplicate-button:hover,
-[data-theme="scholar"] .new-entry-button-header:hover {
+[data-theme="scholar"] .new-entry-button-header:hover,
+[data-theme="scholar"] .astromonix-button:hover {
   background: var(--parchment-bg-hover);
   border-color: var(--accent-sepia);
   box-shadow: 0 2px 4px rgba(139, 105, 20, 0.2);

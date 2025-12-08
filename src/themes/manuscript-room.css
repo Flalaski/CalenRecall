@@ -684,7 +684,8 @@
 
 [data-theme="manuscript-room"] .edit-button,
 [data-theme="manuscript-room"] .duplicate-button,
-[data-theme="manuscript-room"] .new-entry-button-header {
+[data-theme="manuscript-room"] .new-entry-button-header,
+[data-theme="manuscript-room"] .astromonix-button {
   background: var(--manuscript-bg);
   border: 1px solid var(--border-gold);
   border-radius: 3px;
@@ -698,7 +699,8 @@
 
 [data-theme="manuscript-room"] .edit-button:hover,
 [data-theme="manuscript-room"] .duplicate-button:hover,
-[data-theme="manuscript-room"] .new-entry-button-header:hover {
+[data-theme="manuscript-room"] .new-entry-button-header:hover,
+[data-theme="manuscript-room"] .astromonix-button:hover {
   background: var(--manuscript-bg-hover);
   border-color: var(--accent-purple);
   box-shadow: 0 2px 4px rgba(45, 27, 78, 0.15);

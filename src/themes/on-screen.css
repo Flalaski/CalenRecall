@@ -1007,7 +1007,8 @@
 }
 
 [data-theme="on-screen"] .edit-button,
-[data-theme="on-screen"] .duplicate-button {
+[data-theme="on-screen"] .duplicate-button,
+[data-theme="on-screen"] .astromonix-button {
   background: #004488;
   border: none;
   border-radius: 20px 20px 0 0;
@@ -1018,7 +1019,8 @@
 }
 
 [data-theme="on-screen"] .edit-button:hover,
-[data-theme="on-screen"] .duplicate-button:hover {
+[data-theme="on-screen"] .duplicate-button:hover,
+[data-theme="on-screen"] .astromonix-button:hover {
   background: #FF9900;
   color: #000000;
   transform: translateY(-2px);

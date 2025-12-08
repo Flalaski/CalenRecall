@@ -227,7 +227,8 @@
 
 [data-theme="classic-dark"] .edit-button,
 [data-theme="classic-dark"] .save-button,
-[data-theme="classic-dark"] .cancel-button {
+[data-theme="classic-dark"] .cancel-button,
+[data-theme="classic-dark"] .astromonix-button {
   background: #404040;
   border: 2px outset #606060;
   border-radius: 0;
@@ -237,7 +238,8 @@
 }
 
 [data-theme="classic-dark"] .edit-button:hover,
-[data-theme="classic-dark"] .save-button:hover {
+[data-theme="classic-dark"] .save-button:hover,
+[data-theme="classic-dark"] .astromonix-button:hover {
   border: 2px inset #606060;
 }
 

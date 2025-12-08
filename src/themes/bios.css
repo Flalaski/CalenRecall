@@ -647,7 +647,8 @@
 }
 
 [data-theme="bios"] .edit-button,
-[data-theme="bios"] .duplicate-button {
+[data-theme="bios"] .duplicate-button,
+[data-theme="bios"] .astromonix-button {
   background: #000080;
   border: 1px solid #c0c0c0;
   color: #ffffff;
@@ -656,7 +657,8 @@
 }
 
 [data-theme="bios"] .edit-button:hover,
-[data-theme="bios"] .duplicate-button:hover {
+[data-theme="bios"] .duplicate-button:hover,
+[data-theme="bios"] .astromonix-button:hover {
   background: #0000aa;
   box-shadow: none;
 }
