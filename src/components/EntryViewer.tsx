@@ -387,8 +387,8 @@ export default function EntryViewer({
     return `+ New Entry for this ${timeRangeLabel}`;
   };
 
-  // Generate AstroMonix URL for the current selected day
-  const getAstromonixUrl = (): string => {
+  // Generate AstroMonix URL for the current selected day, optionally with time
+  const getAstromonixUrl = (hour?: number | null, minute?: number | null): string => {
     // Format date as YYYY-MM-DD
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -400,11 +400,17 @@ export default function EntryViewer({
       date: dateStr,
     });
     
+    // Add time parameter if provided (format: HH:MM in 24-hour format)
+    if (hour !== null && hour !== undefined && minute !== null && minute !== undefined) {
+      const timeStr = `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
+      params.set('time', timeStr);
+    }
+    
     return `https://astromonix.xyz/?${params.toString()}`;
   };
 
-  const handleOpenAstromonix = async () => {
-    const url = getAstromonixUrl();
+  const handleOpenAstromonix = async (hour?: number | null, minute?: number | null) => {
+    const url = getAstromonixUrl(hour, minute);
     // Open AstroMonix in a new Electron BrowserWindow with specified dimensions
     // Width: 2492px (11% less than 2800px), Height: 1200px (taller) - sufficient space for the 3D chart visualization
     if (window.electronAPI && window.electronAPI.openExternalUrl) {
@@ -553,6 +559,22 @@ export default function EntryViewer({
         <div className="viewer-content">
           <div className="viewer-title">{entry.title}</div>
           <div className="viewer-text">{entry.content}</div>
+          {viewMode === 'day' && entry.timeRange === 'day' && entry.hour !== null && entry.hour !== undefined && entry.minute !== null && entry.minute !== undefined && preferences.showAstromonixToolbarButton === true && (
+            <div className="entry-astromonix-button-container">
+              <button 
+                className="astromonix-button entry-astromonix-button"
+                onClick={() => handleOpenAstromonix(entry.hour, entry.minute)}
+                title={`Open this moment on AstroMonix (${String(entry.hour).padStart(2, '0')}:${String(entry.minute).padStart(2, '0')})`}
+              >
+                <img 
+                  src="./assets/astromonixlogo.png" 
+                  alt="AstroMonix" 
+                  className="astromonix-logo"
+                />
+                <span>Open on AstroMonix</span>
+              </button>
+            </div>
+          )}
           {entry.tags && entry.tags.length > 0 && (
             <div className="viewer-tags">
               {entry.tags.map((tag, idx) => (

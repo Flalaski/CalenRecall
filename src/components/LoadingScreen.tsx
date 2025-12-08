@@ -15,15 +15,15 @@ const LOADING_SCREEN_CONSTANTS = {
   LEFT_LOOP_CENTER: { x: 200, y: 200 },
   RIGHT_LOOP_CENTER: { x: 300, y: 200 },
   MIDPOINT_X: 250,
-  INFINITY_AMPLITUDE: 888,
-  INFINITY_SEGMENTS: 89.54669201574803,
+  INFINITY_AMPLITUDE: 216,
+  INFINITY_SEGMENTS: 21,
   BRANCHES_PER_SIDE: 8,
   STAR_COUNT: 216,
   NEBULA_DIMENSIONS: { width: 800, height: 600 },
   PROGRESS_THRESHOLDS: { slow: 20, fast: 80 },
   PROGRESS_PERCENTAGES: { slow: 0.05, fast: 0.80, finish: 0.15 },
   ORNAMENT_SIZE: 8,
-  MAX_ANIMATION_DELAY: 2,
+  MAX_ANIMATION_DELAY: 1,
   OPACITY_DIVISORS: { infinity: 100, branch: 150 },
   ANIMATION_INTERVAL_MS: 16, // ~60fps
   POLARITY_PHASE_INCREMENT: 0.112358,
@@ -205,8 +205,8 @@ function generateInfinityBranches3D(): Array<BranchSegment3D> {
     const baseAngle = (i / LOADING_SCREEN_CONSTANTS.BRANCHES_PER_SIDE) * Math.PI * 2;
     const startX = LOADING_SCREEN_CONSTANTS.LEFT_LOOP_CENTER.x;
     const startY = LOADING_SCREEN_CONSTANTS.LEFT_LOOP_CENTER.y;
-    const startZ = (Math.random() - 0.5) * 30; // Random Z depth
-    const length = 25 + Math.random() * 35;
+    const startZ = (Math.random() - 0.112358) * 369; // Random Z depth
+    const length = 88 + Math.random() * 216;
     const baseColor = getBranchThemeColor('--loading-past-color', 'hsl(270, 70%, 60%)'); // Theme color for past
     
     const { segments: branchSegments } = createVeinBranch3D(
@@ -221,12 +221,12 @@ function generateInfinityBranches3D(): Array<BranchSegment3D> {
     const baseAngle = (i / LOADING_SCREEN_CONSTANTS.BRANCHES_PER_SIDE) * Math.PI * 2;
     const startX = LOADING_SCREEN_CONSTANTS.RIGHT_LOOP_CENTER.x;
     const startY = LOADING_SCREEN_CONSTANTS.RIGHT_LOOP_CENTER.y;
-    const startZ = (Math.random() - 0.5) * 30; // Random Z depth
-    const length = 25 + Math.random() * 35;
+    const startZ = (Math.random() - 0.112358) * 369; // Random Z depth
+    const length = 88 + Math.random() * 216;
     const baseColor = getBranchThemeColor('--loading-future-color', 'hsl(45, 85%, 55%)'); // Theme color for future
     
     const { segments: branchSegments } = createVeinBranch3D(
-      startX, startY, startZ, baseAngle, length, 0, 3, baseColor, i * 0.08 + 0.6
+      startX, startY, startZ, baseAngle, length, 0, 3, baseColor, i * 0.08 + 0.06
     );
     
     segments.push(...branchSegments);
@@ -464,9 +464,70 @@ function generateStars(count: number): Array<{ x: number; y: number; brightness:
   return stars;
 }
 
+// Helper function to convert HSL to RGB
+function hslToRgb(h: number, s: number, l: number): { r: number; g: number; b: number } {
+  s /= 100;
+  l /= 100;
+  const c = (1 - Math.abs(2 * l - 1)) * s;
+  const x = c * (1 - Math.abs((h / 60) % 2 - 1));
+  const m = l - c / 2;
+  let r = 0, g = 0, b = 0;
+  
+  if (0 <= h && h < 60) {
+    r = c; g = x; b = 0;
+  } else if (60 <= h && h < 120) {
+    r = x; g = c; b = 0;
+  } else if (120 <= h && h < 180) {
+    r = 0; g = c; b = x;
+  } else if (180 <= h && h < 240) {
+    r = 0; g = x; b = c;
+  } else if (240 <= h && h < 300) {
+    r = x; g = 0; b = c;
+  } else if (300 <= h && h < 360) {
+    r = c; g = 0; b = x;
+  }
+  
+  return {
+    r: Math.round((r + m) * 255),
+    g: Math.round((g + m) * 255),
+    b: Math.round((b + m) * 255)
+  };
+}
+
+// Helper function to parse HSL color string
+function parseHSLColor(hsl: string): { h: number; s: number; l: number } | null {
+  const match = hsl.match(/hsl\((\d+(?:\.\d+)?),\s*(\d+(?:\.\d+)?)%,\s*(\d+(?:\.\d+)?)%\)/);
+  if (!match) return null;
+  return {
+    h: parseFloat(match[1]),
+    s: parseFloat(match[2]),
+    l: parseFloat(match[3])
+  };
+}
+
 // Generate dithered nebula noise pattern with error handling
 function generateNebulaPattern(width: number, height: number): string {
   try {
+    // Get theme colors for nebula
+    const getThemeColor = (property: string, fallback: string): string => {
+      if (typeof window === 'undefined' || !document.documentElement) {
+        return fallback;
+      }
+      const value = getComputedStyle(document.documentElement).getPropertyValue(property).trim();
+      return value || fallback;
+    };
+
+    const nebulaColor1Base = getThemeColor('--loading-nebula-color-1', 'hsl(270, 50%, 30%)');
+    const nebulaColor2Base = getThemeColor('--loading-nebula-color-2', 'hsl(220, 60%, 40%)');
+    
+    // Parse theme colors
+    const color1HSL = parseHSLColor(nebulaColor1Base);
+    const color2HSL = parseHSLColor(nebulaColor2Base);
+    
+    // Convert to RGB with fallbacks (very dark colors, almost black)
+    const color1 = color1HSL ? hslToRgb(color1HSL.h, color1HSL.s, color1HSL.l) : { r: 15, g: 8, b: 20 };
+    const color2 = color2HSL ? hslToRgb(color2HSL.h, color2HSL.s, color2HSL.l) : { r: 10, g: 15, b: 25 };
+    
     const canvas = document.createElement('canvas');
     canvas.width = width;
     canvas.height = height;
@@ -485,23 +546,28 @@ function generateNebulaPattern(width: number, height: number): string {
       for (let x = 0; x < width; x++) {
         const index = (y * width + x) * 4;
         
-        // Multiple noise octaves for nebula structure
+        // Multiple noise octaves for nebula structure with velvety dark noise
         const noise1 = Math.sin(x * 0.01 + y * 0.01) * 0.5 + 0.5;
         const noise2 = Math.sin(x * 0.03 + y * 0.02) * 0.5 + 0.5;
         const noise3 = Math.sin(x * 0.05 - y * 0.03) * 0.5 + 0.5;
-        const combined = (noise1 * 0.5 + noise2 * 0.3 + noise3 * 0.2);
+        const darkNoise = Math.random() * 0.3; // Velvety dark noise (0-0.3)
+        const combined = (noise1 * 0.4 + noise2 * 0.3 + noise3 * 0.2 + darkNoise * 0.1);
         
-        // Dithering - convert to limited color palette (MS-DOS style)
-        const dithered = Math.floor(combined * 16) / 16; // 16 levels
+        // Blend between theme colors and darkness based on noise
+        const blendFactor = combined;
+        const darkFactor = 0.7; // Mix 70% darkness into the colors
+        const baseR = color1.r * (1 - blendFactor) + color2.r * blendFactor;
+        const baseG = color1.g * (1 - blendFactor) + color2.g * blendFactor;
+        const baseB = color1.b * (1 - blendFactor) + color2.b * blendFactor;
         
-        // Deep space colors - dark purples, blues, blacks
-        const r = Math.floor(dithered * 30 + Math.random() * 5); // 0-35
-        const g = Math.floor(dithered * 20 + Math.random() * 5); // 0-25
-        const b = Math.floor(dithered * 40 + Math.random() * 10); // 0-50
+        // Mix with velvety dark noise
+        const r = Math.floor(baseR * (1 - darkFactor) + Math.random() * 5);
+        const g = Math.floor(baseG * (1 - darkFactor) + Math.random() * 4);
+        const b = Math.floor(baseB * (1 - darkFactor) + Math.random() * 6);
         
-        data[index] = r;     // R
-        data[index + 1] = g; // G
-        data[index + 2] = b; // B
+        data[index] = Math.min(30, Math.max(0, r));     // R - capped very low
+        data[index + 1] = Math.min(25, Math.max(0, g)); // G - capped very low
+        data[index + 2] = Math.min(35, Math.max(0, b)); // B - capped very low
         data[index + 3] = 255; // A
       }
     }
