@@ -35,6 +35,8 @@ export default function TimelineView({
   const [preferences, setPreferences] = useState<Preferences>({});
   const [bulkEditMode, setBulkEditMode] = useState(false);
   const [selectedEntryIds, setSelectedEntryIds] = useState<Set<number>>(new Set());
+  const [monthEntriesBulkEditMode, setMonthEntriesBulkEditMode] = useState(false);
+  const [selectedMonthEntryIds, setSelectedMonthEntryIds] = useState<Set<number>>(new Set());
 
   // Load preferences for time format
   useEffect(() => {
@@ -110,6 +112,8 @@ export default function TimelineView({
     // Clear bulk selection when changing date/view
     setSelectedEntryIds(new Set());
     setBulkEditMode(false);
+    setSelectedMonthEntryIds(new Set());
+    setMonthEntriesBulkEditMode(false);
   }, [selectedDate, viewMode]);
 
   // Removed loadEntries - now using EntriesContext with memoized filtering
@@ -232,6 +236,7 @@ export default function TimelineView({
     // OPTIMIZATION: Use lookup to get month entries
     const monthKey = `${selectedDate.getFullYear()}-${String(selectedDate.getMonth() + 1).padStart(2, '0')}`;
     const monthEntries = entryLookup.byMonth.get(monthKey) || [];
+    const monthEntriesWithIds = monthEntries.filter(entry => entry.id !== undefined);
     
     // OPTIMIZATION: Get week entries using lookup
     const monthStart = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1);
@@ -340,40 +345,98 @@ export default function TimelineView({
           
           <div className="month-week-entries-section">
             <div className="month-entries-section">
-              <div className="month-entries-header">Month Entries</div>
+              <div className="month-entries-header">
+                <span>Month Entries</span>
+                {monthEntries.length > 0 && (
+                  <button 
+                    className={`bulk-edit-toggle-button ${monthEntriesBulkEditMode ? 'active' : ''}`}
+                    onClick={() => {
+                      setMonthEntriesBulkEditMode(!monthEntriesBulkEditMode);
+                      if (monthEntriesBulkEditMode) {
+                        setSelectedMonthEntryIds(new Set());
+                      }
+                    }}
+                    title={monthEntriesBulkEditMode ? 'Exit bulk edit mode' : 'Enter bulk edit mode'}
+                  >
+                    {monthEntriesBulkEditMode ? 'Cancel' : 'Bulk Edit'}
+                  </button>
+                )}
+              </div>
+              {monthEntriesBulkEditMode && selectedMonthEntryIds.size > 0 && (
+                <div className="bulk-edit-actions">
+                  <span className="bulk-edit-selected-count">
+                    {selectedMonthEntryIds.size} {selectedMonthEntryIds.size === 1 ? 'entry' : 'entries'} selected
+                  </span>
+                  <button 
+                    className="bulk-delete-button"
+                    onClick={handleBulkDeleteMonthEntries}
+                  >
+                    Delete Selected
+                  </button>
+                </div>
+              )}
+              {monthEntriesBulkEditMode && monthEntriesWithIds.length > 0 && (
+                <div className="bulk-edit-select-all">
+                  <label className="bulk-edit-checkbox-label">
+                    <input
+                      type="checkbox"
+                      checked={selectedMonthEntryIds.size === monthEntriesWithIds.length && monthEntriesWithIds.length > 0}
+                      onChange={() => toggleSelectAllMonthEntries(monthEntries)}
+                    />
+                    <span>Select All ({monthEntriesWithIds.length})</span>
+                  </label>
+                </div>
+              )}
               <div className="month-entries-list">
                 {monthEntries.length > 0 ? (
                   monthEntries.map((entry, eIdx) => {
                     const entryColor = calculateEntryColor(entry);
+                    const isSelected = monthEntriesBulkEditMode && entry.id !== undefined && selectedMonthEntryIds.has(entry.id);
                     return (
                       <div
                         key={eIdx}
-                        className="month-entry-item"
+                        className={`month-entry-item ${isSelected ? 'bulk-selected' : ''} ${monthEntriesBulkEditMode ? 'bulk-edit-mode' : ''}`}
                         onClick={() => {
-                          playEntrySelectionSound();
-                          onEntrySelect(entry);
+                          if (monthEntriesBulkEditMode) {
+                            toggleMonthEntrySelection(entry.id);
+                          } else {
+                            playEntrySelectionSound();
+                            onEntrySelect(entry);
+                          }
                         }}
                         title={entry.title}
                         style={{ borderLeftColor: entryColor }}
                       >
-                        <div className="month-entry-header">
-                          <span className="month-entry-title">{entry.title}</span>
-                          {entry.hour !== undefined && entry.hour !== null && (
-                            <span className="month-entry-time">
-                              {formatTime(entry.hour, entry.minute, entry.second, preferences.timeFormat || '12h')}
-                            </span>
-                          )}
-                        </div>
-                        {entry.content && entry.content.length > 0 && (
-                          <span className="month-entry-preview">{entry.content.substring(0, 80)}...</span>
-                        )}
-                        {entry.tags && entry.tags.length > 0 && (
-                          <div className="month-entry-tags">
-                            {entry.tags.slice(0, 3).map((tag, tIdx) => (
-                              <span key={tIdx} className="month-entry-tag">{tag}</span>
-                            ))}
+                        {monthEntriesBulkEditMode && entry.id !== undefined && (
+                          <div className="entry-checkbox-wrapper">
+                            <input
+                              type="checkbox"
+                              checked={selectedMonthEntryIds.has(entry.id)}
+                              onChange={() => toggleMonthEntrySelection(entry.id)}
+                              onClick={(e) => e.stopPropagation()}
+                            />
                           </div>
                         )}
+                        <div className="month-entry-content-wrapper">
+                          <div className="month-entry-header">
+                            <span className="month-entry-title">{entry.title}</span>
+                            {entry.hour !== undefined && entry.hour !== null && (
+                              <span className="month-entry-time">
+                                {formatTime(entry.hour, entry.minute, entry.second, preferences.timeFormat || '12h')}
+                              </span>
+                            )}
+                          </div>
+                          {entry.content && entry.content.length > 0 && (
+                            <span className="month-entry-preview">{entry.content.substring(0, 80)}...</span>
+                          )}
+                          {entry.tags && entry.tags.length > 0 && (
+                            <div className="month-entry-tags">
+                              {entry.tags.slice(0, 3).map((tag, tIdx) => (
+                                <span key={tIdx} className="month-entry-tag">{tag}</span>
+                              ))}
+                            </div>
+                          )}
+                        </div>
                       </div>
                     );
                   })
@@ -583,6 +646,53 @@ export default function TimelineView({
       window.dispatchEvent(new CustomEvent('journalEntrySaved'));
     } catch (error) {
       console.error('Error deleting entries:', error);
+      alert(`Failed to delete entries: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  };
+
+  const toggleMonthEntrySelection = (entryId: number | undefined) => {
+    if (entryId === undefined) return;
+    setSelectedMonthEntryIds(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(entryId)) {
+        newSet.delete(entryId);
+      } else {
+        newSet.add(entryId);
+      }
+      return newSet;
+    });
+  };
+
+  const toggleSelectAllMonthEntries = (monthEntries: JournalEntry[]) => {
+    const entriesWithIds = monthEntries.filter(entry => entry.id !== undefined);
+    if (selectedMonthEntryIds.size === entriesWithIds.length && entriesWithIds.length > 0) {
+      setSelectedMonthEntryIds(new Set());
+    } else {
+      const allIds = new Set(entriesWithIds.map(entry => entry.id!));
+      setSelectedMonthEntryIds(allIds);
+    }
+  };
+
+  const handleBulkDeleteMonthEntries = async () => {
+    if (selectedMonthEntryIds.size === 0) return;
+    
+    const confirmMessage = `Are you sure you want to delete ${selectedMonthEntryIds.size} ${selectedMonthEntryIds.size === 1 ? 'entry' : 'entries'}? This action cannot be undone.`;
+    if (!window.confirm(confirmMessage)) {
+      return;
+    }
+
+    try {
+      const deletePromises = Array.from(selectedMonthEntryIds).map(id => 
+        deleteJournalEntry(id)
+      );
+      await Promise.all(deletePromises);
+      
+      setSelectedMonthEntryIds(new Set());
+      setMonthEntriesBulkEditMode(false);
+      // Entries are automatically refreshed via EntriesContext
+      window.dispatchEvent(new CustomEvent('journalEntrySaved'));
+    } catch (error) {
+      console.error('Error deleting month entries:', error);
       alert(`Failed to delete entries: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   };

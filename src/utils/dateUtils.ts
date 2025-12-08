@@ -77,6 +77,10 @@ export function parseISODate(dateStr: string): Date {
 }
 
 export function formatDate(date: Date, formatStr: string = 'yyyy-MM-dd'): string {
+  // For ISO date format (yyyy-MM-dd), use formatDateToISO to handle negative years correctly
+  if (formatStr === 'yyyy-MM-dd') {
+    return formatDateToISO(date);
+  }
   return format(date, formatStr);
 }
 

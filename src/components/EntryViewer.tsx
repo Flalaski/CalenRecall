@@ -46,10 +46,10 @@ export default function EntryViewer({
   // Check if there are day entries for the selected date (for day view messaging)
   const dayEntries = useMemo(() => {
     if (viewMode === 'day') {
-      return filterEntriesForRange(allEntries, 'day', date);
+      return filterEntriesForRange(allEntries, 'day', date, weekStartsOn);
     }
     return [];
-  }, [allEntries, viewMode, date]);
+  }, [allEntries, viewMode, date, weekStartsOn]);
 
   useEffect(() => {
     loadPeriodEntries();

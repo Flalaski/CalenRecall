@@ -1,46 +1,46 @@
 import { JournalEntry, TimeRange } from '../types';
-import { parseISODate, formatDate, getCanonicalDate, getWeekStart, getWeekEnd } from './dateUtils';
-import { isSameDay, isSameMonth, isSameYear } from 'date-fns';
+import { parseISODate, formatDate, getWeekStart, getWeekEnd, createDate, getMonthStart, getMonthEnd } from './dateUtils';
+import { isSameDay } from 'date-fns';
 
 /**
  * Calculate the date range needed for a view mode and selected date.
  * This determines which entries could be visible in the view.
  */
-export function getDateRangeForView(selectedDate: Date, viewMode: TimeRange): { startDate: Date; endDate: Date } {
+export function getDateRangeForView(selectedDate: Date, viewMode: TimeRange, weekStartsOn: 0 | 1 | 2 | 3 | 4 | 5 | 6 = 0): { startDate: Date; endDate: Date } {
   let startDate: Date;
   let endDate: Date;
 
   switch (viewMode) {
     case 'decade': {
       const decadeStart = Math.floor(selectedDate.getFullYear() / 10) * 10;
-      startDate = new Date(decadeStart, 0, 1);
-      endDate = new Date(decadeStart + 9, 11, 31);
+      startDate = createDate(decadeStart, 0, 1);
+      endDate = createDate(decadeStart + 9, 11, 31);
       break;
     }
     case 'year': {
-      startDate = new Date(selectedDate.getFullYear(), 0, 1);
-      endDate = new Date(selectedDate.getFullYear(), 11, 31);
+      startDate = createDate(selectedDate.getFullYear(), 0, 1);
+      endDate = createDate(selectedDate.getFullYear(), 11, 31);
       break;
     }
     case 'month': {
-      startDate = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1);
-      endDate = new Date(selectedDate.getFullYear(), selectedDate.getMonth() + 1, 0);
+      startDate = getMonthStart(selectedDate);
+      endDate = getMonthEnd(selectedDate);
       break;
     }
     case 'week': {
-      startDate = getWeekStart(selectedDate);
-      endDate = getWeekEnd(selectedDate);
+      startDate = getWeekStart(selectedDate, weekStartsOn);
+      endDate = getWeekEnd(selectedDate, weekStartsOn);
       // Expand to include full month(s) to catch month entries
-      const weekStartMonth = new Date(startDate.getFullYear(), startDate.getMonth(), 1);
-      const weekEndMonth = new Date(endDate.getFullYear(), endDate.getMonth() + 1, 0);
+      const weekStartMonth = getMonthStart(startDate);
+      const weekEndMonth = getMonthEnd(endDate);
       if (weekStartMonth < startDate) startDate = weekStartMonth;
       if (weekEndMonth > endDate) endDate = weekEndMonth;
       break;
     }
     case 'day': {
       // Load entries for the full month to catch month/week entries
-      startDate = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1);
-      endDate = new Date(selectedDate.getFullYear(), selectedDate.getMonth() + 1, 0);
+      startDate = getMonthStart(selectedDate);
+      endDate = getMonthEnd(selectedDate);
       break;
     }
     default: {
@@ -78,9 +78,9 @@ export function filterEntriesByDateRange(
 export function filterEntriesForDate(
   entries: JournalEntry[],
   date: Date,
-  viewMode: TimeRange
+  viewMode: TimeRange,
+  weekStartsOn: 0 | 1 | 2 | 3 | 4 | 5 | 6 = 0
 ): JournalEntry[] {
-  const dateStr = formatDate(date);
   const checkYear = date.getFullYear();
   const checkMonth = date.getMonth();
   const checkDay = date.getDate();
@@ -121,8 +121,8 @@ export function filterEntriesForDate(
         return entryYear === checkYear && entryMonth === checkMonth && entryDay === checkDay;
       }
       if (entry.timeRange === 'week') {
-        const entryWeekStart = getWeekStart(entryDate);
-        const checkWeekStart = getWeekStart(date);
+        const entryWeekStart = getWeekStart(entryDate, weekStartsOn);
+        const checkWeekStart = getWeekStart(date, weekStartsOn);
         return isSameDay(entryWeekStart, checkWeekStart);
       }
       if (entry.timeRange === 'month') {
@@ -137,8 +137,8 @@ export function filterEntriesForDate(
         return entryYear === checkYear && entryMonth === checkMonth && entryDay === checkDay;
       }
       if (entry.timeRange === 'week') {
-        const entryWeekStart = getWeekStart(entryDate);
-        const checkWeekStart = getWeekStart(date);
+        const entryWeekStart = getWeekStart(entryDate, weekStartsOn);
+        const checkWeekStart = getWeekStart(date, weekStartsOn);
         return isSameDay(entryWeekStart, checkWeekStart);
       }
       if (entry.timeRange === 'month') {
@@ -154,8 +154,8 @@ export function filterEntriesForDate(
       }
       // Also show week/month entries that include this day
       if (entry.timeRange === 'week') {
-        const entryWeekStart = getWeekStart(entryDate);
-        const entryWeekEnd = getWeekEnd(entryDate);
+        const entryWeekStart = getWeekStart(entryDate, weekStartsOn);
+        const entryWeekEnd = getWeekEnd(entryDate, weekStartsOn);
         return date >= entryWeekStart && date <= entryWeekEnd;
       }
       if (entry.timeRange === 'month') {
@@ -175,7 +175,8 @@ export function filterEntriesForDate(
 export function filterEntriesForRange(
   entries: JournalEntry[],
   range: TimeRange,
-  date: Date
+  date: Date,
+  weekStartsOn: 0 | 1 | 2 | 3 | 4 | 5 | 6 = 0
 ): JournalEntry[] {
   let targetValue: number;
   let targetYear: number;
@@ -200,14 +201,14 @@ export function filterEntriesForRange(
       break;
     }
     case 'week': {
-      targetWeekStart = getWeekStart(date);
+      targetWeekStart = getWeekStart(date, weekStartsOn);
       // Reference Monday: January 1, 0001
-      const referenceMonday = new Date(1, 0, 1);
+      const referenceMonday = createDate(1, 0, 1);
       targetValue = Math.floor((targetWeekStart.getTime() - referenceMonday.getTime()) / (1000 * 60 * 60 * 24 * 7));
       break;
     }
     case 'day': {
-      const referenceDay = new Date(1, 0, 1);
+      const referenceDay = createDate(1, 0, 1);
       targetValue = Math.floor((date.getTime() - referenceDay.getTime()) / (1000 * 60 * 60 * 24));
       break;
     }
@@ -234,13 +235,13 @@ export function filterEntriesForRange(
         break;
       }
       case 'week': {
-        const entryWeekStart = getWeekStart(entryDate);
-        const referenceMonday = new Date(1, 0, 1);
+        const entryWeekStart = getWeekStart(entryDate, weekStartsOn);
+        const referenceMonday = createDate(1, 0, 1);
         entryValue = Math.floor((entryWeekStart.getTime() - referenceMonday.getTime()) / (1000 * 60 * 60 * 24 * 7));
         break;
       }
       case 'day': {
-        const referenceDay = new Date(1, 0, 1);
+        const referenceDay = createDate(1, 0, 1);
         entryValue = Math.floor((entryDate.getTime() - referenceDay.getTime()) / (1000 * 60 * 60 * 24));
         break;
       }
@@ -256,18 +257,17 @@ export function filterEntriesForRange(
  */
 export function hasEntryForDate(
   entries: JournalEntry[],
-  date: Date
+  date: Date,
+  weekStartsOn: 0 | 1 | 2 | 3 | 4 | 5 | 6 = 0
 ): boolean {
   const dateStr = formatDate(date);
   const checkYear = date.getFullYear();
   const checkMonth = date.getMonth();
-  const checkDay = date.getDate();
 
   return entries.some(entry => {
     const entryDate = parseISODate(entry.date);
     const entryYear = entryDate.getFullYear();
     const entryMonth = entryDate.getMonth();
-    const entryDay = entryDate.getDate();
 
     if (entry.timeRange === 'day') {
       return entry.date === dateStr;
@@ -276,8 +276,8 @@ export function hasEntryForDate(
       return entryYear === checkYear && entryMonth === checkMonth;
     } else if (entry.timeRange === 'week') {
       // Mark all days in the week
-      const entryWeekStart = getWeekStart(entryDate);
-      const checkWeekStart = getWeekStart(date);
+      const entryWeekStart = getWeekStart(entryDate, weekStartsOn);
+      const checkWeekStart = getWeekStart(date, weekStartsOn);
       return isSameDay(entryWeekStart, checkWeekStart);
     } else if (entry.timeRange === 'year') {
       return entryYear === checkYear;
