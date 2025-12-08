@@ -155,7 +155,7 @@ declare global {
       removeEntryAttachment: (entryId: number, attachmentId: string) => Promise<{ success: boolean; error?: string; message?: string }>;
       getAttachmentPath: (entryId: number, attachmentId: string) => Promise<{ success: boolean; error?: string; path?: string }>;
       getEntriesByDateRange: (date: string, timeRange: TimeRange) => Promise<JournalEntry[]>;
-      saveEntry: (entry: JournalEntry) => Promise<void>;
+      saveEntry: (entry: JournalEntry) => Promise<{ success: boolean; entry: JournalEntry }>;
       deleteEntry: (id: number) => Promise<void>;
       deleteEntryByDateRange: (date: string, timeRange: TimeRange) => Promise<void>;
       searchEntries: (query: string) => Promise<JournalEntry[]>;

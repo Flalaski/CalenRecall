@@ -10,11 +10,13 @@ export async function getEntryForDate(date: Date, timeRange: TimeRange): Promise
   return await window.electronAPI.getEntry(dateStr, timeRange);
 }
 
-export async function saveJournalEntry(entry: JournalEntry): Promise<void> {
+export async function saveJournalEntry(entry: JournalEntry): Promise<JournalEntry> {
   if (!window.electronAPI) {
     throw new Error('Electron API not available');
   }
-  await window.electronAPI.saveEntry(entry);
+  const result = await window.electronAPI.saveEntry(entry);
+  // Return the saved entry with ID (for new entries, the ID will be populated)
+  return result.entry || entry;
 }
 
 export async function deleteJournalEntry(id: number): Promise<void> {

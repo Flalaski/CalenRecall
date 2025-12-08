@@ -833,7 +833,7 @@ export function getEntriesByDateAndRange(date: string, timeRange: 'decade' | 'ye
   });
 }
 
-export function saveEntry(entry: JournalEntry): void {
+export function saveEntry(entry: JournalEntry): JournalEntry {
   console.log('═══════════════════════════════════════════════════════════');
   console.log('[Database] 🗄️ saveEntry FUNCTION CALLED');
   console.log('[Database] Entry received:', {
@@ -1115,8 +1115,16 @@ export function saveEntry(entry: JournalEntry): void {
           secondType: typeof verifyRow?.second,
         });
         console.log('[Database] Insert operation COMPLETE for new entry ID:', lastInsertId.id);
+        
+        // Return entry with the new ID
+        return { ...entry, id: lastInsertId.id };
       }
+      // Fallback: return entry as-is if ID retrieval fails
+      return entry;
     }
+    
+    // For updates, return the entry with existing ID
+    return entry;
   } catch (error: any) {
     console.error('═══════════════════════════════════════════════════════════');
     console.error('[Database] ❌❌❌ ERROR in saveEntry:', error);

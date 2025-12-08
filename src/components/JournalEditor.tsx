@@ -45,10 +45,8 @@ export default function JournalEditor({
   const [preferences, setPreferences] = useState<Preferences>({});
   const [amPm, setAmPm] = useState<'AM' | 'PM'>('AM');
   const titleInputRef = useRef<HTMLInputElement>(null);
-  const [autoSaving, setAutoSaving] = useState(false);
-  const [lastAutoSave, setLastAutoSave] = useState<Date | null>(null);
   const autoSaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const autoSaveCountRef = useRef<number>(0);
+  const isSavingRef = useRef<boolean>(false);
 
   // Load preferences for time format
   useEffect(() => {
@@ -326,122 +324,42 @@ export default function JournalEditor({
     }
   };
 
-  // REDUNDANT AUTO-SAVE: Save entry data in real-time as user types
-  const performAutoSave = useCallback(async (isRedundant: boolean = false) => {
-    // Don't auto-save if there's no content
-    if (!title.trim() && !content.trim()) {
-      return;
-    }
-    
-    // Don't auto-save if we're already saving manually
-    if (saving) {
-      return;
-    }
-    
+  const getDefaultTitle = useCallback((): string => {
+    // Use calendar-aware formatting
     try {
-      setAutoSaving(true);
-      autoSaveCountRef.current += 1;
-      const saveNumber = autoSaveCountRef.current;
-      
-      console.log(`[JournalEditor] 🔄 AUTO-SAVE ${saveNumber}${isRedundant ? ' (REDUNDANT)' : ''} triggered`);
-      
-      const defaultTitle = getDefaultTitle();
-      
-      // If editing an existing entry, preserve its original date and timeRange
-      // Otherwise, calculate canonical date from current date/viewMode for new entries
-      let entryDate: string;
-      let entryTimeRange: TimeRange;
-      
-      if (currentEntry?.id) {
-        entryDate = currentEntry.date;
-        entryTimeRange = currentEntry.timeRange;
-      } else {
-        const canonicalDate = getCanonicalDate(date, viewMode);
-        entryDate = formatDate(canonicalDate);
-        entryTimeRange = viewMode;
+      return getTimeRangeLabelInCalendar(date, viewMode, calendar);
+    } catch (e) {
+      console.error('Error formatting date in calendar:', e);
+      // Fallback to Gregorian formatting
+      switch (viewMode) {
+        case 'decade':
+          const decadeStart = Math.floor(date.getFullYear() / 10) * 10;
+          return `${decadeStart}s`;
+        case 'year':
+          return formatDate(date, 'yyyy');
+        case 'month':
+          return formatDate(date, 'MMMM yyyy');
+        case 'week':
+          return `Week of ${formatDate(date, 'MMM d, yyyy')}`;
+        case 'day':
+          return formatDate(date, 'MMMM d, yyyy');
+        default:
+          return formatDate(date, 'MMMM d, yyyy');
       }
-      
-      // Process time fields same as manual save
-      const rawHour = hour;
-      const rawMinute = minute;
-      const rawSecond = second;
-      
-      let finalHour: number | null = null;
-      if (rawHour !== undefined && rawHour !== null && !isNaN(rawHour)) {
-        const converted = convertTo24Hour(rawHour, amPm);
-        if (converted !== undefined && converted !== null && !isNaN(converted)) {
-          finalHour = converted;
-        }
-      }
-      
-      let finalMinute: number = 0;
-      if (rawMinute !== undefined && rawMinute !== null && !isNaN(rawMinute)) {
-        finalMinute = rawMinute;
-      }
-      
-      let finalSecond: number = 0;
-      if (rawSecond !== undefined && rawSecond !== null && !isNaN(rawSecond)) {
-        finalSecond = rawSecond;
-      }
-      
-      const entry: JournalEntry = {
-        id: currentEntry?.id,
-        date: entryDate,
-        timeRange: entryTimeRange,
-        hour: finalHour,
-        minute: finalMinute,
-        second: finalSecond,
-        title: title.trim() || defaultTitle,
-        content: content.trim(),
-        tags: tags || [],
-        createdAt: currentEntry?.createdAt || new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-        linkedEntries: currentEntry?.linkedEntries || [],
-        archived: currentEntry?.archived || false,
-        pinned: currentEntry?.pinned || false,
-        attachments: currentEntry?.attachments || [],
-      };
-      
-      await saveJournalEntry(entry);
-      console.log(`[JournalEditor] ✅ AUTO-SAVE ${saveNumber} completed${isRedundant ? ' (REDUNDANT)' : ''}`);
-      
-      // Update currentEntry to track saved state
-      setCurrentEntry(entry);
-      setLastAutoSave(new Date());
-      
-      // REDUNDANT SAVE: Perform second save immediately after first (redundancy)
-      if (!isRedundant) {
-        setTimeout(() => {
-          performAutoSave(true);
-        }, 100);
-      }
-      
-    } catch (error) {
-      console.error(`[JournalEditor] ❌ AUTO-SAVE error:`, error);
-    } finally {
-      setAutoSaving(false);
     }
-  }, [title, content, tags, hour, minute, second, amPm, currentEntry, date, viewMode, saving, preferences.timeFormat]);
+  }, [date, viewMode, calendar]);
 
-  // Debounced auto-save trigger
-  const triggerAutoSave = useCallback(() => {
-    // Clear existing timeout
-    if (autoSaveTimeoutRef.current) {
-      clearTimeout(autoSaveTimeoutRef.current);
-    }
-    
-    // Don't auto-save if no content
-    if (!title.trim() && !content.trim()) {
-      return;
-    }
-    
-    // Debounce: wait 1 second after user stops typing
-    autoSaveTimeoutRef.current = setTimeout(() => {
-      performAutoSave(false);
-    }, 1000);
-  }, [title, content, performAutoSave]);
 
   const handleSave = async () => {
+    // CRITICAL: Prevent multiple simultaneous saves using ref (synchronous check)
+    if (isSavingRef.current || saving) {
+      console.warn('[JournalEditor] ⚠️ Save already in progress, ignoring duplicate call');
+      return;
+    }
+    
+    // Set ref immediately to prevent duplicate calls
+    isSavingRef.current = true;
+    
     // VERBOSE LOGGING - Always show when save is triggered
     console.log('═══════════════════════════════════════════════════════════');
     console.log('[JournalEditor] 🚀 handleSave FUNCTION CALLED');
@@ -464,13 +382,21 @@ export default function JournalEditor({
     
     if (!title.trim() && !content.trim()) {
       console.warn('[JournalEditor] ❌ Save blocked: No title or content');
+      isSavingRef.current = false; // Reset ref if save is blocked
       alert('Please enter a title or content before saving.');
       return;
     }
     
-    playSaveSound();
-
+    // Cancel any pending auto-save to prevent duplicate saves
+    if (autoSaveTimeoutRef.current) {
+      clearTimeout(autoSaveTimeoutRef.current);
+      autoSaveTimeoutRef.current = null;
+    }
+    
+    // Prevent auto-save from running during manual save
     setSaving(true);
+    
+    playSaveSound();
     try {
       const defaultTitle = getDefaultTitle();
       
@@ -570,23 +496,25 @@ export default function JournalEditor({
       
       console.log('[JournalEditor] 🔄 Calling saveJournalEntry IPC...');
       try {
-        await saveJournalEntry(entry);
+        const savedEntry = await saveJournalEntry(entry);
         console.log('[JournalEditor] ✅ saveJournalEntry IPC call COMPLETED successfully');
         
         // Verify entry was saved with time
-        if (entry.hour !== null && entry.hour !== undefined) {
-          console.log('[JournalEditor] ✅✅✅ Entry saved WITH TIME:', `${entry.hour}:${String(entry.minute).padStart(2, '0')}:${String(entry.second).padStart(2, '0')}`);
-        } else if (entry.minute !== 0 || entry.second !== 0) {
-          console.log('[JournalEditor] ⚠️ Entry saved with minute/second but no hour:', `--:${entry.minute}:${entry.second}`);
+        if (savedEntry.hour !== null && savedEntry.hour !== undefined) {
+          console.log('[JournalEditor] ✅✅✅ Entry saved WITH TIME:', `${savedEntry.hour}:${String(savedEntry.minute).padStart(2, '0')}:${String(savedEntry.second).padStart(2, '0')}`);
+        } else if (savedEntry.minute !== 0 || savedEntry.second !== 0) {
+          console.log('[JournalEditor] ⚠️ Entry saved with minute/second but no hour:', `--:${savedEntry.minute}:${savedEntry.second}`);
         } else {
           console.log('[JournalEditor] ℹ️ Entry saved without time fields (all null/zero)');
         }
+        
+        // CRITICAL: Use the saved entry with ID (for new entries, ID will now be populated)
+        console.log('[JournalEditor] 📝 Saved entry ID:', savedEntry.id);
+        setCurrentEntry(savedEntry);
       } catch (saveError) {
         console.error('[JournalEditor] ❌❌❌ ERROR saving entry:', saveError);
         throw saveError;
       }
-      
-      setCurrentEntry(entry);
       
       // Small delay to ensure database write completes
       await new Promise(resolve => setTimeout(resolve, 100));
@@ -623,33 +551,10 @@ export default function JournalEditor({
     } finally {
       console.log('[JournalEditor] ✅ handleSave function completed (finally block)');
       setSaving(false);
+      isSavingRef.current = false; // Reset ref when save completes
     }
   };
 
-  const getDefaultTitle = (): string => {
-    // Use calendar-aware formatting
-    try {
-      return getTimeRangeLabelInCalendar(date, viewMode, calendar);
-    } catch (e) {
-      console.error('Error formatting date in calendar:', e);
-      // Fallback to Gregorian formatting
-      switch (viewMode) {
-        case 'decade':
-          const decadeStart = Math.floor(date.getFullYear() / 10) * 10;
-          return `${decadeStart}s`;
-        case 'year':
-          return formatDate(date, 'yyyy');
-        case 'month':
-          return formatDate(date, 'MMMM yyyy');
-        case 'week':
-          return `Week of ${formatDate(date, 'MMM d, yyyy')}`;
-        case 'day':
-          return formatDate(date, 'MMMM d, yyyy');
-        default:
-          return formatDate(date, 'MMMM d, yyyy');
-      }
-    }
-  };
 
   const handleDelete = async () => {
     if (!currentEntry || !currentEntry.id) {
@@ -687,8 +592,6 @@ export default function JournalEditor({
       const newTags = [...tags, tag];
       setTags(newTags);
       setTagInput('');
-      // Trigger auto-save when tags change
-      setTimeout(() => triggerAutoSave(), 500);
     }
   };
 
@@ -696,8 +599,6 @@ export default function JournalEditor({
     playRemoveSound();
     const newTags = tags.filter(tag => tag !== tagToRemove);
     setTags(newTags);
-    // Trigger auto-save when tags change
-    setTimeout(() => triggerAutoSave(), 500);
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -824,7 +725,6 @@ export default function JournalEditor({
     }
     setMinute(minute);
     setSecond(second);
-    triggerAutoSave();
   };
 
   const getDateLabel = () => {
@@ -865,15 +765,6 @@ export default function JournalEditor({
       <div className="editor-header">
         <div className="header-top">
           <h3>{getDateLabel()}</h3>
-          <div className="auto-save-status">
-            {autoSaving ? (
-              <span className="auto-save-saving">Auto-saving...</span>
-            ) : lastAutoSave ? (
-              <span className="auto-save-saved" title={`Last auto-saved: ${lastAutoSave.toLocaleTimeString()}`}>
-                ✓ Auto-saved {Math.floor((Date.now() - lastAutoSave.getTime()) / 1000)}s ago
-              </span>
-            ) : null}
-          </div>
         </div>
         {currentEntry && (
           <div className="entry-meta">
@@ -918,7 +809,6 @@ export default function JournalEditor({
                       setHour(parsed);
                       playTimeInputSound();
                       console.log('[JournalEditor] Hour state updated to:', parsed);
-                      triggerAutoSave();
                     }
                   }}
                   onKeyDown={(e) => {
@@ -941,7 +831,6 @@ export default function JournalEditor({
                     onChange={(e) => {
                       setAmPm(e.target.value as 'AM' | 'PM');
                       playTimeInputSound();
-                      triggerAutoSave();
                     }}
                     onKeyDown={(e) => {
                       if (e.key === 'Tab') {
@@ -969,7 +858,6 @@ export default function JournalEditor({
                     const inputValue = e.target.value;
                     if (inputValue === '' || inputValue === null) {
                       setMinute(undefined);
-                      triggerAutoSave();
                       return;
                     }
                     const parsed = parseInt(inputValue, 10);
@@ -980,7 +868,6 @@ export default function JournalEditor({
                       setMinute(parsed);
                       playTimeInputSound();
                       console.log('[JournalEditor] Minute state updated to:', parsed);
-                      triggerAutoSave();
                     }
                   }}
                   onKeyDown={(e) => {
@@ -1007,7 +894,6 @@ export default function JournalEditor({
                     const inputValue = e.target.value;
                     if (inputValue === '' || inputValue === null) {
                       setSecond(undefined);
-                      triggerAutoSave();
                       return;
                     }
                     const parsed = parseInt(inputValue, 10);
@@ -1018,7 +904,6 @@ export default function JournalEditor({
                       setSecond(parsed);
                       playTimeInputSound();
                       console.log('[JournalEditor] Second state updated to:', parsed);
-                      triggerAutoSave();
                     }
                   }}
                   onKeyDown={(e) => {
@@ -1041,7 +926,6 @@ export default function JournalEditor({
                   setMinute(undefined);
                   setSecond(undefined);
                   setAmPm('AM');
-                  triggerAutoSave();
                 }}
                 title="Clear time"
               >
@@ -1067,7 +951,6 @@ export default function JournalEditor({
           value={title}
           onChange={(e) => {
             setTitle(e.target.value);
-            triggerAutoSave();
           }}
           onKeyDown={handleKeyPress}
         />
@@ -1078,7 +961,6 @@ export default function JournalEditor({
           value={content}
           onChange={(e) => {
             setContent(e.target.value);
-            triggerAutoSave();
           }}
           onKeyDown={handleKeyPress}
         />
@@ -1094,14 +976,16 @@ export default function JournalEditor({
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && e.ctrlKey) {
                   e.preventDefault();
+                  e.stopPropagation();
                   handleSave();
                 } else if (e.key === 'Enter') {
                   e.preventDefault();
+                  e.stopPropagation();
                   handleAddTag();
                 }
               }}
             />
-            <button className="add-tag-button" onClick={handleAddTag}>Add</button>
+            <button type="button" className="add-tag-button" onClick={handleAddTag}>Add</button>
           </div>
           <div className="tags-list">
             {tags.map((tag, idx) => (

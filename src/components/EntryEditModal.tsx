@@ -229,7 +229,7 @@ export default function EntryEditModal({
       
       console.log('[EntryEditModal] 🔄 Calling saveJournalEntry IPC...');
       try {
-        await saveJournalEntry(updatedEntry);
+        const savedEntry = await saveJournalEntry(updatedEntry);
         console.log('[EntryEditModal] ✅ saveJournalEntry IPC call COMPLETED successfully');
         
         // Verify entry was saved with time

@@ -469,8 +469,8 @@ export function setupIpcHandlers() {
       console.log('[IPC] Full Entry JSON:', JSON.stringify(entry, null, 2));
       console.log('═══════════════════════════════════════════════════════════');
       
-      // Save entry to database
-      saveEntry(entry);
+      // Save entry to database and get back the entry with ID (for new entries)
+      const savedEntry = saveEntry(entry);
       
       // CRITICAL: Explicitly flush database to disk immediately after save
       // This ensures data is persisted even if the program closes unexpectedly
@@ -480,8 +480,8 @@ export function setupIpcHandlers() {
         console.log('[IPC] ✅ Database flushed to disk - data is now persistent');
         
         // Additional verification: Read back the entry to confirm it's saved with time values
-        if (entry.id) {
-          const verifyEntry = getEntryById(entry.id);
+        if (savedEntry.id) {
+          const verifyEntry = getEntryById(savedEntry.id);
           if (verifyEntry) {
             console.log('[IPC] ✅✅✅ VERIFICATION: Entry read back from database:', {
               id: verifyEntry.id,
@@ -492,9 +492,9 @@ export function setupIpcHandlers() {
               minuteType: typeof verifyEntry.minute,
               secondType: typeof verifyEntry.second,
             });
-            if (verifyEntry.hour !== entry.hour || verifyEntry.minute !== entry.minute || verifyEntry.second !== entry.second) {
+            if (verifyEntry.hour !== savedEntry.hour || verifyEntry.minute !== savedEntry.minute || verifyEntry.second !== savedEntry.second) {
               console.error('[IPC] ❌❌❌ MISMATCH: Time values in database do not match what was saved!', {
-                saved: { hour: entry.hour, minute: entry.minute, second: entry.second },
+                saved: { hour: savedEntry.hour, minute: savedEntry.minute, second: savedEntry.second },
                 retrieved: { hour: verifyEntry.hour, minute: verifyEntry.minute, second: verifyEntry.second }
               });
             }
@@ -509,7 +509,7 @@ export function setupIpcHandlers() {
       
       console.log('[IPC] ✅ save-entry handler COMPLETED - database.saveEntry() called and flushed');
       console.log('═══════════════════════════════════════════════════════════');
-      return { success: true };
+      return { success: true, entry: savedEntry };
     } catch (error) {
       console.error('═══════════════════════════════════════════════════════════');
       console.error('[IPC] ❌❌❌ ERROR in save-entry handler:', error);
@@ -633,24 +633,29 @@ export function setupIpcHandlers() {
   });
 
   ipcMain.handle('set-preference', async (event, key: keyof Preferences, value: any) => {
+    console.log('[IPC] set-preference called:', key, value, 'type:', typeof value);
     setPreference(key, value);
     
     // Notify main window of preference changes that need immediate UI updates
     // This allows the main window to update immediately without waiting for window events
     // Use type assertion to check string keys since TypeScript can't narrow keyof types
     const keyStr = key as string;
-    // Send notification for theme, fontSize, minimapCrystalUseDefaultColors, backgroundImage, minimapSize, showMinimap, and weekStartsOn
-    if (keyStr === 'theme' || keyStr === 'fontSize' || keyStr === 'minimapCrystalUseDefaultColors' || keyStr === 'backgroundImage' || keyStr === 'minimapSize' || keyStr === 'showMinimap' || keyStr === 'weekStartsOn') {
+    // Send notification for theme, fontSize, minimapCrystalUseDefaultColors, backgroundImage, minimapSize, showMinimap, weekStartsOn, and soundEffectsEnabled
+    if (keyStr === 'theme' || keyStr === 'fontSize' || keyStr === 'minimapCrystalUseDefaultColors' || keyStr === 'backgroundImage' || keyStr === 'minimapSize' || keyStr === 'showMinimap' || keyStr === 'weekStartsOn' || keyStr === 'soundEffectsEnabled') {
+      console.log('[IPC] Preference', keyStr, 'is in notification list, will send to main window');
       // Send to main window if it exists and is not the sender
       if (mainWindowRef && !mainWindowRef.isDestroyed()) {
         const senderWindow = BrowserWindow.fromWebContents(event.sender);
         // Only send if the sender is not the main window (i.e., it's the preferences window)
         if (senderWindow !== mainWindowRef) {
-          console.log('[IPC] 📤 Sending preference-updated to main window:', keyStr, value);
+          console.log('[IPC] 📤 Sending preference-updated to main window:', keyStr, value, 'type:', typeof value);
           try {
             // Send immediately
             const sent = mainWindowRef.webContents.send('preference-updated', { key: keyStr, value });
             console.log('[IPC] ✅ Message sent (send returns void, but no error thrown)');
+            if (keyStr === 'soundEffectsEnabled') {
+              console.log('[IPC] 🔊 Sound effects preference update sent - value:', value, 'type:', typeof value);
+            }
             
             // For theme, fontSize, and minimapSize changes, send multiple fallback messages to ensure it's received
             // This handles cases where the listener might not be ready or there are timing issues

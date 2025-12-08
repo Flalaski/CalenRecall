@@ -18,7 +18,21 @@ function areSoundEffectsEnabled(): boolean {
 
 // Update cache when preference changes (called from App.tsx or other components)
 export function updateSoundEffectsCache(enabled: boolean): void {
+  console.log('[audioUtils] Updating sound effects cache:', enabled);
   soundEffectsEnabledCache = enabled;
+  
+  // If sounds are being enabled, ensure audio context is ready
+  if (enabled && sharedAudioContext) {
+    // Resume audio context if it's suspended (browsers require user interaction)
+    if (sharedAudioContext.state === 'suspended') {
+      console.log('[audioUtils] Resuming suspended audio context...');
+      sharedAudioContext.resume().then(() => {
+        console.log('[audioUtils] ✅ Audio context resumed, state:', sharedAudioContext?.state);
+      }).catch((error) => {
+        console.warn('[audioUtils] Could not resume audio context:', error);
+      });
+    }
+  }
 }
 
 // Initialize cache from preferences (called on app startup)
@@ -26,7 +40,22 @@ export async function initializeSoundEffectsCache(): Promise<void> {
   if (window.electronAPI) {
     try {
       const enabled = await window.electronAPI.getPreference('soundEffectsEnabled');
-      updateSoundEffectsCache(enabled !== false); // Default to true if undefined
+      console.log('[audioUtils] Initializing sound effects cache from preference:', enabled, 'type:', typeof enabled);
+      // Explicitly handle boolean values
+      // If value is explicitly false, disable sounds
+      // If value is true, enable sounds
+      // If value is undefined/null, enable sounds (default to enabled)
+      let cacheValue: boolean;
+      if (enabled === false) {
+        cacheValue = false;
+      } else if (enabled === true) {
+        cacheValue = true;
+      } else {
+        // undefined, null, or any other value - default to enabled
+        cacheValue = true;
+      }
+      console.log('[audioUtils] Setting initial sound effects cache to:', cacheValue, '(preference was:', enabled, ')');
+      updateSoundEffectsCache(cacheValue);
     } catch (error) {
       console.debug('Error initializing sound effects cache:', error);
       updateSoundEffectsCache(true); // Default to enabled

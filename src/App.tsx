@@ -254,9 +254,32 @@ function App() {
       setPreferences(prev => ({ ...prev, weekStartsOn: value }));
     } else if (key === 'soundEffectsEnabled') {
       // Update preferences state and sound effects cache
-      console.log('[App] Updating sound effects enabled:', value);
+      console.log('[App] Updating sound effects enabled:', value, 'type:', typeof value);
       setPreferences(prev => ({ ...prev, soundEffectsEnabled: value }));
-      updateSoundEffectsCache(value !== false); // Default to true if undefined
+      // Explicitly handle boolean values
+      // If value is explicitly false, disable sounds
+      // If value is true, enable sounds
+      // If value is undefined/null, enable sounds (default to enabled)
+      let enabled: boolean;
+      if (value === false) {
+        enabled = false;
+      } else if (value === true) {
+        enabled = true;
+      } else {
+        // undefined, null, or any other value - default to enabled
+        enabled = true;
+      }
+      console.log('[App] Setting sound effects cache to:', enabled, '(value was:', value, ')');
+      updateSoundEffectsCache(enabled);
+      
+      // Re-initialize the cache from the database to ensure it's in sync
+      // This ensures the change takes effect immediately
+      console.log('[App] Re-initializing sound effects cache from database...');
+      initializeSoundEffectsCache().then(() => {
+        console.log('[App] ✅ Sound effects cache re-initialized');
+      }).catch((error) => {
+        console.error('[App] Error re-initializing sound effects cache:', error);
+      });
     } else {
       // For all other preferences, update state (they may not need immediate UI updates)
       setPreferences(prev => ({ ...prev, [key]: value }));

@@ -151,6 +151,7 @@ export default function PreferencesComponent() {
   };
 
   const updatePreference = <K extends keyof Preferences>(key: K, value: Preferences[K]) => {
+    console.log('[Preferences] updatePreference called:', key, value, 'type:', typeof value);
     setPreferences(prev => ({ ...prev, [key]: value }));
     
     // Apply theme and font size immediately if changed (before save for instant feedback)
@@ -170,7 +171,10 @@ export default function PreferencesComponent() {
     if (window.electronAPI) {
       window.electronAPI.setPreference(key, value)
         .then(() => {
-          console.log('[Preferences] Preference saved successfully:', key, value);
+          console.log('[Preferences] Preference saved successfully:', key, value, 'type:', typeof value);
+          if (key === 'soundEffectsEnabled') {
+            console.log('[Preferences] 🔊 Sound effects preference saved - value:', value);
+          }
           // For theme changes, explicitly force the main window to refresh
           if (key === 'theme') {
             // Give the preference save a moment to complete
@@ -632,7 +636,10 @@ export default function PreferencesComponent() {
               <input
                 type="checkbox"
                 checked={preferences.soundEffectsEnabled !== false}
-                onChange={(e) => updatePreference('soundEffectsEnabled', e.target.checked)}
+                onChange={(e) => {
+                  console.log('[Preferences] Sound effects checkbox toggled:', e.target.checked, 'current preference:', preferences.soundEffectsEnabled);
+                  updatePreference('soundEffectsEnabled', e.target.checked);
+                }}
               />
               Enable sound effects
             </label>

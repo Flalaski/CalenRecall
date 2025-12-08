@@ -85,7 +85,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   getAttachmentPath: (entryId: number, attachmentId: string): Promise<{ success: boolean; error?: string; path?: string }> =>
     ipcRenderer.invoke('get-attachment-path', entryId, attachmentId),
   
-  saveEntry: (entry: JournalEntry): Promise<void> =>
+  saveEntry: (entry: JournalEntry): Promise<{ success: boolean; entry: JournalEntry }> =>
     ipcRenderer.invoke('save-entry', entry),
   
   deleteEntry: (id: number): Promise<void> =>
