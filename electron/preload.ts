@@ -27,6 +27,7 @@ export interface Preferences {
   timeFormat?: '12h' | '24h'; // Time format: 12-hour (AM/PM) or 24-hour
   defaultExportFormat?: ExportFormat; // Default export format to use when exporting entries
   defaultExportMetadata?: ExportMetadata; // Default export metadata to use for all exports
+  soundEffectsEnabled?: boolean; // Whether sound effects are enabled
 }
 
 contextBridge.exposeInMainWorld('electronAPI', {

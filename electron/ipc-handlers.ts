@@ -25,6 +25,7 @@ interface ThemeStyles {
 import {
   getEntries,
   getEntry,
+  getEntryById,
   getEntriesByDateAndRange,
   saveEntry,
   deleteEntry,
@@ -46,6 +47,7 @@ import {
   pinEntry,
   unpinEntry,
   getPinnedEntries,
+  flushDatabase,
 } from './database';
 import { EntryVersion } from './types';
 import { JournalEntry, TimeRange, ExportFormat, EntryAttachment, ExportMetadata } from './types';
@@ -445,12 +447,77 @@ export function setupIpcHandlers() {
 
   ipcMain.handle('save-entry', async (_event, entry: JournalEntry) => {
     try {
-      console.log('IPC save-entry handler called');
+      console.log('═══════════════════════════════════════════════════════════');
+      console.log('[IPC] 📥 save-entry handler RECEIVED entry from renderer');
+      console.log('[IPC] Entry Details:', {
+        id: entry.id,
+        date: entry.date,
+        timeRange: entry.timeRange,
+        timeFields: {
+          hour: entry.hour,
+          hourType: typeof entry.hour,
+          minute: entry.minute,
+          minuteType: typeof entry.minute,
+          second: entry.second,
+          secondType: typeof entry.second,
+        },
+        title: entry.title,
+        contentLength: entry.content?.length || 0,
+        hasTags: !!entry.tags,
+        tagsCount: entry.tags?.length || 0,
+      });
+      console.log('[IPC] Full Entry JSON:', JSON.stringify(entry, null, 2));
+      console.log('═══════════════════════════════════════════════════════════');
+      
+      // Save entry to database
       saveEntry(entry);
-      console.log('IPC save-entry completed');
+      
+      // CRITICAL: Explicitly flush database to disk immediately after save
+      // This ensures data is persisted even if the program closes unexpectedly
+      console.log('[IPC] 🔄 Flushing database to disk after save...');
+      try {
+        flushDatabase();
+        console.log('[IPC] ✅ Database flushed to disk - data is now persistent');
+        
+        // Additional verification: Read back the entry to confirm it's saved with time values
+        if (entry.id) {
+          const verifyEntry = getEntryById(entry.id);
+          if (verifyEntry) {
+            console.log('[IPC] ✅✅✅ VERIFICATION: Entry read back from database:', {
+              id: verifyEntry.id,
+              hour: verifyEntry.hour,
+              minute: verifyEntry.minute,
+              second: verifyEntry.second,
+              hourType: typeof verifyEntry.hour,
+              minuteType: typeof verifyEntry.minute,
+              secondType: typeof verifyEntry.second,
+            });
+            if (verifyEntry.hour !== entry.hour || verifyEntry.minute !== entry.minute || verifyEntry.second !== entry.second) {
+              console.error('[IPC] ❌❌❌ MISMATCH: Time values in database do not match what was saved!', {
+                saved: { hour: entry.hour, minute: entry.minute, second: entry.second },
+                retrieved: { hour: verifyEntry.hour, minute: verifyEntry.minute, second: verifyEntry.second }
+              });
+            }
+          } else {
+            console.warn('[IPC] ⚠️ WARNING: Could not verify entry after save (entry not found)');
+          }
+        }
+      } catch (flushError) {
+        console.error('[IPC] ❌ Error flushing database:', flushError);
+        // Don't fail the save - data might still be saved, just not flushed yet
+      }
+      
+      console.log('[IPC] ✅ save-entry handler COMPLETED - database.saveEntry() called and flushed');
+      console.log('═══════════════════════════════════════════════════════════');
       return { success: true };
     } catch (error) {
-      console.error('IPC save-entry error:', error);
+      console.error('═══════════════════════════════════════════════════════════');
+      console.error('[IPC] ❌❌❌ ERROR in save-entry handler:', error);
+      console.error('[IPC] Error details:', {
+        message: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      });
+      console.error('═══════════════════════════════════════════════════════════');
       throw error;
     }
   });
@@ -478,6 +545,16 @@ export function setupIpcHandlers() {
    */
   ipcMain.handle('export-entries', async (_event, format: ExportFormat, metadata?: ExportMetadata) => {
     const entries = getAllEntries();
+    console.log('[Export] Retrieved entries for export:', entries.length);
+    if (entries.length > 0) {
+      console.log('[Export] First entry time values:', {
+        id: entries[0].id,
+        date: entries[0].date,
+        hour: entries[0].hour,
+        minute: entries[0].minute,
+        second: entries[0].second
+      });
+    }
 
     if (!entries.length) {
       return { success: false, canceled: false, error: 'no_entries' };
@@ -1355,6 +1432,26 @@ function parseMarkdownImport(content: string): JournalEntry[] {
 }
 
 /**
+ * Format time values from entry (hour, minute, second) as a readable time string.
+ * Returns formatted time like "10:30:00" or "10:30" if seconds are 0, or empty string if no hour.
+ */
+function formatEntryTime(entry: JournalEntry): string {
+  if (entry.hour === null || entry.hour === undefined) {
+    return '';
+  }
+  
+  const hour = entry.hour;
+  const minute = entry.minute !== null && entry.minute !== undefined ? entry.minute : 0;
+  const second = entry.second !== null && entry.second !== undefined ? entry.second : 0;
+  
+  // Format as HH:MM:SS or HH:MM if seconds are 0
+  if (second === 0) {
+    return `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
+  }
+  return `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}:${String(second).padStart(2, '0')}`;
+}
+
+/**
  * Render all entries into a single string according to the chosen export format.
  * For binary formats like PDF, see exportEntriesAsPdf instead.
  */
@@ -1545,7 +1642,17 @@ function formatAsMarkdown(entries: JournalEntry[], metadata?: ExportMetadata): s
   
   // Entries
   for (const entry of entries) {
-    lines.push(`## ${entry.date} (${entry.timeRange}) — ${entry.title}`);
+    const timeStr = formatEntryTime(entry);
+    console.log('[Export Markdown] Entry time values:', {
+      id: entry.id,
+      date: entry.date,
+      hour: entry.hour,
+      minute: entry.minute,
+      second: entry.second,
+      formattedTime: timeStr
+    });
+    const dateTimeStr = timeStr ? `${entry.date} ${timeStr}` : entry.date;
+    lines.push(`## ${dateTimeStr} (${entry.timeRange}) — ${entry.title}`);
     if (entry.tags && entry.tags.length > 0) {
       lines.push(`**Tags:** ${entry.tags.join(', ')}`);
     }
@@ -1670,7 +1777,9 @@ function formatAsPlainText(entries: JournalEntry[], metadata?: ExportMetadata): 
   
   // Entries
   for (const entry of entries) {
-    lines.push(`${entry.date} [${entry.timeRange}] - ${entry.title}`);
+    const timeStr = formatEntryTime(entry);
+    const dateTimeStr = timeStr ? `${entry.date} ${timeStr}` : entry.date;
+    lines.push(`${dateTimeStr} [${entry.timeRange}] - ${entry.title}`);
     if (entry.tags && entry.tags.length > 0) {
       lines.push(`Tags: ${entry.tags.join(', ')}`);
     }
@@ -1827,7 +1936,9 @@ function formatAsRtf(entries: JournalEntry[], metadata?: ExportMetadata): string
   body.push('\\par');
 
   for (const entry of entries) {
-    const titleLine = `${entry.date} (${entry.timeRange}) - ${entry.title}`;
+    const timeStr = formatEntryTime(entry);
+    const dateTimeStr = timeStr ? `${entry.date} ${timeStr}` : entry.date;
+    const titleLine = `${dateTimeStr} (${entry.timeRange}) - ${entry.title}`;
     body.push(`\\b ${escapeRtf(titleLine)} \\b0\\par`);
 
     if (entry.tags && entry.tags.length > 0) {
@@ -1905,8 +2016,10 @@ function formatAsDecades(entries: JournalEntry[], metadata?: ExportMetadata): st
       lines.push(`  -- ${year} --`);
       const yearEntries = yearMap.get(year)!;
       for (const entry of yearEntries) {
+        const timeStr = formatEntryTime(entry);
+        const dateTimeStr = timeStr ? `${entry.date} ${timeStr}` : entry.date;
         lines.push(
-          `    * ${entry.date} [${entry.timeRange}] ${entry.title}`
+          `    * ${dateTimeStr} [${entry.timeRange}] ${entry.title}`
         );
       }
       lines.push('');
@@ -1946,7 +2059,7 @@ function formatAsCsv(entries: JournalEntry[], metadata?: ExportMetadata): string
   }
   
   // CSV header
-  lines.push('Date,Time Range,Title,Content,Tags,Created At,Updated At');
+  lines.push('Date,Time,Time Range,Title,Content,Tags,Created At,Updated At');
   
   // Helper function to escape CSV fields
   const escapeCsvField = (field: string): string => {
@@ -1959,6 +2072,8 @@ function formatAsCsv(entries: JournalEntry[], metadata?: ExportMetadata): string
   
   for (const entry of entries) {
     const date = escapeCsvField(entry.date);
+    const timeStr = formatEntryTime(entry);
+    const time = escapeCsvField(timeStr);
     const timeRange = escapeCsvField(entry.timeRange);
     const title = escapeCsvField(entry.title);
     const content = escapeCsvField(entry.content);
@@ -1966,7 +2081,7 @@ function formatAsCsv(entries: JournalEntry[], metadata?: ExportMetadata): string
     const createdAt = escapeCsvField(entry.createdAt);
     const updatedAt = escapeCsvField(entry.updatedAt);
     
-    lines.push(`${date},${timeRange},${title},${content},${tags},${createdAt},${updatedAt}`);
+    lines.push(`${date},${time},${timeRange},${title},${content},${tags},${createdAt},${updatedAt}`);
   }
   
   return lines.join('\n');
@@ -2084,7 +2199,9 @@ async function exportEntriesAsPdf(entries: JournalEntry[], filePath: string, met
       doc.moveDown(2);
 
       for (const entry of entries) {
-        const titleLine = `${entry.date} (${entry.timeRange}) — ${entry.title}`;
+        const timeStr = formatEntryTime(entry);
+        const dateTimeStr = timeStr ? `${entry.date} ${timeStr}` : entry.date;
+        const titleLine = `${dateTimeStr} (${entry.timeRange}) — ${entry.title}`;
         doc.fontSize(14).font('Helvetica-Bold');
         (doc as any).fillColor(colors.text);
         doc.text(titleLine);

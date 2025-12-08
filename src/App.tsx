@@ -11,7 +11,7 @@ import LoadingScreen from './components/LoadingScreen';
 import BackgroundArt from './components/BackgroundArt';
 import { TimeRange, JournalEntry, Preferences, ExportFormat, ExportMetadata } from './types';
 import { getEntryForDate } from './services/journalService';
-import { playNewEntrySound } from './utils/audioUtils';
+import { playNewEntrySound, initializeSoundEffectsCache, updateSoundEffectsCache } from './utils/audioUtils';
 import { formatDateToISO, parseISODate } from './utils/dateUtils';
 import { applyTheme, initializeTheme, applyFontSize } from './utils/themes';
 import { useEntries } from './contexts/EntriesContext';
@@ -252,6 +252,11 @@ function App() {
       // This triggers a re-render which will update all calendar views
       console.log('[App] Updating week starts on:', value);
       setPreferences(prev => ({ ...prev, weekStartsOn: value }));
+    } else if (key === 'soundEffectsEnabled') {
+      // Update preferences state and sound effects cache
+      console.log('[App] Updating sound effects enabled:', value);
+      setPreferences(prev => ({ ...prev, soundEffectsEnabled: value }));
+      updateSoundEffectsCache(value !== false); // Default to true if undefined
     } else {
       // For all other preferences, update state (they may not need immediate UI updates)
       setPreferences(prev => ({ ...prev, [key]: value }));
@@ -316,6 +321,9 @@ function App() {
           applyTheme(theme);
           initializeTheme(theme);
           applyFontSize(fontSize);
+          
+          // Initialize sound effects cache
+          initializeSoundEffectsCache();
           
           // In built versions, sometimes the DOM isn't fully ready when React first renders
           // Apply again after DOM is ready to ensure it takes effect

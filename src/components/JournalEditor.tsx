@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { JournalEntry, TimeRange, Preferences } from '../types';
 import { formatDate, getCanonicalDate, isToday } from '../utils/dateUtils';
 import { getEntryForDate, saveJournalEntry, deleteJournalEntry } from '../services/journalService';
-import { playSaveSound, playCancelSound, playDeleteSound, playAddSound, playRemoveSound } from '../utils/audioUtils';
+import { playSaveSound, playCancelSound, playDeleteSound, playAddSound, playRemoveSound, playTimeInputSound, playTimeFieldFocusSound, playTimeIncrementSound, playTabSound } from '../utils/audioUtils';
 import { useCalendar } from '../contexts/CalendarContext';
 import { getTimeRangeLabelInCalendar } from '../utils/calendars/timeRangeConverter';
 import './JournalEditor.css';
@@ -45,6 +45,10 @@ export default function JournalEditor({
   const [preferences, setPreferences] = useState<Preferences>({});
   const [amPm, setAmPm] = useState<'AM' | 'PM'>('AM');
   const titleInputRef = useRef<HTMLInputElement>(null);
+  const [autoSaving, setAutoSaving] = useState(false);
+  const [lastAutoSave, setLastAutoSave] = useState<Date | null>(null);
+  const autoSaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const autoSaveCountRef = useRef<number>(0);
 
   // Load preferences for time format
   useEffect(() => {
@@ -141,32 +145,38 @@ export default function JournalEditor({
       setTitle(propSelectedEntry.title);
       setContent(propSelectedEntry.content);
       setTags(propSelectedEntry.tags || []);
-      // Only load time fields for day entries
-      if (propSelectedEntry.timeRange === 'day') {
+      // Always preserve time fields as foundational entry data
+      // Convert null to undefined for UI state
+      const hour24: number | undefined = (propSelectedEntry.hour !== null && propSelectedEntry.hour !== undefined) ? propSelectedEntry.hour : undefined;
+      const minuteValue: number | undefined = (propSelectedEntry.minute !== null && propSelectedEntry.minute !== undefined) ? propSelectedEntry.minute : undefined;
+      const secondValue: number | undefined = (propSelectedEntry.second !== null && propSelectedEntry.second !== undefined) ? propSelectedEntry.second : undefined;
+      
+      // Only display time fields in UI for day entries
+      // But always preserve them in original state for saving
+      if (propSelectedEntry.timeRange === 'day' && viewMode === 'day') {
         const timeFormat = preferences.timeFormat || '12h';
-        if (timeFormat === '12h' && propSelectedEntry.hour !== undefined && propSelectedEntry.hour !== null) {
-          const hour24 = propSelectedEntry.hour;
+        if (timeFormat === '12h' && hour24 !== undefined) {
           setHour(getDisplayHour(hour24));
           setAmPm(hour24 >= 12 ? 'PM' : 'AM');
         } else {
-          setHour(propSelectedEntry.hour);
-          setAmPm(propSelectedEntry.hour !== undefined && propSelectedEntry.hour !== null && propSelectedEntry.hour >= 12 ? 'PM' : 'AM');
+          setHour(hour24);
+          setAmPm(hour24 !== undefined && hour24 >= 12 ? 'PM' : 'AM');
         }
-        setMinute(propSelectedEntry.minute);
-        setSecond(propSelectedEntry.second);
-        setOriginalHour(propSelectedEntry.hour);
-        setOriginalMinute(propSelectedEntry.minute);
-        setOriginalSecond(propSelectedEntry.second);
+        setMinute(minuteValue);
+        setSecond(secondValue);
       } else {
-        // Clear time fields for non-day entries
+        // Clear UI state for non-day entries (time inputs not shown)
+        // But preserve original values for saving
         setHour(undefined);
         setMinute(undefined);
         setSecond(undefined);
         setAmPm('AM');
-        setOriginalHour(undefined);
-        setOriginalMinute(undefined);
-        setOriginalSecond(undefined);
       }
+      // Always preserve original time fields for all entry types
+      // This ensures time is saved as foundational entry data
+      setOriginalHour(hour24);
+      setOriginalMinute(minuteValue);
+      setOriginalSecond(secondValue);
       setOriginalTitle(propSelectedEntry.title);
       setOriginalContent(propSelectedEntry.content);
       setOriginalTags(propSelectedEntry.tags || []);
@@ -232,32 +242,38 @@ export default function JournalEditor({
         setTitle(existingEntry.title);
         setContent(existingEntry.content);
         setTags(existingEntry.tags || []);
-        // Only load time fields for day entries and when in day view mode
+        // Always preserve time fields as foundational entry data
+        // Convert null to undefined for UI state (null comes from database, undefined is for empty state)
+        const hour24: number | undefined = (existingEntry.hour !== null && existingEntry.hour !== undefined) ? existingEntry.hour : undefined;
+        const minuteValue: number | undefined = (existingEntry.minute !== null && existingEntry.minute !== undefined) ? existingEntry.minute : undefined;
+        const secondValue: number | undefined = (existingEntry.second !== null && existingEntry.second !== undefined) ? existingEntry.second : undefined;
+        
+        // Only display time fields in UI for day entries in day view mode
+        // But always preserve them in original state for saving
         if (viewMode === 'day' && existingEntry.timeRange === 'day') {
           const timeFormat = preferences.timeFormat || '12h';
-          if (timeFormat === '12h' && existingEntry.hour !== undefined && existingEntry.hour !== null) {
-            const hour24 = existingEntry.hour;
+          if (timeFormat === '12h' && hour24 !== undefined) {
             setHour(getDisplayHour(hour24));
             setAmPm(hour24 >= 12 ? 'PM' : 'AM');
           } else {
-            setHour(existingEntry.hour);
-            setAmPm(existingEntry.hour !== undefined && existingEntry.hour !== null && existingEntry.hour >= 12 ? 'PM' : 'AM');
+            setHour(hour24);
+            setAmPm(hour24 !== undefined && hour24 >= 12 ? 'PM' : 'AM');
           }
-          setMinute(existingEntry.minute);
-          setSecond(existingEntry.second);
-          setOriginalHour(existingEntry.hour);
-          setOriginalMinute(existingEntry.minute);
-          setOriginalSecond(existingEntry.second);
+          setMinute(minuteValue);
+          setSecond(secondValue);
         } else {
-          // Clear time fields for non-day entries or non-day view modes
+          // Clear UI state for non-day entries (time inputs not shown)
+          // But preserve original values for saving
           setHour(undefined);
           setMinute(undefined);
           setSecond(undefined);
           setAmPm('AM');
-          setOriginalHour(undefined);
-          setOriginalMinute(undefined);
-          setOriginalSecond(undefined);
         }
+        // Always preserve original time fields for all entry types
+        // This ensures time is saved as foundational entry data
+        setOriginalHour(hour24);
+        setOriginalMinute(minuteValue);
+        setOriginalSecond(secondValue);
         setOriginalTitle(existingEntry.title);
         setOriginalContent(existingEntry.content);
         setOriginalTags(existingEntry.tags || []);
@@ -310,10 +326,144 @@ export default function JournalEditor({
     }
   };
 
+  // REDUNDANT AUTO-SAVE: Save entry data in real-time as user types
+  const performAutoSave = useCallback(async (isRedundant: boolean = false) => {
+    // Don't auto-save if there's no content
+    if (!title.trim() && !content.trim()) {
+      return;
+    }
+    
+    // Don't auto-save if we're already saving manually
+    if (saving) {
+      return;
+    }
+    
+    try {
+      setAutoSaving(true);
+      autoSaveCountRef.current += 1;
+      const saveNumber = autoSaveCountRef.current;
+      
+      console.log(`[JournalEditor] 🔄 AUTO-SAVE ${saveNumber}${isRedundant ? ' (REDUNDANT)' : ''} triggered`);
+      
+      const defaultTitle = getDefaultTitle();
+      
+      // If editing an existing entry, preserve its original date and timeRange
+      // Otherwise, calculate canonical date from current date/viewMode for new entries
+      let entryDate: string;
+      let entryTimeRange: TimeRange;
+      
+      if (currentEntry?.id) {
+        entryDate = currentEntry.date;
+        entryTimeRange = currentEntry.timeRange;
+      } else {
+        const canonicalDate = getCanonicalDate(date, viewMode);
+        entryDate = formatDate(canonicalDate);
+        entryTimeRange = viewMode;
+      }
+      
+      // Process time fields same as manual save
+      const rawHour = hour;
+      const rawMinute = minute;
+      const rawSecond = second;
+      
+      let finalHour: number | null = null;
+      if (rawHour !== undefined && rawHour !== null && !isNaN(rawHour)) {
+        const converted = convertTo24Hour(rawHour, amPm);
+        if (converted !== undefined && converted !== null && !isNaN(converted)) {
+          finalHour = converted;
+        }
+      }
+      
+      let finalMinute: number = 0;
+      if (rawMinute !== undefined && rawMinute !== null && !isNaN(rawMinute)) {
+        finalMinute = rawMinute;
+      }
+      
+      let finalSecond: number = 0;
+      if (rawSecond !== undefined && rawSecond !== null && !isNaN(rawSecond)) {
+        finalSecond = rawSecond;
+      }
+      
+      const entry: JournalEntry = {
+        id: currentEntry?.id,
+        date: entryDate,
+        timeRange: entryTimeRange,
+        hour: finalHour,
+        minute: finalMinute,
+        second: finalSecond,
+        title: title.trim() || defaultTitle,
+        content: content.trim(),
+        tags: tags || [],
+        createdAt: currentEntry?.createdAt || new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        linkedEntries: currentEntry?.linkedEntries || [],
+        archived: currentEntry?.archived || false,
+        pinned: currentEntry?.pinned || false,
+        attachments: currentEntry?.attachments || [],
+      };
+      
+      await saveJournalEntry(entry);
+      console.log(`[JournalEditor] ✅ AUTO-SAVE ${saveNumber} completed${isRedundant ? ' (REDUNDANT)' : ''}`);
+      
+      // Update currentEntry to track saved state
+      setCurrentEntry(entry);
+      setLastAutoSave(new Date());
+      
+      // REDUNDANT SAVE: Perform second save immediately after first (redundancy)
+      if (!isRedundant) {
+        setTimeout(() => {
+          performAutoSave(true);
+        }, 100);
+      }
+      
+    } catch (error) {
+      console.error(`[JournalEditor] ❌ AUTO-SAVE error:`, error);
+    } finally {
+      setAutoSaving(false);
+    }
+  }, [title, content, tags, hour, minute, second, amPm, currentEntry, date, viewMode, saving, preferences.timeFormat]);
+
+  // Debounced auto-save trigger
+  const triggerAutoSave = useCallback(() => {
+    // Clear existing timeout
+    if (autoSaveTimeoutRef.current) {
+      clearTimeout(autoSaveTimeoutRef.current);
+    }
+    
+    // Don't auto-save if no content
+    if (!title.trim() && !content.trim()) {
+      return;
+    }
+    
+    // Debounce: wait 1 second after user stops typing
+    autoSaveTimeoutRef.current = setTimeout(() => {
+      performAutoSave(false);
+    }, 1000);
+  }, [title, content, performAutoSave]);
+
   const handleSave = async () => {
-    console.log('handleSave called', { title, content, hasTitle: !!title.trim(), hasContent: !!content.trim() });
+    // VERBOSE LOGGING - Always show when save is triggered
+    console.log('═══════════════════════════════════════════════════════════');
+    console.log('[JournalEditor] 🚀 handleSave FUNCTION CALLED');
+    console.log('[JournalEditor] Entry State:', {
+      title: title,
+      contentLength: content.length,
+      contentPreview: content.substring(0, 100),
+      hour: hour,
+      minute: minute,
+      second: second,
+      amPm: amPm,
+      viewMode: viewMode,
+      hasCurrentEntry: !!currentEntry,
+      currentEntryId: currentEntry?.id,
+      currentEntryHour: currentEntry?.hour,
+      currentEntryMinute: currentEntry?.minute,
+      currentEntrySecond: currentEntry?.second,
+    });
+    console.log('═══════════════════════════════════════════════════════════');
     
     if (!title.trim() && !content.trim()) {
+      console.warn('[JournalEditor] ❌ Save blocked: No title or content');
       alert('Please enter a title or content before saving.');
       return;
     }
@@ -340,47 +490,101 @@ export default function JournalEditor({
         entryTimeRange = viewMode;
       }
       
-      // Convert hour to 24-hour format if needed (treat time fields like other form fields)
-      // If state has a value (including 0), use it; otherwise preserve from currentEntry
-      const hour24 = (hour !== undefined && hour !== null)
-        ? convertTo24Hour(hour, amPm)
-        : currentEntry?.hour;
+      // PROFESSIONAL TIME SAVE: Always process and include time fields explicitly
+      // Step 1: Get raw values from state
+      const rawHour = hour;
+      const rawMinute = minute;
+      const rawSecond = second;
       
+      // Step 2: Convert hour to 24-hour format if provided
+      let finalHour: number | null = null;
+      if (rawHour !== undefined && rawHour !== null && !isNaN(rawHour)) {
+        const converted = convertTo24Hour(rawHour, amPm);
+        if (converted !== undefined && converted !== null && !isNaN(converted)) {
+          finalHour = converted;
+        }
+      }
+      
+      // Step 3: Process minute - use state value or default to 0
+      let finalMinute: number = 0;
+      if (rawMinute !== undefined && rawMinute !== null && !isNaN(rawMinute)) {
+        finalMinute = rawMinute;
+      }
+      
+      // Step 4: Process second - use state value or default to 0
+      let finalSecond: number = 0;
+      if (rawSecond !== undefined && rawSecond !== null && !isNaN(rawSecond)) {
+        finalSecond = rawSecond;
+      }
+      
+      // Step 5: Build entry with time fields ALWAYS included (never undefined)
       const entry: JournalEntry = {
         id: currentEntry?.id,
         date: entryDate,
         timeRange: entryTimeRange,
-        // Save time fields exactly like title/content/tags - use state or preserve existing
-        hour: hour24,
-        minute: (minute !== undefined && minute !== null) ? minute : currentEntry?.minute,
-        second: (second !== undefined && second !== null) ? second : currentEntry?.second,
+        // CRITICAL: Time fields must always be present in entry object
+        // Use null for hour if not set, 0 for minute/second if not set
+        hour: finalHour,
+        minute: finalMinute,
+        second: finalSecond,
         title: title.trim() || defaultTitle,
         content: content.trim(),
-        tags: tags,
+        tags: tags || [],
         createdAt: currentEntry?.createdAt || new Date().toISOString(),
         updatedAt: new Date().toISOString(),
-        // Preserve other fields that might exist on the entry
-        linkedEntries: currentEntry?.linkedEntries,
-        archived: currentEntry?.archived,
-        pinned: currentEntry?.pinned,
-        attachments: currentEntry?.attachments,
+        // Preserve other fields
+        linkedEntries: currentEntry?.linkedEntries || [],
+        archived: currentEntry?.archived || false,
+        pinned: currentEntry?.pinned || false,
+        attachments: currentEntry?.attachments || [],
       };
+      
+      // VERBOSE LOGGING - Time processing
+      console.log('[JournalEditor] ⏰ Time Processing Step:');
+      console.log('  Raw State Values:', { hour: rawHour, minute: rawMinute, second: rawSecond, amPm: amPm });
+      console.log('  After Conversion:', { hour: finalHour, minute: finalMinute, second: finalSecond });
+      console.log('  Final Entry Time Fields:', { hour: entry.hour, minute: entry.minute, second: entry.second });
 
-      console.log('Saving entry:', {
+      // VERBOSE LOGGING - Complete entry object
+      console.log('[JournalEditor] 📦 Complete Entry Object Being Saved:');
+      console.log(JSON.stringify(entry, null, 2));
+      console.log('[JournalEditor] Entry Summary:', {
         id: entry.id,
         date: entry.date,
         timeRange: entry.timeRange,
-        hour: entry.hour,
-        minute: entry.minute,
-        second: entry.second,
+        timeFields: {
+          hour: entry.hour,
+          hourType: typeof entry.hour,
+          minute: entry.minute,
+          minuteType: typeof entry.minute,
+          second: entry.second,
+          secondType: typeof entry.second,
+        },
         title: entry.title,
-        stateHour: hour,
-        stateMinute: minute,
-        stateSecond: second,
-        currentEntryHour: currentEntry?.hour,
+        contentLength: entry.content.length,
+        tagsCount: entry.tags?.length || 0,
+        hasLinkedEntries: !!entry.linkedEntries,
+        archived: entry.archived,
+        pinned: entry.pinned,
       });
-      await saveJournalEntry(entry);
-      console.log('Entry saved successfully');
+      
+      console.log('[JournalEditor] 🔄 Calling saveJournalEntry IPC...');
+      try {
+        await saveJournalEntry(entry);
+        console.log('[JournalEditor] ✅ saveJournalEntry IPC call COMPLETED successfully');
+        
+        // Verify entry was saved with time
+        if (entry.hour !== null && entry.hour !== undefined) {
+          console.log('[JournalEditor] ✅✅✅ Entry saved WITH TIME:', `${entry.hour}:${String(entry.minute).padStart(2, '0')}:${String(entry.second).padStart(2, '0')}`);
+        } else if (entry.minute !== 0 || entry.second !== 0) {
+          console.log('[JournalEditor] ⚠️ Entry saved with minute/second but no hour:', `--:${entry.minute}:${entry.second}`);
+        } else {
+          console.log('[JournalEditor] ℹ️ Entry saved without time fields (all null/zero)');
+        }
+      } catch (saveError) {
+        console.error('[JournalEditor] ❌❌❌ ERROR saving entry:', saveError);
+        throw saveError;
+      }
       
       setCurrentEntry(entry);
       
@@ -389,7 +593,7 @@ export default function JournalEditor({
       
       // Trigger a custom event to refresh calendar and list
       window.dispatchEvent(new CustomEvent('journalEntrySaved'));
-      console.log('journalEntrySaved event dispatched');
+      console.log('[JournalEditor] journalEntrySaved event dispatched');
       
       // Clear form after saving if it was a new entry
       if (isNewEntry) {
@@ -407,9 +611,17 @@ export default function JournalEditor({
         onEntrySaved();
       }
     } catch (error) {
-      console.error('Error saving entry:', error);
+      console.error('═══════════════════════════════════════════════════════════');
+      console.error('[JournalEditor] ❌❌❌ ERROR in handleSave:', error);
+      console.error('[JournalEditor] Error details:', {
+        message: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+        errorObject: error
+      });
+      console.error('═══════════════════════════════════════════════════════════');
       alert(`Failed to save entry: ${error instanceof Error ? error.message : 'Unknown error'}. Please check the console for details.`);
     } finally {
+      console.log('[JournalEditor] ✅ handleSave function completed (finally block)');
       setSaving(false);
     }
   };
@@ -472,19 +684,27 @@ export default function JournalEditor({
     const tag = tagInput.trim();
     if (tag && !tags.includes(tag)) {
       playAddSound();
-      setTags([...tags, tag]);
+      const newTags = [...tags, tag];
+      setTags(newTags);
       setTagInput('');
+      // Trigger auto-save when tags change
+      setTimeout(() => triggerAutoSave(), 500);
     }
   };
 
   const handleRemoveTag = (tagToRemove: string) => {
     playRemoveSound();
-    setTags(tags.filter(tag => tag !== tagToRemove));
+    const newTags = tags.filter(tag => tag !== tagToRemove);
+    setTags(newTags);
+    // Trigger auto-save when tags change
+    setTimeout(() => triggerAutoSave(), 500);
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && e.ctrlKey) {
       handleSave();
+    } else if (e.key === 'Tab') {
+      playTabSound();
     }
   };
 
@@ -575,8 +795,18 @@ export default function JournalEditor({
     }
   }, [isNewEntry, loading]);
 
+  // Cleanup auto-save timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (autoSaveTimeoutRef.current) {
+        clearTimeout(autoSaveTimeoutRef.current);
+      }
+    };
+  }, []);
+
   // Handle "now" button - set current local time
   const handleSetNow = () => {
+    playAddSound(); // Play add sound for setting current time
     const now = new Date();
     const hour24 = now.getHours();
     const minute = now.getMinutes();
@@ -594,6 +824,7 @@ export default function JournalEditor({
     }
     setMinute(minute);
     setSecond(second);
+    triggerAutoSave();
   };
 
   const getDateLabel = () => {
@@ -634,6 +865,15 @@ export default function JournalEditor({
       <div className="editor-header">
         <div className="header-top">
           <h3>{getDateLabel()}</h3>
+          <div className="auto-save-status">
+            {autoSaving ? (
+              <span className="auto-save-saving">Auto-saving...</span>
+            ) : lastAutoSave ? (
+              <span className="auto-save-saved" title={`Last auto-saved: ${lastAutoSave.toLocaleTimeString()}`}>
+                ✓ Auto-saved {Math.floor((Date.now() - lastAutoSave.getTime()) / 1000)}s ago
+              </span>
+            ) : null}
+          </div>
         </div>
         {currentEntry && (
           <div className="entry-meta">
@@ -660,13 +900,32 @@ export default function JournalEditor({
                   max={preferences.timeFormat === '12h' ? 12 : 23}
                   placeholder="--"
                   value={hour !== undefined && hour !== null ? hour : ''}
+                  onFocus={() => playTimeFieldFocusSound()}
                   onChange={(e) => {
-                    const val = e.target.value === '' ? undefined : parseInt(e.target.value, 10);
+                    const inputValue = e.target.value;
+                    if (inputValue === '' || inputValue === null) {
+                      setHour(undefined);
+                      return;
+                    }
+                    const parsed = parseInt(inputValue, 10);
+                    if (isNaN(parsed)) {
+                      return; // Invalid input, don't update
+                    }
                     const timeFormat = preferences.timeFormat || '12h';
                     const maxVal = timeFormat === '12h' ? 12 : 23;
                     const minVal = timeFormat === '12h' ? 1 : 0;
-                    if (val === undefined || (val >= minVal && val <= maxVal)) {
-                      setHour(val);
+                    if (parsed >= minVal && parsed <= maxVal) {
+                      setHour(parsed);
+                      playTimeInputSound();
+                      console.log('[JournalEditor] Hour state updated to:', parsed);
+                      triggerAutoSave();
+                    }
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+                      playTimeIncrementSound(e.key === 'ArrowUp' ? 'up' : 'down');
+                    } else if (e.key === 'Tab') {
+                      playTabSound();
                     }
                   }}
                 />
@@ -678,7 +937,17 @@ export default function JournalEditor({
                     id="ampm-input"
                     className="time-input"
                     value={amPm}
-                    onChange={(e) => setAmPm(e.target.value as 'AM' | 'PM')}
+                    onFocus={() => playTimeFieldFocusSound()}
+                    onChange={(e) => {
+                      setAmPm(e.target.value as 'AM' | 'PM');
+                      playTimeInputSound();
+                      triggerAutoSave();
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Tab') {
+                        playTabSound();
+                      }
+                    }}
                   >
                     <option value="AM">AM</option>
                     <option value="PM">PM</option>
@@ -695,10 +964,30 @@ export default function JournalEditor({
                   max="59"
                   placeholder="--"
                   value={minute !== undefined && minute !== null ? minute : ''}
+                  onFocus={() => playTimeFieldFocusSound()}
                   onChange={(e) => {
-                    const val = e.target.value === '' ? undefined : parseInt(e.target.value, 10);
-                    if (val === undefined || (val >= 0 && val <= 59)) {
-                      setMinute(val);
+                    const inputValue = e.target.value;
+                    if (inputValue === '' || inputValue === null) {
+                      setMinute(undefined);
+                      triggerAutoSave();
+                      return;
+                    }
+                    const parsed = parseInt(inputValue, 10);
+                    if (isNaN(parsed)) {
+                      return; // Invalid input, don't update
+                    }
+                    if (parsed >= 0 && parsed <= 59) {
+                      setMinute(parsed);
+                      playTimeInputSound();
+                      console.log('[JournalEditor] Minute state updated to:', parsed);
+                      triggerAutoSave();
+                    }
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+                      playTimeIncrementSound(e.key === 'ArrowUp' ? 'up' : 'down');
+                    } else if (e.key === 'Tab') {
+                      playTabSound();
                     }
                   }}
                 />
@@ -713,10 +1002,30 @@ export default function JournalEditor({
                   max="59"
                   placeholder="--"
                   value={second !== undefined && second !== null ? second : ''}
+                  onFocus={() => playTimeFieldFocusSound()}
                   onChange={(e) => {
-                    const val = e.target.value === '' ? undefined : parseInt(e.target.value, 10);
-                    if (val === undefined || (val >= 0 && val <= 59)) {
-                      setSecond(val);
+                    const inputValue = e.target.value;
+                    if (inputValue === '' || inputValue === null) {
+                      setSecond(undefined);
+                      triggerAutoSave();
+                      return;
+                    }
+                    const parsed = parseInt(inputValue, 10);
+                    if (isNaN(parsed)) {
+                      return; // Invalid input, don't update
+                    }
+                    if (parsed >= 0 && parsed <= 59) {
+                      setSecond(parsed);
+                      playTimeInputSound();
+                      console.log('[JournalEditor] Second state updated to:', parsed);
+                      triggerAutoSave();
+                    }
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+                      playTimeIncrementSound(e.key === 'ArrowUp' ? 'up' : 'down');
+                    } else if (e.key === 'Tab') {
+                      playTabSound();
                     }
                   }}
                 />
@@ -727,10 +1036,12 @@ export default function JournalEditor({
                 type="button"
                 className="clear-time-button"
                 onClick={() => {
+                  playRemoveSound();
                   setHour(undefined);
                   setMinute(undefined);
                   setSecond(undefined);
                   setAmPm('AM');
+                  triggerAutoSave();
                 }}
                 title="Clear time"
               >
@@ -754,7 +1065,10 @@ export default function JournalEditor({
           className="title-input"
           placeholder={`${viewMode.charAt(0).toUpperCase() + viewMode.slice(1)} entry title...`}
           value={title}
-          onChange={(e) => setTitle(e.target.value)}
+          onChange={(e) => {
+            setTitle(e.target.value);
+            triggerAutoSave();
+          }}
           onKeyDown={handleKeyPress}
         />
         
@@ -762,7 +1076,10 @@ export default function JournalEditor({
           className="content-input"
           placeholder={`Write your ${viewMode} journal entry here...`}
           value={content}
-          onChange={(e) => setContent(e.target.value)}
+          onChange={(e) => {
+            setContent(e.target.value);
+            triggerAutoSave();
+          }}
           onKeyDown={handleKeyPress}
         />
         
@@ -811,7 +1128,18 @@ export default function JournalEditor({
           )}
           <button
             className="save-button"
-            onClick={handleSave}
+            onClick={() => {
+              console.log('[JournalEditor] 🔘 SAVE BUTTON CLICKED');
+              console.log('[JournalEditor] Button click - current state:', {
+                saving: saving,
+                hasTitle: !!title.trim(),
+                hasContent: !!content.trim(),
+                hour: hour,
+                minute: minute,
+                second: second
+              });
+              handleSave();
+            }}
             disabled={saving || (!title.trim() && !content.trim())}
           >
             {saving ? 'Saving...' : 'Save (Ctrl+Enter)'}

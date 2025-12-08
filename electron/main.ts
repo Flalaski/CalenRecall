@@ -622,6 +622,27 @@ function createMenu() {
       ],
     },
     {
+      label: 'Sound',
+      submenu: [
+        {
+          label: 'Enable Sound Effects',
+          type: 'checkbox',
+          checked: getAllPreferences().soundEffectsEnabled !== false,
+          click: () => {
+            const currentPrefs = getAllPreferences();
+            const newValue = !(currentPrefs.soundEffectsEnabled !== false);
+            setPreference('soundEffectsEnabled', newValue);
+            // Notify the renderer process about the change
+            if (mainWindow && !mainWindow.isDestroyed()) {
+              mainWindow.webContents.send('preference-updated', { key: 'soundEffectsEnabled', value: newValue });
+            }
+            // Update the menu to reflect the change
+            updateMenu();
+          },
+        },
+      ],
+    },
+    {
       label: 'Themes',
       submenu: themeMenuItems,
     },

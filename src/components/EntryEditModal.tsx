@@ -124,7 +124,27 @@ export default function EntryEditModal({
   }, [isOpen, onClose]);
 
   const handleSave = async () => {
+    // VERBOSE LOGGING - Always show when save is triggered
+    console.log('═══════════════════════════════════════════════════════════');
+    console.log('[EntryEditModal] 🚀 handleSave FUNCTION CALLED');
+    console.log('[EntryEditModal] Entry State:', {
+      entryId: entry.id,
+      title: title,
+      contentLength: content.length,
+      contentPreview: content.substring(0, 100),
+      hour: hour,
+      minute: minute,
+      second: second,
+      amPm: amPm,
+      timeRange: entry.timeRange,
+      originalHour: entry.hour,
+      originalMinute: entry.minute,
+      originalSecond: entry.second,
+    });
+    console.log('═══════════════════════════════════════════════════════════');
+    
     if (!title.trim() && !content.trim()) {
+      console.warn('[EntryEditModal] ❌ Save blocked: No title or content');
       alert('Please enter a title or content before saving.');
       return;
     }
@@ -133,30 +153,104 @@ export default function EntryEditModal({
     setSaving(true);
 
     try {
-      // Convert hour to 24-hour format if needed (only for day entries)
-      const hour24 = entry.timeRange === 'day' && hour !== undefined && hour !== null 
-        ? convertTo24Hour(hour, amPm) 
-        : undefined;
+      // PROFESSIONAL TIME SAVE: Always process and include time fields explicitly (only for day entries)
+      let finalHour: number | null = null;
+      let finalMinute: number = 0;
+      let finalSecond: number = 0;
       
+      if (entry.timeRange === 'day') {
+        // Step 1: Get raw values from state
+        const rawHour = hour;
+        const rawMinute = minute;
+        const rawSecond = second;
+        
+        // Step 2: Convert hour to 24-hour format if provided
+        if (rawHour !== undefined && rawHour !== null && !isNaN(rawHour)) {
+          const converted = convertTo24Hour(rawHour, amPm);
+          if (converted !== undefined && converted !== null && !isNaN(converted)) {
+            finalHour = converted;
+          }
+        }
+        
+        // Step 3: Process minute - use state value or default to 0
+        if (rawMinute !== undefined && rawMinute !== null && !isNaN(rawMinute)) {
+          finalMinute = rawMinute;
+        }
+        
+        // Step 4: Process second - use state value or default to 0
+        if (rawSecond !== undefined && rawSecond !== null && !isNaN(rawSecond)) {
+          finalSecond = rawSecond;
+        }
+      } else {
+        // For non-day entries, preserve existing time values
+        finalHour = entry.hour ?? null;
+        finalMinute = entry.minute ?? 0;
+        finalSecond = entry.second ?? 0;
+      }
+      
+      // VERBOSE LOGGING - Time processing
+      console.log('[EntryEditModal] ⏰ Time Processing Step:');
+      console.log('  Raw State Values:', { hour: hour, minute: minute, second: second, amPm: amPm });
+      console.log('  After Conversion:', { hour: finalHour, minute: finalMinute, second: finalSecond });
+      
+      // Step 5: Build entry with time fields ALWAYS included (never undefined)
       const updatedEntry: JournalEntry = {
         ...entry,
         title: title.trim() || entry.title,
         content: content.trim(),
         tags: tags,
-        // Only include time fields for day entries
-        hour: entry.timeRange === 'day' ? hour24 : entry.hour,
-        minute: entry.timeRange === 'day' ? (minute !== undefined && minute !== null ? minute : entry.minute) : entry.minute,
-        second: entry.timeRange === 'day' ? (second !== undefined && second !== null ? second : entry.second) : entry.second,
+        // CRITICAL: Time fields must always be present in entry object
+        // Use null for hour if not set, 0 for minute/second if not set
+        hour: finalHour,
+        minute: finalMinute,
+        second: finalSecond,
         updatedAt: new Date().toISOString(),
       };
 
-      await saveJournalEntry(updatedEntry);
+      // VERBOSE LOGGING - Complete entry object
+      console.log('[EntryEditModal] 📦 Complete Entry Object Being Saved:');
+      console.log(JSON.stringify(updatedEntry, null, 2));
+      console.log('[EntryEditModal] Entry Summary:', {
+        id: updatedEntry.id,
+        date: updatedEntry.date,
+        timeRange: updatedEntry.timeRange,
+        timeFields: {
+          hour: updatedEntry.hour,
+          hourType: typeof updatedEntry.hour,
+          minute: updatedEntry.minute,
+          minuteType: typeof updatedEntry.minute,
+          second: updatedEntry.second,
+          secondType: typeof updatedEntry.second,
+        },
+        title: updatedEntry.title,
+        contentLength: updatedEntry.content.length,
+        tagsCount: updatedEntry.tags?.length || 0,
+      });
+      
+      console.log('[EntryEditModal] 🔄 Calling saveJournalEntry IPC...');
+      try {
+        await saveJournalEntry(updatedEntry);
+        console.log('[EntryEditModal] ✅ saveJournalEntry IPC call COMPLETED successfully');
+        
+        // Verify entry was saved with time
+        if (updatedEntry.hour !== null && updatedEntry.hour !== undefined) {
+          console.log('[EntryEditModal] ✅✅✅ Entry saved WITH TIME:', `${updatedEntry.hour}:${String(updatedEntry.minute).padStart(2, '0')}:${String(updatedEntry.second).padStart(2, '0')}`);
+        } else if (updatedEntry.minute !== 0 || updatedEntry.second !== 0) {
+          console.log('[EntryEditModal] ⚠️ Entry saved with minute/second but no hour:', `--:${updatedEntry.minute}:${updatedEntry.second}`);
+        } else {
+          console.log('[EntryEditModal] ℹ️ Entry saved without time fields (all null/zero)');
+        }
+      } catch (saveError) {
+        console.error('[EntryEditModal] ❌❌❌ ERROR saving entry:', saveError);
+        throw saveError;
+      }
 
       // Small delay to ensure database write completes
       await new Promise(resolve => setTimeout(resolve, 100));
 
       // Trigger a custom event to refresh calendar and list
       window.dispatchEvent(new CustomEvent('journalEntrySaved'));
+      console.log('[EntryEditModal] journalEntrySaved event dispatched');
 
       // Notify parent
       if (onEntrySaved) {
@@ -165,9 +259,17 @@ export default function EntryEditModal({
 
       onClose();
     } catch (error) {
-      console.error('Error saving entry:', error);
+      console.error('═══════════════════════════════════════════════════════════');
+      console.error('[EntryEditModal] ❌❌❌ ERROR in handleSave:', error);
+      console.error('[EntryEditModal] Error details:', {
+        message: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+        errorObject: error
+      });
+      console.error('═══════════════════════════════════════════════════════════');
       alert(`Failed to save entry: ${error instanceof Error ? error.message : 'Unknown error'}. Please check the console for details.`);
     } finally {
+      console.log('[EntryEditModal] ✅ handleSave function completed (finally block)');
       setSaving(false);
     }
   };
@@ -519,7 +621,19 @@ export default function EntryEditModal({
             </button>
             <button
               className="modal-save-button"
-              onClick={handleSave}
+              onClick={() => {
+                console.log('[EntryEditModal] 🔘 SAVE BUTTON CLICKED');
+                console.log('[EntryEditModal] Button click - current state:', {
+                  saving: saving,
+                  hasTitle: !!title.trim(),
+                  hasContent: !!content.trim(),
+                  hour: hour,
+                  minute: minute,
+                  second: second,
+                  timeRange: entry.timeRange
+                });
+                handleSave();
+              }}
               disabled={saving || (!title.trim() && !content.trim())}
             >
               {saving ? 'Saving...' : 'Save (Ctrl+Enter)'}

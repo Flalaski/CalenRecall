@@ -28,6 +28,34 @@
   justify-content: space-between;
   align-items: center;
   margin-bottom: 0.5rem;
+  gap: 1rem;
+}
+
+.auto-save-status {
+  display: flex;
+  align-items: center;
+  font-size: 0.75rem;
+  color: #666;
+}
+
+.auto-save-saving {
+  color: #4a90e2;
+  font-weight: 500;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+.auto-save-saved {
+  color: #28a745;
+  font-weight: 500;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.6;
+  }
 }
 
 .editor-header h3 {

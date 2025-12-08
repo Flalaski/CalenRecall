@@ -2,9 +2,9 @@ export interface JournalEntry {
   id?: number;
   date: string; // ISO date string (YYYY-MM-DD) - canonical date for the time range
   timeRange: 'decade' | 'year' | 'month' | 'week' | 'day'; // Time scale for this entry
-  hour?: number; // Optional hour (0-23)
-  minute?: number; // Optional minute (0-59)
-  second?: number; // Optional second (0-59)
+  hour?: number | null; // Optional hour (0-23), null when cleared
+  minute?: number | null; // Optional minute (0-59), null when cleared
+  second?: number | null; // Optional second (0-59), null when cleared
   title: string;
   content: string;
   createdAt: string; // ISO datetime string
@@ -131,6 +131,7 @@ export interface Preferences {
   timeFormat?: '12h' | '24h'; // Time format: 12-hour (AM/PM) or 24-hour
   defaultExportFormat?: ExportFormat; // Default export format to use when exporting entries
   defaultExportMetadata?: ExportMetadata; // Default export metadata to use for all exports
+  soundEffectsEnabled?: boolean; // Whether sound effects are enabled
 }
 
 declare global {

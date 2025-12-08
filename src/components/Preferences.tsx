@@ -626,6 +626,18 @@ export default function PreferencesComponent() {
               <option value="6">Saturday</option>
             </select>
           </div>
+
+          <div className="preference-item">
+            <label>
+              <input
+                type="checkbox"
+                checked={preferences.soundEffectsEnabled !== false}
+                onChange={(e) => updatePreference('soundEffectsEnabled', e.target.checked)}
+              />
+              Enable sound effects
+            </label>
+            <small>When enabled, the app will play sound effects for various interactions. Disable to turn off all sound effects.</small>
+          </div>
         </div>
 
         <div className="preferences-section">

@@ -1,6 +1,41 @@
 // Shared audio context for all UI sounds - reuse to avoid creation overhead
 let sharedAudioContext: AudioContext | null = null;
 
+// Cache for sound effects enabled preference
+let soundEffectsEnabledCache: boolean | null = null;
+
+// Check if sound effects are enabled (synchronous, uses cache)
+function areSoundEffectsEnabled(): boolean {
+  // Use cached value if available
+  if (soundEffectsEnabledCache !== null) {
+    return soundEffectsEnabledCache;
+  }
+  
+  // Default to enabled if cache is not set yet
+  // The cache will be populated by App.tsx on startup
+  return true;
+}
+
+// Update cache when preference changes (called from App.tsx or other components)
+export function updateSoundEffectsCache(enabled: boolean): void {
+  soundEffectsEnabledCache = enabled;
+}
+
+// Initialize cache from preferences (called on app startup)
+export async function initializeSoundEffectsCache(): Promise<void> {
+  if (window.electronAPI) {
+    try {
+      const enabled = await window.electronAPI.getPreference('soundEffectsEnabled');
+      updateSoundEffectsCache(enabled !== false); // Default to true if undefined
+    } catch (error) {
+      console.debug('Error initializing sound effects cache:', error);
+      updateSoundEffectsCache(true); // Default to enabled
+    }
+  } else {
+    updateSoundEffectsCache(true); // Default to enabled
+  }
+}
+
 // Initialize audio context on first use
 export function getAudioContext(): AudioContext | null {
   if (!sharedAudioContext) {
@@ -37,6 +72,7 @@ export function getAudioContext(): AudioContext | null {
 
 // Generate mechanical click sound using Web Audio API (for minimap scale changes)
 export function playMechanicalClick(direction: 'up' | 'down'): void {
+  if (!areSoundEffectsEnabled()) return;
   const audioContext = getAudioContext();
   if (!audioContext) return;
   
@@ -110,6 +146,7 @@ export function playMicroBlip(
   tier: 'decade' | 'year' | 'month' | 'week' | 'day' = 'day',
   direction: 'next' | 'prev' | null = null
 ): void {
+  if (!areSoundEffectsEnabled()) return;
   const audioContext = getAudioContext();
   if (!audioContext) return;
   
@@ -169,6 +206,7 @@ export function playMicroBlip(
 
 // Tab sound - for tabbing between date input fields
 export function playTabSound(): void {
+  if (!areSoundEffectsEnabled()) return;
   const audioContext = getAudioContext();
   if (!audioContext) return;
   
@@ -200,8 +238,110 @@ export function playTabSound(): void {
   }
 }
 
+// Time input sound - for time field value changes
+export function playTimeInputSound(): void {
+  if (!areSoundEffectsEnabled()) return;
+  const audioContext = getAudioContext();
+  if (!audioContext) return;
+  
+  if (audioContext.state === 'closed') return;
+  
+  try {
+    const now = audioContext.currentTime;
+    const oscillator = audioContext.createOscillator();
+    const gainNode = audioContext.createGain();
+    
+    // Precise time input sound - quick, crisp tick for time value changes
+    oscillator.type = 'sine';
+    oscillator.frequency.setValueAtTime(900, now);
+    oscillator.frequency.linearRampToValueAtTime(1000, now + 0.02);
+    oscillator.frequency.linearRampToValueAtTime(850, now + 0.04);
+    
+    gainNode.gain.setValueAtTime(0, now);
+    gainNode.gain.linearRampToValueAtTime(0.18, now + 0.001);
+    gainNode.gain.exponentialRampToValueAtTime(0.03, now + 0.03);
+    gainNode.gain.linearRampToValueAtTime(0, now + 0.06);
+    
+    oscillator.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+    
+    oscillator.start(now);
+    oscillator.stop(now + 0.06);
+  } catch (error) {
+    console.debug('Time input sound error:', error);
+  }
+}
+
+// Time field focus sound - for focusing on time input fields
+export function playTimeFieldFocusSound(): void {
+  if (!areSoundEffectsEnabled()) return;
+  const audioContext = getAudioContext();
+  if (!audioContext) return;
+  
+  if (audioContext.state === 'closed') return;
+  
+  try {
+    const now = audioContext.currentTime;
+    const oscillator = audioContext.createOscillator();
+    const gainNode = audioContext.createGain();
+    
+    // Gentle focus sound - subtle indication of field focus
+    oscillator.type = 'sine';
+    oscillator.frequency.setValueAtTime(750, now);
+    oscillator.frequency.linearRampToValueAtTime(850, now + 0.04);
+    
+    gainNode.gain.setValueAtTime(0, now);
+    gainNode.gain.linearRampToValueAtTime(0.15, now + 0.001);
+    gainNode.gain.exponentialRampToValueAtTime(0.02, now + 0.03);
+    gainNode.gain.linearRampToValueAtTime(0, now + 0.05);
+    
+    oscillator.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+    
+    oscillator.start(now);
+    oscillator.stop(now + 0.05);
+  } catch (error) {
+    console.debug('Time field focus sound error:', error);
+  }
+}
+
+// Time increment/decrement sound - for arrow key changes in time fields
+export function playTimeIncrementSound(direction: 'up' | 'down'): void {
+  if (!areSoundEffectsEnabled()) return;
+  const audioContext = getAudioContext();
+  if (!audioContext) return;
+  
+  if (audioContext.state === 'closed') return;
+  
+  try {
+    const now = audioContext.currentTime;
+    const oscillator = audioContext.createOscillator();
+    const gainNode = audioContext.createGain();
+    
+    // Quick tick sound - higher for up, lower for down
+    oscillator.type = 'sine';
+    const baseFreq = direction === 'up' ? 950 : 750;
+    oscillator.frequency.setValueAtTime(baseFreq, now);
+    oscillator.frequency.linearRampToValueAtTime(direction === 'up' ? 1050 : 650, now + 0.02);
+    
+    gainNode.gain.setValueAtTime(0, now);
+    gainNode.gain.linearRampToValueAtTime(0.2, now + 0.001);
+    gainNode.gain.exponentialRampToValueAtTime(0.04, now + 0.02);
+    gainNode.gain.linearRampToValueAtTime(0, now + 0.04);
+    
+    oscillator.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+    
+    oscillator.start(now);
+    oscillator.stop(now + 0.04);
+  } catch (error) {
+    console.debug('Time increment sound error:', error);
+  }
+}
+
 // Date submit sound - for submitting date with Enter key
 export function playDateSubmitSound(): void {
+  if (!areSoundEffectsEnabled()) return;
   const audioContext = getAudioContext();
   if (!audioContext) return;
   
@@ -235,6 +375,7 @@ export function playDateSubmitSound(): void {
 
 // Navigation sound - for prev/next/today buttons
 export function playNavigationSound(): void {
+  if (!areSoundEffectsEnabled()) return;
   const audioContext = getAudioContext();
   if (!audioContext) return;
   
@@ -273,6 +414,7 @@ export function playTierNavigationSound(
   direction: 'next' | 'prev',
   shiftPressed: boolean = false
 ): void {
+  if (!areSoundEffectsEnabled()) return;
   const audioContext = getAudioContext();
   if (!audioContext) return;
   
@@ -371,6 +513,7 @@ export function playTierNavigationSound(
 // Navigation journey sound - procedurally generated based on time tier
 // Creates unique sounds for each tier that reflect the journey through time scales
 export function playNavigationJourneySound(tier: 'decade' | 'year' | 'month' | 'week' | 'day'): void {
+  if (!areSoundEffectsEnabled()) return;
   const audioContext = getAudioContext();
   if (!audioContext) return;
   
@@ -505,6 +648,7 @@ export function playNavigationJourneySound(tier: 'decade' | 'year' | 'month' | '
 
 // Mode selection sound - for view mode buttons
 export function playModeSelectionSound(): void {
+  if (!areSoundEffectsEnabled()) return;
   const audioContext = getAudioContext();
   if (!audioContext) return;
   
@@ -538,6 +682,7 @@ export function playModeSelectionSound(): void {
 
 // Save/confirmation sound - for save buttons
 export function playSaveSound(): void {
+  if (!areSoundEffectsEnabled()) return;
   const audioContext = getAudioContext();
   if (!audioContext) return;
   
@@ -571,6 +716,7 @@ export function playSaveSound(): void {
 
 // Cancel sound - for cancel buttons
 export function playCancelSound(): void {
+  if (!areSoundEffectsEnabled()) return;
   const audioContext = getAudioContext();
   if (!audioContext) return;
   
@@ -604,6 +750,7 @@ export function playCancelSound(): void {
 
 // Delete/warning sound - for delete buttons
 export function playDeleteSound(): void {
+  if (!areSoundEffectsEnabled()) return;
   const audioContext = getAudioContext();
   if (!audioContext) return;
   
@@ -637,6 +784,7 @@ export function playDeleteSound(): void {
 
 // Edit sound - for edit buttons
 export function playEditSound(): void {
+  if (!areSoundEffectsEnabled()) return;
   const audioContext = getAudioContext();
   if (!audioContext) return;
   
@@ -670,6 +818,7 @@ export function playEditSound(): void {
 
 // New entry/creation sound - for new entry buttons
 export function playNewEntrySound(): void {
+  if (!areSoundEffectsEnabled()) return;
   const audioContext = getAudioContext();
   if (!audioContext) return;
   
@@ -703,6 +852,7 @@ export function playNewEntrySound(): void {
 
 // Add sound - for add tag buttons
 export function playAddSound(): void {
+  if (!areSoundEffectsEnabled()) return;
   const audioContext = getAudioContext();
   if (!audioContext) return;
   
@@ -735,6 +885,7 @@ export function playAddSound(): void {
 
 // Remove sound - for remove tag buttons
 export function playRemoveSound(): void {
+  if (!areSoundEffectsEnabled()) return;
   const audioContext = getAudioContext();
   if (!audioContext) return;
   
@@ -767,6 +918,7 @@ export function playRemoveSound(): void {
 
 // Settings/preferences sound - for preferences button
 export function playSettingsSound(): void {
+  if (!areSoundEffectsEnabled()) return;
   const audioContext = getAudioContext();
   if (!audioContext) return;
   
@@ -801,6 +953,7 @@ export function playSettingsSound(): void {
 
 // Reset sound - for reset buttons
 export function playResetSound(): void {
+  if (!areSoundEffectsEnabled()) return;
   const audioContext = getAudioContext();
   if (!audioContext) return;
   
@@ -834,6 +987,7 @@ export function playResetSound(): void {
 
 // Export sound - for export buttons
 export function playExportSound(): void {
+  if (!areSoundEffectsEnabled()) return;
   const audioContext = getAudioContext();
   if (!audioContext) return;
   
@@ -867,6 +1021,7 @@ export function playExportSound(): void {
 
 // Calendar selection sound - for clicking calendar cells
 export function playCalendarSelectionSound(): void {
+  if (!areSoundEffectsEnabled()) return;
   const audioContext = getAudioContext();
   if (!audioContext) return;
   
@@ -900,6 +1055,7 @@ export function playCalendarSelectionSound(): void {
 
 // Entry selection sound - for clicking on journal entries
 export function playEntrySelectionSound(): void {
+  if (!areSoundEffectsEnabled()) return;
   const audioContext = getAudioContext();
   if (!audioContext) return;
   
@@ -941,6 +1097,7 @@ export interface SliderNoise {
 // Generate continuous soft noise simulating a mixing board slider
 // Volume and frequency fade based on distance from center to threshold
 export function createSliderNoise(): SliderNoise | null {
+  if (!areSoundEffectsEnabled()) return null;
   const audioContext = getAudioContext();
   if (!audioContext) return null;
   
