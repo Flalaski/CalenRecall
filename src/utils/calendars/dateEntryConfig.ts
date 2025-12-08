@@ -36,7 +36,7 @@ export function getDateEntryConfig(calendar: CalendarSystem): CalendarDateEntryC
             label: 'Cycle',
             placeholder: 'Cycle',
             maxLength: 6,
-            formatValue: (v) => v.replace(/[^-\d]/g, ''),
+            formatValue: (v) => v.replace(/[^+\-\d]/g, ''), // Allow +, -, and digits
             validation: (v) => {
               const num = parseInt(v, 10);
               return !isNaN(num);
@@ -98,7 +98,7 @@ export function getDateEntryConfig(calendar: CalendarSystem): CalendarDateEntryC
             label: 'Haab',
             placeholder: 'Haab',
             maxLength: 6,
-            formatValue: (v) => v.replace(/[^-\d]/g, ''),
+            formatValue: (v) => v.replace(/[^+\-\d]/g, ''), // Allow +, -, and digits
             validation: (v) => {
               const num = parseInt(v, 10);
               return !isNaN(num);
@@ -169,7 +169,7 @@ export function getDateEntryConfig(calendar: CalendarSystem): CalendarDateEntryC
             label: 'Baktun',
             placeholder: 'Baktun',
             maxLength: 4,
-            formatValue: (v) => v.replace(/[^-\d]/g, ''),
+            formatValue: (v) => v.replace(/[^+\-\d]/g, ''), // Allow +, -, and digits
             validation: (v) => {
               const num = parseInt(v, 10);
               return !isNaN(num);
@@ -179,7 +179,7 @@ export function getDateEntryConfig(calendar: CalendarSystem): CalendarDateEntryC
             label: 'Katun',
             placeholder: 'Katun',
             maxLength: 3,
-            formatValue: (v) => v.replace(/[^-\d]/g, ''),
+            formatValue: (v) => v.replace(/[^+\-\d]/g, ''), // Allow +, -, and digits
             validation: (v) => {
               const num = parseInt(v, 10);
               return !isNaN(num) && num >= 0 && num < 20;
@@ -189,7 +189,7 @@ export function getDateEntryConfig(calendar: CalendarSystem): CalendarDateEntryC
             label: 'Tun',
             placeholder: 'Tun',
             maxLength: 3,
-            formatValue: (v) => v.replace(/[^-\d]/g, ''),
+            formatValue: (v) => v.replace(/[^+\-\d]/g, ''), // Allow +, -, and digits
             validation: (v) => {
               const num = parseInt(v, 10);
               return !isNaN(num) && num >= 0 && num < 20;
@@ -199,7 +199,7 @@ export function getDateEntryConfig(calendar: CalendarSystem): CalendarDateEntryC
             label: 'Uinal',
             placeholder: 'Uinal',
             maxLength: 2,
-            formatValue: (v) => v.replace(/[^-\d]/g, ''),
+            formatValue: (v) => v.replace(/[^+\-\d]/g, ''), // Allow +, -, and digits
             validation: (v) => {
               const num = parseInt(v, 10);
               return !isNaN(num) && num >= 0 && num < 18;
@@ -209,7 +209,7 @@ export function getDateEntryConfig(calendar: CalendarSystem): CalendarDateEntryC
             label: 'Kin',
             placeholder: 'Kin',
             maxLength: 2,
-            formatValue: (v) => v.replace(/[^-\d]/g, ''),
+            formatValue: (v) => v.replace(/[^+\-\d]/g, ''), // Allow +, -, and digits
             validation: (v) => {
               const num = parseInt(v, 10);
               return !isNaN(num) && num >= 0 && num < 20;
@@ -254,7 +254,7 @@ export function getDateEntryConfig(calendar: CalendarSystem): CalendarDateEntryC
             label: 'Váḥid',
             placeholder: 'Váḥid',
             maxLength: 6,
-            formatValue: (v) => v.replace(/[^-\d]/g, ''),
+            formatValue: (v) => v.replace(/[^+\-\d]/g, ''), // Allow +, -, and digits
             validation: (v) => {
               const num = parseInt(v, 10);
               return !isNaN(num);
@@ -316,7 +316,7 @@ export function getDateEntryConfig(calendar: CalendarSystem): CalendarDateEntryC
             label: 'Year',
             placeholder: 'Year',
             maxLength: 6,
-            formatValue: (v) => v.replace(/[^-\d]/g, ''),
+            formatValue: (v) => v.replace(/[^+\-\d]/g, ''), // Allow +, -, and digits
             validation: (v) => {
               const num = parseInt(v, 10);
               return !isNaN(num);
@@ -377,7 +377,7 @@ export function getDateEntryConfig(calendar: CalendarSystem): CalendarDateEntryC
             label: 'Year',
             placeholder: 'Year',
             maxLength: 6,
-            formatValue: (v) => v.replace(/[^-\d]/g, ''),
+            formatValue: (v) => v.replace(/[^+\-\d]/g, ''), // Allow +, -, and digits
             validation: (v) => {
               const num = parseInt(v, 10);
               return !isNaN(num);
@@ -438,7 +438,7 @@ export function getDateEntryConfig(calendar: CalendarSystem): CalendarDateEntryC
             label: 'Xiuhmolpilli',
             placeholder: 'Xiuhmolpilli',
             maxLength: 6,
-            formatValue: (v) => v.replace(/[^-\d]/g, ''),
+            formatValue: (v) => v.replace(/[^+\-\d]/g, ''), // Allow +, -, and digits
             validation: (v) => {
               const num = parseInt(v, 10);
               return !isNaN(num);
@@ -500,7 +500,7 @@ export function getDateEntryConfig(calendar: CalendarSystem): CalendarDateEntryC
             label: 'Year',
             placeholder: 'YYYY',
             maxLength: 6,
-            formatValue: (v) => v.replace(/[^-\d]/g, ''),
+            formatValue: (v) => v.replace(/[^+\-\d]/g, ''), // Allow +, -, and digits
             validation: (v) => {
               const num = parseInt(v, 10);
               return !isNaN(num);

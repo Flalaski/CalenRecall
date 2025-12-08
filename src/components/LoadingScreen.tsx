@@ -26,9 +26,9 @@ const LOADING_SCREEN_CONSTANTS = {
   MAX_ANIMATION_DELAY: 2,
   OPACITY_DIVISORS: { infinity: 100, branch: 150 },
   ANIMATION_INTERVAL_MS: 16, // ~60fps
-  POLARITY_PHASE_INCREMENT: 0.01,
+  POLARITY_PHASE_INCREMENT: 0.0112358,
   CAMERA_ZOOM: 1.369, // Higher = more zoomed in (1.0 = normal, 2.0 = 2x zoom, 0.5 = zoomed out)
-  CAMERA_DISTANCE: 0, // translateZ offset for camera position (negative = closer, positive = farther)
+  CAMERA_DISTANCE: -0.5, // translateZ offset for camera position (negative = closer, positive = farther)
   SINGULARITY_CENTER: { x: 250, y: 200 }, // Center singularity point representing present moment
   TEMPORAL_DISTANCE_SCALE: 0.5, // How much temporal distance affects spatial position (0-1 blend factor)
   MAX_TEMPORAL_DISTANCE_DAYS: 365 * 10, // 10 years - maximum temporal distance for scaling

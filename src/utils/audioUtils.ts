@@ -402,6 +402,82 @@ export function playDateSubmitSound(): void {
   }
 }
 
+// Era switch sound - for switching between CE and BCE
+export function playEraSwitchSound(era: 'CE' | 'BCE'): void {
+  if (!areSoundEffectsEnabled()) return;
+  const audioContext = getAudioContext();
+  if (!audioContext) return;
+  
+  if (audioContext.state === 'closed') return;
+  
+  try {
+    const now = audioContext.currentTime;
+    const oscillator = audioContext.createOscillator();
+    const gainNode = audioContext.createGain();
+    
+    // Distinct era switch sound - CE is higher/forward, BCE is lower/backward
+    oscillator.type = 'sine';
+    if (era === 'CE') {
+      // CE: ascending, forward-moving sound
+      oscillator.frequency.setValueAtTime(600, now);
+      oscillator.frequency.linearRampToValueAtTime(800, now + 0.06);
+      oscillator.frequency.linearRampToValueAtTime(700, now + 0.12);
+    } else {
+      // BCE: descending, backward-moving sound
+      oscillator.frequency.setValueAtTime(700, now);
+      oscillator.frequency.linearRampToValueAtTime(500, now + 0.06);
+      oscillator.frequency.linearRampToValueAtTime(600, now + 0.12);
+    }
+    
+    gainNode.gain.setValueAtTime(0, now);
+    gainNode.gain.linearRampToValueAtTime(0.25, now + 0.001);
+    gainNode.gain.exponentialRampToValueAtTime(0.08, now + 0.08);
+    gainNode.gain.linearRampToValueAtTime(0, now + 0.15);
+    
+    oscillator.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+    
+    oscillator.start(now);
+    oscillator.stop(now + 0.15);
+  } catch (error) {
+    console.debug('Era switch sound error:', error);
+  }
+}
+
+// Number typing sound - for typing digits in date fields
+export function playNumberTypingSound(): void {
+  if (!areSoundEffectsEnabled()) return;
+  const audioContext = getAudioContext();
+  if (!audioContext) return;
+  
+  if (audioContext.state === 'closed') return;
+  
+  try {
+    const now = audioContext.currentTime;
+    const oscillator = audioContext.createOscillator();
+    const gainNode = audioContext.createGain();
+    
+    // Quick, crisp tick for number input - subtle and non-intrusive
+    oscillator.type = 'sine';
+    oscillator.frequency.setValueAtTime(1000, now);
+    oscillator.frequency.linearRampToValueAtTime(1100, now + 0.01);
+    oscillator.frequency.linearRampToValueAtTime(950, now + 0.03);
+    
+    gainNode.gain.setValueAtTime(0, now);
+    gainNode.gain.linearRampToValueAtTime(0.15, now + 0.001);
+    gainNode.gain.exponentialRampToValueAtTime(0.03, now + 0.02);
+    gainNode.gain.linearRampToValueAtTime(0, now + 0.04);
+    
+    oscillator.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+    
+    oscillator.start(now);
+    oscillator.stop(now + 0.04);
+  } catch (error) {
+    console.debug('Number typing sound error:', error);
+  }
+}
+
 // Navigation sound - for prev/next/today buttons
 export function playNavigationSound(): void {
   if (!areSoundEffectsEnabled()) return;

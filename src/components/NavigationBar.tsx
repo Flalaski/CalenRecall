@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState, useMemo, useCallback } from 'react';
 import { TimeRange } from '../types';
 import { format, addMonths, addYears, addWeeks, addDays, differenceInDays, differenceInMonths, differenceInYears } from 'date-fns';
-import { playNavigationSound, playModeSelectionSound, playSettingsSound, playTabSound, playDateSubmitSound, playNavigationJourneySound, playTierNavigationSound } from '../utils/audioUtils';
+import { playNavigationSound, playModeSelectionSound, playSettingsSound, playTabSound, playDateSubmitSound, playNavigationJourneySound, playTierNavigationSound, playEraSwitchSound, playNumberTypingSound } from '../utils/audioUtils';
 import { useCalendar } from '../contexts/CalendarContext';
 import { CalendarSystem, CALENDAR_INFO } from '../utils/calendars/types';
 import { getTimeRangeLabelInCalendar } from '../utils/calendars/timeRangeConverter';
@@ -140,8 +140,9 @@ export default function NavigationBar({
   }, [calendar, selectedDate, dateEntryConfig.fields.length, dateToCalendar, usesBCE_CE, eraMode]);
 
   // Update era mode when selectedDate changes (for BCE/CE calendars)
+  // But don't update if user is actively typing (they may be setting era manually)
   useEffect(() => {
-    if (usesBCE_CE) {
+    if (usesBCE_CE && !isUserTypingRef.current) {
       try {
         const calendarDate = dateToCalendar(selectedDate);
         if (calendarDate.year < 1) {
@@ -156,7 +157,11 @@ export default function NavigationBar({
   }, [selectedDate, usesBCE_CE, dateToCalendar]);
 
   // Initialize and populate date input values when calendar changes
+  // Only populate if user is not actively typing
   useEffect(() => {
+    if (isUserTypingRef.current) {
+      return; // Don't populate if user is typing
+    }
     const fieldCount = dateEntryConfig.fields.length;
     const values = populateDateFields();
     setDateInputValues(values);
@@ -336,11 +341,30 @@ export default function NavigationBar({
       value = field.formatValue(value);
     }
     
-    // For year fields with BCE/CE, allow "-" as a valid intermediate value
-    // This allows users to type negative years by starting with "-"
+    // For year fields with BCE/CE, allow "-" and "+" as valid intermediate values
+    // This allows users to type negative years by starting with "-" or switch to CE with "+"
     if (isYearField && usesBCE_CE) {
-      // If user types "-" when field already has content, clear it and show "-"
       const previousValue = dateInputValues[index]?.trim() || '';
+      
+      // If user types "+" when field already has content, clear it and switch to CE
+      if (value === '+' && previousValue !== '' && previousValue !== '+') {
+        // User typed "+" in a field with content: clear it and switch to CE
+        const newValues = [...dateInputValues];
+        newValues[index] = '';
+        setDateInputValues(newValues);
+        setDateInputError(false);
+        setEraMode('CE');
+        playEraSwitchSound('CE');
+        // Keep typing flag active to prevent any effects from repopulating
+        isUserTypingRef.current = true;
+        // Focus the input
+        setTimeout(() => {
+          inputRefs.current[index]?.focus();
+        }, 0);
+        return;
+      }
+      
+      // If user types "-" when field already has content, clear it and show "-"
       if (value === '-' && previousValue !== '' && previousValue !== '-') {
         // User typed "-" in a field with content: clear it and show "-"
         const newValues = [...dateInputValues];
@@ -348,12 +372,30 @@ export default function NavigationBar({
         setDateInputValues(newValues);
         setDateInputError(false);
         setEraMode('BCE');
+        playEraSwitchSound('BCE');
+        // Keep typing flag active to prevent any effects from repopulating
+        isUserTypingRef.current = true;
         // Focus the input and place cursor after "-"
         setTimeout(() => {
           inputRefs.current[index]?.focus();
           inputRefs.current[index]?.setSelectionRange(1, 1);
         }, 0);
         return;
+      }
+      
+      // Handle "+" to switch to CE mode (remove the "+" from value since it's not needed)
+      if (value.startsWith('+')) {
+        // Remove the "+" and switch to CE mode
+        const cleanValue = value.replace(/^\+/, '');
+        const newValues = [...dateInputValues];
+        newValues[index] = cleanValue;
+        setDateInputValues(newValues);
+        setDateInputError(false);
+        setEraMode('CE');
+        playEraSwitchSound('CE');
+        // Keep typing flag active to prevent any effects from repopulating
+        isUserTypingRef.current = true;
+        return; // Skip further processing
       }
       
       // Allow "-" as a valid intermediate value when typing negative numbers
@@ -364,7 +406,11 @@ export default function NavigationBar({
         setDateInputValues(newValues);
         setDateInputError(false);
         if (value === '-') {
+          // Set era mode but ensure we stay in typing mode to prevent repopulation
           setEraMode('BCE');
+          playEraSwitchSound('BCE');
+          // Keep typing flag active to prevent any effects from repopulating
+          isUserTypingRef.current = true;
         }
         return; // Skip validation for intermediate "-" or empty
       }
@@ -376,17 +422,21 @@ export default function NavigationBar({
           if (numValue < 0) {
             // User typed negative year, switch to BCE mode
             setEraMode('BCE');
+            playEraSwitchSound('BCE');
           } else if (numValue > 0 && eraMode === 'BCE') {
             // User typed positive year while in BCE mode, keep BCE mode
             // (the value will be converted to negative on parse)
+          } else if (numValue > 0) {
+            // User typed a number - play typing sound
+            playNumberTypingSound();
           }
         }
       }
     }
     
     // Apply validation if specified
-    // Skip validation for "-" in year fields (already handled above)
-    if (field.validation && value !== '' && value !== '-') {
+    // Skip validation for "-" and "+" in year fields (already handled above)
+    if (field.validation && value !== '' && value !== '-' && value !== '+') {
       if (!field.validation(value)) {
         return; // Don't update if validation fails
       }
@@ -402,6 +452,14 @@ export default function NavigationBar({
     newValues[index] = value;
     setDateInputValues(newValues);
     setDateInputError(false);
+    
+    // Play number typing sound when typing digits (not for special characters like - or +)
+    // Check if the value contains digits and is not just a special character
+    const hasDigits = /\d/.test(value);
+    const isJustSpecialChar = value === '-' || value === '+' || value === '';
+    if (hasDigits && !isJustSpecialChar) {
+      playNumberTypingSound();
+    }
   };
 
   const handleDateInputFocus = (index: number) => () => {
@@ -471,151 +529,289 @@ export default function NavigationBar({
     const timeDiff = Math.abs(differenceInDays(startDate, targetDate));
     const isFuture = targetDate > startDate;
     
-    // Time tier hierarchy: decade → year → month → week → day
-    const timeTiers: TimeRange[] = ['decade', 'year', 'month', 'week', 'day'];
-    const currentTierIndex = timeTiers.indexOf(viewMode);
+    // For very large jumps (more than 1000 years = ~365,000 days), jump to within 1000 years first
+    // Then do animated navigation from there
+    const MAX_ANIMATED_DAYS = 365000; // ~1000 years
+    let actualStartDate = new Date(startDate);
     
-    // Calculate navigation steps based on distance
+    if (timeDiff > MAX_ANIMATED_DAYS) {
+      // Calculate how many years away we are
+      const yearsDiff = differenceInYears(targetDate, startDate);
+      const yearsToJump = isFuture 
+        ? yearsDiff - 1000  // Jump forward to 1000 years before target
+        : yearsDiff + 1000; // Jump backward to 1000 years after target
+      
+      // Jump to within 1000 years of target
+      actualStartDate = addYears(startDate, yearsToJump);
+      // Round to start of year for cleaner navigation
+      actualStartDate = createDate(actualStartDate.getFullYear(), 0, 1);
+      
+      // Update the date immediately to the jump point (no animation for this part)
+      // This happens synchronously so the animation can continue from this point
+      onDateChange(actualStartDate);
+    }
+    
+    // Checkpoint-based navigation system with directional momentum
+    // Creates checkpoints at regular intervals and calculates steps between them dynamically
     interface NavigationStep {
       date: Date;
       viewMode: TimeRange;
     }
     
-    const steps: NavigationStep[] = [];
-    let currentDate = new Date(startDate);
+    // Checkpoint-based navigation system with directional momentum
+    // Creates checkpoints at regular intervals and calculates steps between them dynamically
+    interface Checkpoint {
+      date: Date;
+      viewMode: TimeRange;
+      distance: number; // Days from start
+    }
     
-    // Step 1: Navigate through decades if more than 5 years away
-    const yearsDiff = differenceInYears(targetDate, currentDate);
-    if (Math.abs(yearsDiff) >= 5) {
-      // Start at decade view if we're far away
-      if (currentTierIndex > 0) {
-        steps.push({ date: currentDate, viewMode: 'decade' });
-      }
+    // Create directional checkpoints at regular intervals
+    const createCheckpoints = (start: Date, target: Date, isFuture: boolean): Checkpoint[] => {
+      const checkpoints: Checkpoint[] = [];
+      const totalDays = Math.abs(differenceInDays(start, target));
       
-      // Navigate decade by decade
-      while (Math.abs(differenceInYears(currentDate, targetDate)) >= 10) {
-        if (isFuture) {
-          currentDate = addYears(currentDate, 10);
-        } else {
-          currentDate = addYears(currentDate, -10);
-        }
-        // Round to start of decade
-        const decadeStart = Math.floor(currentDate.getFullYear() / 10) * 10;
-        currentDate = createDate(decadeStart, 0, 1);
-        steps.push({ date: new Date(currentDate), viewMode: 'decade' });
-      }
-    }
-    
-    // Step 2: Navigate through years if more than 6 months away
-    const monthsDiff = differenceInMonths(targetDate, currentDate);
-    if (Math.abs(monthsDiff) >= 6) {
-      // Transition to year view
-      if (steps.length === 0 && currentTierIndex > 1) {
-        steps.push({ date: currentDate, viewMode: 'year' });
-      } else if (steps.length > 0) {
-        steps.push({ date: currentDate, viewMode: 'year' });
-      }
+      // Determine checkpoint intervals based on distance
+      let checkpointInterval: number; // Days between checkpoints
+      let viewModeForCheckpoints: TimeRange;
       
-      // Navigate year by year
-      while (Math.abs(differenceInMonths(currentDate, targetDate)) >= 12) {
-        if (isFuture) {
-          currentDate = addYears(currentDate, 1);
-        } else {
-          currentDate = addYears(currentDate, -1);
-        }
-        currentDate = createDate(currentDate.getFullYear(), 0, 1);
-        steps.push({ date: new Date(currentDate), viewMode: 'year' });
-      }
-    }
-    
-    // Step 3: Navigate through months if more than 2 weeks away
-    if (timeDiff >= 14) {
-      // Transition to month view
-      if (steps.length === 0 && currentTierIndex > 2) {
-        steps.push({ date: currentDate, viewMode: 'month' });
-      } else if (steps.length > 0) {
-        steps.push({ date: currentDate, viewMode: 'month' });
-      }
-      
-      // Navigate month by month
-      while (timeDiff >= 14 && Math.abs(differenceInDays(currentDate, targetDate)) >= 14) {
-        if (isFuture) {
-          currentDate = addMonths(currentDate, 1);
-        } else {
-          currentDate = addMonths(currentDate, -1);
-        }
-        currentDate = createDate(currentDate.getFullYear(), currentDate.getMonth(), 1);
-        steps.push({ date: new Date(currentDate), viewMode: 'month' });
-      }
-    }
-    
-    // Step 4: Navigate through weeks if more than 3 days away
-    if (timeDiff >= 3) {
-      // Transition to week view
-      if (steps.length === 0 && currentTierIndex > 3) {
-        steps.push({ date: currentDate, viewMode: 'week' });
-      } else if (steps.length > 0) {
-        steps.push({ date: currentDate, viewMode: 'week' });
-      }
-      
-      // Navigate week by week
-      while (Math.abs(differenceInDays(currentDate, targetDate)) >= 7) {
-        if (isFuture) {
-          currentDate = addWeeks(currentDate, 1);
-        } else {
-          currentDate = addWeeks(currentDate, -1);
-        }
-        steps.push({ date: new Date(currentDate), viewMode: 'week' });
-      }
-    }
-    
-    // Step 5: Final transition to day view and navigate day by day
-    if (steps.length === 0 && currentTierIndex > 4) {
-      steps.push({ date: currentDate, viewMode: 'day' });
-    } else if (steps.length > 0) {
-      steps.push({ date: currentDate, viewMode: 'day' });
-    }
-    
-    // Navigate day by day for final precision
-    while (Math.abs(differenceInDays(currentDate, targetDate)) > 0) {
-      if (isFuture) {
-        currentDate = addDays(currentDate, 1);
+      if (totalDays > 365000) { // > 1000 years
+        checkpointInterval = 182500; // ~500 years between checkpoints
+        viewModeForCheckpoints = 'decade';
+      } else if (totalDays > 36500) { // > 100 years
+        checkpointInterval = 18250; // ~50 years between checkpoints
+        viewModeForCheckpoints = 'decade';
+      } else if (totalDays > 3650) { // > 10 years
+        checkpointInterval = 1825; // ~5 years between checkpoints
+        viewModeForCheckpoints = 'year';
+      } else if (totalDays > 365) { // > 1 year
+        checkpointInterval = 90; // ~3 months between checkpoints
+        viewModeForCheckpoints = 'month';
+      } else if (totalDays > 30) { // > 1 month
+        checkpointInterval = 14; // 2 weeks between checkpoints
+        viewModeForCheckpoints = 'week';
       } else {
-        currentDate = addDays(currentDate, -1);
+        checkpointInterval = 7; // 1 week between checkpoints (even for small distances)
+        viewModeForCheckpoints = 'day';
       }
-      steps.push({ date: new Date(currentDate), viewMode: 'day' });
-    }
+      
+      // Create checkpoints
+      let currentCheckpointDate = new Date(start);
+      let distance = 0;
+      
+      while (distance < totalDays) {
+        checkpoints.push({
+          date: new Date(currentCheckpointDate),
+          viewMode: viewModeForCheckpoints,
+          distance: distance
+        });
+        
+        // Move to next checkpoint
+        if (isFuture) {
+          currentCheckpointDate = addDays(currentCheckpointDate, checkpointInterval);
+        } else {
+          currentCheckpointDate = addDays(currentCheckpointDate, -checkpointInterval);
+        }
+        distance += checkpointInterval;
+      }
+      
+      // Always add final target as last checkpoint
+      checkpoints.push({
+        date: new Date(target),
+        viewMode: 'day',
+        distance: totalDays
+      });
+      
+      return checkpoints;
+    };
     
-    // Add final target step
-    steps.push({ date: targetDate, viewMode: 'day' });
-    
-    // For very long journeys, optimize by skipping intermediate steps
-    let optimizedSteps = steps;
-    if (steps.length > 100) {
-      // Take every Nth step to keep animation reasonable
-      const skipFactor = Math.ceil(steps.length / 50);
-      optimizedSteps = steps.filter((_, index) => index % skipFactor === 0 || index === steps.length - 1);
-    }
-    
-    // Animate through steps with appropriate pacing
-    let stepIndex = 0;
+    const checkpoints = createCheckpoints(actualStartDate, targetDate, isFuture);
+    let checkpointIndex = 0;
     let currentViewMode = viewMode;
+    let animatedCurrentDate = new Date(actualStartDate);
+    const totalJourneyDays = Math.abs(differenceInDays(actualStartDate, targetDate));
     
     // Store timeout ID to allow cancellation
     let timeoutId: NodeJS.Timeout | null = null;
     
+    // Easing function: ease-out-cubic for smooth deceleration
+    const easeOutCubic = (t: number): number => {
+      return 1 - Math.pow(1 - t, 3);
+    };
+    
+    // Bell curve function for step size distribution (larger steps in middle, smaller at edges)
+    // Returns a multiplier (0 to 1) based on progress through the journey
+    const bellCurveMultiplier = (progress: number): number => {
+      // Normalized bell curve: peaks at 0.5 (middle), tapers at 0 and 1 (edges)
+      // Using a Gaussian-like function: e^(-((x-0.5)^2) / (2*sigma^2))
+      // Adjust sigma to control the curve width (smaller = sharper peak)
+      const sigma = 0.25; // Controls curve width (smaller = sharper peak, more extreme middle)
+      const center = 0.5;
+      const exponent = -Math.pow((progress - center) / sigma, 2) / 2;
+      const bellValue = Math.exp(exponent);
+      
+      // Normalize to 0.1-1.0 range (minimum 10% step size at edges, 100% at peak)
+      // This creates more extreme differences - much smaller at edges, full size at middle
+      return 0.1 + (bellValue * 0.9);
+    };
+    
+    // Calculate steps between current position and next checkpoint
+    // Uses bell curve to take larger steps in the middle of the journey
+    const calculateStepsToCheckpoint = (
+      from: Date, 
+      to: Date, 
+      targetViewMode: TimeRange,
+      overallProgress: number // 0 to 1, progress through entire journey
+    ): NavigationStep[] => {
+      const steps: NavigationStep[] = [];
+      let current = new Date(from);
+      const daysToCheckpoint = Math.abs(differenceInDays(current, to));
+      
+      // Get bell curve multiplier for current progress
+      const bellMultiplier = bellCurveMultiplier(overallProgress);
+      
+      // Determine base step size based on distance and view mode
+      // Apply bell curve to create much larger steps in the middle
+      if (daysToCheckpoint > 365) {
+        // Large distance: step by years
+        const yearsToCheckpoint = Math.abs(differenceInYears(to, current));
+        // Base step size, then apply aggressive bell curve multiplier (much larger steps in middle)
+        const baseStepSize = Math.max(1, Math.floor(yearsToCheckpoint / 10)); // Base: max 10 steps
+        // Bell multiplier creates 1x to 10x larger steps in middle (very aggressive)
+        const dynamicStepSize = Math.max(1, Math.floor(baseStepSize * (1 + bellMultiplier * 9)));
+        
+        while (Math.abs(differenceInYears(current, to)) > dynamicStepSize) {
+          if (isFuture) {
+            current = addYears(current, dynamicStepSize);
+          } else {
+            current = addYears(current, -dynamicStepSize);
+          }
+          steps.push({ date: new Date(current), viewMode: 'year' });
+        }
+      } else if (daysToCheckpoint > 30) {
+        // Medium distance: step by months
+        const monthsToCheckpoint = Math.abs(differenceInMonths(to, current));
+        const baseStepSize = Math.max(1, Math.floor(monthsToCheckpoint / 10));
+        // Bell multiplier creates 1x to 8x larger steps in middle
+        const dynamicStepSize = Math.max(1, Math.floor(baseStepSize * (1 + bellMultiplier * 7)));
+        
+        while (Math.abs(differenceInMonths(current, to)) > dynamicStepSize) {
+          if (isFuture) {
+            current = addMonths(current, dynamicStepSize);
+          } else {
+            current = addMonths(current, -dynamicStepSize);
+          }
+          steps.push({ date: new Date(current), viewMode: 'month' });
+        }
+      } else if (daysToCheckpoint > 7) {
+        // Small distance: step by weeks
+        const weeksToCheckpoint = Math.floor(daysToCheckpoint / 7);
+        const baseStepSize = Math.max(1, Math.floor(weeksToCheckpoint / 6));
+        // Bell multiplier creates 1x to 5x larger steps in middle
+        const dynamicStepSize = Math.max(1, Math.floor(baseStepSize * (1 + bellMultiplier * 4)));
+        
+        let weeksStepped = 0;
+        while (weeksStepped < weeksToCheckpoint) {
+          const stepSize = Math.min(dynamicStepSize, weeksToCheckpoint - weeksStepped);
+          if (isFuture) {
+            current = addWeeks(current, stepSize);
+          } else {
+            current = addWeeks(current, -stepSize);
+          }
+          steps.push({ date: new Date(current), viewMode: 'week' });
+          weeksStepped += stepSize;
+        }
+      } else {
+        // Very small distance: step by days
+        // For small distances, use smaller bell curve effect
+        const baseStepSize = 1;
+        const dynamicStepSize = Math.max(1, Math.floor(baseStepSize * (1 + bellMultiplier * 2)));
+        
+        let daysStepped = 0;
+        while (daysStepped < daysToCheckpoint) {
+          const stepSize = Math.min(dynamicStepSize, daysToCheckpoint - daysStepped);
+          if (isFuture) {
+            current = addDays(current, stepSize);
+          } else {
+            current = addDays(current, -stepSize);
+          }
+          steps.push({ date: new Date(current), viewMode: 'day' });
+          daysStepped += stepSize;
+        }
+      }
+      
+      // Add final checkpoint step
+      steps.push({ date: new Date(to), viewMode: targetViewMode });
+      
+      return steps;
+    };
+    
+    // Current segment of steps between checkpoints
+    let currentSegmentSteps: NavigationStep[] = [];
+    let segmentStepIndex = 0;
+    
     const executeStep = () => {
       try {
-        if (stepIndex >= optimizedSteps.length) {
-          // Reset navigation flag
-          isNavigatingRef.current = false;
+        // If we've completed all checkpoints, finish
+        if (checkpointIndex >= checkpoints.length) {
+          // Final step - ensure we're at target with day view
+          if (currentViewMode !== 'day') {
+            playModeSelectionSound();
+            onViewModeChange('day');
+          }
+          onDateChange(targetDate);
+          if (!isUserTypingRef.current) {
+            setTimeout(() => {
+              if (!isUserTypingRef.current) {
+                const values = populateDateFields(targetDate);
+                setDateInputValues(values);
+                setDateInputError(false);
+              }
+            }, 0);
+          }
+          timeoutId = setTimeout(() => {
+            isNavigatingRef.current = false;
+            timeoutId = null;
+          }, 100);
           return;
         }
         
-        const step = optimizedSteps[stepIndex];
+        // If we've completed current segment, calculate next segment to next checkpoint
+        if (segmentStepIndex >= currentSegmentSteps.length) {
+          const nextCheckpoint = checkpoints[checkpointIndex];
+          
+          if (!nextCheckpoint) {
+            // No more checkpoints, go directly to target
+            onDateChange(targetDate);
+            checkpointIndex = checkpoints.length; // Mark as complete
+            timeoutId = setTimeout(executeStep, 0);
+            return;
+          }
+          
+          // Calculate overall progress through entire journey (0 to 1)
+          const daysTraveled = Math.abs(differenceInDays(actualStartDate, animatedCurrentDate));
+          const overallProgress = Math.min(1, daysTraveled / totalJourneyDays);
+          
+          // Calculate steps to next checkpoint with bell curve step sizing
+          currentSegmentSteps = calculateStepsToCheckpoint(
+            animatedCurrentDate,
+            nextCheckpoint.date,
+            nextCheckpoint.viewMode,
+            overallProgress
+          );
+          segmentStepIndex = 0;
+          checkpointIndex++;
+        }
         
-        // Play procedurally generated navigation sound based on time tier
-        // Each tier has a unique sound reflecting the journey through time scales
+        // Execute current step in segment
+        const step = currentSegmentSteps[segmentStepIndex];
+        segmentStepIndex++;
+        animatedCurrentDate = new Date(step.date);
+        
+        // Calculate progress (0 to 1) based on checkpoints
+        const totalProgress = checkpointIndex / checkpoints.length;
+        
+        // Play sound
         playNavigationJourneySound(step.viewMode);
         
         // Update view mode if it changed
@@ -630,8 +826,7 @@ export default function NavigationBar({
         // Update date
         onDateChange(step.date);
         
-        // Populate date fields after navigation step (only if user is not typing)
-        // Use setTimeout to ensure state has updated
+        // Populate date fields
         if (!isUserTypingRef.current) {
           setTimeout(() => {
             if (!isUserTypingRef.current) {
@@ -642,45 +837,23 @@ export default function NavigationBar({
           }, 0);
         }
         
-        stepIndex++;
+        // Calculate dynamic delay based on progress and view mode
+        // Faster at start (momentum), slower near end (precision)
+        const baseDelays: Record<TimeRange, number> = {
+          decade: 12,
+          year: 10,
+          month: 6,
+          week: 4,
+          day: 2
+        };
         
-        // Calculate delay: faster pacing for smoother navigation
-        // Decade steps: 80ms, Year steps: 60ms, Month steps: 40ms, Week steps: 30ms, Day steps: 20ms
-        let delay = 40;
-        if (step.viewMode === 'decade') delay = 8;
-        else if (step.viewMode === 'year') delay = 6;
-        else if (step.viewMode === 'month') delay = 4;
-        else if (step.viewMode === 'week') delay = 3;
-        else if (step.viewMode === 'day') delay = 2;
+        const baseDelay = baseDelays[step.viewMode] || 6;
+        const momentumFactor = 1 + (1 - easeOutCubic(totalProgress)) * 1.5; // 1x to 2.5x speedup
+        const delay = Math.max(1, baseDelay / momentumFactor);
         
-        if (stepIndex < optimizedSteps.length) {
-          timeoutId = setTimeout(executeStep, delay);
-        } else {
-          // Final step - ensure we're at target with day view
-          if (currentViewMode !== 'day') {
-            playModeSelectionSound();
-            onViewModeChange('day');
-          }
-          onDateChange(targetDate);
-          // Populate date fields after navigation completes (only if user is not typing)
-          // Use setTimeout to ensure state has updated
-          if (!isUserTypingRef.current) {
-            setTimeout(() => {
-              if (!isUserTypingRef.current) {
-                const values = populateDateFields(targetDate);
-                setDateInputValues(values);
-                setDateInputError(false);
-              }
-            }, 0);
-          }
-          // Reset navigation flag after a short delay to allow final update to complete
-          timeoutId = setTimeout(() => {
-            isNavigatingRef.current = false;
-            timeoutId = null;
-          }, 100);
-        }
+        // Continue animation
+        timeoutId = setTimeout(executeStep, delay);
       } catch (error) {
-        // Reset navigation flag on error
         console.error('Error during navigation:', error);
         isNavigatingRef.current = false;
         if (timeoutId) {
@@ -690,7 +863,20 @@ export default function NavigationBar({
       }
     };
     
-    // Start animation
+    // Initialize first segment
+    if (checkpoints.length > 0) {
+      const firstCheckpoint = checkpoints[0];
+      const initialProgress = 0; // At the start of journey
+      currentSegmentSteps = calculateStepsToCheckpoint(
+        actualStartDate,
+        firstCheckpoint.date,
+        firstCheckpoint.viewMode,
+        initialProgress
+      );
+      checkpointIndex = 1; // Will process first checkpoint
+    }
+    
+    // Start animation immediately
     executeStep();
   };
 
@@ -922,8 +1108,9 @@ export default function NavigationBar({
                               onClick={() => {
                                 const newEraMode = eraMode === 'CE' ? 'BCE' : 'CE';
                                 setEraMode(newEraMode);
+                                playEraSwitchSound(newEraMode);
                                 // Update the year value when toggling era
-                                const currentYearValue = dateInputValues[0]?.trim();
+                                const currentYearValue = dateInputValues[0]?.trim() || '';
                                 const newValues = [...dateInputValues];
                                 
                                 if (eraMode === 'CE' && newEraMode === 'BCE') {
