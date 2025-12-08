@@ -1113,6 +1113,87 @@
   background: #252525;
 }
 
+/* Modal time inputs section - matching time-inputs-section styles */
+[data-theme="the-real-world"] .modal-time-inputs-section {
+  background: #0f0f0f;
+  border: 1px solid #7fbf7f;
+  border-radius: 0;
+  padding: 0.75rem;
+}
+
+[data-theme="the-real-world"] .modal-time-label {
+  font-size: 0.85rem;
+  font-weight: bold;
+  color: #7fbf7f;
+  margin-bottom: 0.25rem;
+  font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
+}
+
+[data-theme="the-real-world"] .modal-time-inputs {
+  background: transparent;
+}
+
+[data-theme="the-real-world"] .modal-time-input-group {
+  background: transparent;
+}
+
+[data-theme="the-real-world"] .modal-time-input-group label {
+  font-size: 0.75rem;
+  color: #7fbf7f;
+  font-weight: bold;
+  font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
+}
+
+[data-theme="the-real-world"] .modal-time-input {
+  background: #1a1a1a;
+  border: 1px solid #7fbf7f;
+  border-radius: 0;
+  color: #7fbf7f;
+  font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
+  font-weight: bold;
+  font-size: 13px;
+  text-align: center;
+  padding: 6px 8px;
+}
+
+[data-theme="the-real-world"] .modal-time-input:focus {
+  outline: 2px solid #7fbf7f;
+}
+
+[data-theme="the-real-world"] .modal-time-input-group select.modal-time-input {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%237fbf7f' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+}
+
+[data-theme="the-real-world"] .modal-clear-time-button {
+  background: #1a1a1a;
+  border: 1px solid #7fbf7f;
+  border-radius: 0;
+  color: #7fbf7f;
+  font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
+  font-weight: bold;
+  font-size: 13px;
+  padding: 6px 8px;
+}
+
+[data-theme="the-real-world"] .modal-clear-time-button:hover {
+  background: #252525;
+}
+
+[data-theme="the-real-world"] .modal-now-time-button {
+  background: #1a1a1a;
+  border: 1px solid #7fbf7f;
+  border-radius: 0;
+  color: #7fbf7f;
+  font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
+  font-weight: bold;
+  font-size: 13px;
+  padding: 6px 8px;
+}
+
+[data-theme="the-real-world"] .modal-now-time-button:hover {
+  background: #252525;
+}
+
 [data-theme="the-real-world"] .title-input {
   background: #1a1a1a;
   border: 1px solid #7fbf7f;

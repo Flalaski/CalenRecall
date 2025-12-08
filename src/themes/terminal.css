@@ -976,6 +976,78 @@
   background: #001100;
 }
 
+/* Modal time inputs section - matching time-inputs-section styles */
+[data-theme="terminal"] .modal-time-inputs-section {
+  background: #000000;
+  border: 1px solid #00ff00;
+  border-radius: 0;
+  padding: 0.75rem;
+}
+
+[data-theme="terminal"] .modal-time-label {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #00ff00;
+  margin-bottom: 0.25rem;
+  font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
+}
+
+[data-theme="terminal"] .modal-time-inputs {
+  background: transparent;
+}
+
+[data-theme="terminal"] .modal-time-input-group {
+  background: transparent;
+}
+
+[data-theme="terminal"] .modal-time-input-group label {
+  font-size: 0.75rem;
+  color: #00ff00;
+  font-weight: 400;
+  font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
+}
+
+[data-theme="terminal"] .modal-time-input {
+  background: #000000;
+  border: 1px solid #00ff00;
+  border-radius: 0;
+  color: #00ff00;
+  font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
+  text-align: center;
+}
+
+[data-theme="terminal"] .modal-time-input:focus {
+  outline: 1px solid #00ff00;
+}
+
+[data-theme="terminal"] .modal-time-input-group select.modal-time-input {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2300ff00' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+}
+
+[data-theme="terminal"] .modal-clear-time-button {
+  background: #000000;
+  border: 1px solid #00ff00;
+  border-radius: 0;
+  color: #00ff00;
+  font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
+}
+
+[data-theme="terminal"] .modal-clear-time-button:hover {
+  background: #001100;
+}
+
+[data-theme="terminal"] .modal-now-time-button {
+  background: #000000;
+  border: 1px solid #00ff00;
+  border-radius: 0;
+  color: #00ff00;
+  font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
+}
+
+[data-theme="terminal"] .modal-now-time-button:hover {
+  background: #001100;
+}
+
 [data-theme="terminal"] .title-input {
   background: #000000;
   border: 1px solid #00ff00;

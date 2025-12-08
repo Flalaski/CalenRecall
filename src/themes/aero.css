@@ -920,6 +920,93 @@
   box-shadow: 0 2px 8px rgba(21, 101, 192, 0.3);
 }
 
+/* Modal time inputs section - matching time-inputs-section styles */
+[data-theme="aero"] .modal-time-inputs-section {
+  background: rgba(240, 248, 255, 0.6);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(173, 216, 230, 0.5);
+  border-radius: 4px;
+  padding: 0.75rem;
+}
+
+[data-theme="aero"] .modal-time-label {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #1565c0;
+  margin-bottom: 0.25rem;
+  text-shadow: 0 1px 2px rgba(255, 255, 255, 0.8);
+}
+
+[data-theme="aero"] .modal-time-inputs {
+  background: transparent;
+}
+
+[data-theme="aero"] .modal-time-input-group {
+  background: transparent;
+}
+
+[data-theme="aero"] .modal-time-input-group label {
+  font-size: 0.75rem;
+  color: #1565c0;
+  font-weight: 400;
+  text-shadow: 0 1px 2px rgba(255, 255, 255, 0.8);
+}
+
+[data-theme="aero"] .modal-time-input {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(173, 216, 230, 0.6);
+  border-radius: 4px;
+  color: #1565c0;
+  text-align: center;
+  text-shadow: 0 1px 2px rgba(255, 255, 255, 0.8);
+}
+
+[data-theme="aero"] .modal-time-input:focus {
+  border-color: rgba(100, 181, 246, 0.9);
+  outline: 2px solid rgba(21, 101, 192, 0.5);
+  box-shadow: 0 0 8px rgba(21, 101, 192, 0.3);
+  background: rgba(255, 255, 255, 0.85);
+}
+
+[data-theme="aero"] .modal-time-input-group select.modal-time-input {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%231565c0' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+}
+
+[data-theme="aero"] .modal-clear-time-button {
+  background: rgba(255, 255, 255, 0.4);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(173, 216, 230, 0.6);
+  border-radius: 4px;
+  color: #1565c0;
+  text-shadow: 0 1px 2px rgba(255, 255, 255, 0.8);
+}
+
+[data-theme="aero"] .modal-clear-time-button:hover {
+  background: rgba(255, 255, 255, 0.6);
+  border-color: rgba(100, 181, 246, 0.8);
+  box-shadow: 0 2px 8px rgba(21, 101, 192, 0.3);
+}
+
+[data-theme="aero"] .modal-now-time-button {
+  background: rgba(255, 255, 255, 0.4);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(173, 216, 230, 0.6);
+  border-radius: 4px;
+  color: #1565c0;
+  text-shadow: 0 1px 2px rgba(255, 255, 255, 0.8);
+}
+
+[data-theme="aero"] .modal-now-time-button:hover {
+  background: rgba(255, 255, 255, 0.6);
+  border-color: rgba(100, 181, 246, 0.8);
+  box-shadow: 0 2px 8px rgba(21, 101, 192, 0.3);
+}
+
 [data-theme="aero"] .title-input {
   background: rgba(255, 255, 255, 0.7);
   backdrop-filter: blur(8px);

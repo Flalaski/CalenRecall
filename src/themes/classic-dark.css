@@ -963,6 +963,86 @@
   border: 2px inset #606060;
 }
 
+/* Modal time inputs section - matching time-inputs-section styles */
+[data-theme="classic-dark"] .modal-time-inputs-section {
+  background: #2a2a2a;
+  border: 2px inset #606060;
+  border-radius: 0;
+  padding: 0.75rem;
+}
+
+[data-theme="classic-dark"] .modal-time-label {
+  font-family: 'MS Sans Serif', sans-serif;
+  font-size: 10px;
+  font-weight: bold;
+  color: #e0e0e0;
+  text-shadow: none;
+  margin-bottom: 0.25rem;
+}
+
+[data-theme="classic-dark"] .modal-time-inputs {
+  background: transparent;
+}
+
+[data-theme="classic-dark"] .modal-time-input-group {
+  background: transparent;
+}
+
+[data-theme="classic-dark"] .modal-time-input-group label {
+  font-family: 'MS Sans Serif', sans-serif;
+  font-size: 9px;
+  color: #e0e0e0;
+  text-shadow: none;
+  font-weight: bold;
+}
+
+[data-theme="classic-dark"] .modal-time-input {
+  background: #1e1e1e;
+  border: 2px inset #606060;
+  border-radius: 0;
+  color: #e0e0e0;
+  font-family: 'MS Sans Serif', sans-serif;
+  font-size: 11px;
+  text-align: center;
+}
+
+[data-theme="classic-dark"] .modal-time-input:focus {
+  border: 2px inset #000080;
+  outline: none;
+}
+
+[data-theme="classic-dark"] .modal-time-input-group select.modal-time-input {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23e0e0e0' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+}
+
+[data-theme="classic-dark"] .modal-clear-time-button {
+  background: #404040;
+  border: 2px outset #606060;
+  border-radius: 0;
+  color: #e0e0e0;
+  font-family: 'MS Sans Serif', sans-serif;
+  font-size: 11px;
+  text-shadow: none;
+}
+
+[data-theme="classic-dark"] .modal-clear-time-button:hover {
+  border: 2px inset #606060;
+}
+
+[data-theme="classic-dark"] .modal-now-time-button {
+  background: #404040;
+  border: 2px outset #606060;
+  border-radius: 0;
+  color: #e0e0e0;
+  font-family: 'MS Sans Serif', sans-serif;
+  font-size: 11px;
+  text-shadow: none;
+}
+
+[data-theme="classic-dark"] .modal-now-time-button:hover {
+  border: 2px inset #606060;
+}
+
 [data-theme="classic-dark"] .title-input {
   background: #1e1e1e;
   border: 2px inset #606060;
