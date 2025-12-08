@@ -1,0 +1,2108 @@
+/**
+ * Football Theme
+ * Green grass field theme with football field minimap
+ */
+
+/* Color Palette:
+ * Field Green: #2d5016 (dark grass)
+ * Bright Green: #3a6b1f (medium grass)
+ * Light Green: #4a7c2a (light grass)
+ * White Lines: #ffffff
+ * End Zone: #1a3d0a (darker green)
+ * Accent: #ff6b00 (orange for highlights)
+ */
+
+[data-theme="football"] body {
+  background: #2d5016;
+  color: #ffffff;
+}
+
+[data-theme="football"] .app {
+  background: #2d5016;
+}
+
+[data-theme="football"] {
+  font-family: 'Arial', 'Helvetica', sans-serif;
+  font-size: 14px;
+}
+
+[data-theme="football"] .app-content {
+  background: #2d5016;
+  gap: 2px;
+}
+
+[data-theme="football"] .timeline-section {
+  background: #2d5016;
+}
+
+[data-theme="football"] .editor-section {
+  background: #2d5016;
+  border-left: 2px solid #ffffff;
+}
+
+/* Navigation Bar */
+[data-theme="football"] .navigation-bar {
+  background: #3a6b1f;
+  border-bottom: 2px solid #ffffff;
+}
+
+[data-theme="football"] .navigation-bar-top-row {
+  background: #3a6b1f;
+  border-bottom: 2px solid #ffffff;
+}
+
+[data-theme="football"] .nav-controls {
+  background: transparent;
+}
+
+[data-theme="football"] .nav-button,
+[data-theme="football"] .view-mode-button {
+  background: #3a6b1f;
+  border: 1px solid #ffffff;
+  color: #ffffff;
+  border-radius: 4px;
+}
+
+[data-theme="football"] .nav-button:hover,
+[data-theme="football"] .view-mode-button:hover {
+  background: #4a7c2a;
+  border-color: #ffffff;
+}
+
+[data-theme="football"] .view-mode-button.active {
+  background: #ff6b00;
+  color: #ffffff;
+  border-color: #ffffff;
+}
+
+[data-theme="football"] .today-button {
+  background: #3a6b1f;
+  border: 1px solid #ffffff;
+  color: #ffffff;
+  border-radius: 4px;
+}
+
+[data-theme="football"] .today-button:hover {
+  background: #4a7c2a;
+  border-color: #ffffff;
+}
+
+[data-theme="football"] .view-mode-selector {
+  background: transparent;
+}
+
+[data-theme="football"] .date-label {
+  color: #ffffff;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+[data-theme="football"] .calendar-selector {
+  background: #3a6b1f;
+}
+
+[data-theme="football"] .calendar-select {
+  background: #2d5016;
+  border: 1px solid #ffffff;
+  color: #ffffff;
+  border-radius: 4px;
+}
+
+[data-theme="football"] .calendar-select option {
+  background: #2d5016;
+  color: #ffffff;
+}
+
+[data-theme="football"] .calendar-select:focus {
+  border-color: #ff6b00;
+  outline: 2px solid #ff6b00;
+}
+
+[data-theme="football"] .calendar-info-panel {
+  background: #2d5016;
+  border: 1px solid #ffffff;
+  color: #ffffff;
+}
+
+[data-theme="football"] .calendar-definition-toggle {
+  background: #3a6b1f;
+  border: 1px solid #ffffff;
+  color: #ffffff;
+}
+
+[data-theme="football"] .calendar-definition-toggle:hover {
+  background: #4a7c2a;
+  border-color: #ffffff;
+}
+
+[data-theme="football"] .calendar-definition-drawer {
+  background: #2d5016;
+  border: 1px solid #ffffff;
+  color: #ffffff;
+}
+
+/* Date Input Components */
+[data-theme="football"] .date-input {
+  background: #2d5016;
+  border: 1px solid #ffffff;
+  border-radius: 4px;
+  color: #ffffff;
+}
+
+[data-theme="football"] .date-input::placeholder {
+  color: #a0a0a0;
+}
+
+[data-theme="football"] .date-input:hover {
+  background: #3a6b1f;
+  border-color: #ffffff;
+}
+
+[data-theme="football"] .date-input:focus {
+  background: #3a6b1f;
+  border-color: #ff6b00;
+  box-shadow: 0 0 0 2px rgba(255, 107, 0, 0.3);
+  outline: none;
+}
+
+[data-theme="football"] .date-input.error {
+  border-color: #ff4444;
+  background: #4a1a1a;
+}
+
+[data-theme="football"] .date-input.error:focus {
+  border-color: #ff4444;
+  box-shadow: 0 0 0 2px rgba(255, 68, 68, 0.3);
+}
+
+[data-theme="football"] .date-field-label {
+  color: #ffffff;
+}
+
+[data-theme="football"] .date-field-separator {
+  color: #ffffff;
+}
+
+[data-theme="football"] .date-input-helper-text {
+  background: #3a6b1f;
+  border: 1px solid #ffffff;
+  color: #ffffff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+[data-theme="football"] .date-input-error-message {
+  background: #4a1a1a;
+  border: 1px solid #ff4444;
+  color: #ffaaaa;
+}
+
+/* Calendar View */
+[data-theme="football"] .calendar-loading {
+  background: #2d5016;
+  color: #ffffff;
+}
+
+[data-theme="football"] .calendar-grid {
+  background: #2d5016;
+  border: 2px solid #ffffff;
+}
+
+[data-theme="football"] .calendar-cell {
+  background: #3a6b1f;
+  border: 1px solid #ffffff;
+  color: #ffffff;
+}
+
+[data-theme="football"] .calendar-cell:hover {
+  background: #4a7c2a;
+  border-color: #ffffff;
+}
+
+[data-theme="football"] .calendar-cell.empty-cell {
+  background: #1a3d0a;
+  border: 1px solid #2d5016;
+  cursor: default;
+}
+
+[data-theme="football"] .calendar-cell.today {
+  background: #ff6b00;
+  color: #ffffff;
+  border: 2px solid #ffffff;
+}
+
+[data-theme="football"] .calendar-cell.selected {
+  background: #ff6b00;
+  color: #ffffff;
+  border: 2px solid #ffffff;
+}
+
+[data-theme="football"] .calendar-cell.has-entry {
+  background: #3a6b1f;
+  border: 2px solid #ff6b00;
+}
+
+[data-theme="football"] .calendar-cell.has-entry.today {
+  background: #ff6b00;
+  color: #ffffff;
+}
+
+[data-theme="football"] .cell-content {
+  color: inherit;
+}
+
+[data-theme="football"] .cell-label {
+  color: inherit;
+}
+
+[data-theme="football"] .entry-indicator {
+  background: #ff6b00;
+  border: 1px solid #ffffff;
+}
+
+[data-theme="football"] .entry-indicator-wrapper {
+  width: max(9px, var(--entry-indicator-size, 16px));
+  height: max(9px, var(--entry-indicator-size, 16px));
+}
+
+[data-theme="football"] .entry-indicator-wrapper.in-cluster {
+  width: max(9px, var(--entry-indicator-size-cluster, 16px));
+  height: max(9px, var(--entry-indicator-size-cluster, 16px));
+}
+
+[data-theme="football"] .weekday-header {
+  background: #3a6b1f;
+  border-bottom: 2px solid #ffffff;
+  color: #ffffff;
+}
+
+[data-theme="football"] .day-header h2 {
+  color: #ffffff;
+}
+
+[data-theme="football"] .weekday-cell {
+  background: #3a6b1f;
+  border: 1px solid #ffffff;
+  color: #ffffff;
+}
+
+[data-theme="football"] .day-number {
+  color: inherit;
+}
+
+[data-theme="football"] .day-name {
+  color: inherit;
+}
+
+[data-theme="football"] .day-month {
+  color: inherit;
+}
+
+/* Timeline View */
+[data-theme="football"] .timeline-loading {
+  background: #2d5016;
+  color: #ffffff;
+}
+
+[data-theme="football"] .timeline-month-view,
+[data-theme="football"] .timeline-week-view {
+  background: #2d5016;
+}
+
+[data-theme="football"] .month-view-content {
+  background: #2d5016;
+}
+
+[data-theme="football"] .month-calendar-section {
+  background: #2d5016;
+}
+
+[data-theme="football"] .month-week-entries-section {
+  background: #2d5016;
+  border-left: 2px solid #ffffff;
+}
+
+[data-theme="football"] .month-entries-section {
+  border-bottom: 2px solid #ffffff;
+}
+
+[data-theme="football"] .month-entries-header {
+  background: #3a6b1f;
+  border-bottom: 2px solid #ffffff;
+  color: #ffffff;
+}
+
+[data-theme="football"] .month-entries-list {
+  background: #2d5016;
+}
+
+[data-theme="football"] .month-entry-title {
+  color: #ffffff;
+}
+
+[data-theme="football"] .month-entry-preview {
+  color: #d0d0d0;
+}
+
+[data-theme="football"] .month-entry-empty {
+  color: #808080;
+}
+
+[data-theme="football"] .timeline-grid {
+  background: #2d5016;
+  border: 2px solid #ffffff;
+}
+
+[data-theme="football"] .timeline-cell {
+  background: #3a6b1f;
+  border: 1px solid #ffffff;
+  color: #ffffff;
+}
+
+[data-theme="football"] .timeline-cell:hover {
+  background: #4a7c2a;
+  border-color: #ffffff;
+}
+
+[data-theme="football"] .timeline-cell.today {
+  background: #ff6b00;
+  color: #ffffff;
+  border: 2px solid #ffffff;
+}
+
+[data-theme="football"] .week-entries-header {
+  background: #3a6b1f;
+  border-bottom: 2px solid #ffffff;
+  color: #ffffff;
+}
+
+[data-theme="football"] .week-entries-list {
+  background: #2d5016;
+}
+
+[data-theme="football"] .week-entry-group-header {
+  background: #2d5016;
+  border-bottom: 1px solid #ffffff;
+}
+
+[data-theme="football"] .week-label {
+  color: #ffffff;
+}
+
+[data-theme="football"] .week-entry-count {
+  background: #ff6b00;
+  color: #ffffff;
+  border: 1px solid #ffffff;
+}
+
+[data-theme="football"] .week-entry-items {
+  background: transparent;
+}
+
+[data-theme="football"] .week-entry-group {
+  background: #2d5016;
+  border: 1px solid #ffffff;
+}
+
+[data-theme="football"] .week-entry-item {
+  background: #3a6b1f;
+  border: 1px solid #ffffff;
+  color: #ffffff;
+}
+
+[data-theme="football"] .week-entry-item:hover {
+  background: #4a7c2a;
+  border-color: #ffffff;
+}
+
+[data-theme="football"] .week-entry-title {
+  color: inherit;
+}
+
+[data-theme="football"] .week-entry-empty {
+  color: #808080;
+  font-style: italic;
+}
+
+[data-theme="football"] .month-entry-item {
+  background: #3a6b1f !important;
+  border: 1px solid #ffffff;
+  color: #ffffff;
+}
+
+[data-theme="football"] .month-entry-item:hover {
+  background: #4a7c2a !important;
+  border-color: #ffffff;
+}
+
+/* Entry Viewer */
+[data-theme="football"] .entry-viewer {
+  background: #2d5016;
+  color: #ffffff;
+}
+
+[data-theme="football"] .viewer-header {
+  background: #3a6b1f;
+  border-bottom: 2px solid #ffffff;
+}
+
+[data-theme="football"] .header-top {
+  background: transparent;
+}
+
+[data-theme="football"] .viewer-header h3,
+[data-theme="football"] .editor-header h3 {
+  color: #ffffff;
+}
+
+[data-theme="football"] .header-actions {
+  background: transparent;
+}
+
+[data-theme="football"] .edit-button,
+[data-theme="football"] .duplicate-button {
+  background: #3a6b1f;
+  border: 1px solid #ffffff;
+  color: #ffffff;
+}
+
+[data-theme="football"] .edit-button:hover,
+[data-theme="football"] .duplicate-button:hover {
+  background: #4a7c2a;
+  border-color: #ffffff;
+}
+
+[data-theme="football"] .new-entry-button-header {
+  background: #ff6b00;
+  border: 1px solid #ffffff;
+  color: #ffffff;
+}
+
+[data-theme="football"] .new-entry-button-header:hover {
+  background: #ff8800;
+  border-color: #ffffff;
+}
+
+[data-theme="football"] .time-range-badge-viewer {
+  background: #2d5016;
+  border: 1px solid #ffffff;
+  color: #ffffff;
+}
+
+[data-theme="football"] .entry-date-display {
+  color: #ffffff;
+}
+
+[data-theme="football"] .viewer-content {
+  background: #2d5016;
+  color: #ffffff;
+}
+
+[data-theme="football"] .viewer-title {
+  color: #ffffff;
+  border-bottom: 2px solid #ffffff;
+}
+
+[data-theme="football"] .viewer-text {
+  color: #ffffff;
+}
+
+[data-theme="football"] .viewer-tags {
+  background: transparent;
+  border-top: 1px solid #ffffff;
+}
+
+[data-theme="football"] .viewer-tag {
+  background: #3a6b1f;
+  border: 1px solid #ffffff;
+  color: #ffffff;
+}
+
+[data-theme="football"] .viewer-linked-entries {
+  background: transparent;
+  border-top: 1px solid #ffffff;
+}
+
+[data-theme="football"] .viewer-linked-entries h4 {
+  color: #ffffff;
+}
+
+[data-theme="football"] .linked-entries-list {
+  background: transparent;
+}
+
+[data-theme="football"] .linked-entry-item {
+  background: #3a6b1f;
+  border: 1px solid #ffffff;
+  color: #ffffff;
+}
+
+[data-theme="football"] .linked-entry-item:hover {
+  background: #4a7c2a;
+  border-color: #ffffff;
+}
+
+[data-theme="football"] .linked-entry-title {
+  color: inherit;
+}
+
+[data-theme="football"] .linked-entry-meta {
+  color: inherit;
+}
+
+[data-theme="football"] .linked-entry-date {
+  color: inherit;
+}
+
+[data-theme="football"] .linked-entry-time-range {
+  background: #2d5016;
+  border: 1px solid #ffffff;
+  color: #ffffff;
+}
+
+[data-theme="football"] .viewer-empty {
+  background: #2d5016;
+  color: #808080;
+  font-style: italic;
+}
+
+[data-theme="football"] .viewer-loading {
+  background: #2d5016;
+  color: #ffffff;
+}
+
+[data-theme="football"] .period-entries-controls {
+  background: #3a6b1f;
+  border-bottom: 2px solid #ffffff;
+}
+
+[data-theme="football"] .period-entries-filter,
+[data-theme="football"] .period-entries-sort {
+  background: transparent;
+}
+
+[data-theme="football"] .period-entries-filter label,
+[data-theme="football"] .period-entries-sort label {
+  color: #ffffff;
+}
+
+[data-theme="football"] .period-entries-tags {
+  background: transparent;
+}
+
+[data-theme="football"] .period-entry-filter-tag {
+  background: #2d5016;
+  border: 1px solid #ffffff;
+  color: #ffffff;
+}
+
+[data-theme="football"] .period-entry-filter-tag:hover {
+  background: #3a6b1f;
+  border-color: #ffffff;
+}
+
+[data-theme="football"] .period-entry-filter-tag.active {
+  background: #ff6b00;
+  color: #ffffff;
+  border-color: #ffffff;
+}
+
+[data-theme="football"] .period-entry-clear-filters {
+  background: #3a6b1f;
+  border: 1px solid #ffffff;
+  color: #ffffff;
+}
+
+[data-theme="football"] .period-entry-clear-filters:hover {
+  background: #4a7c2a;
+  border-color: #ffffff;
+}
+
+[data-theme="football"] .period-entries-sort select {
+  background: #2d5016;
+  border: 1px solid #ffffff;
+  color: #ffffff;
+}
+
+[data-theme="football"] .period-entries-sort select:focus {
+  border-color: #ff6b00;
+  outline: 2px solid #ff6b00;
+}
+
+[data-theme="football"] .period-entries-list {
+  background: transparent;
+}
+
+[data-theme="football"] .period-entry-item {
+  background: #3a6b1f;
+  border: 1px solid #ffffff;
+  color: #ffffff;
+}
+
+[data-theme="football"] .period-entry-item:hover {
+  background: #4a7c2a;
+  border-color: #ffffff;
+}
+
+[data-theme="football"] .period-entry-header {
+  background: transparent;
+}
+
+[data-theme="football"] .period-entry-title-row {
+  background: transparent;
+}
+
+[data-theme="football"] .period-entry-title {
+  color: inherit;
+}
+
+[data-theme="football"] .period-entry-actions {
+  background: transparent;
+}
+
+[data-theme="football"] .period-entry-edit-button {
+  background: #3a6b1f;
+  border: 1px solid #ffffff;
+  color: #ffffff;
+}
+
+[data-theme="football"] .period-entry-edit-button:hover {
+  background: #4a7c2a;
+  border-color: #ffffff;
+}
+
+[data-theme="football"] .period-entry-badge {
+  background: #ff6b00;
+  color: #ffffff;
+  border: 1px solid #ffffff;
+}
+
+[data-theme="football"] .period-entry-meta {
+  background: transparent;
+}
+
+[data-theme="football"] .period-entry-date {
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-color: #ff6b00;
+}
+
+[data-theme="football"] .period-entry-content {
+  color: inherit;
+}
+
+[data-theme="football"] .period-entry-content-wrapper {
+  background: transparent;
+}
+
+[data-theme="football"] .period-entry-tags {
+  background: transparent;
+  border-top: 1px solid #ffffff;
+}
+
+[data-theme="football"] .period-entry-tag {
+  background: #3a6b1f;
+  border: 1px solid #ffffff;
+  color: #ffffff;
+}
+
+/* Journal Editor */
+[data-theme="football"] .journal-editor-inline {
+  background: #2d5016;
+}
+
+[data-theme="football"] .journal-editor {
+  background: #2d5016;
+  color: #ffffff;
+}
+
+[data-theme="football"] .editor-loading {
+  background: #2d5016;
+  color: #ffffff;
+}
+
+[data-theme="football"] .editor-header {
+  background: #3a6b1f;
+  border-bottom: 2px solid #ffffff;
+}
+
+[data-theme="football"] .editor-content {
+  background: #2d5016;
+  color: #ffffff;
+}
+
+[data-theme="football"] .view-mode-message {
+  background: #2d5016;
+  color: #808080;
+  font-style: italic;
+}
+
+[data-theme="football"] .time-inputs-section {
+  background: #1a3d0a;
+  border: 1px solid #ffffff;
+  border-radius: 4px;
+  padding: 0.75rem;
+}
+
+[data-theme="football"] .time-label {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #ffffff;
+  margin-bottom: 0.25rem;
+}
+
+[data-theme="football"] .time-inputs {
+  background: transparent;
+}
+
+[data-theme="football"] .time-input-group {
+  background: transparent;
+}
+
+[data-theme="football"] .time-input-group label {
+  font-size: 0.75rem;
+  color: #ffffff;
+  font-weight: 400;
+}
+
+[data-theme="football"] .time-input {
+  background: #2d5016;
+  border: 1px solid #ffffff;
+  border-radius: 4px;
+  color: #ffffff;
+  text-align: center;
+}
+
+[data-theme="football"] .time-input:focus {
+  border-color: #ff6b00;
+  outline: 2px solid #ff6b00;
+}
+
+[data-theme="football"] .time-input-group select.time-input {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23ffffff' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+}
+
+[data-theme="football"] .clear-time-button {
+  background: #2d5016;
+  border: 1px solid #ffffff;
+  border-radius: 4px;
+  color: #ffffff;
+}
+
+[data-theme="football"] .clear-time-button:hover {
+  border-color: #ff6b00;
+  background: #3a6b1f;
+}
+
+/* Modal time inputs section */
+[data-theme="football"] .modal-time-inputs-section {
+  background: #1a3d0a;
+  border: 1px solid #ffffff;
+  border-radius: 4px;
+  padding: 0.75rem;
+}
+
+[data-theme="football"] .modal-time-label {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #ffffff;
+  margin-bottom: 0.25rem;
+}
+
+[data-theme="football"] .modal-time-inputs {
+  background: transparent;
+}
+
+[data-theme="football"] .modal-time-input-group {
+  background: transparent;
+}
+
+[data-theme="football"] .modal-time-input-group label {
+  font-size: 0.75rem;
+  color: #ffffff;
+  font-weight: 400;
+}
+
+[data-theme="football"] .modal-time-input {
+  background: #2d5016;
+  border: 1px solid #ffffff;
+  border-radius: 4px;
+  color: #ffffff;
+  text-align: center;
+}
+
+[data-theme="football"] .modal-time-input:focus {
+  border-color: #ff6b00;
+  outline: 2px solid #ff6b00;
+}
+
+[data-theme="football"] .modal-time-input-group select.modal-time-input {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23ffffff' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+}
+
+[data-theme="football"] .modal-clear-time-button {
+  background: #2d5016;
+  border: 1px solid #ffffff;
+  border-radius: 4px;
+  color: #ffffff;
+}
+
+[data-theme="football"] .modal-clear-time-button:hover {
+  border-color: #ff6b00;
+  background: #3a6b1f;
+}
+
+[data-theme="football"] .modal-now-time-button {
+  background: #2d5016;
+  border: 1px solid #ffffff;
+  border-radius: 4px;
+  color: #ffffff;
+}
+
+[data-theme="football"] .modal-now-time-button:hover {
+  border-color: #ff6b00;
+  background: #3a6b1f;
+}
+
+[data-theme="football"] .title-input {
+  background: #2d5016;
+  border: 1px solid #ffffff;
+  color: #ffffff;
+}
+
+[data-theme="football"] .title-input:focus {
+  border-color: #ff6b00;
+  outline: 2px solid #ff6b00;
+}
+
+[data-theme="football"] .content-input {
+  background: #2d5016;
+  border: 1px solid #ffffff;
+  color: #ffffff;
+}
+
+[data-theme="football"] .content-input:focus {
+  border-color: #ff6b00;
+  outline: 2px solid #ff6b00;
+}
+
+[data-theme="football"] .tags-section {
+  background: transparent;
+}
+
+[data-theme="football"] .tags-input-container {
+  background: transparent;
+}
+
+[data-theme="football"] .tag-input {
+  background: #2d5016;
+  border: 1px solid #ffffff;
+  color: #ffffff;
+}
+
+[data-theme="football"] .tag-input:focus {
+  border-color: #ff6b00;
+  outline: 2px solid #ff6b00;
+}
+
+[data-theme="football"] .add-tag-button {
+  background: #ff6b00;
+  border: 1px solid #ffffff;
+  color: #ffffff;
+}
+
+[data-theme="football"] .add-tag-button:hover {
+  background: #ff8800;
+  border-color: #ffffff;
+}
+
+[data-theme="football"] .tags-list {
+  background: transparent;
+}
+
+[data-theme="football"] .tag {
+  background: #3a6b1f;
+  border: 1px solid #ffffff;
+  color: #ffffff;
+}
+
+[data-theme="football"] .tag-remove {
+  background: transparent;
+  border: none;
+  color: #ffffff;
+}
+
+[data-theme="football"] .tag-remove:hover {
+  background: #4a7c2a;
+  color: #ffffff;
+}
+
+[data-theme="football"] .editor-footer {
+  background: #3a6b1f;
+  border-top: 2px solid #ffffff;
+}
+
+[data-theme="football"] .footer-actions {
+  background: transparent;
+}
+
+[data-theme="football"] .cancel-button {
+  background: #3a6b1f;
+  border: 1px solid #ffffff;
+  color: #ffffff;
+}
+
+[data-theme="football"] .cancel-button:hover {
+  background: #4a7c2a;
+  border-color: #ffffff;
+}
+
+[data-theme="football"] .delete-button {
+  background: #8b0000;
+  border: 1px solid #ffffff;
+  color: #ffffff;
+}
+
+[data-theme="football"] .delete-button:hover {
+  background: #a00000;
+  border-color: #ffffff;
+}
+
+[data-theme="football"] .save-button {
+  background: #ff6b00;
+  border: 1px solid #ffffff;
+  color: #ffffff;
+}
+
+[data-theme="football"] .save-button:hover:not(:disabled) {
+  background: #ff8800;
+  border-color: #ffffff;
+}
+
+[data-theme="football"] .save-button:disabled {
+  background: #2d5016;
+  color: #808080;
+  border: 1px solid #ffffff;
+  cursor: not-allowed;
+}
+
+[data-theme="football"] .confirm-dialog-overlay {
+  background: rgba(0, 0, 0, 0.8);
+}
+
+[data-theme="football"] .confirm-dialog {
+  background: #2d5016;
+  border: 2px solid #ffffff;
+  color: #ffffff;
+}
+
+[data-theme="football"] .confirm-dialog-buttons {
+  background: transparent;
+}
+
+/* Journal List */
+[data-theme="football"] .journal-list {
+  background: #2d5016;
+  border-right: 2px solid #ffffff;
+}
+
+[data-theme="football"] .journal-list-loading {
+  background: #2d5016;
+  color: #ffffff;
+}
+
+[data-theme="football"] .journal-list-header {
+  background: #3a6b1f;
+  border-bottom: 2px solid #ffffff;
+}
+
+[data-theme="football"] .journal-list-header h3 {
+  color: #ffffff;
+}
+
+[data-theme="football"] .journal-list-header-actions {
+  background: transparent;
+}
+
+[data-theme="football"] .new-entry-button {
+  background: #ff6b00;
+  border: 1px solid #ffffff;
+  color: #ffffff;
+}
+
+[data-theme="football"] .new-entry-button:hover {
+  background: #ff8800;
+  border-color: #ffffff;
+}
+
+[data-theme="football"] .bulk-edit-toggle-button {
+  background: #3a6b1f;
+  border: 1px solid #ffffff;
+  color: #ffffff;
+}
+
+[data-theme="football"] .bulk-edit-toggle-button:hover {
+  background: #4a7c2a;
+  border-color: #ffffff;
+}
+
+[data-theme="football"] .bulk-edit-toggle-button.active {
+  background: #ff6b00;
+  color: #ffffff;
+  border-color: #ffffff;
+}
+
+[data-theme="football"] .journal-list-content {
+  background: #2d5016;
+}
+
+[data-theme="football"] .journal-list-controls {
+  background: #3a6b1f;
+  border-bottom: 2px solid #ffffff;
+}
+
+[data-theme="football"] .journal-list-filter,
+[data-theme="football"] .journal-list-sort {
+  background: transparent;
+}
+
+[data-theme="football"] .journal-list-filter label,
+[data-theme="football"] .journal-list-sort label {
+  color: #ffffff;
+}
+
+[data-theme="football"] .journal-list-tags {
+  background: transparent;
+}
+
+[data-theme="football"] .journal-entry-filter-tag {
+  background: #2d5016;
+  border: 1px solid #ffffff;
+  color: #ffffff;
+}
+
+[data-theme="football"] .journal-entry-filter-tag:hover {
+  background: #3a6b1f;
+  border-color: #ffffff;
+}
+
+[data-theme="football"] .journal-entry-filter-tag.active {
+  background: #ff6b00;
+  color: #ffffff;
+  border-color: #ffffff;
+}
+
+[data-theme="football"] .journal-entry-clear-filters {
+  background: #3a6b1f;
+  border: 1px solid #ffffff;
+  color: #ffffff;
+}
+
+[data-theme="football"] .journal-entry-clear-filters:hover {
+  background: #4a7c2a;
+  border-color: #ffffff;
+}
+
+[data-theme="football"] .journal-list-sort select {
+  background: #2d5016;
+  border: 1px solid #ffffff;
+  color: #ffffff;
+}
+
+[data-theme="football"] .journal-list-sort select:focus {
+  border-color: #ff6b00;
+  outline: 2px solid #ff6b00;
+}
+
+[data-theme="football"] .journal-list-empty {
+  background: #2d5016;
+  color: #808080;
+  font-style: italic;
+}
+
+[data-theme="football"] .journal-entries {
+  background: transparent;
+}
+
+[data-theme="football"] .journal-entry-item {
+  background: #3a6b1f;
+  border: 1px solid #ffffff;
+  color: #ffffff;
+}
+
+[data-theme="football"] .journal-entry-item:hover {
+  background: #4a7c2a;
+  border-color: #ffffff;
+}
+
+[data-theme="football"] .journal-entry-item.selected {
+  background: #ff6b00;
+  color: #ffffff;
+  border-color: #ffffff;
+}
+
+[data-theme="football"] .journal-entry-item.bulk-edit-mode {
+  background: #3a6b1f;
+}
+
+[data-theme="football"] .journal-entry-item.bulk-selected {
+  background: #ff6b00;
+  color: #ffffff;
+  border-color: #ffffff;
+}
+
+[data-theme="football"] .entry-item-header {
+  background: transparent;
+}
+
+[data-theme="football"] .entry-item-title {
+  color: inherit;
+}
+
+[data-theme="football"] .entry-item-meta {
+  background: transparent;
+}
+
+[data-theme="football"] .entry-time-range {
+  background: #2d5016;
+  border: 1px solid #ffffff;
+  color: #ffffff;
+}
+
+[data-theme="football"] .entry-date {
+  color: inherit;
+}
+
+[data-theme="football"] .entry-item-preview {
+  color: inherit;
+}
+
+[data-theme="football"] .entry-item-tags {
+  background: transparent;
+}
+
+[data-theme="football"] .entry-tag {
+  background: #3a6b1f;
+  border: 1px solid #ffffff;
+  color: #ffffff;
+}
+
+[data-theme="football"] .entry-item-content {
+  background: transparent;
+}
+
+[data-theme="football"] .entry-checkbox-wrapper {
+  background: transparent;
+}
+
+[data-theme="football"] .entry-checkbox-wrapper input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  border: 1px solid #ffffff;
+  background: #2d5016;
+  accent-color: #ff6b00;
+}
+
+[data-theme="football"] .bulk-edit-actions {
+  background: #ff6b00;
+  border-bottom: 2px solid #ffffff;
+}
+
+[data-theme="football"] .bulk-edit-selected-count {
+  color: #ffffff;
+}
+
+[data-theme="football"] .bulk-delete-button {
+  background: #8b0000;
+  border: 1px solid #ffffff;
+  color: #ffffff;
+}
+
+[data-theme="football"] .bulk-delete-button:hover {
+  background: #a00000;
+  border-color: #ffffff;
+}
+
+[data-theme="football"] .bulk-edit-select-all {
+  background: #3a6b1f;
+  border-bottom: 2px solid #ffffff;
+}
+
+[data-theme="football"] .bulk-edit-checkbox-label {
+  color: #ffffff;
+}
+
+/* Entry Edit Modal */
+[data-theme="football"] .entry-edit-modal-overlay {
+  background: rgba(0, 0, 0, 0.8);
+}
+
+[data-theme="football"] .entry-edit-modal {
+  background: #2d5016;
+  border: 2px solid #ffffff;
+  color: #ffffff;
+}
+
+[data-theme="football"] .modal-header {
+  background: #3a6b1f;
+  border-bottom: 2px solid #ffffff;
+}
+
+[data-theme="football"] .modal-header-top {
+  background: transparent;
+}
+
+[data-theme="football"] .modal-header-top h3 {
+  color: #ffffff;
+}
+
+[data-theme="football"] .modal-close-button {
+  background: #3a6b1f;
+  border: 1px solid #ffffff;
+  color: #ffffff;
+}
+
+[data-theme="football"] .modal-close-button:hover {
+  background: #4a7c2a;
+  border-color: #ffffff;
+}
+
+[data-theme="football"] .modal-entry-meta {
+  background: transparent;
+}
+
+[data-theme="football"] .modal-entry-meta small {
+  color: #a0a0a0;
+}
+
+[data-theme="football"] .modal-content {
+  background: #2d5016;
+  color: #ffffff;
+}
+
+[data-theme="football"] .modal-title-input {
+  background: #2d5016;
+  border: 1px solid #ffffff;
+  color: #ffffff;
+}
+
+[data-theme="football"] .modal-title-input:focus {
+  border-color: #ff6b00;
+  outline: 2px solid #ff6b00;
+}
+
+[data-theme="football"] .modal-content-input {
+  background: #2d5016;
+  border: 1px solid #ffffff;
+  color: #ffffff;
+}
+
+[data-theme="football"] .modal-content-input:focus {
+  border-color: #ff6b00;
+  outline: 2px solid #ff6b00;
+}
+
+[data-theme="football"] .modal-tags-section {
+  background: transparent;
+}
+
+[data-theme="football"] .modal-tags-input-container {
+  background: transparent;
+}
+
+[data-theme="football"] .modal-tag-input {
+  background: #2d5016;
+  border: 1px solid #ffffff;
+  color: #ffffff;
+}
+
+[data-theme="football"] .modal-tag-input:focus {
+  border-color: #ff6b00;
+  outline: 2px solid #ff6b00;
+}
+
+[data-theme="football"] .modal-add-tag-button {
+  background: #ff6b00;
+  border: 1px solid #ffffff;
+  color: #ffffff;
+}
+
+[data-theme="football"] .modal-add-tag-button:hover {
+  background: #ff8800;
+  border-color: #ffffff;
+}
+
+[data-theme="football"] .modal-tags-list {
+  background: transparent;
+}
+
+[data-theme="football"] .modal-tag {
+  background: #3a6b1f;
+  border: 1px solid #ffffff;
+  color: #ffffff;
+}
+
+[data-theme="football"] .modal-tag-remove {
+  background: transparent;
+  border: none;
+  color: #ffffff;
+}
+
+[data-theme="football"] .modal-tag-remove:hover {
+  background: #4a7c2a;
+  color: #ffffff;
+}
+
+[data-theme="football"] .modal-footer {
+  background: #3a6b1f;
+  border-top: 2px solid #ffffff;
+}
+
+[data-theme="football"] .modal-duplicate-button {
+  background: #3a6b1f;
+  border: 1px solid #ffffff;
+  color: #ffffff;
+}
+
+[data-theme="football"] .modal-duplicate-button:hover {
+  background: #4a7c2a;
+  border-color: #ffffff;
+}
+
+[data-theme="football"] .modal-delete-button {
+  background: #8b0000;
+  border: 1px solid #ffffff;
+  color: #ffffff;
+}
+
+[data-theme="football"] .modal-delete-button:hover {
+  background: #a00000;
+  border-color: #ffffff;
+}
+
+[data-theme="football"] .modal-footer-actions {
+  background: transparent;
+}
+
+[data-theme="football"] .modal-cancel-button {
+  background: #3a6b1f;
+  border: 1px solid #ffffff;
+  color: #ffffff;
+}
+
+[data-theme="football"] .modal-cancel-button:hover {
+  background: #4a7c2a;
+  border-color: #ffffff;
+}
+
+[data-theme="football"] .modal-save-button {
+  background: #ff6b00;
+  border: 1px solid #ffffff;
+  color: #ffffff;
+}
+
+[data-theme="football"] .modal-save-button:hover:not(:disabled) {
+  background: #ff8800;
+  border-color: #ffffff;
+}
+
+[data-theme="football"] .modal-save-button:disabled {
+  background: #2d5016;
+  color: #808080;
+  border: 1px solid #ffffff;
+  cursor: not-allowed;
+}
+
+/* Search View */
+[data-theme="football"] .search-view {
+  background: #2d5016;
+  color: #ffffff;
+}
+
+[data-theme="football"] .search-header {
+  background: #3a6b1f;
+  border-bottom: 2px solid #ffffff;
+}
+
+[data-theme="football"] .search-input-container {
+  background: transparent;
+}
+
+[data-theme="football"] .search-input {
+  background: #2d5016;
+  border: 1px solid #ffffff;
+  color: #ffffff;
+}
+
+[data-theme="football"] .search-input:focus {
+  border-color: #ff6b00;
+  outline: 2px solid #ff6b00;
+}
+
+[data-theme="football"] .search-filters-toggle {
+  background: #3a6b1f;
+  border: 1px solid #ffffff;
+  color: #ffffff;
+}
+
+[data-theme="football"] .search-filters-toggle:hover {
+  background: #4a7c2a;
+  border-color: #ffffff;
+}
+
+[data-theme="football"] .search-close-button {
+  background: #3a6b1f;
+  border: 1px solid #ffffff;
+  color: #ffffff;
+}
+
+[data-theme="football"] .search-close-button:hover {
+  background: #4a7c2a;
+  border-color: #ffffff;
+}
+
+[data-theme="football"] .search-filters {
+  background: #3a6b1f;
+  border-bottom: 2px solid #ffffff;
+}
+
+[data-theme="football"] .filter-group {
+  background: transparent;
+}
+
+[data-theme="football"] .filter-group label {
+  color: #ffffff;
+}
+
+[data-theme="football"] .filter-tags {
+  background: transparent;
+}
+
+[data-theme="football"] .filter-tag {
+  background: #2d5016;
+  border: 1px solid #ffffff;
+  color: #ffffff;
+}
+
+[data-theme="football"] .filter-tag:hover {
+  background: #3a6b1f;
+  border-color: #ffffff;
+}
+
+[data-theme="football"] .filter-tag.active {
+  background: #ff6b00;
+  color: #ffffff;
+  border-color: #ffffff;
+}
+
+[data-theme="football"] .filter-empty {
+  color: #808080;
+  font-style: italic;
+}
+
+[data-theme="football"] .filter-time-ranges {
+  background: transparent;
+}
+
+[data-theme="football"] .filter-time-range {
+  background: #2d5016;
+  border: 1px solid #ffffff;
+  color: #ffffff;
+}
+
+[data-theme="football"] .filter-time-range:hover {
+  background: #3a6b1f;
+  border-color: #ffffff;
+}
+
+[data-theme="football"] .filter-time-range.active {
+  background: #ff6b00;
+  color: #ffffff;
+  border-color: #ffffff;
+}
+
+[data-theme="football"] .filter-date-range {
+  background: transparent;
+}
+
+[data-theme="football"] .filter-date-range input {
+  background: #2d5016;
+  border: 1px solid #ffffff;
+  color: #ffffff;
+}
+
+[data-theme="football"] .filter-date-range input:focus {
+  border-color: #ff6b00;
+  outline: 2px solid #ff6b00;
+}
+
+[data-theme="football"] .filter-sort {
+  background: transparent;
+}
+
+[data-theme="football"] .filter-sort select {
+  background: #2d5016;
+  border: 1px solid #ffffff;
+  color: #ffffff;
+}
+
+[data-theme="football"] .filter-sort select:focus {
+  border-color: #ff6b00;
+  outline: 2px solid #ff6b00;
+}
+
+[data-theme="football"] .clear-filters-button {
+  background: #3a6b1f;
+  border: 1px solid #ffffff;
+  color: #ffffff;
+}
+
+[data-theme="football"] .clear-filters-button:hover {
+  background: #4a7c2a;
+  border-color: #ffffff;
+}
+
+[data-theme="football"] .search-results {
+  background: #2d5016;
+  color: #ffffff;
+}
+
+[data-theme="football"] .search-loading,
+[data-theme="football"] .search-empty {
+  background: #2d5016;
+  color: #808080;
+  font-style: italic;
+}
+
+[data-theme="football"] .search-results-count {
+  color: #ffffff;
+}
+
+[data-theme="football"] .search-results-list {
+  background: transparent;
+}
+
+[data-theme="football"] .search-result-item {
+  background: #3a6b1f;
+  border: 1px solid #ffffff;
+  color: #ffffff;
+}
+
+[data-theme="football"] .search-result-item:hover {
+  background: #4a7c2a;
+  border-color: #ffffff;
+}
+
+[data-theme="football"] .result-item-header {
+  background: transparent;
+}
+
+[data-theme="football"] .result-item-title {
+  color: inherit;
+}
+
+[data-theme="football"] .result-item-meta {
+  background: transparent;
+}
+
+[data-theme="football"] .result-time-range-badge {
+  background: #ff6b00;
+  color: #ffffff;
+  border: 1px solid #ffffff;
+}
+
+[data-theme="football"] .result-date {
+  color: inherit;
+}
+
+[data-theme="football"] .result-item-content {
+  color: inherit;
+}
+
+[data-theme="football"] .result-item-tags {
+  background: transparent;
+}
+
+[data-theme="football"] .result-tag {
+  background: #3a6b1f;
+  border: 1px solid #ffffff;
+  color: #ffffff;
+}
+
+/* Preferences */
+[data-theme="football"] .preferences-container {
+  background: #2d5016;
+  color: #ffffff;
+}
+
+[data-theme="football"] .preferences-loading {
+  background: #2d5016;
+  color: #ffffff;
+}
+
+[data-theme="football"] .preferences-header {
+  background: #3a6b1f;
+  border-bottom: 2px solid #ffffff;
+}
+
+[data-theme="football"] .preferences-header h1 {
+  color: #ffffff;
+}
+
+[data-theme="football"] .preferences-actions {
+  background: transparent;
+}
+
+[data-theme="football"] .preferences-button {
+  background: #3a6b1f;
+  border: 1px solid #ffffff;
+  color: #ffffff;
+}
+
+[data-theme="football"] .preferences-button:hover {
+  background: #4a7c2a;
+  border-color: #ffffff;
+}
+
+[data-theme="football"] .preferences-content {
+  background: #2d5016;
+}
+
+[data-theme="football"] .preferences-section {
+  background: #2d5016;
+  border: 2px solid #ffffff;
+}
+
+[data-theme="football"] .preferences-section h2 {
+  color: #ffffff;
+  border-bottom: 2px solid #ffffff;
+}
+
+[data-theme="football"] .preference-item {
+  background: transparent;
+}
+
+[data-theme="football"] .preference-item label {
+  color: #ffffff;
+}
+
+[data-theme="football"] .preference-item input[type="text"],
+[data-theme="football"] .preference-item input[type="number"],
+[data-theme="football"] .preference-item select {
+  background: #2d5016;
+  border: 1px solid #ffffff;
+  color: #ffffff;
+}
+
+[data-theme="football"] .preference-item select option {
+  background: #2d5016;
+  color: #ffffff;
+}
+
+[data-theme="football"] .preference-item input[type="text"]:focus,
+[data-theme="football"] .preference-item input[type="number"]:focus,
+[data-theme="football"] .preference-item select:focus {
+  border-color: #ff6b00;
+  outline: 2px solid #ff6b00;
+}
+
+[data-theme="football"] .preference-item input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  border: 1px solid #ffffff;
+  background: #2d5016;
+  accent-color: #ff6b00;
+}
+
+[data-theme="football"] .preference-item small {
+  color: #a0a0a0;
+}
+
+[data-theme="football"] .preference-note {
+  background: #1a3d0a;
+  border-left: 3px solid #ff6b00;
+  color: #ffffff;
+}
+
+[data-theme="football"] .auto-save-indicator {
+  color: #ff6b00;
+}
+
+[data-theme="football"] .export-toolbar {
+  background: transparent;
+}
+
+[data-theme="football"] .export-controls {
+  background: transparent;
+}
+
+[data-theme="football"] .export-controls select {
+  background: #2d5016;
+  border: 1px solid #ffffff;
+  color: #ffffff;
+}
+
+[data-theme="football"] .export-controls select:focus {
+  border-color: #ff6b00;
+  outline: 2px solid #ff6b00;
+}
+
+[data-theme="football"] .about-section {
+  background: #2d5016;
+  border: 1px solid #ffffff;
+  color: #ffffff;
+}
+
+[data-theme="football"] .about-section a {
+  color: #ff6b00;
+  text-decoration: underline;
+}
+
+[data-theme="football"] .about-section a:hover {
+  color: #ff8800;
+}
+
+/* About Page */
+[data-theme="football"] .about-container {
+  background: #2d5016;
+  color: #ffffff;
+}
+
+[data-theme="football"] .about-content {
+  background: #2d5016;
+  border: 2px solid #ffffff;
+  color: #ffffff;
+}
+
+[data-theme="football"] .about-header {
+  background: transparent;
+  border-bottom: 2px solid #ffffff;
+}
+
+[data-theme="football"] .about-icon {
+  border: 2px solid #ffffff;
+}
+
+[data-theme="football"] .about-title-section h1 {
+  color: #ffffff;
+}
+
+[data-theme="football"] .about-description {
+  color: #ffffff;
+}
+
+[data-theme="football"] .about-section {
+  background: transparent;
+  border-top: 1px solid #ffffff;
+}
+
+[data-theme="football"] .about-version {
+  color: #ffffff;
+}
+
+[data-theme="football"] .about-note {
+  color: #a0a0a0;
+}
+
+[data-theme="football"] .about-credits h2 {
+  color: #ffffff;
+}
+
+[data-theme="football"] .about-credits p {
+  color: #ffffff;
+}
+
+[data-theme="football"] .about-link {
+  color: #ff6b00;
+  text-decoration: underline;
+}
+
+[data-theme="football"] .about-link:hover {
+  color: #ff8800;
+}
+
+[data-theme="football"] .about-credits-detailed {
+  background: transparent;
+}
+
+[data-theme="football"] .about-credits-detailed h2 {
+  color: #ffffff;
+}
+
+[data-theme="football"] .credits-category {
+  background: transparent;
+}
+
+[data-theme="football"] .credits-category h3 {
+  color: #ff6b00;
+}
+
+[data-theme="football"] .credits-category ul {
+  background: transparent;
+}
+
+[data-theme="football"] .credits-category li {
+  color: #ffffff;
+}
+
+[data-theme="football"] .credits-category li strong {
+  color: #ffffff;
+}
+
+[data-theme="football"] .credits-category li em {
+  color: #a0a0a0;
+}
+
+[data-theme="football"] .credits-category p {
+  color: #ffffff;
+}
+
+[data-theme="football"] .credits-note {
+  color: #a0a0a0;
+  font-style: italic;
+}
+
+/* Loading Screen */
+[data-theme="football"] .loading-screen {
+  background: #2d5016;
+  color: #ffffff;
+}
+
+[data-theme="football"] .space-background {
+  background: #1a3d0a;
+}
+
+[data-theme="football"] .loading-content {
+  background: transparent;
+  color: #ffffff;
+}
+
+[data-theme="football"] .loading-title {
+  color: #ffffff;
+}
+
+[data-theme="football"] .loading-message {
+  color: #ffffff;
+}
+
+[data-theme="football"] .loading-progress {
+  background: transparent;
+}
+
+[data-theme="football"] .loading-progress-bar {
+  background: #1a3d0a;
+  border: 2px solid #ffffff;
+}
+
+[data-theme="football"] .loading-progress-fill {
+  background: #ff6b00;
+  border: 1px solid #ffffff;
+}
+
+[data-theme="football"] .loading-progress-text {
+  color: #ffffff;
+}
+
+/* Global Timeline Minimap - Football Field Design */
+[data-theme="football"] .global-timeline-minimap {
+  background: #1a3d0a;
+  border-bottom: 3px solid #ffffff;
+  position: relative;
+  /* Create field texture with subtle grass pattern */
+  background-image: 
+    repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 3px,
+      rgba(255, 255, 255, 0.02) 3px,
+      rgba(255, 255, 255, 0.02) 6px
+    );
+}
+
+/* Football field minimap container - looks like a field with yard lines */
+[data-theme="football"] .minimap-container {
+  background: #3a6b1f;
+  border: 2px solid #ffffff;
+  position: relative;
+  /* Create horizontal yard lines (vertical stripes) and end zones */
+  background-image: 
+    /* Yard lines - vertical white stripes */
+    repeating-linear-gradient(
+      90deg,
+      transparent,
+      transparent 15px,
+      rgba(255, 255, 255, 0.2) 15px,
+      rgba(255, 255, 255, 0.2) 16px
+    ),
+    /* Center line (50-yard line) - thicker */
+    linear-gradient(
+      90deg,
+      transparent calc(50% - 1px),
+      rgba(255, 255, 255, 0.4) calc(50% - 1px),
+      rgba(255, 255, 255, 0.4) calc(50% + 1px),
+      transparent calc(50% + 1px)
+    ),
+    /* Field gradient with end zones */
+    linear-gradient(
+      to bottom,
+      #1a3d0a 0%,
+      #1a3d0a 6%,
+      #3a6b1f 6%,
+      #4a7c2a 50%,
+      #3a6b1f 94%,
+      #1a3d0a 94%,
+      #1a3d0a 100%
+    );
+  overflow: hidden;
+}
+
+/* Add hash marks effect (small vertical lines) */
+[data-theme="football"] .minimap-container::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  background-image: 
+    repeating-linear-gradient(
+      90deg,
+      transparent,
+      transparent 14px,
+      rgba(255, 255, 255, 0.1) 14px,
+      rgba(255, 255, 255, 0.1) 15px
+    );
+  pointer-events: none;
+  z-index: 0;
+}
+
+[data-theme="football"] .radial-dial-center {
+  background: #ff6b00;
+  border: 3px solid #ffffff;
+  box-shadow: 0 0 15px rgba(255, 107, 0, 0.8), inset 0 0 10px rgba(255, 255, 255, 0.3);
+}
+
+[data-theme="football"] .radial-arrow {
+  color: #ff6b00;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5), 0 0 8px rgba(255, 107, 0, 0.6);
+}
+
+[data-theme="football"] .radial-label {
+  background: rgba(255, 255, 255, 0.95);
+  border: 2px solid #ff6b00;
+  color: #2d5016;
+  font-weight: 600;
+}
+
+[data-theme="football"] .timeline-path {
+  stroke: #ffffff;
+  stroke-width: 2px;
+  stroke-dasharray: 4, 4;
+}
+
+[data-theme="football"] .segment-indicator {
+  background: #ffffff;
+  border: 2px solid #ff6b00;
+  border-radius: 50%;
+  box-shadow: 0 0 8px rgba(255, 107, 0, 0.6);
+}
+
+[data-theme="football"] .timeline-segment.current .segment-indicator {
+  background: #ff6b00;
+  border: 3px solid #ffffff;
+  box-shadow: 0 0 12px rgba(255, 107, 0, 0.8);
+}
+
+[data-theme="football"] .segment-label {
+  background: rgba(255, 255, 255, 0.95);
+  color: #2d5016;
+  border: 2px solid #ff6b00;
+  font-weight: 600;
+  text-shadow: none;
+}
+
+[data-theme="football"] .entry-indicator {
+  background: #ff6b00;
+  border: 2px solid #ffffff;
+  border-radius: 50%;
+  box-shadow: 0 0 6px rgba(255, 107, 0, 0.7);
+}
+
+[data-theme="football"] .entry-indicator-wrapper {
+  width: max(9px, var(--entry-indicator-size, 16px));
+  height: max(9px, var(--entry-indicator-size, 16px));
+}
+
+[data-theme="football"] .entry-indicator-wrapper.in-cluster {
+  width: max(9px, var(--entry-indicator-size-cluster, 16px));
+  height: max(9px, var(--entry-indicator-size-cluster, 16px));
+}
+
+[data-theme="football"] .scale-label {
+  color: #ffffff;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);
+  font-weight: 600;
+}
+
+/* Entry badges and cards */
+[data-theme="football"] .entry-decade {
+  background: rgba(156, 39, 176, 0.3);
+  color: #e1bee7;
+}
+
+[data-theme="football"] .entry-year {
+  background: rgba(255, 107, 0, 0.3);
+  color: #ffcc80;
+}
+
+[data-theme="football"] .entry-month {
+  background: rgba(239, 108, 0, 0.3);
+  color: #ffb74d;
+}
+
+[data-theme="football"] .entry-week {
+  background: rgba(46, 125, 50, 0.3);
+  color: #a5d6a7;
+}
+
+[data-theme="football"] .entry-day {
+  background: rgba(194, 24, 91, 0.3);
+  color: #f48fb1;
+}
+
+[data-theme="football"] .entry-card {
+  background: #3a6b1f !important;
+  border-color: #ffffff;
+}
+
+[data-theme="football"] .entry-card-full {
+  background: #3a6b1f !important;
+  border-color: #ffffff;
+}
+
+[data-theme="football"] .card-title,
+[data-theme="football"] .card-title-full,
+[data-theme="football"] .badge-title {
+  color: #ffffff;
+}
+
+[data-theme="football"] .entry-item-title {
+  color: #ffffff;
+}
+
+[data-theme="football"] .card-tag-full {
+  background: #ff6b00;
+  color: #ffffff;
+}
+
+[data-theme="football"] .card-content-full {
+  color: #ffffff;
+}
+
+[data-theme="football"] .card-date {
+  color: #ffffff;
+}
+
+[data-theme="football"] .time-range-badge {
+  background: #ff6b00;
+  color: #ffffff;
+}
+
