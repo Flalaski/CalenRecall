@@ -84,6 +84,12 @@
   flex-shrink: 0;
 }
 
+.date-input-with-era {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
 .date-field-label {
   font-size: 0.65rem;
   color: #666;
@@ -155,6 +161,46 @@
 .date-input.error:focus {
   border-color: #e53935;
   box-shadow: 0 0 0 2px rgba(229, 57, 53, 0.2);
+}
+
+.era-switcher-button {
+  padding: 0.4rem 0.6rem;
+  font-size: 0.75rem;
+  background: #4a90e2;
+  color: white;
+  border: 1px solid #4a90e2;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: 'Bebas Neue', 'Impact', 'Arial Black', 'Franklin Gothic Heavy', 'Arial Narrow', sans-serif;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  font-weight: normal;
+  white-space: nowrap;
+  flex-shrink: 0;
+  min-width: 45px;
+  text-align: center;
+  line-height: 1;
+  /* Optimized: Simplified text-shadow for better performance */
+  text-shadow: 
+    1px 1px 0px rgba(0, 0, 0, 0.2),
+    2px 2px 2px rgba(0, 0, 0, 0.1);
+  /* Optimized: Use nearest neighbor rendering */
+  -webkit-font-smoothing: none;
+  -moz-osx-font-smoothing: unset;
+  text-rendering: optimizeSpeed;
+}
+
+.era-switcher-button:hover {
+  background: #357abd;
+  border-color: #357abd;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.era-switcher-button:active {
+  transform: translateY(0);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
 }
 
 .date-input-helper-text {
@@ -510,5 +556,16 @@
 
 [data-theme="dark"] .date-field-separator {
   color: #666;
+}
+
+[data-theme="dark"] .era-switcher-button {
+  background: #357abd;
+  border-color: #357abd;
+  color: white;
+}
+
+[data-theme="dark"] .era-switcher-button:hover {
+  background: #2a6ba0;
+  border-color: #2a6ba0;
 }
 

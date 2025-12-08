@@ -34,6 +34,12 @@ export default function NavigationBar({
   // Get date entry configuration for current calendar
   const dateEntryConfig = useMemo(() => getDateEntryConfig(calendar), [calendar]);
   
+  // Era state for BCE/CE switcher (only for year fields)
+  // Determine if current calendar uses BCE/CE terminology
+  const calendarInfo = CALENDAR_INFO[calendar];
+  const usesBCE_CE = !calendarInfo.eraName || calendarInfo.eraName === 'CE' || calendarInfo.eraName === '';
+  const [eraMode, setEraMode] = useState<'CE' | 'BCE'>('CE');
+  
   // Dynamic date input state - array of values for each field
   // Initialize based on current calendar's field count
   const [dateInputValues, setDateInputValues] = useState<string[]>(() => 
@@ -45,6 +51,8 @@ export default function NavigationBar({
   // Dynamic refs for input fields
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
   const previousFocusedFieldRef = useRef<number | null>(null);
+  // Track if user is actively typing in date fields to prevent auto-population
+  const isUserTypingRef = useRef(false);
   
   // Use ref to access current onDateChange in keyboard handler
   const onDateChangeRef = useRef(onDateChange);
@@ -57,11 +65,13 @@ export default function NavigationBar({
   // Helper function to populate date input fields from selectedDate
   // All calendar conversions go through JDN (Julian Day Number), ensuring
   // that the day/K'in values represent the same moment in time across all calendars
-  const populateDateFields = useCallback(() => {
+  const populateDateFields = useCallback((date?: Date) => {
     try {
-      // Convert selectedDate (Gregorian Date) to current calendar format via JDN
+      // Use provided date or fall back to selectedDate
+      const dateToUse = date || selectedDate;
+      // Convert date (Gregorian Date) to current calendar format via JDN
       // This ensures all calendars represent the same moment in time
-      const calendarDate = dateToCalendar(selectedDate);
+      const calendarDate = dateToCalendar(dateToUse);
       const fieldCount = dateEntryConfig.fields.length;
       const values: string[] = [];
       
@@ -86,7 +96,20 @@ export default function NavigationBar({
         // For all other calendars, use year/month/day directly
         // The day field represents the same moment in time across all calendars
         // because all conversions go through JDN
-        values[0] = calendarDate.year.toString();
+        // For year field: display based on current era mode
+        let yearValue = calendarDate.year;
+        if (usesBCE_CE && calendarDate.year < 1) {
+          // For BCE dates, show as positive number when in BCE mode
+          // Check current era mode state (but don't update it here to avoid circular dependency)
+          const currentEraMode = eraMode;
+          if (currentEraMode === 'BCE') {
+            yearValue = Math.abs(calendarDate.year);
+          } else {
+            // In CE mode, show negative year
+            yearValue = calendarDate.year;
+          }
+        }
+        values[0] = yearValue.toString();
         if (fieldCount > 1) {
           values[1] = calendarDate.month.toString();
         }
@@ -94,6 +117,13 @@ export default function NavigationBar({
           // This day/K'in value is synchronized across all calendars via JDN
           values[2] = calendarDate.day.toString();
         }
+      }
+      
+      // Update era mode based on calendar date (only if not manually set by user)
+      // Use a separate effect to avoid circular dependency
+      if (usesBCE_CE && calendarDate.year !== undefined) {
+        // Update era mode based on the actual calendar date
+        // This will be handled by useEffect below
       }
       
       // Ensure array is properly sized
@@ -107,7 +137,23 @@ export default function NavigationBar({
       console.error('Error populating date fields:', e);
       return new Array(dateEntryConfig.fields.length).fill('');
     }
-  }, [calendar, selectedDate, dateEntryConfig.fields.length, dateToCalendar]);
+  }, [calendar, selectedDate, dateEntryConfig.fields.length, dateToCalendar, usesBCE_CE, eraMode]);
+
+  // Update era mode when selectedDate changes (for BCE/CE calendars)
+  useEffect(() => {
+    if (usesBCE_CE) {
+      try {
+        const calendarDate = dateToCalendar(selectedDate);
+        if (calendarDate.year < 1) {
+          setEraMode('BCE');
+        } else {
+          setEraMode('CE');
+        }
+      } catch (e) {
+        // Ignore errors
+      }
+    }
+  }, [selectedDate, usesBCE_CE, dateToCalendar]);
 
   // Initialize and populate date input values when calendar changes
   useEffect(() => {
@@ -120,23 +166,8 @@ export default function NavigationBar({
     previousFocusedFieldRef.current = null;
   }, [calendar, dateEntryConfig.fields.length, populateDateFields]);
 
-  // Update input values when selectedDate changes externally
-  // Use ref to prevent updates during navigation animation
-  useEffect(() => {
-    // Skip update if navigation is in progress
-    if (isNavigatingRef.current) {
-      return;
-    }
-    
-    const activeElement = document.activeElement;
-    const isAnyInputFocused = inputRefs.current.some(ref => ref === activeElement);
-    
-    if (!isAnyInputFocused) {
-      const values = populateDateFields();
-      setDateInputValues(values);
-      setDateInputError(false);
-    }
-  }, [selectedDate, populateDateFields]);
+  // Don't auto-populate fields from selectedDate changes
+  // Fields will only be populated during explicit navigation movements
 
   const navigate = (direction: 'prev' | 'next', shiftPressed: boolean = false) => {
     // Play tier-aware navigation sound with direction and shift distinction
@@ -167,6 +198,17 @@ export default function NavigationBar({
         newDate = selectedDate;
     }
     onDateChange(newDate);
+    // Populate date fields after navigation (only if user is not typing)
+    // Use setTimeout to ensure state has updated
+    if (!isUserTypingRef.current) {
+      setTimeout(() => {
+        if (!isUserTypingRef.current) {
+          const values = populateDateFields(newDate);
+          setDateInputValues(values);
+          setDateInputError(false);
+        }
+      }, 0);
+    }
   };
 
   const getDateLabel = () => {
@@ -216,7 +258,19 @@ export default function NavigationBar({
 
   const goToToday = () => {
     playNavigationSound();
-    onDateChange(new Date());
+    const today = new Date();
+    onDateChange(today);
+    // Populate date fields after navigation (only if user is not typing)
+    // Use setTimeout to ensure state has updated
+    if (!isUserTypingRef.current) {
+      setTimeout(() => {
+        if (!isUserTypingRef.current) {
+          const values = populateDateFields(today);
+          setDateInputValues(values);
+          setDateInputError(false);
+        }
+      }, 0);
+    }
   };
 
   // Parse date from dynamic fields using calendar-specific parser
@@ -229,8 +283,28 @@ export default function NavigationBar({
 
     // Convert calendar date to JavaScript Date
     try {
+      // Handle BCE/CE era toggle for calendars that use BCE/CE terminology
+      let year = parsed.year;
+      if (usesBCE_CE) {
+        const isYearField = dateEntryConfig.fields[0]?.label.toLowerCase().includes('year') ||
+                           dateEntryConfig.fields[0]?.label.toLowerCase().includes('cycle') ||
+                           dateEntryConfig.fields[0]?.label.toLowerCase().includes('haab') ||
+                           dateEntryConfig.fields[0]?.label.toLowerCase().includes('baktun') ||
+                           dateEntryConfig.fields[0]?.label.toLowerCase().includes('váḥid') ||
+                           dateEntryConfig.fields[0]?.label.toLowerCase().includes('xiuhmolpilli');
+        
+        if (isYearField) {
+          // If era mode is BCE and year is positive, make it negative
+          if (eraMode === 'BCE' && year > 0) {
+            year = -year;
+          }
+          // If year is already negative (user typed -), respect that regardless of era mode
+          // This allows users to type negative years directly
+        }
+      }
+      
       const calendarDate = {
-        year: parsed.year,
+        year: year,
         month: parsed.month,
         day: parsed.day,
         calendar: calendar
@@ -243,16 +317,76 @@ export default function NavigationBar({
 
   // Dynamic input change handler
   const handleFieldChange = (index: number) => (e: React.ChangeEvent<HTMLInputElement>) => {
+    // Mark that user is actively typing to prevent auto-population
+    isUserTypingRef.current = true;
+    
     const field = dateEntryConfig.fields[index];
     let value = e.target.value;
+    
+    // Check if this is a year field that uses BCE/CE
+    const isYearField = field.label.toLowerCase().includes('year') || 
+                       field.label.toLowerCase().includes('cycle') ||
+                       field.label.toLowerCase().includes('haab') ||
+                       field.label.toLowerCase().includes('baktun') ||
+                       field.label.toLowerCase().includes('váḥid') ||
+                       field.label.toLowerCase().includes('xiuhmolpilli');
     
     // Apply formatting if specified
     if (field.formatValue) {
       value = field.formatValue(value);
     }
     
+    // For year fields with BCE/CE, allow "-" as a valid intermediate value
+    // This allows users to type negative years by starting with "-"
+    if (isYearField && usesBCE_CE) {
+      // If user types "-" when field already has content, clear it and show "-"
+      const previousValue = dateInputValues[index]?.trim() || '';
+      if (value === '-' && previousValue !== '' && previousValue !== '-') {
+        // User typed "-" in a field with content: clear it and show "-"
+        const newValues = [...dateInputValues];
+        newValues[index] = '-';
+        setDateInputValues(newValues);
+        setDateInputError(false);
+        setEraMode('BCE');
+        // Focus the input and place cursor after "-"
+        setTimeout(() => {
+          inputRefs.current[index]?.focus();
+          inputRefs.current[index]?.setSelectionRange(1, 1);
+        }, 0);
+        return;
+      }
+      
+      // Allow "-" as a valid intermediate value when typing negative numbers
+      if (value === '-' || value === '') {
+        // Update the value immediately to allow typing "-"
+        const newValues = [...dateInputValues];
+        newValues[index] = value;
+        setDateInputValues(newValues);
+        setDateInputError(false);
+        if (value === '-') {
+          setEraMode('BCE');
+        }
+        return; // Skip validation for intermediate "-" or empty
+      }
+      
+      // Detect negative input and update era mode
+      if (value.trim() !== '') {
+        const numValue = parseInt(value, 10);
+        if (!isNaN(numValue)) {
+          if (numValue < 0) {
+            // User typed negative year, switch to BCE mode
+            setEraMode('BCE');
+          } else if (numValue > 0 && eraMode === 'BCE') {
+            // User typed positive year while in BCE mode, keep BCE mode
+            // (the value will be converted to negative on parse)
+          }
+        }
+      }
+    }
+    
     // Apply validation if specified
-    if (field.validation && value !== '') {
+    // Skip validation for "-" in year fields (already handled above)
+    if (field.validation && value !== '' && value !== '-') {
       if (!field.validation(value)) {
         return; // Don't update if validation fails
       }
@@ -272,18 +406,35 @@ export default function NavigationBar({
 
   const handleDateInputFocus = (index: number) => () => {
     setIsDateInputFocused(true);
+    // Mark that user is actively typing to prevent auto-population
+    isUserTypingRef.current = true;
+    
+    // Check if this is the first time focusing on any date field (coming from outside)
+    const isInitialFocus = previousFocusedFieldRef.current === null;
+    const isSwitchingFields = previousFocusedFieldRef.current !== null && previousFocusedFieldRef.current !== index;
+    
     // Play a unique tab sound when tabbing between date input fields
-    // Only play if coming from another date input field (not initial focus from outside)
-    if (previousFocusedFieldRef.current !== null && previousFocusedFieldRef.current !== index) {
+    if (isSwitchingFields) {
       playTabSound();
     }
+    
+    // Only clear fields on initial focus (when clicking from outside), not when moving between fields
+    if (isInitialFocus) {
+      // Clear all date input fields when user first clicks on any field
+      // This prevents the current date from interfering with user input
+      const clearedValues = new Array(dateEntryConfig.fields.length).fill('');
+      setDateInputValues(clearedValues);
+      setDateInputError(false);
+    }
+    
     previousFocusedFieldRef.current = index;
     
-    // Automatically select all text when field is focused
-    // Use setTimeout to ensure selection happens after focus event completes
+    // Focus the clicked field and select its content for easy replacement
     setTimeout(() => {
       const input = inputRefs.current[index];
       if (input) {
+        input.focus();
+        // Select all text so user can easily type over it
         input.select();
       }
     }, 0);
@@ -291,6 +442,11 @@ export default function NavigationBar({
 
   const handleDateInputBlur = () => {
     setIsDateInputFocused(false);
+    // Reset typing flag after a short delay to allow for any pending updates
+    setTimeout(() => {
+      isUserTypingRef.current = false;
+    }, 100);
+    
     // Don't auto-submit on blur - only clear if all fields are empty
     if (dateInputValues.every(v => !v.trim())) {
       setDateInputValues(new Array(dateEntryConfig.fields.length).fill(''));
@@ -474,6 +630,18 @@ export default function NavigationBar({
         // Update date
         onDateChange(step.date);
         
+        // Populate date fields after navigation step (only if user is not typing)
+        // Use setTimeout to ensure state has updated
+        if (!isUserTypingRef.current) {
+          setTimeout(() => {
+            if (!isUserTypingRef.current) {
+              const values = populateDateFields(step.date);
+              setDateInputValues(values);
+              setDateInputError(false);
+            }
+          }, 0);
+        }
+        
         stepIndex++;
         
         // Calculate delay: faster pacing for smoother navigation
@@ -494,6 +662,17 @@ export default function NavigationBar({
             onViewModeChange('day');
           }
           onDateChange(targetDate);
+          // Populate date fields after navigation completes (only if user is not typing)
+          // Use setTimeout to ensure state has updated
+          if (!isUserTypingRef.current) {
+            setTimeout(() => {
+              if (!isUserTypingRef.current) {
+                const values = populateDateFields(targetDate);
+                setDateInputValues(values);
+                setDateInputError(false);
+              }
+            }, 0);
+          }
           // Reset navigation flag after a short delay to allow final update to complete
           timeoutId = setTimeout(() => {
             isNavigatingRef.current = false;
@@ -643,6 +822,17 @@ export default function NavigationBar({
             newDate = currentSelectedDate;
         }
         onDateChange(newDate);
+        // Populate date fields after keyboard navigation (only if user is not typing)
+        // Use setTimeout to ensure state has updated
+        if (!isUserTypingRef.current) {
+          setTimeout(() => {
+            if (!isUserTypingRef.current) {
+              const values = populateDateFields(newDate);
+              setDateInputValues(values);
+              setDateInputError(false);
+            }
+          }, 0);
+        }
         return;
       }
     };
@@ -687,6 +877,12 @@ export default function NavigationBar({
                 {dateEntryConfig.fields.map((field, index) => {
                   // Ensure dateInputValues array is properly sized
                   const fieldValue = index < dateInputValues.length ? dateInputValues[index] : '';
+                  const isYearField = field.label.toLowerCase().includes('year') || 
+                                     field.label.toLowerCase().includes('cycle') ||
+                                     field.label.toLowerCase().includes('haab') ||
+                                     field.label.toLowerCase().includes('baktun') ||
+                                     field.label.toLowerCase().includes('váḥid') ||
+                                     field.label.toLowerCase().includes('xiuhmolpilli');
                   
                   return (
                     <React.Fragment key={`${calendar}-${index}-${field.label}`}>
@@ -697,27 +893,72 @@ export default function NavigationBar({
                         >
                           {field.label}
                         </label>
-                        <input
-                          ref={(el) => {
-                            if (inputRefs.current.length <= index) {
-                              inputRefs.current.length = index + 1;
-                            }
-                            inputRefs.current[index] = el;
-                          }}
-                          type="text"
-                          id={`date-input-${calendar}-${index}`}
-                          className={`date-input date-input-${index} ${dateInputError ? 'error' : ''}`}
-                          placeholder={field.placeholder}
-                          value={fieldValue}
-                          onChange={handleFieldChange(index)}
-                          onKeyDown={handleDateInputKeyDown(index)}
-                          onFocus={handleDateInputFocus(index)}
-                          onBlur={handleDateInputBlur}
-                          aria-label={field.label}
-                          aria-describedby="date-input-helper date-input-error"
-                          aria-invalid={dateInputError}
-                          maxLength={field.maxLength}
-                        />
+                        <div className="date-input-with-era">
+                          <input
+                            ref={(el) => {
+                              if (inputRefs.current.length <= index) {
+                                inputRefs.current.length = index + 1;
+                              }
+                              inputRefs.current[index] = el;
+                            }}
+                            type="text"
+                            id={`date-input-${calendar}-${index}`}
+                            className={`date-input date-input-${index} ${dateInputError ? 'error' : ''}`}
+                            placeholder={field.placeholder}
+                            value={fieldValue}
+                            onChange={handleFieldChange(index)}
+                            onKeyDown={handleDateInputKeyDown(index)}
+                            onFocus={handleDateInputFocus(index)}
+                            onBlur={handleDateInputBlur}
+                            aria-label={field.label}
+                            aria-describedby="date-input-helper date-input-error"
+                            aria-invalid={dateInputError}
+                            maxLength={field.maxLength}
+                          />
+                          {isYearField && usesBCE_CE && (
+                            <button
+                              type="button"
+                              className="era-switcher-button"
+                              onClick={() => {
+                                const newEraMode = eraMode === 'CE' ? 'BCE' : 'CE';
+                                setEraMode(newEraMode);
+                                // Update the year value when toggling era
+                                const currentYearValue = dateInputValues[0]?.trim();
+                                const newValues = [...dateInputValues];
+                                
+                                if (eraMode === 'CE' && newEraMode === 'BCE') {
+                                  // Switching from CE to BCE: clear field and show "-" so user can type
+                                  newValues[0] = '-';
+                                  setDateInputValues(newValues);
+                                  // Focus the input field so user can continue typing
+                                  setTimeout(() => {
+                                    inputRefs.current[0]?.focus();
+                                    inputRefs.current[0]?.setSelectionRange(1, 1); // Place cursor after "-"
+                                  }, 0);
+                                } else if (eraMode === 'BCE' && newEraMode === 'CE') {
+                                  // Switching from BCE to CE: clear field
+                                  if (currentYearValue) {
+                                    const yearNum = parseInt(currentYearValue, 10);
+                                    if (!isNaN(yearNum) && yearNum < 0) {
+                                      // Convert negative to positive
+                                      newValues[0] = Math.abs(yearNum).toString();
+                                    } else {
+                                      // Clear the field
+                                      newValues[0] = '';
+                                    }
+                                  } else {
+                                    newValues[0] = '';
+                                  }
+                                  setDateInputValues(newValues);
+                                }
+                              }}
+                              title={`Current era: ${eraMode}. Click to switch to ${eraMode === 'CE' ? 'BCE' : 'CE'}`}
+                              aria-label={`Current era: ${eraMode}. Click to switch to ${eraMode === 'CE' ? 'BCE' : 'CE'}`}
+                            >
+                              {eraMode}
+                            </button>
+                          )}
+                        </div>
                       </div>
                       {index < dateEntryConfig.fields.length - 1 && (
                         <div className="date-field-separator">
