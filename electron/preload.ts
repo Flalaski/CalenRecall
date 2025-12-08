@@ -200,5 +200,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // Open external URL in Electron window with specified dimensions
   openExternalUrl: (url: string, width: number, height: number): Promise<{ success: boolean; error?: string }> =>
     ipcRenderer.invoke('open-external-url', url, width, height),
+  
+  // Open external URL in the default browser
+  openExternalBrowser: (url: string): Promise<{ success: boolean; error?: string }> =>
+    ipcRenderer.invoke('open-external-browser', url),
 });
 

@@ -189,6 +189,7 @@ declare global {
       onMenuExport: (callback: (format: ExportFormat) => void) => void;
       removeMenuListeners: () => void;
       openExternalUrl: (url: string, width: number, height: number) => Promise<{ success: boolean; error?: string }>;
+      openExternalBrowser: (url: string) => Promise<{ success: boolean; error?: string }>;
     };
   }
 }

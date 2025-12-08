@@ -86,8 +86,12 @@ export default function AboutComponent() {
           <p>
             <a 
               href="https://github.com/flalaski/CalenRecall" 
-              target="_blank" 
-              rel="noopener noreferrer"
+              onClick={(e) => {
+                e.preventDefault();
+                if (window.electronAPI?.openExternalBrowser) {
+                  window.electronAPI.openExternalBrowser('https://github.com/flalaski/CalenRecall');
+                }
+              }}
               className="about-link"
             >
               GitHub Repository
@@ -96,8 +100,12 @@ export default function AboutComponent() {
           <p>
             <a 
               href="https://github.com/flalaski/CalenRecall/issues" 
-              target="_blank" 
-              rel="noopener noreferrer"
+              onClick={(e) => {
+                e.preventDefault();
+                if (window.electronAPI?.openExternalBrowser) {
+                  window.electronAPI.openExternalBrowser('https://github.com/flalaski/CalenRecall/issues');
+                }
+              }}
               className="about-link"
             >
               Report Issues or Provide Feedback

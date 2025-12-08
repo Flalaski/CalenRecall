@@ -783,6 +783,17 @@ export function setupIpcHandlers() {
     return getAllPreferences();
   });
 
+  // Open external URL in the default browser
+  ipcMain.handle('open-external-browser', async (_event, url: string) => {
+    try {
+      await shell.openExternal(url);
+      return { success: true };
+    } catch (error: any) {
+      console.error('Error opening external URL in browser:', error);
+      return { success: false, error: error.message || 'unknown_error' };
+    }
+  });
+
   // Open external URL in a new BrowserWindow with specified dimensions
   ipcMain.handle('open-external-url', async (_event, url: string, width: number, height: number) => {
     try {
