@@ -16,7 +16,7 @@ const LOADING_SCREEN_CONSTANTS = {
   RIGHT_LOOP_CENTER: { x: 300, y: 200 },
   MIDPOINT_X: 250,
   INFINITY_AMPLITUDE: 216,
-  INFINITY_SEGMENTS: 21,
+  INFINITY_SEGMENTS: 216,
   BRANCHES_PER_SIDE: 8,
   STAR_COUNT: 216,
   NEBULA_DIMENSIONS: { width: 800, height: 600 },
@@ -584,11 +584,19 @@ function generateNebulaPattern(width: number, height: number): string {
 export default function LoadingScreen({ progress, message = 'Loading your journal...' }: LoadingScreenProps) {
   const { entries } = useEntries();
   const [polarityPhase, setPolarityPhase] = useState(0);
+  const [rotationAngle, setRotationAngle] = useState(0); // Track infinity rotation angle
   const [stars] = useState(() => generateStars(LOADING_SCREEN_CONSTANTS.STAR_COUNT));
   const [nebulaPattern, setNebulaPattern] = useState<string>('');
 
   // Generate 3D branch segments
   const branchSegments3D = useMemo(() => generateInfinityBranches3D(), []);
+  
+  // Calculate average Z depth of branch segments for relative displacement
+  const averageBranchZ = useMemo(() => {
+    if (branchSegments3D.length === 0) return 0;
+    const sumZ = branchSegments3D.reduce((sum, seg) => sum + (seg.startZ + seg.endZ) / 2, 0);
+    return sumZ / branchSegments3D.length;
+  }, [branchSegments3D]);
   
   // Map entries to 3D branch positions as ornaments
   const entryOrnaments = useMemo(() => {
@@ -630,10 +638,24 @@ export default function LoadingScreen({ progress, message = 'Loading your journa
     );
     setNebulaPattern(pattern);
     
+    // Track infinity rotation angle (60 seconds per full rotation, mechanical ticks)
+    const startTime = Date.now();
+    const rotationInterval = setInterval(() => {
+      // Calculate current rotation based on elapsed time (60s = 360deg, mechanical ticks)
+      const elapsed = (Date.now() - startTime) / 1000; // Elapsed seconds
+      const rotationSpeed = 360 / 60; // 6 degrees per second (1 tick per second)
+      const currentAngle = (elapsed * rotationSpeed) % 360;
+      setRotationAngle(currentAngle);
+    }, 1000); // Update every second (each mechanical tick)
+    
     const interval = setInterval(() => {
       setPolarityPhase(prev => (prev + LOADING_SCREEN_CONSTANTS.POLARITY_PHASE_INCREMENT) % (Math.PI * 2));
     }, LOADING_SCREEN_CONSTANTS.ANIMATION_INTERVAL_MS);
-    return () => clearInterval(interval);
+    
+    return () => {
+      clearInterval(interval);
+      clearInterval(rotationInterval);
+    };
   }, []);
 
   // Generate 3D infinity symbol segments
@@ -805,6 +827,46 @@ export default function LoadingScreen({ progress, message = 'Loading your journa
               const angle = Math.atan2(dy, dx) * (180 / Math.PI);
               // Interpolate Z depth smoothly along segment
               const avgZ = (seg.z1 + seg.z2) / 2;
+              const segmentCenterX = (seg.x1 + seg.x2) / 2;
+              const segmentCenterY = (seg.y1 + seg.y2) / 2;
+              
+              // Calculate gravitational pull from entry ornaments
+              // Each entry exerts a gravitational force on the infinity segment
+              let gravitationalX = 0;
+              let gravitationalY = 0;
+              const gravitationalConstant = 0.8; // Strength of gravitational pull
+              const maxGravitationalDistance = 888; // Maximum distance for gravitational effect
+              
+              visibleEntries.forEach(({ x: entryX, y: entryY }) => {
+                // Calculate distance from segment center to entry
+                const distX = entryX - segmentCenterX;
+                const distY = entryY - segmentCenterY;
+                const distance2D = Math.sqrt(distX * distX + distY * distY);
+                
+                // Only apply gravity if within range
+                if (distance2D < maxGravitationalDistance && distance2D > 0) {
+                  // Inverse square law for gravitational pull (weakened for subtlety)
+                  const gravitationalStrength = gravitationalConstant / (1 + distance2D * distance2D / 1000);
+                  const pullAngle = Math.atan2(distY, distX) * (180 / Math.PI);
+                  
+                  // Adjust pull direction based on rotation angle
+                  const adjustedAngle = pullAngle + rotationAngle;
+                  gravitationalX += gravitationalStrength * Math.cos(adjustedAngle * Math.PI / 180);
+                  gravitationalY += gravitationalStrength * Math.sin(adjustedAngle * Math.PI / 180);
+                }
+              });
+              
+              // Combine with subtle relative displacement based on Z position relative to branch average
+              const zRelativeToBranches = avgZ - averageBranchZ;
+              const displacementScale = 0.12; // Subtle displacement factor
+              // Perpendicular to segment, adjusted by current rotation angle
+              const perpAngle = angle + 90 + rotationAngle; // Perpendicular to segment + rotation
+              const parallaxX = zRelativeToBranches * displacementScale * Math.cos(perpAngle * Math.PI / 180);
+              const parallaxY = zRelativeToBranches * displacementScale * Math.sin(perpAngle * Math.PI / 180);
+              
+              // Combine gravitational pull with parallax displacement
+              const displacementX = gravitationalX + parallaxX;
+              const displacementY = gravitationalY + parallaxY;
               
               // Ensure minimum opacity so segments remain visible and connected
               const baseOpacity = 0.4; // Semi-transparent
@@ -825,7 +887,7 @@ export default function LoadingScreen({ progress, message = 'Loading your journa
                   style={{
                     left: `${seg.x1}px`,
                     top: `${seg.y1}px`,
-                    transform: `translateZ(${avgZ}px) rotateZ(${angle}deg)`,
+                    transform: `translateZ(${avgZ}px) translateX(${displacementX}px) translateY(${displacementY}px) rotateZ(${angle}deg)`,
                     opacity: finalOpacity,
                   }}
                 >
