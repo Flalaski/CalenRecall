@@ -11,10 +11,25 @@
   z-index: 10000;
   animation: fadeIn 0.3s ease-in;
   overflow: hidden;
+  /* Global pixelization effect - apply to all children */
   image-rendering: pixelated;
   image-rendering: crisp-edges;
   image-rendering: -moz-crisp-edges;
   image-rendering: -webkit-crisp-edges;
+  /* Default polarity colors - can be overridden by themes */
+  --loading-past-color: hsl(270, 70%, 60%);
+  --loading-future-color: hsl(45, 85%, 55%);
+}
+
+/* Apply pixelization to all child elements */
+.loading-screen * {
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: -webkit-crisp-edges;
+  -webkit-font-smoothing: none;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeSpeed;
 }
 
 /* Film Grain Overlay - Optimized Static Noise Pattern */
@@ -147,6 +162,11 @@
     0 0 2px #000,
     0 0 4px #000,
     0 0 6px rgba(0, 0, 0, 0.8);
+  /* Global pixelization effect */
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: -webkit-crisp-edges;
 }
 
 .loading-logo {

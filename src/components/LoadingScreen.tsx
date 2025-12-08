@@ -26,7 +26,7 @@ const LOADING_SCREEN_CONSTANTS = {
   MAX_ANIMATION_DELAY: 2,
   OPACITY_DIVISORS: { infinity: 100, branch: 150 },
   ANIMATION_INTERVAL_MS: 16, // ~60fps
-  POLARITY_PHASE_INCREMENT: 0.0112358,
+  POLARITY_PHASE_INCREMENT: 0.112358,
   CAMERA_ZOOM: 1.369, // Higher = more zoomed in (1.0 = normal, 2.0 = 2x zoom, 0.5 = zoomed out)
   CAMERA_DISTANCE: -0.5, // translateZ offset for camera position (negative = closer, positive = farther)
   SINGULARITY_CENTER: { x: 250, y: 200 }, // Center singularity point representing present moment
@@ -191,14 +191,23 @@ function generateInfinityBranches3D(): Array<BranchSegment3D> {
     return { segments: allSegments, points: allPoints };
   };
   
-  // Left half branches (past/potential past) - emanating from left loop - BLUE
+  // Get theme colors for branches (called during generation, so we need to get them here)
+  const getBranchThemeColor = (property: string, fallback: string): string => {
+    if (typeof window === 'undefined' || !document.documentElement) {
+      return fallback;
+    }
+    const value = getComputedStyle(document.documentElement).getPropertyValue(property).trim();
+    return value || fallback;
+  };
+
+  // Left half branches (past/potential past) - emanating from left loop - uses theme color
   for (let i = 0; i < LOADING_SCREEN_CONSTANTS.BRANCHES_PER_SIDE; i++) {
     const baseAngle = (i / LOADING_SCREEN_CONSTANTS.BRANCHES_PER_SIDE) * Math.PI * 2;
     const startX = LOADING_SCREEN_CONSTANTS.LEFT_LOOP_CENTER.x;
     const startY = LOADING_SCREEN_CONSTANTS.LEFT_LOOP_CENTER.y;
     const startZ = (Math.random() - 0.5) * 30; // Random Z depth
     const length = 25 + Math.random() * 35;
-    const baseColor = `hsl(200, 70%, 60%)`; // Blue for past
+    const baseColor = getBranchThemeColor('--loading-past-color', 'hsl(270, 70%, 60%)'); // Theme color for past
     
     const { segments: branchSegments } = createVeinBranch3D(
       startX, startY, startZ, baseAngle, length, 0, 3, baseColor, i * 0.08
@@ -207,14 +216,14 @@ function generateInfinityBranches3D(): Array<BranchSegment3D> {
     segments.push(...branchSegments);
   }
 
-  // Right half branches (future/potential future) - emanating from right loop - RED
+  // Right half branches (future/potential future) - emanating from right loop - uses theme color
   for (let i = 0; i < LOADING_SCREEN_CONSTANTS.BRANCHES_PER_SIDE; i++) {
     const baseAngle = (i / LOADING_SCREEN_CONSTANTS.BRANCHES_PER_SIDE) * Math.PI * 2;
     const startX = LOADING_SCREEN_CONSTANTS.RIGHT_LOOP_CENTER.x;
     const startY = LOADING_SCREEN_CONSTANTS.RIGHT_LOOP_CENTER.y;
     const startZ = (Math.random() - 0.5) * 30; // Random Z depth
     const length = 25 + Math.random() * 35;
-    const baseColor = `hsl(0, 70%, 60%)`; // Red for future
+    const baseColor = getBranchThemeColor('--loading-future-color', 'hsl(45, 85%, 55%)'); // Theme color for future
     
     const { segments: branchSegments } = createVeinBranch3D(
       startX, startY, startZ, baseAngle, length, 0, 3, baseColor, i * 0.08 + 0.6
@@ -624,10 +633,41 @@ export default function LoadingScreen({ progress, message = 'Loading your journa
     return segments;
   }, []);
 
-  // Calculate polarity colors (shifts between two poles)
-  // Blue for past (left), Red for future (right)
-  const leftColor = `hsl(${200 + Math.sin(polarityPhase) * 40}, 70%, ${50 + Math.sin(polarityPhase) * 20}%)`; // Blue (past)
-  const rightColor = `hsl(${0 + Math.cos(polarityPhase) * 20}, 70%, ${50 + Math.cos(polarityPhase) * 20}%)`; // Red (future)
+  // Get theme colors from CSS custom properties
+  const getThemeColor = (property: string, fallback: string): string => {
+    if (typeof window === 'undefined' || !document.documentElement) {
+      return fallback;
+    }
+    const value = getComputedStyle(document.documentElement).getPropertyValue(property).trim();
+    return value || fallback;
+  };
+
+  // Get polarity colors from theme CSS variables
+  const pastColorBase = getThemeColor('--loading-past-color', 'hsl(270, 70%, 60%)');
+  const futureColorBase = getThemeColor('--loading-future-color', 'hsl(45, 85%, 55%)');
+  
+  // Parse HSL and apply phase animation for dynamic shifting
+  const parseHSL = (hsl: string): { h: number; s: number; l: number } | null => {
+    const match = hsl.match(/hsl\((\d+(?:\.\d+)?),\s*(\d+(?:\.\d+)?)%,\s*(\d+(?:\.\d+)?)%\)/);
+    if (!match) return null;
+    return {
+      h: parseFloat(match[1]),
+      s: parseFloat(match[2]),
+      l: parseFloat(match[3])
+    };
+  };
+
+  // Calculate polarity colors with phase animation
+  const pastHSL = parseHSL(pastColorBase);
+  const futureHSL = parseHSL(futureColorBase);
+  
+  const leftColor = pastHSL
+    ? `hsl(${pastHSL.h + Math.sin(polarityPhase) * 20}, ${pastHSL.s}%, ${pastHSL.l + Math.sin(polarityPhase) * 20}%)`
+    : pastColorBase; // Fallback to raw value if not HSL
+  
+  const rightColor = futureHSL
+    ? `hsl(${futureHSL.h + Math.cos(polarityPhase) * 15}, ${futureHSL.s}%, ${futureHSL.l + Math.cos(polarityPhase) * 15}%)`
+    : futureColorBase; // Fallback to raw value if not HSL
   
   // Helper function to create cylindrical gradient from HSL color
   const createCylindricalGradient = (hslColor: string): string => {

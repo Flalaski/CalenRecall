@@ -786,9 +786,15 @@ export function setupIpcHandlers() {
   // Open external URL in a new BrowserWindow with specified dimensions
   ipcMain.handle('open-external-url', async (_event, url: string, width: number, height: number) => {
     try {
+      // Determine icon path for AstroMonix window (same pattern as main.ts)
+      const iconPath = path.join(__dirname, '../assets/astromonixlogo.png');
+      
       const externalWindow = new BrowserWindow({
         width: width,
         height: height,
+        ...(process.platform === 'win32' && fs.existsSync(iconPath) && {
+          icon: iconPath,
+        }),
         webPreferences: {
           nodeIntegration: false,
           contextIsolation: true,
