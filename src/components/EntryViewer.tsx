@@ -302,7 +302,7 @@ export default function EntryViewer({
     }
   };
 
-  // Load preferences for time format
+  // Load preferences for time format and toolbar visibility
   useEffect(() => {
     const loadPreferences = async () => {
       if (window.electronAPI) {
@@ -311,6 +311,23 @@ export default function EntryViewer({
       }
     };
     loadPreferences();
+
+    // Listen for preference updates
+    if (window.electronAPI && window.electronAPI.onPreferenceUpdated) {
+      const handlePreferenceUpdated = (data: { key: string; value: any }) => {
+        if (data.key === 'showAstromonixToolbarButton') {
+          setPreferences(prev => ({ ...prev, [data.key]: data.value }));
+        }
+      };
+      
+      window.electronAPI.onPreferenceUpdated(handlePreferenceUpdated);
+      
+      return () => {
+        if (window.electronAPI && window.electronAPI.removePreferenceUpdatedListener) {
+          window.electronAPI.removePreferenceUpdatedListener();
+        }
+      };
+    }
   }, []);
 
   const formatEntryTime = (entry: JournalEntry): string | null => {
@@ -368,6 +385,41 @@ export default function EntryViewer({
   const getNewEntryButtonText = (): string => {
     const timeRangeLabel = getTimeRangeLabel(viewMode);
     return `+ New Entry for this ${timeRangeLabel}`;
+  };
+
+  // Generate AstroMonix URL for the current selected day
+  const getAstromonixUrl = (): string => {
+    // Format date as YYYY-MM-DD
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const dateStr = `${year}-${month}-${day}`;
+    
+    // Build URL with date parameter
+    const params = new URLSearchParams({
+      date: dateStr,
+    });
+    
+    return `https://astromonix.xyz/?${params.toString()}`;
+  };
+
+  const handleOpenAstromonix = async () => {
+    const url = getAstromonixUrl();
+    // Open AstroMonix in a new Electron BrowserWindow with specified dimensions
+    // Width: 2492px (11% less than 2800px), Height: 1200px (taller) - sufficient space for the 3D chart visualization
+    if (window.electronAPI && window.electronAPI.openExternalUrl) {
+      try {
+        await window.electronAPI.openExternalUrl(url, 2492, 1200);
+      } catch (error) {
+        console.error('Error opening AstroMonix URL:', error);
+        // Fallback to window.open if Electron API fails
+        window.open(url, '_blank');
+      }
+    } else {
+      // Fallback for non-Electron environments
+      const windowFeatures = 'width=2492,height=1200,resizable=yes,scrollbars=yes,status=yes';
+      window.open(url, '_blank', windowFeatures);
+    }
   };
 
   // Get all unique tags from period entries
@@ -471,6 +523,21 @@ export default function EntryViewer({
               </button>
             </div>
           </div>
+          {viewMode === 'day' && preferences.showAstromonixToolbarButton === true && (
+            <div className="header-toolbar">
+              <button 
+                className="astromonix-button"
+                onClick={handleOpenAstromonix}
+                title="Open this day on AstroMonix"
+              >
+                <img 
+                  src="./assets/astromonixlogo.png" 
+                  alt="AstroMonix" 
+                  className="astromonix-logo"
+                />
+              </button>
+            </div>
+          )}
           <div className="entry-meta">
             <span className="time-range-badge-viewer">{getTimeRangeLabel(entry.timeRange)}</span>
             <small className="entry-date-display">
@@ -552,6 +619,21 @@ export default function EntryViewer({
             </button>
           </div>
         </div>
+        {viewMode === 'day' && preferences.showAstromonixToolbarButton === true && (
+          <div className="header-toolbar">
+            <button 
+              className="astromonix-button"
+              onClick={handleOpenAstromonix}
+              title="Open this day on AstroMonix"
+            >
+              <img 
+                src="./assets/astromonixlogo.png" 
+                alt="AstroMonix" 
+                className="astromonix-logo"
+              />
+            </button>
+          </div>
+        )}
       </div>
       
       <div className="viewer-content">

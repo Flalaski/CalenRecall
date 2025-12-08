@@ -15,23 +15,23 @@ const LOADING_SCREEN_CONSTANTS = {
   LEFT_LOOP_CENTER: { x: 200, y: 200 },
   RIGHT_LOOP_CENTER: { x: 300, y: 200 },
   MIDPOINT_X: 250,
-  INFINITY_AMPLITUDE: 36.9,
-  INFINITY_SEGMENTS: 42,
-  BRANCHES_PER_SIDE: 12,
+  INFINITY_AMPLITUDE: 888,
+  INFINITY_SEGMENTS: 89.54669201574803,
+  BRANCHES_PER_SIDE: 8,
   STAR_COUNT: 216,
   NEBULA_DIMENSIONS: { width: 800, height: 600 },
   PROGRESS_THRESHOLDS: { slow: 20, fast: 80 },
   PROGRESS_PERCENTAGES: { slow: 0.05, fast: 0.80, finish: 0.15 },
-  ORNAMENT_SIZE: 4,
+  ORNAMENT_SIZE: 8,
   MAX_ANIMATION_DELAY: 2,
   OPACITY_DIVISORS: { infinity: 100, branch: 150 },
   ANIMATION_INTERVAL_MS: 16, // ~60fps
   POLARITY_PHASE_INCREMENT: 0.0112358,
   CAMERA_ZOOM: 1.369, // Higher = more zoomed in (1.0 = normal, 2.0 = 2x zoom, 0.5 = zoomed out)
   CAMERA_DISTANCE: -0.5, // translateZ offset for camera position (negative = closer, positive = farther)
-  SINGULARITY_CENTER: { x: 250, y: 250 }, // Center singularity point representing present moment
-  TEMPORAL_DISTANCE_SCALE: 0.5, // How much temporal distance affects spatial position (0-1 blend factor)
-  MAX_TEMPORAL_DISTANCE_DAYS: 365 * 10, // 10 years - maximum temporal distance for scaling
+  SINGULARITY_CENTER: { x: 250, y: 200 }, // Center singularity point representing present moment
+  TEMPORAL_DISTANCE_SCALE: 0.8888888888888888, // How much temporal distance affects spatial position (0-1 blend factor)
+  MAX_TEMPORAL_DISTANCE_DAYS: 365 * 100, // 100 years - maximum temporal distance for scaling
 } as const;
 
 // Generate 3D positioned branch segments for true 3D structure
@@ -87,7 +87,7 @@ function generateInfinityBranches3D(): Array<BranchSegment3D> {
     const endX = startX + Math.cos(angle) * length;
     const endY = startY + Math.sin(angle) * length;
     // Vary Z depth based on branch depth for 3D structure
-    const endZ = startZ + (Math.random() - 0.5) * 20 * (depth + 1);
+    const endZ = startZ + (Math.random() - 0.5) * 200 * (depth + 11);
     
     // Create control point for fractal interpolation (midpoint with slight offset)
     const midX = (startX + endX) / 2;
@@ -687,7 +687,8 @@ export default function LoadingScreen({ progress, message = 'Loading your journa
             <div className="infinity-3d-container">
             {/* Unified 3D infinity structure - all elements positioned in 3D space */}
             
-            {/* Infinity symbol core - 3D line segments with rotated duplicates to fill 3D space */}
+            {/* Infinity symbol core - 3D cylindrical forms - wrapped in rotating container */}
+            <div className="infinity-rotating-wrapper">
             {infinitySegments3D.map((seg, idx) => {
               const isLeft = seg.x1 < LOADING_SCREEN_CONSTANTS.MIDPOINT_X;
               const baseColor = isLeft ? leftColor : rightColor;
@@ -707,23 +708,62 @@ export default function LoadingScreen({ progress, message = 'Loading your journa
               // Create cylindrical gradient for thin cylinder appearance
               const cylindricalGradient = createCylindricalGradient(baseColor);
               
+              // Cylinder dimensions - true 3D form
+              const cylinderRadius = 1.112358; // Half of 3px diameter
+              const cylinderLength = length;
+              
               return (
                 <div
                   key={`infinity-seg-${idx}`}
-                  className="infinity-segment-3d"
+                  className="infinity-segment-3d-cylinder"
                   style={{
                     left: `${seg.x1}px`,
                     top: `${seg.y1}px`,
-                    width: `${length}px`,
                     transform: `translateZ(${avgZ}px) rotateZ(${angle}deg)`,
-                    background: cylindricalGradient,
                     opacity: finalOpacity,
                   }}
-                />
+                >
+                  {/* Cylinder body - main tube with 3D depth */}
+                  <div 
+                    className="cylinder-body"
+                    style={{
+                      width: `${cylinderLength}px`,
+                      height: `${cylinderRadius * 2}px`,
+                      background: cylindricalGradient,
+                      borderRadius: `${cylinderRadius}px`,
+                      boxShadow: `inset 0 0 ${cylinderRadius}px rgba(0, 0, 0, 0.2), 0 0 ${cylinderRadius}px rgba(0, 0, 0, 0.1)`,
+                    }}
+                  />
+                  {/* Cylinder start cap - circular end facing viewer */}
+                  <div 
+                    className="cylinder-cap cylinder-cap-start"
+                    style={{
+                      width: `${cylinderRadius * 2}px`,
+                      height: `${cylinderRadius * 2}px`,
+                      background: `radial-gradient(circle, ${baseColor}, ${baseColor}dd)`,
+                      borderRadius: '50%',
+                      transform: `translateX(-${cylinderRadius}px) translateZ(${cylinderRadius}px)`,
+                      boxShadow: `0 0 ${cylinderRadius}px rgba(0, 0, 0, 0.2)`,
+                    }}
+                  />
+                  {/* Cylinder end cap - circular end facing viewer */}
+                  <div 
+                    className="cylinder-cap cylinder-cap-end"
+                    style={{
+                      width: `${cylinderRadius * 2}px`,
+                      height: `${cylinderRadius * 2}px`,
+                      background: `radial-gradient(circle, ${baseColor}, ${baseColor}dd)`,
+                      borderRadius: '50%',
+                      transform: `translateX(${cylinderLength - cylinderRadius}px) translateZ(${cylinderRadius}px)`,
+                      boxShadow: `0 0 ${cylinderRadius}px rgba(0, 0, 0, 0.2)`,
+                    }}
+                  />
+                </div>
               );
             })}
+            </div>
             
-            {/* Branch segments - 3D positioned with rotated duplicates to fill 3D space */}
+            {/* Branch segments - 3D cylindrical forms */}
             {branchSegments3D.map((segment, idx) => {
               const isLeft = segment.startX < LOADING_SCREEN_CONSTANTS.MIDPOINT_X;
               const color = isLeft ? leftColor : rightColor;
@@ -743,44 +783,107 @@ export default function LoadingScreen({ progress, message = 'Loading your journa
               // Create cylindrical gradient for thin cylinder appearance
               const cylindricalGradient = createCylindricalGradient(color);
               
+              // Cylinder dimensions - true 3D form
+              const cylinderRadius = segment.thickness / 2;
+              const cylinderLength = length;
+              
               return (
                 <div
                   key={`branch-seg-${idx}`}
-                  className="branch-segment-3d"
+                  className="branch-segment-3d-cylinder"
                   style={{
                     left: `${segment.startX}px`,
                     top: `${segment.startY}px`,
-                    width: `${length}px`,
-                    height: `${segment.thickness}px`,
                     transform: `translateZ(${avgZ}px) rotateZ(${angle}deg)`,
-                    background: cylindricalGradient,
                     opacity: finalOpacity,
                     animationDelay: `${segment.delay}s`,
                     animationDuration: `${segment.duration}s`,
                   }}
-                />
+                >
+                  {/* Cylinder body - main tube with 3D depth */}
+                  <div 
+                    className="cylinder-body"
+                    style={{
+                      width: `${cylinderLength}px`,
+                      height: `${cylinderRadius * 2}px`,
+                      background: cylindricalGradient,
+                      borderRadius: `${cylinderRadius}px`,
+                      boxShadow: `inset 0 0 ${cylinderRadius}px rgba(0, 0, 0, 0.2), 0 0 ${cylinderRadius}px rgba(0, 0, 0, 0.1)`,
+                    }}
+                  />
+                  {/* Cylinder start cap - circular end facing viewer */}
+                  <div 
+                    className="cylinder-cap cylinder-cap-start"
+                    style={{
+                      width: `${cylinderRadius * 2}px`,
+                      height: `${cylinderRadius * 2}px`,
+                      background: `radial-gradient(circle, ${color}, ${color}dd)`,
+                      borderRadius: '50%',
+                      transform: `translateX(-${cylinderRadius}px) translateZ(${cylinderRadius}px)`,
+                      boxShadow: `0 0 ${cylinderRadius}px rgba(0, 0, 0, 0.2)`,
+                    }}
+                  />
+                  {/* Cylinder end cap - circular end facing viewer */}
+                  <div 
+                    className="cylinder-cap cylinder-cap-end"
+                    style={{
+                      width: `${cylinderRadius * 2}px`,
+                      height: `${cylinderRadius * 2}px`,
+                      background: `radial-gradient(circle, ${color}, ${color}dd)`,
+                      borderRadius: '50%',
+                      transform: `translateX(${cylinderLength - cylinderRadius}px) translateZ(${cylinderRadius}px)`,
+                      boxShadow: `0 0 ${cylinderRadius}px rgba(0, 0, 0, 0.2)`,
+                    }}
+                  />
+                </div>
               );
             })}
             
-            {/* Entry ornaments - 3D positioned */}
+            {/* Entry ornaments - 3D spherical forms */}
             {visibleEntries.map(({ entry, x, y, z }, idx) => {
               const entryColor = calculateEntryColor(entry);
               const delay = Math.min(idx * 0.01, LOADING_SCREEN_CONSTANTS.MAX_ANIMATION_DELAY);
               
+              // Parse color for sphere gradient
+              const sphereSize = LOADING_SCREEN_CONSTANTS.ORNAMENT_SIZE;
+              
               return (
                 <div
                   key={`ornament-${entry.id || entry.date}-${idx}`}
-                  className="entry-ornament-3d"
+                  className="entry-ornament-3d-sphere"
                   style={{
                     left: `${x}px`,
                     top: `${y}px`,
                     transform: `translateZ(${z}px)`,
-                    background: entryColor,
-                    width: `${LOADING_SCREEN_CONSTANTS.ORNAMENT_SIZE}px`,
-                    height: `${LOADING_SCREEN_CONSTANTS.ORNAMENT_SIZE}px`,
+                    width: `${sphereSize}px`,
+                    height: `${sphereSize}px`,
                     animation: `ornamentAppear 0.6s ease-out ${delay}s both`,
                   }}
-                />
+                >
+                  {/* Sphere outer shell with 3D lighting */}
+                  <div 
+                    className="sphere-shell"
+                    style={{
+                      width: '100%',
+                      height: '100%',
+                      background: `radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.6), ${entryColor} 50%, ${entryColor} 100%)`,
+                      boxShadow: `inset -2px -2px 4px rgba(0, 0, 0, 0.3), inset 2px 2px 4px rgba(255, 255, 255, 0.2), 0 0 8px ${entryColor}`,
+                    }}
+                  />
+                  {/* Sphere highlight for 3D depth */}
+                  <div 
+                    className="sphere-highlight"
+                    style={{
+                      width: '40%',
+                      height: '40%',
+                      background: 'radial-gradient(circle, rgba(255, 255, 255, 0.8), transparent)',
+                      borderRadius: '50%',
+                      position: 'absolute',
+                      top: '20%',
+                      left: '25%',
+                    }}
+                  />
+                </div>
               );
             })}
             

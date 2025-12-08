@@ -783,6 +783,36 @@ export function setupIpcHandlers() {
     return getAllPreferences();
   });
 
+  // Open external URL in a new BrowserWindow with specified dimensions
+  ipcMain.handle('open-external-url', async (_event, url: string, width: number, height: number) => {
+    try {
+      const externalWindow = new BrowserWindow({
+        width: width,
+        height: height,
+        webPreferences: {
+          nodeIntegration: false,
+          contextIsolation: true,
+          webSecurity: true,
+        },
+        show: false,
+      });
+
+      externalWindow.loadURL(url);
+      externalWindow.once('ready-to-show', () => {
+        externalWindow.show();
+      });
+
+      externalWindow.on('closed', () => {
+        // Window is already being destroyed
+      });
+
+      return { success: true };
+    } catch (error) {
+      console.error('[IPC] Error opening external URL:', error);
+      return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+    }
+  });
+
   ipcMain.handle('reset-preferences', async () => {
     resetPreferences();
     return { success: true };

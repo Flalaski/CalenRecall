@@ -793,6 +793,21 @@ export default function PreferencesComponent() {
         </div>
 
         <div className="preferences-section">
+          <h2>Extra Links</h2>
+          <div className="preference-item">
+            <label>
+              <input
+                type="checkbox"
+                checked={preferences.showAstromonixToolbarButton === true}
+                onChange={(e) => updatePreference('showAstromonixToolbarButton', e.target.checked)}
+              />
+              Show AstroMonix.xyz toolbar button
+            </label>
+            <small>When enabled, a toolbar button will appear in day view header to quickly open the current day on AstroMonix.xyz. Default is unchecked (hidden).</small>
+          </div>
+        </div>
+
+        <div className="preferences-section">
           <h2>Window</h2>
           <div className="preference-item">
             <label htmlFor="windowWidth">Default Window Width</label>

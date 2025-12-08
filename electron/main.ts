@@ -649,6 +649,27 @@ function createMenu() {
       submenu: themeMenuItems,
     },
     {
+      label: 'Extra Links',
+      submenu: [
+        {
+          label: 'Show AstroMonix.xyz Toolbar Button',
+          type: 'checkbox',
+          checked: getAllPreferences().showAstromonixToolbarButton === true,
+          click: () => {
+            const currentPrefs = getAllPreferences();
+            const newValue = !(currentPrefs.showAstromonixToolbarButton === true);
+            setPreference('showAstromonixToolbarButton', newValue);
+            // Notify the renderer process about the change
+            if (mainWindow && !mainWindow.isDestroyed()) {
+              mainWindow.webContents.send('preference-updated', { key: 'showAstromonixToolbarButton', value: newValue });
+            }
+            // Update the menu to reflect the change
+            updateMenu();
+          },
+        },
+      ],
+    },
+    {
       label: 'Window',
       submenu: [
         { role: 'minimize', label: 'Minimize' },

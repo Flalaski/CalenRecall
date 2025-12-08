@@ -132,6 +132,7 @@ export interface Preferences {
   defaultExportFormat?: ExportFormat; // Default export format to use when exporting entries
   defaultExportMetadata?: ExportMetadata; // Default export metadata to use for all exports
   soundEffectsEnabled?: boolean; // Whether sound effects are enabled
+  showAstromonixToolbarButton?: boolean; // Whether to show the AstroMonix toolbar button in day view
 }
 
 declare global {
@@ -187,6 +188,7 @@ declare global {
       onMenuImport: (callback: (format: 'json' | 'markdown') => void) => void;
       onMenuExport: (callback: (format: ExportFormat) => void) => void;
       removeMenuListeners: () => void;
+      openExternalUrl: (url: string, width: number, height: number) => Promise<{ success: boolean; error?: string }>;
     };
   }
 }

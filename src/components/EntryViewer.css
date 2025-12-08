@@ -43,6 +43,40 @@
   gap: 0.5rem;
 }
 
+.header-toolbar {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  margin-top: 0.5rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid #e0e0e0;
+}
+
+.astromonix-button {
+  padding: 0.375rem 0.75rem;
+  background: #f5f5f5;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.astromonix-button:hover {
+  background: #e8e8e8;
+  border-color: #bbb;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.astromonix-logo {
+  height: 20px;
+  width: auto;
+  display: block;
+}
+
 .edit-button {
   padding: 0.4rem 0.8rem;
   background: #f5f5f5;

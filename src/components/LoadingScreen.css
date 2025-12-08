@@ -183,7 +183,6 @@
   width: 500px;
   height: 400px;
   transform-style: preserve-3d;
-  animation: infinity3DRotate 20s linear infinite;
   transform-origin: center center;
   will-change: transform;
   backface-visibility: visible;
@@ -201,14 +200,24 @@
   perspective: 2000px;
 }
 
-/* 3D Infinity symbol segments - structural foundation of time tree */
-.infinity-segment-3d {
+/* Rotating wrapper for infinity segments only */
+.infinity-rotating-wrapper {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+  transform-origin: center center;
+  animation: infinityRoll 22s linear infinite;
+  will-change: transform;
+  backface-visibility: visible;
+  -webkit-backface-visibility: visible;
+}
+
+/* 3D Infinity symbol segments - true 3D cylindrical forms */
+.infinity-segment-3d-cylinder {
   position: absolute;
-  height: 3px;
-  min-height: 3px;
   transform-origin: left center;
   transform-style: preserve-3d;
-  border-radius: 50%;
   image-rendering: pixelated;
   image-rendering: crisp-edges;
   image-rendering: -moz-crisp-edges;
@@ -222,18 +231,34 @@
   outline: 1px solid transparent;
   overflow: visible;
   z-index: 1;
-  /* Cylindrical appearance - rounded cross-section */
   box-sizing: border-box;
 }
 
-/* 3D Branch segments - time tree polarity branches (past=blue/left, future=red/right) */
-.branch-segment-3d {
+/* Cylinder body - main tube section (rounded rectangle/pill shape) */
+.infinity-segment-3d-cylinder .cylinder-body {
   position: absolute;
-  min-width: 1px;
-  min-height: 1px;
+  top: 0;
+  left: 0;
+  transform-style: preserve-3d;
+  backface-visibility: visible;
+  -webkit-backface-visibility: visible;
+}
+
+/* Cylinder caps - circular ends */
+.infinity-segment-3d-cylinder .cylinder-cap {
+  position: absolute;
+  top: 0;
+  border-radius: 50%;
+  transform-style: preserve-3d;
+  backface-visibility: visible;
+  -webkit-backface-visibility: visible;
+}
+
+/* 3D Branch segments - true 3D cylindrical forms */
+.branch-segment-3d-cylinder {
+  position: absolute;
   transform-origin: left center;
   transform-style: preserve-3d;
-  border-radius: 50%;
   animation: branchFlow3D 3s linear infinite, branchPulse3D 2.5s ease-in-out infinite;
   image-rendering: pixelated;
   image-rendering: crisp-edges;
@@ -248,8 +273,27 @@
   outline: 1px solid transparent;
   overflow: visible;
   z-index: 2;
-  /* Cylindrical appearance - rounded cross-section */
   box-sizing: border-box;
+}
+
+/* Cylinder body - main tube section (rounded rectangle/pill shape) */
+.branch-segment-3d-cylinder .cylinder-body {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform-style: preserve-3d;
+  backface-visibility: visible;
+  -webkit-backface-visibility: visible;
+}
+
+/* Cylinder caps - circular ends */
+.branch-segment-3d-cylinder .cylinder-cap {
+  position: absolute;
+  top: 0;
+  border-radius: 50%;
+  transform-style: preserve-3d;
+  backface-visibility: visible;
+  -webkit-backface-visibility: visible;
 }
 
 @keyframes branchFlow3D {
@@ -273,13 +317,11 @@
   }
 }
 
-/* 3D Entry ornaments - spherical crystals */
-.entry-ornament-3d {
+/* 3D Entry ornaments - true 3D spherical forms */
+.entry-ornament-3d-sphere {
   position: absolute;
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
   transform-style: preserve-3d;
+  transform-origin: center center;
   image-rendering: pixelated;
   image-rendering: crisp-edges;
   image-rendering: -moz-crisp-edges;
@@ -292,8 +334,29 @@
   -webkit-backface-visibility: visible;
   outline: 1px solid transparent;
   z-index: 10;
-  /* Create sphere effect with radial gradient */
-  background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.8), currentColor 70%, currentColor);
+  border-radius: 50%;
+  overflow: visible;
+}
+
+/* Sphere outer shell with 3D lighting */
+.entry-ornament-3d-sphere .sphere-shell {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  transform-style: preserve-3d;
+  backface-visibility: visible;
+  -webkit-backface-visibility: visible;
+}
+
+/* Sphere highlight for 3D depth perception */
+.entry-ornament-3d-sphere .sphere-highlight {
+  pointer-events: none;
+  transform-style: preserve-3d;
+  backface-visibility: visible;
+  -webkit-backface-visibility: visible;
 }
 
 .infinity-3d-layer {
@@ -325,33 +388,12 @@
   filter: drop-shadow(0 0 30px rgba(255, 255, 255, 0.4));
 }
 
-@keyframes infinity3DRotate {
+@keyframes infinityRoll {
   0% {
-    transform: translateZ(0) rotateY(0deg) rotateX(10deg);
-  }
-  12.5% {
-    transform: translateZ(0) rotateY(45deg) rotateX(7.5deg);
-  }
-  25% {
-    transform: translateZ(0) rotateY(90deg) rotateX(5deg);
-  }
-  37.5% {
-    transform: translateZ(0) rotateY(135deg) rotateX(7.5deg);
-  }
-  50% {
-    transform: translateZ(0) rotateY(180deg) rotateX(10deg);
-  }
-  62.5% {
-    transform: translateZ(0) rotateY(225deg) rotateX(7.5deg);
-  }
-  75% {
-    transform: translateZ(0) rotateY(270deg) rotateX(5deg);
-  }
-  87.5% {
-    transform: translateZ(0) rotateY(315deg) rotateX(7.5deg);
+    transform: translateZ(0) rotateZ(0deg);
   }
   100% {
-    transform: translateZ(0) rotateY(360deg) rotateX(10deg);
+    transform: translateZ(0) rotateZ(360deg);
   }
 }
 

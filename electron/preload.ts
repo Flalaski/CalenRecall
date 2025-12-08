@@ -28,6 +28,7 @@ export interface Preferences {
   defaultExportFormat?: ExportFormat; // Default export format to use when exporting entries
   defaultExportMetadata?: ExportMetadata; // Default export metadata to use for all exports
   soundEffectsEnabled?: boolean; // Whether sound effects are enabled
+  showAstromonixToolbarButton?: boolean; // Whether to show the AstroMonix toolbar button in day view
 }
 
 contextBridge.exposeInMainWorld('electronAPI', {
@@ -195,5 +196,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.removeAllListeners('menu-import');
     ipcRenderer.removeAllListeners('menu-export');
   },
+  
+  // Open external URL in Electron window with specified dimensions
+  openExternalUrl: (url: string, width: number, height: number): Promise<{ success: boolean; error?: string }> =>
+    ipcRenderer.invoke('open-external-url', url, width, height),
 });
 

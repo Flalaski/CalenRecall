@@ -1562,6 +1562,7 @@ export interface Preferences {
   defaultExportFormat?: ExportFormat; // Default export format to use when exporting entries
   defaultExportMetadata?: ExportMetadata; // Default export metadata to use for all exports
   soundEffectsEnabled?: boolean; // Whether sound effects are enabled
+  showAstromonixToolbarButton?: boolean; // Whether to show the AstroMonix toolbar button in day view
 }
 
 const DEFAULT_PREFERENCES: Preferences = {
