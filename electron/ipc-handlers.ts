@@ -39,6 +39,13 @@ interface ThemeStyles {
   textShadow: string;
   borderRadius: string;
   boxShadow: string;
+  // Extended styling properties
+  cardBorderRadius?: string;
+  cardBoxShadow?: string;
+  cardBorderStyle?: 'solid' | 'inset' | 'outset' | 'dashed';
+  badgeBorderRadius?: string;
+  headerBorderRadius?: string;
+  headerBoxShadow?: string;
 }
 import {
   getEntries,
@@ -264,13 +271,37 @@ function extractThemeStyles(themeName: string): ThemeStyles {
     const textShadowMatch = cssContent.match(/(?:h1|h2|h3|\.date-label|\.viewer-title)[^}]*text-shadow:\s*([^;]+);/i);
     const textShadow = textShadowMatch?.[1]?.trim() || defaultStyles.textShadow;
     
-    // Extract border radius
+    // Extract border radius - general and specific
     const borderRadiusMatch = cssContent.match(/\[data-theme=["']?[^"']*["']?\]\s*\*\s*\{[^}]*border-radius:\s*([^;]+);/i);
     const borderRadius = borderRadiusMatch?.[1]?.trim() || defaultStyles.borderRadius;
     
-    // Extract box shadow (from navigation or key elements)
+    // Extract card-specific border radius
+    const cardBorderRadiusMatch = cssContent.match(/(?:\.timeline-cell|\.journal-entry-item|\.entry-item|\.period-entry-item)[^}]*border-radius:\s*([^;]+);/i);
+    const cardBorderRadius = cardBorderRadiusMatch?.[1]?.trim() || borderRadius;
+    
+    // Extract badge border radius
+    const badgeBorderRadiusMatch = cssContent.match(/(?:\.badge|\.tag|\.viewer-tag|\.entry-tag)[^}]*border-radius:\s*([^;]+);/i);
+    const badgeBorderRadius = badgeBorderRadiusMatch?.[1]?.trim() || '12px'; // Default rounded
+    
+    // Extract header border radius
+    const headerBorderRadiusMatch = cssContent.match(/\.navigation-bar[^}]*border-radius:\s*([^;]+);/i);
+    const headerBorderRadius = headerBorderRadiusMatch?.[1]?.trim() || '0';
+    
+    // Extract box shadow - general and specific
     const boxShadowMatch = cssContent.match(/(?:\.navigation-bar|\.nav-button)[^}]*box-shadow:\s*([^;]+);/i);
     const boxShadow = boxShadowMatch?.[1]?.trim() || defaultStyles.boxShadow;
+    
+    // Extract card-specific box shadow
+    const cardBoxShadowMatch = cssContent.match(/(?:\.timeline-cell|\.journal-entry-item|\.entry-item|\.period-entry-item)[^}]*box-shadow:\s*([^;]+);/i);
+    const cardBoxShadow = cardBoxShadowMatch?.[1]?.trim() || boxShadow;
+    
+    // Extract header box shadow
+    const headerBoxShadowMatch = cssContent.match(/\.navigation-bar[^}]*box-shadow:\s*([^;]+);/i);
+    const headerBoxShadow = headerBoxShadowMatch?.[1]?.trim() || boxShadow;
+    
+    // Extract border style (inset/outset/solid) from cards
+    const cardBorderStyleMatch = cssContent.match(/(?:\.timeline-cell|\.journal-entry-item|\.entry-item|\.period-entry-item)[^}]*border[^:]*:\s*[^}]*\s+(inset|outset|solid|dashed)/i);
+    const cardBorderStyle = cardBorderStyleMatch?.[1]?.toLowerCase() as 'solid' | 'inset' | 'outset' | 'dashed' | undefined;
     
     return {
       colors: {
@@ -293,6 +324,13 @@ function extractThemeStyles(themeName: string): ThemeStyles {
       textShadow,
       borderRadius,
       boxShadow,
+      // Extended styling properties
+      cardBorderRadius,
+      cardBoxShadow,
+      cardBorderStyle,
+      badgeBorderRadius,
+      headerBorderRadius,
+      headerBoxShadow,
     };
   } catch (error) {
     console.error(`[Export] Error extracting styles from theme ${themeName}:`, error);
@@ -2582,17 +2620,123 @@ async function exportEntriesAsPdf(entries: JournalEntry[], filePath: string, met
         doc.fillColor(colors.text);
       };
       
-      // Helper function to draw a card/box with border and proper colors
+      // Helper function to parse CSS border-radius to pixels
+      const parseBorderRadius = (radius: string): number => {
+        if (!radius || radius === '0' || radius === 'none') return 0;
+        const match = radius.match(/(\d+(?:\.\d+)?)(?:px|rem|em)?/);
+        if (match) {
+          let value = parseFloat(match[1]);
+          // Convert rem/em to pixels (assuming 16px base)
+          if (radius.includes('rem') || radius.includes('em')) {
+            value = value * 16;
+          }
+          return Math.round(value);
+        }
+        return 0;
+      };
+      
+      // Helper function to parse box-shadow and apply visual effect
+      const applyBoxShadow = (x: number, y: number, width: number, height: number, shadow: string) => {
+        if (!shadow || shadow === 'none') return;
+        
+        // Parse box-shadow: offsetX offsetY blur spread color
+        const shadowMatch = shadow.match(/(?:inset\s+)?(-?\d+(?:\.\d+)?)px\s+(-?\d+(?:\.\d+)?)px\s+(\d+(?:\.\d+)?)px(?:\s+(-?\d+(?:\.\d+)?)px)?\s+(rgba?\([^)]+\)|#[0-9a-fA-F]{3,6})/i);
+        if (shadowMatch) {
+          const offsetX = parseFloat(shadowMatch[1]);
+          const offsetY = parseFloat(shadowMatch[2]);
+          const blur = parseFloat(shadowMatch[3]);
+          const color = shadowMatch[5];
+          
+          // Draw shadow as a slightly offset rectangle
+          // PDFKit doesn't support blur, so we simulate with a darker/lighter rectangle
+          let shadowColor = '#000000';
+          let shadowAlpha = 0.3;
+          
+          if (color.includes('rgba')) {
+            // Extract rgba values
+            const rgbaMatch = color.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([\d.]+))?\)/);
+            if (rgbaMatch) {
+              const r = parseInt(rgbaMatch[1]);
+              const g = parseInt(rgbaMatch[2]);
+              const b = parseInt(rgbaMatch[3]);
+              shadowAlpha = rgbaMatch[4] ? parseFloat(rgbaMatch[4]) : 0.3;
+              shadowColor = `#${[r, g, b].map(x => {
+                const hex = x.toString(16);
+                return hex.length === 1 ? '0' + hex : hex;
+              }).join('')}`;
+            }
+          } else if (color.includes('#')) {
+            shadowColor = color;
+          }
+          
+          // Draw shadow rectangle (simplified - PDFKit doesn't support true blur)
+          // Use a semi-transparent darker version for shadow effect
+          const shadowRgb = hexToRgb(shadowColor);
+          if (shadowRgb) {
+            const darkerShadow = adjustColorBrightness(shadowColor, -30);
+            doc.fillColor(darkerShadow);
+            doc.rect(x + offsetX, y + offsetY, width, height);
+            doc.fill();
+          }
+        }
+      };
+      
+      // Helper function to draw a card/box with border, rounded corners, and shadows
       const drawCard = (x: number, y: number, width: number, height: number, padding: number = 0) => {
+        const borderRadius = parseBorderRadius(themeStyles.cardBorderRadius || '0');
+        
+        // Apply box shadow if present (draw shadow first, behind the card)
+        if (themeStyles.cardBoxShadow && themeStyles.cardBoxShadow !== 'none') {
+          applyBoxShadow(x, y, width, height, themeStyles.cardBoxShadow);
+        }
+        
         // Card background - use theme's card color
         doc.fillColor(cardBgColor);
-        doc.rect(x, y, width, height);
+        if (borderRadius > 0) {
+          // Use rounded rectangle if supported, otherwise use regular rect
+          try {
+            (doc as any).roundedRect(x, y, width, height, borderRadius);
+          } catch {
+            doc.rect(x, y, width, height);
+          }
+        } else {
+          doc.rect(x, y, width, height);
+        }
         doc.fill();
         
         // Card border - use theme border color or card border if available
-        const borderColor = colors.cardBorder || colors.border || adjustColorBrightness(cardBgColor, -20);
+        const borderColor = colors.border || adjustColorBrightness(cardBgColor, -20);
         doc.strokeColor(borderColor);
-        doc.rect(x, y, width, height);
+        
+        // Apply border style (inset/outset effect by adjusting border position)
+        let borderX = x;
+        let borderY = y;
+        let borderWidth = width;
+        let borderHeight = height;
+        
+        if (themeStyles.cardBorderStyle === 'inset') {
+          // Inset: border appears inside, create darker inner border
+          borderX = x + 2;
+          borderY = y + 2;
+          borderWidth = width - 4;
+          borderHeight = height - 4;
+        } else if (themeStyles.cardBorderStyle === 'outset') {
+          // Outset: border appears raised, create lighter outer border
+          borderX = x - 1;
+          borderY = y - 1;
+          borderWidth = width + 2;
+          borderHeight = height + 2;
+        }
+        
+        if (borderRadius > 0) {
+          try {
+            (doc as any).roundedRect(borderX, borderY, borderWidth, borderHeight, borderRadius);
+          } catch {
+            doc.rect(borderX, borderY, borderWidth, borderHeight);
+          }
+        } else {
+          doc.rect(borderX, borderY, borderWidth, borderHeight);
+        }
         doc.stroke();
         
         return { x: x + padding, y: y + padding, width: width - (padding * 2), height: height - (padding * 2) };
@@ -2603,7 +2747,7 @@ async function exportEntriesAsPdf(entries: JournalEntry[], filePath: string, met
         return (doc as any).widthOfString(text) || text.length * 6; // Fallback estimate
       };
       
-      // Helper function to draw a badge/tag with proper contrast
+      // Helper function to draw a badge/tag with rounded corners and proper contrast
       const drawBadge = (x: number, y: number, text: string, bgColor: string, textColor: string) => {
         const padding = 6;
         const fontSize = 8;
@@ -2612,20 +2756,37 @@ async function exportEntriesAsPdf(entries: JournalEntry[], filePath: string, met
         const textWidth = getTextWidth(text);
         const badgeWidth = textWidth + (padding * 2);
         const badgeHeight = fontSize + (padding * 2);
+        const badgeRadius = parseBorderRadius(themeStyles.badgeBorderRadius || '12px');
         
         // Ensure badge text color has proper contrast
         const readableBadgeText = getContrastRatio(textColor, bgColor) >= 4.5 
           ? textColor 
           : getReadableTextColor(bgColor);
         
-        // Badge background
+        // Badge background with rounded corners
         doc.fillColor(bgColor);
-        doc.rect(x, y, badgeWidth, badgeHeight);
+        if (badgeRadius > 0) {
+          try {
+            (doc as any).roundedRect(x, y, badgeWidth, badgeHeight, badgeRadius);
+          } catch {
+            doc.rect(x, y, badgeWidth, badgeHeight);
+          }
+        } else {
+          doc.rect(x, y, badgeWidth, badgeHeight);
+        }
         doc.fill();
         
-        // Badge border for definition
+        // Badge border for definition with rounded corners
         doc.strokeColor(adjustColorBrightness(bgColor, -20));
-        doc.rect(x, y, badgeWidth, badgeHeight);
+        if (badgeRadius > 0) {
+          try {
+            (doc as any).roundedRect(x, y, badgeWidth, badgeHeight, badgeRadius);
+          } catch {
+            doc.rect(x, y, badgeWidth, badgeHeight);
+          }
+        } else {
+          doc.rect(x, y, badgeWidth, badgeHeight);
+        }
         doc.stroke();
         
         // Badge text
@@ -2647,15 +2808,37 @@ async function exportEntriesAsPdf(entries: JournalEntry[], filePath: string, met
       // Header background - use theme's header color if available, otherwise accent or adjusted background
       const headerBgColor = colors.headerBg || colors.accent || adjustColorBrightness(colors.background, -15);
       const headerTextColor = getReadableTextColor(headerBgColor);
+      const headerRadius = parseBorderRadius(themeStyles.headerBorderRadius || '0');
       
-      // Draw header background
+      // Apply header box shadow if present
+      if (themeStyles.headerBoxShadow && themeStyles.headerBoxShadow !== 'none') {
+        applyBoxShadow(headerX, headerY, headerWidth, headerHeight, themeStyles.headerBoxShadow);
+      }
+      
+      // Draw header background with rounded corners
       doc.fillColor(headerBgColor);
-      doc.rect(headerX, headerY, headerWidth, headerHeight);
+      if (headerRadius > 0) {
+        try {
+          (doc as any).roundedRect(headerX, headerY, headerWidth, headerHeight, headerRadius);
+        } catch {
+          doc.rect(headerX, headerY, headerWidth, headerHeight);
+        }
+      } else {
+        doc.rect(headerX, headerY, headerWidth, headerHeight);
+      }
       doc.fill();
       
-      // Header border
+      // Header border with rounded corners
       doc.strokeColor(colors.border || adjustColorBrightness(headerBgColor, -20));
-      doc.rect(headerX, headerY, headerWidth, headerHeight);
+      if (headerRadius > 0) {
+        try {
+          (doc as any).roundedRect(headerX, headerY, headerWidth, headerHeight, headerRadius);
+        } catch {
+          doc.rect(headerX, headerY, headerWidth, headerHeight);
+        }
+      } else {
+        doc.rect(headerX, headerY, headerWidth, headerHeight);
+      }
       doc.stroke();
       
       const headerPadding = 15;

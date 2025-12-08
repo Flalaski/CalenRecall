@@ -33,6 +33,12 @@ declare module 'pdfkit' {
     moveTo(x: number, y: number): this;
     lineTo(x: number, y: number): this;
     rect(x: number, y: number, width: number, height: number): this;
+    roundedRect(x: number, y: number, width: number, height: number, radius?: number): this;
+    circle(x: number, y: number, radius: number): this;
+    arc(x: number, y: number, radius: number, startAngle: number, endAngle: number): this;
+    bezierCurveTo(cp1x: number, cp1y: number, cp2x: number, cp2y: number, x: number, y: number): this;
+    quadraticCurveTo(cpx: number, cpy: number, x: number, y: number): this;
+    closePath(): this;
     
     // Color methods
     fillColor(color: string): this;
