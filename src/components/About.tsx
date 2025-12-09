@@ -1,8 +1,46 @@
-import { useEffect } from 'react';
+import { useEffect, useRef, useCallback } from 'react';
 import packageJson from '../../package.json';
+import { initializeTheme, type ThemeName, applyFontSize } from '../utils/themes';
 import './About.css';
 
 export default function AboutComponent() {
+  const themeCleanupRef = useRef<(() => void) | null>(null);
+
+  // Load theme from profile selector's localStorage (same as profile selector)
+  const loadProfileSelectorTheme = (): ThemeName => {
+    const savedTheme = localStorage.getItem('profileSelectorTheme') as ThemeName | null;
+    return savedTheme || 'aero';
+  };
+
+  // Save theme to profile selector's localStorage
+  const saveProfileSelectorTheme = (themeName: ThemeName) => {
+    localStorage.setItem('profileSelectorTheme', themeName);
+  };
+
+  // Handle theme change - updates localStorage and applies the theme
+  const handleThemeChange = useCallback((newTheme: ThemeName) => {
+    console.log('[About] Theme change requested:', newTheme);
+    saveProfileSelectorTheme(newTheme);
+    
+    // Clean up previous theme listener
+    if (themeCleanupRef.current) {
+      themeCleanupRef.current();
+      themeCleanupRef.current = null;
+    }
+    
+    // Apply new theme
+    const cleanup = initializeTheme(newTheme);
+    themeCleanupRef.current = cleanup;
+    
+    // Force reflow to ensure CSS variables are applied
+    setTimeout(() => {
+      void document.documentElement.offsetHeight;
+      void document.body.offsetHeight;
+      const appliedTheme = document.documentElement.getAttribute('data-theme');
+      console.log('[About] Theme applied. Current data-theme:', appliedTheme);
+    }, 0);
+  }, []);
+
   useEffect(() => {
     // Enable scrolling for about page with performance optimizations
     document.body.classList.add('about-page');
@@ -16,31 +54,128 @@ export default function AboutComponent() {
     
     // Enable hardware acceleration for smooth scrolling
     document.body.style.transform = 'translateZ(0)';
+    // @ts-expect-error: Non-standard property for legacy iOS momentum scrolling
     document.body.style.webkitOverflowScrolling = 'touch';
+
+    // Initialize theme from profile selector's localStorage
+    const initialTheme = loadProfileSelectorTheme();
+    console.log('[About] Initial theme from localStorage:', initialTheme);
     
-    // Apply theme on load
-    const applyTheme = async () => {
+    // Apply theme immediately - don't wait for DOMContentLoaded
+    const applyTheme = () => {
+      // Clean up previous theme listener if it exists
+      if (themeCleanupRef.current) {
+        themeCleanupRef.current();
+        themeCleanupRef.current = null;
+      }
+      
+      console.log('[About] Applying theme:', initialTheme);
+      const cleanup = initializeTheme(initialTheme);
+      themeCleanupRef.current = cleanup;
+      
+      // Force a reflow to ensure CSS variables are applied
+      void document.documentElement.offsetHeight;
+      void document.body.offsetHeight;
+      
+      // Verify theme was applied
+      const appliedTheme = document.documentElement.getAttribute('data-theme');
+      console.log('[About] Theme attribute after apply:', appliedTheme);
+      
+      // Ensure body/html get theme background
+      if (appliedTheme) {
+        const bodyBg = getComputedStyle(document.body).getPropertyValue('--theme-body-bg');
+        console.log('[About] Theme body background variable:', bodyBg);
+      }
+    };
+    
+    // Apply theme immediately
+    applyTheme();
+    
+    // Also apply after a short delay to ensure theme CSS is fully loaded
+    setTimeout(applyTheme, 100);
+    
+    // Load font size from preferences if available
+    const loadFontSize = async () => {
       if (window.electronAPI) {
-        const prefs = await window.electronAPI.getAllPreferences();
-        const theme = prefs.theme || 'light';
-        document.documentElement.setAttribute('data-theme', theme);
-        if (theme === 'auto') {
-          const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-          document.documentElement.setAttribute('data-theme', prefersDark ? 'dark' : 'light');
-        }
-        if (prefs.fontSize) {
-          document.documentElement.setAttribute('data-font-size', prefs.fontSize);
+        try {
+          const prefs = await window.electronAPI.getAllPreferences();
+          if (prefs.fontSize) {
+            applyFontSize(prefs.fontSize);
+          }
+        } catch (error) {
+          console.error('Error loading font size:', error);
         }
       }
     };
-    applyTheme();
+    loadFontSize();
     
     // Cleanup on unmount
     return () => {
       document.body.classList.remove('about-page');
       document.documentElement.classList.remove('about-page');
+      if (themeCleanupRef.current) {
+        themeCleanupRef.current();
+      }
     };
   }, []);
+
+  // Listen for theme updates from Electron menu - uses profile selector's localStorage theme
+  useEffect(() => {
+    if (!window.electronAPI || !window.electronAPI.onPreferenceUpdated) {
+      return;
+    }
+
+    const handlePreferenceUpdate = (data: { key: string; value: any }) => {
+      if (data.key === 'theme') {
+        // When theme is changed from Electron menu, update profile selector's localStorage theme
+        // This keeps the about page theme in sync with profile selector
+        const newTheme = (data.value || 'aero') as ThemeName;
+        handleThemeChange(newTheme);
+      } else if (data.key === 'fontSize') {
+        // Update font size when preference changes
+        applyFontSize(data.value);
+      }
+    };
+
+    window.electronAPI.onPreferenceUpdated(handlePreferenceUpdate);
+
+    return () => {
+      if (window.electronAPI && window.electronAPI.removePreferenceUpdatedListener) {
+        window.electronAPI.removePreferenceUpdatedListener();
+      }
+    };
+  }, [handleThemeChange]);
+
+  // Listen for localStorage changes to profileSelectorTheme (when profile selector changes theme)
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'profileSelectorTheme' && e.newValue) {
+        const newTheme = e.newValue as ThemeName;
+        handleThemeChange(newTheme);
+      }
+    };
+
+    // Listen for storage events (works across tabs/windows)
+    window.addEventListener('storage', handleStorageChange);
+
+    // Also poll for changes (since storage events don't fire in the same window)
+    // Use a shorter interval for more responsive updates
+    const pollInterval = setInterval(() => {
+      const currentTheme = loadProfileSelectorTheme();
+      const appliedTheme = document.documentElement.getAttribute('data-theme');
+      
+      // If theme has changed, apply it
+      if (currentTheme && currentTheme !== appliedTheme) {
+        console.log('[About] Detected theme change via polling:', currentTheme, '-> applying');
+        handleThemeChange(currentTheme);
+      }
+    }, 250); // Check every 250ms for more responsive updates
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      clearInterval(pollInterval);
+    };
+  }, [handleThemeChange]);
 
   return (
     <div className="about-container">

@@ -623,6 +623,8 @@ function createProfileSelectorWindow() {
               profileSelectorWindow.setPosition(x, y, false);
               profileSelectorWindow.show();
               profileSelectorWindow.focus(); // Bring to front
+              // Disable always-on-top after initial display so window can be moved behind others
+              profileSelectorWindow.setAlwaysOnTop(false);
               console.log('[Main] Profile selector window shown and positioned');
               
               // Close startup loading window now that profile selector is ready
@@ -644,6 +646,8 @@ function createProfileSelectorWindow() {
               profileSelectorWindow.setPosition(x, y, false);
               profileSelectorWindow.show();
               profileSelectorWindow.focus(); // Bring to front
+              // Disable always-on-top after initial display so window can be moved behind others
+              profileSelectorWindow.setAlwaysOnTop(false);
               
               // Close startup loading window now that profile selector is ready
               closeStartupLoadingWindow();
