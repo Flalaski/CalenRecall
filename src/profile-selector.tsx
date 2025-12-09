@@ -86,7 +86,6 @@ function ProfileSelector() {
   const [editName, setEditName] = useState('');
   const [autoLoadProfileId, setAutoLoadProfileId] = useState<string | null>(null);
   const [profileDetails, setProfileDetails] = useState<Map<string, ProfileDetails>>(new Map());
-  const [theme, setTheme] = useState<ThemeName>('aero');
   const themeCleanupRef = React.useRef<(() => void) | null>(null);
   // Password-related state
   const [showPasswordDialog, setShowPasswordDialog] = useState(false);
@@ -120,9 +119,8 @@ function ProfileSelector() {
     localStorage.setItem('profileSelectorTheme', themeName);
   };
 
-  // Handle theme change - updates both state and localStorage, and applies the theme
+  // Handle theme change - updates localStorage and applies the theme
   const handleThemeChange = useCallback((newTheme: ThemeName) => {
-    setTheme(newTheme);
     saveProfileSelectorTheme(newTheme);
     
     // Clean up previous theme listener
@@ -139,7 +137,6 @@ function ProfileSelector() {
   // Initialize theme on mount - only from profile selector's own storage
   useEffect(() => {
     const initialTheme = loadProfileSelectorTheme();
-    setTheme(initialTheme);
     
     // Apply theme and set up auto theme listener if needed
     const cleanup = initializeTheme(initialTheme);
