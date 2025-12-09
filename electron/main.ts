@@ -1,14 +1,9 @@
 import { app, BrowserWindow, ipcMain, Menu, shell, screen } from 'electron';
 import * as path from 'path';
 import * as fs from 'fs';
-import { config } from 'dotenv';
 import { initDatabase, getAllPreferences, setPreference, closeDatabase, switchProfile, getCurrentProfile, Preferences } from './database';
 import { setupIpcHandlers, setMainWindow, setProfileSelectorWindow, setMenuUpdateCallback, setImportProgressWindow, setCreateImportProgressWindowCallback } from './ipc-handlers';
 import { getAutoLoadProfileId, setAutoLoadProfileId } from './profile-manager';
-
-// Load environment variables from .env file (if it exists)
-// This allows configuration without hardcoding values
-config();
 
 let mainWindow: BrowserWindow | null = null;
 let preferencesWindow: BrowserWindow | null = null;
@@ -18,6 +13,20 @@ let importProgressWindow: BrowserWindow | null = null;
 let startupLoadingWindow: BrowserWindow | null = null;
 
 const isDev = process.env.NODE_ENV === 'development' || !app.isPackaged;
+
+// Load environment variables from .env file (if it exists) - only in development
+// This allows configuration without hardcoding values during development
+if (isDev) {
+  try {
+    // Use require instead of import to allow conditional loading
+    const dotenv = require('dotenv');
+    dotenv.config();
+    console.log('[Main] Loaded environment variables from .env file');
+  } catch (error) {
+    // dotenv is optional - only needed in development
+    console.log('[Main] dotenv not available (this is normal in production builds)');
+  }
+}
 
 // Hardware acceleration is enabled by default in Electron
 // We ensure it's not disabled for better performance
