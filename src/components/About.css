@@ -1,5 +1,25 @@
 /* About Page Styles - Fully Theme-Compatible */
 
+/* Base html/body styles - same pattern as profile selector */
+html, body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  min-height: 100vh;
+  margin: 0;
+  padding: 0;
+}
+
+/* Theme-aware body background - use theme body background if available */
+[data-theme] html,
+[data-theme] body {
+  background: var(--theme-body-bg, linear-gradient(135deg, #667eea 0%, #764ba2 100%)) !important;
+  color: var(--theme-text, inherit);
+}
+
 /* Base styles - use CSS variables with fallbacks */
 .about-container {
   width: 100%;
@@ -9,7 +29,7 @@
   justify-content: center;
   padding: 40px 20px;
   padding-bottom: 60px;
-  background: var(--theme-body-bg, #f5f5f5);
+  background: transparent; /* Let html/body background show through */
   color: var(--theme-text, #333333);
   box-sizing: border-box;
 }
@@ -182,13 +202,6 @@
   opacity: 0.8;
 }
 
-/* Ensure html and body get theme background */
-[data-theme] html,
-[data-theme] body {
-  background: var(--theme-body-bg) !important;
-  color: var(--theme-text) !important;
-}
-
 /* Enable scrolling for About page with hardware acceleration */
 body.about-page,
 html.about-page {
@@ -205,5 +218,5 @@ html.about-page #root {
   height: auto !important;
   min-height: 100% !important;
   overflow: visible !important;
-  background: var(--theme-body-bg, transparent) !important;
+  background: transparent !important; /* Let html/body background show through */
 }
