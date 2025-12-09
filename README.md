@@ -1,6 +1,10 @@
-# CalenRecall
-
-A self-contained calendar journal application for Windows that helps you recall memories across decades, years, months, weeks, and days. All your journaling history is stored locally on your device.
+<div align="center">
+  <img src="assets/astromonixlogo.png" alt="CalenRecall Logo" width="200">
+  
+  # CalenRecall
+  
+  A self-contained calendar journal application for Windows that helps you recall memories across decades, years, months, weeks, and days. All your journaling history is stored locally on your device.
+</div>
 
 ## Features
 
