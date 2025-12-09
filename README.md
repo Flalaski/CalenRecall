@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/astromonixlogo.png" alt="CalenRecall Logo" width="200">
+  <img src="assets/icon-512.png" alt="CalenRecall Logo" width="200">
 </p>
 
 # CalenRecall
