@@ -460,6 +460,137 @@ Access preferences by clicking the gear icon (⚙️) in the navigation bar. You
 - Click results to navigate to entries
 - Press `Escape` to close search
 
+## Use Cases
+
+CalenRecall is versatile enough to support a wide range of journaling and documentation needs. Here are some practical examples:
+
+### Personal Journaling
+
+**Daily Reflections & Memories**
+- Create day entries with specific times (e.g., "Morning meditation at 6:00 AM")
+- Use tags like `#grateful`, `#anxious`, `#excited` to track moods
+- Link related entries to build a narrative timeline
+- Search for "summer 2023" to recall specific memories
+- Export to PDF to create a personal memoir
+
+**Life Milestones**
+- Decade entry: "2010s: College, Career Start, Marriage"
+- Year entry: "2024: Year of Growth and Change"
+- Month entry: "January 2024: New Job Started"
+- Day entry: "2024-06-15: Wedding Day" with precise time (2:15 PM)
+
+### Professional & Work
+
+**Work Journal & Time Tracking**
+- Document meetings with precise timestamps (9:00 AM standup, 2:30 PM client call)
+- Tag entries with `#meeting`, `#project-alpha`, `#client-meeting`
+- Create weekly summaries: "Week 1: Completed sprint goals"
+- Link related work items to track project progress
+- Export to PDF for client reports or performance reviews
+
+**Project Documentation**
+- Daily entries for project updates and decisions
+- Week entries for sprint summaries
+- Month entries for milestone reviews
+- Use tags: `#milestone`, `#blocker`, `#decision`, `#risk`
+- Archive completed projects while keeping them searchable
+
+### Health & Wellness
+
+**Fitness & Exercise Log**
+- Track workouts with precise times: "Morning run at 6:00 AM, 5km in 28 minutes"
+- Tag entries: `#cardio`, `#strength`, `#yoga`, `#running`
+- Weekly summaries: "Week 1: Exercised 5 days, total 8 hours"
+- Monthly reviews: "January: Ran 120km, lost 5 pounds"
+- Export to CSV for data analysis and trend tracking
+
+**Health Symptom Tracking**
+- Log symptoms with timestamps: "Headache started at 2:00 PM, severity 6/10"
+- Track medications: "Took medication at 8:00 AM, felt nauseous"
+- Use tags: `#symptom`, `#medication`, `#treatment`, `#doctor-visit`
+- Search for patterns: "all entries with headache symptom"
+- Export to PDF for doctor visits
+
+### Academic & Research
+
+**Research Notes & Observations**
+- Document experiments with precise timestamps: "Experiment A at 10:15 AM, temperature 72°F"
+- Link related experiments to track research progress
+- Use tags: `#experiment`, `#observation`, `#hypothesis`, `#result`
+- Weekly summaries: "Week 1: Completed 5 experiments, 3 positive results"
+- Export to markdown for research papers
+
+**Study & Learning Journal**
+- Track study sessions: "Studied calculus for 2 hours at 9:00 AM"
+- Document assignments: "Completed history essay at 3:00 PM"
+- Weekly summaries: "Week 1: 20 hours of study, completed 3 assignments"
+- Search by subject: "all assignments for History class"
+- Export to PDF for academic portfolios
+
+### Creative Projects
+
+**Writing Journal**
+- Daily writing sessions: "Wrote 1000 words at 9:00 AM, developed character backstory"
+- Capture ideas: "New plot idea: Time travel mystery"
+- Link related chapters or story elements
+- Weekly progress: "Week 1: Wrote 5000 words, completed Chapter 3"
+- Export to markdown for manuscript drafts
+
+**Art & Photography Documentation**
+- Document art sessions: "Painting session: 3 hours, completed landscape background"
+- Track photography shoots: "Sunrise shoot at 6:00 AM, Golden hour, 50 photos"
+- Link related pieces in the same series
+- Export to PDF for art portfolios
+
+### Historical & Genealogical
+
+**Family History**
+- Decade entries: "1920s: Grandparents' immigration to America"
+- Year entries: "1945: Grandfather returned from war"
+- Day entries: "1923-06-15: Great-grandmother's birthday"
+- Use Julian calendar for historical dates before 1582
+- Link family members and events
+- Export to PDF for family history books
+
+**Historical Event Documentation**
+- Use appropriate calendar systems: "1066-10-14: Battle of Hastings" (Julian calendar)
+- Support for negative years: "-0044-03-15: Assassination of Julius Caesar"
+- Use Islamic calendar: "622: Hijra" (year 1 AH)
+- Link related historical events
+- Export to PDF for historical documentation
+
+### Multi-Profile Organization
+
+**Separate Life Areas**
+- **Profile 1: "Personal Journal"** - Daily personal entries, reflections, memories
+- **Profile 2: "Work Journal"** - Professional activities, meetings, projects
+- **Profile 3: "Health Journal"** - Fitness, symptoms, medical appointments
+- **Profile 4: "Research Journal"** - Academic research, study notes, experiments
+
+Each profile has its own isolated database, allowing you to keep different aspects of your life organized separately while using the same powerful features.
+
+### Advanced Use Cases
+
+**Data Migration**
+- Import from other journaling platforms (Day One, Journey, etc.)
+- Convert CSV data to JSON format for import
+- Consolidate multiple journal sources into one profile
+- Export to multiple formats for backup and redundancy
+
+**Data Analysis**
+- Export to CSV for spreadsheet analysis
+- Search for patterns: "all entries with #anxiety tag between 9 AM and 5 PM"
+- Analyze time-based patterns and trends
+- Create reports by exporting to PDF with comprehensive metadata
+
+**Long-Term Archive**
+- Archive entries older than 5 years
+- Export to PDF for permanent archive
+- Export to JSON for data preservation
+- Use appropriate calendar systems for historical accuracy
+
+For a comprehensive list of use cases, see [USE_CASES_ANALYSIS.md](USE_CASES_ANALYSIS.md).
+
 ## Troubleshooting
 
 ### Build Issues
