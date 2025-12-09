@@ -3,13 +3,16 @@ import { Preferences, ExportFormat } from '../types';
 import { playResetSound, playExportSound } from '../utils/audioUtils';
 import { CALENDAR_INFO } from '../utils/calendars/types';
 import { getAvailableThemes, loadAllThemes, applyTheme, initializeTheme, applyFontSize } from '../utils/themes';
+import { useCalendar } from '../contexts/CalendarContext';
 import HotkeyDiagram from './HotkeyDiagram';
 import ImportProgressModal from './ImportProgressModal';
 import packageJson from '../../package.json';
 import './Preferences.css';
 
 export default function PreferencesComponent() {
+  const { calendar, setCalendar } = useCalendar();
   const [preferences, setPreferences] = useState<Preferences>({});
+  const [autoLoadProfile, setAutoLoadProfile] = useState(false);
   const [loading, setLoading] = useState(true);
   const [exportFormat, setExportFormat] = useState<ExportFormat>('markdown');
   const [isExporting, setIsExporting] = useState(false);
@@ -18,7 +21,6 @@ export default function PreferencesComponent() {
   const [isBackingUp, setIsBackingUp] = useState(false);
   const [isRestoring, setIsRestoring] = useState(false);
   const [backgroundImagePreview, setBackgroundImagePreview] = useState<string | null>(null);
-  const [themesLoaded, setThemesLoaded] = useState(false);
   const [themeListKey, setThemeListKey] = useState(0); // Force re-render when themes update
   const [importProgress, setImportProgress] = useState({
     isOpen: false,
@@ -33,12 +35,10 @@ export default function PreferencesComponent() {
     // Load all themes (built-in + custom) first
     loadAllThemes().then(() => {
       console.log('[Preferences] All themes loaded');
-      setThemesLoaded(true);
       setThemeListKey(prev => prev + 1); // Force re-render to show updated theme list
       loadPreferences();
     }).catch(error => {
       console.error('[Preferences] Error loading themes:', error);
-      setThemesLoaded(true);
       loadPreferences();
     });
     
@@ -103,6 +103,17 @@ export default function PreferencesComponent() {
     };
   }, []);
 
+  // Sync CalendarContext changes back to Preferences
+  useEffect(() => {
+    if (preferences.calendar !== calendar) {
+      setPreferences(prev => ({ ...prev, calendar: calendar as any }));
+      // Also save to database
+      if (window.electronAPI) {
+        window.electronAPI.setPreference('calendar', calendar).catch(console.error);
+      }
+    }
+  }, [calendar]);
+
   const loadPreferences = async () => {
     try {
       if (!window.electronAPI) {
@@ -117,7 +128,17 @@ export default function PreferencesComponent() {
       const currentProfile = await window.electronAPI.getCurrentProfile();
       const isAutoLoad = autoLoadProfileId === currentProfile?.id;
       
-      setPreferences({ ...prefs, autoLoadProfile: isAutoLoad });
+      setPreferences(prefs);
+      setAutoLoadProfile(isAutoLoad);
+      
+      // Sync calendar from preferences to CalendarContext if it exists
+      if (prefs.calendar && prefs.calendar !== calendar) {
+        setCalendar(prefs.calendar as any);
+      } else if (!prefs.calendar && calendar !== 'gregorian') {
+        // If no calendar preference exists but CalendarContext has a different calendar,
+        // sync CalendarContext to preferences
+        setPreferences(prev => ({ ...prev, calendar: calendar as any }));
+      }
 
       // Load background image preview
       if (prefs.backgroundImage) {
@@ -179,6 +200,11 @@ export default function PreferencesComponent() {
     }
     if (key === 'fontSize') {
       applyFontSize(value as string);
+    }
+    
+    // Sync calendar changes with CalendarContext
+    if (key === 'calendar') {
+      setCalendar(value as any);
     }
     
     // Note: We don't dispatch window events here because Preferences is in a separate BrowserWindow.
@@ -574,21 +600,21 @@ export default function PreferencesComponent() {
             <label>
               <input
                 type="checkbox"
-                checked={!!preferences.autoLoadProfile}
+                checked={autoLoadProfile}
                 onChange={async (e) => {
                   if (!window.electronAPI) return;
                   
                   const newValue = e.target.checked;
                   
                   // Update state immediately for instant UI feedback
-                  setPreferences(prev => ({ ...prev, autoLoadProfile: newValue }));
+                  setAutoLoadProfile(newValue);
                   
                   try {
                     const currentProfile = await window.electronAPI.getCurrentProfile();
                     if (!currentProfile) {
                       console.warn('[Preferences] No current profile found');
                       // Revert state change
-                      setPreferences(prev => ({ ...prev, autoLoadProfile: !newValue }));
+                      setAutoLoadProfile(!newValue);
                       alert('No current profile found. Please select a profile first.');
                       return;
                     }
@@ -616,7 +642,7 @@ export default function PreferencesComponent() {
                     });
                     
                     // Update state with verified value
-                    setPreferences(prev => ({ ...prev, autoLoadProfile: isAutoLoad }));
+                    setAutoLoadProfile(isAutoLoad);
                     
                     // If there's a mismatch, reload preferences to get correct state
                     if (isAutoLoad !== newValue) {
@@ -626,7 +652,7 @@ export default function PreferencesComponent() {
                   } catch (error) {
                     console.error('Error setting auto-load profile:', error);
                     // Revert state change on error
-                    setPreferences(prev => ({ ...prev, autoLoadProfile: !newValue }));
+                    setAutoLoadProfile(!newValue);
                     alert('Failed to set auto-load profile. Please try again.');
                     // Reload preferences to restore correct state
                     await loadPreferences();
@@ -658,11 +684,11 @@ export default function PreferencesComponent() {
           </div>
 
           <div className="preference-item">
-            <label htmlFor="defaultCalendar">Default Calendar</label>
+            <label htmlFor="calendar">Calendar</label>
             <select
-              id="defaultCalendar"
-              value={preferences.defaultCalendar || 'gregorian'}
-              onChange={(e) => updatePreference('defaultCalendar', e.target.value)}
+              id="calendar"
+              value={preferences.calendar || calendar || 'gregorian'}
+              onChange={(e) => updatePreference('calendar', e.target.value)}
             >
               {Object.entries(CALENDAR_INFO)
                 .filter(([key]) => ['gregorian', 'julian', 'islamic', 'hebrew', 'persian', 'ethiopian', 'coptic', 'indian-saka', 'cherokee', 'iroquois', 'thai-buddhist', 'bahai', 'mayan-tzolkin', 'mayan-haab', 'mayan-longcount', 'aztec-xiuhpohualli', 'chinese'].includes(key))
@@ -672,7 +698,7 @@ export default function PreferencesComponent() {
                   </option>
                 ))}
             </select>
-            <small>Select the default calendar system for displaying dates. You can also change this from the navigation bar.</small>
+            <small>Select the calendar system for displaying dates. This syncs with the active profile's calendar setting. You can also change this from the navigation bar.</small>
           </div>
 
           <div className="preference-item">

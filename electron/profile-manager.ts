@@ -1114,6 +1114,28 @@ export function getProfileDetails(profileId: string): ProfileDetails | null {
             // Ignore parse errors
           }
         }
+        
+        // Get calendar preference
+        const calendarRow = tempDb.prepare(`
+          SELECT value FROM preferences WHERE key = 'calendar'
+        `).get() as { value: string } | undefined;
+        
+        if (calendarRow?.value) {
+          try {
+            if (!details.preferences) {
+              details.preferences = {};
+            }
+            // Parse JSON value (preferences are stored as JSON strings)
+            const calendarValue = JSON.parse(calendarRow.value);
+            details.preferences.calendar = calendarValue;
+          } catch {
+            // If parsing fails, try using the raw value
+            if (!details.preferences) {
+              details.preferences = {};
+            }
+            details.preferences.calendar = calendarRow.value;
+          }
+        }
       } finally {
         tempDb.close();
       }

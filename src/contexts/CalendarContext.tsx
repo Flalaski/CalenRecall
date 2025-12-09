@@ -8,9 +8,8 @@
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { CalendarSystem, CalendarDate, CALENDAR_INFO } from '../utils/calendars/types';
-import { dateToCalendarDate, calendarDateToDate, convertDate, formatCalendarDate, getCalendarConverter } from '../utils/calendars/calendarConverter';
-import { dateToJDN, jdnToDate } from '../utils/calendars/julianDayUtils';
-import { parseISODate, formatDateToISO } from '../utils/dateUtils';
+import { dateToCalendarDate, calendarDateToDate, formatCalendarDate } from '../utils/calendars/calendarConverter';
+import { parseISODate } from '../utils/dateUtils';
 
 interface CalendarContextType {
   // Current calendar system
@@ -42,29 +41,66 @@ export function CalendarProvider({ children }: { children: React.ReactNode }) {
   const [calendar, setCalendarState] = useState<CalendarSystem>('gregorian');
   const [preferencesLoaded, setPreferencesLoaded] = useState(false);
 
-  // Load calendar preference from storage
+  // Load calendar preference from storage (use 'calendar' key to match profile database)
   useEffect(() => {
-    if (window.electronAPI) {
-      window.electronAPI.getPreference('defaultCalendar')
-        .then((pref: string | undefined) => {
+    const loadCalendar = async () => {
+      if (window.electronAPI) {
+        try {
+          const pref = await window.electronAPI.getPreference('calendar');
           if (pref && typeof pref === 'string') {
             setCalendarState(pref as CalendarSystem);
           }
           setPreferencesLoaded(true);
-        })
-        .catch(() => {
+        } catch {
           setPreferencesLoaded(true);
-        });
-    } else {
-      setPreferencesLoaded(true);
+        }
+      } else {
+        setPreferencesLoaded(true);
+      }
+    };
+    
+    loadCalendar();
+    
+    // Listen for profile switches to reload calendar from new profile
+    if (window.electronAPI && (window.electronAPI as any).onProfileSwitched) {
+      const handleProfileSwitch = async () => {
+        console.log('[CalendarContext] Profile switched, reloading calendar preference');
+        // Wait a moment for the database to initialize
+        await new Promise(resolve => setTimeout(resolve, 500));
+        const pref = await window.electronAPI.getPreference('calendar');
+        if (pref && typeof pref === 'string') {
+          setCalendarState(pref as CalendarSystem);
+        }
+      };
+      
+      (window.electronAPI as any).onProfileSwitched(handleProfileSwitch);
+      
+      return () => {
+        if ((window.electronAPI as any).removeProfileListeners) {
+          (window.electronAPI as any).removeProfileListeners();
+        }
+      };
     }
   }, []);
 
-  // Save calendar preference when it changes
-  const setCalendar = useCallback((newCalendar: CalendarSystem) => {
+  // Save calendar preference when it changes (use 'calendar' key to match profile database)
+  const setCalendar = useCallback(async (newCalendar: CalendarSystem) => {
     setCalendarState(newCalendar);
     if (window.electronAPI && preferencesLoaded) {
-      window.electronAPI.setPreference('defaultCalendar', newCalendar).catch(console.error);
+      try {
+        const result = await window.electronAPI.setPreference('calendar', newCalendar);
+        if (result && !result.success) {
+          console.error('[CalendarContext] Failed to save calendar preference');
+        } else {
+          console.log('[CalendarContext] ✅ Calendar preference saved:', newCalendar);
+        }
+      } catch (error) {
+        console.error('[CalendarContext] ❌ Error saving calendar preference:', error);
+        // Don't revert the state change - the UI should reflect the user's choice
+        // The preference will be saved on next attempt or when the app restarts
+      }
+    } else if (!preferencesLoaded) {
+      console.warn('[CalendarContext] Preferences not loaded yet, calendar change will be saved when ready');
     }
   }, [preferencesLoaded]);
 

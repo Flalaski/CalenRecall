@@ -15,6 +15,9 @@ import {
   initializeSoundEffectsCache,
   updateSoundEffectsCache
 } from './utils/audioUtils';
+import { parseISODate } from './utils/dateUtils';
+import { dateToCalendarDate, formatCalendarDate } from './utils/calendars/calendarConverter';
+import { CalendarSystem, CALENDAR_INFO } from './utils/calendars/types';
 
 interface Profile {
   id: string;
@@ -166,6 +169,13 @@ function ProfileSelector() {
         // Update sound effects cache when preference changes
         const enabled = data.value !== false;
         updateSoundEffectsCache(enabled);
+      } else if (data.key === 'calendar') {
+        // When calendar changes, refresh profile details to show updated calendar
+        // This ensures the profile selector displays the correct calendar for each profile
+        // Wait a moment for the database to be flushed, then refresh
+        setTimeout(() => {
+          loadProfiles();
+        }, 100);
       }
     };
 
@@ -516,17 +526,47 @@ function ProfileSelector() {
     }
   };
 
-  const formatDate = (dateString: string): string => {
+  // Format date using calendar-aware formatting with proper terminology
+  const formatDate = (dateString: string, calendar?: CalendarSystem): string => {
     try {
-      const date = new Date(dateString);
-      return date.toLocaleDateString(undefined, {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric',
+      // Parse ISO date string (handles negative years)
+      const date = parseISODate(dateString);
+      
+      // Use provided calendar or default to gregorian
+      const calendarToUse = calendar || 'gregorian';
+      
+      // Convert to calendar date
+      const calendarDate = dateToCalendarDate(date, calendarToUse);
+      
+      // Format with calendar terminology (includes era like BCE, CE, AH, etc.)
+      return formatCalendarDate(calendarDate, 'MMM D, YYYY ERA');
+    } catch {
+      // Fallback to original string if parsing fails
+      return dateString;
+    }
+  };
+  
+  // Format date with time (for lastUsed, createdAt)
+  const formatDateTime = (dateString: string, calendar?: CalendarSystem): string => {
+    try {
+      // Parse ISO date string (handles negative years)
+      const date = parseISODate(dateString);
+      
+      // Use provided calendar or default to gregorian
+      const calendarToUse = calendar || 'gregorian';
+      
+      // Convert to calendar date
+      const calendarDate = dateToCalendarDate(date, calendarToUse);
+      
+      // Format with calendar terminology and time
+      const datePart = formatCalendarDate(calendarDate, 'MMM D, YYYY ERA');
+      const timePart = date.toLocaleTimeString(undefined, {
         hour: '2-digit',
         minute: '2-digit',
       });
+      return `${datePart}, ${timePart}`;
     } catch {
+      // Fallback to original string if parsing fails
       return dateString;
     }
   };
@@ -639,13 +679,18 @@ function ProfileSelector() {
                     {editingProfile?.id !== profile.id && (
                       <>
                         <div className="profile-meta-group">
-                          <p className="profile-meta">
-                            Last used: {formatDate(profile.lastUsed)}
-                          </p>
                           {(() => {
                             const details = getProfileDetail(profile);
+                            const calendar = (details?.preferences?.calendar as CalendarSystem) || 'gregorian';
+                            const calendarInfo = CALENDAR_INFO[calendar];
                             return (
                               <>
+                                <p className="profile-meta">
+                                  Last used: {formatDateTime(profile.lastUsed, calendar)}
+                                </p>
+                                <p className="profile-meta">
+                                  Calendar: {calendarInfo.name}{calendarInfo.eraName ? ` (${calendarInfo.eraName})` : ''}
+                                </p>
                                 {details?.entryCount !== undefined && (
                                   <p className="profile-meta">
                                     Entries: {details.entryCount.toLocaleString()}
@@ -658,12 +703,12 @@ function ProfileSelector() {
                                 )}
                                 {details?.firstEntryDate && (
                                   <p className="profile-meta">
-                                    First: {formatDate(details.firstEntryDate)}
+                                    First: {formatDate(details.firstEntryDate, calendar)}
                                   </p>
                                 )}
                                 {details?.lastEntryDate && (
                                   <p className="profile-meta">
-                                    Last: {formatDate(details.lastEntryDate)}
+                                    Last: {formatDate(details.lastEntryDate, calendar)}
                                   </p>
                                 )}
                               </>

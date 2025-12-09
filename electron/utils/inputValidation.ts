@@ -39,6 +39,7 @@ const VALID_PREFERENCE_KEYS: Array<keyof Preferences> = [
   'lastViewedDate',
   'lastViewedMode',
   'defaultCalendar',
+  'calendar', // Calendar preference key (syncs with active profile)
   'showMultipleCalendars',
   'backgroundImage',
   'timeFormat',

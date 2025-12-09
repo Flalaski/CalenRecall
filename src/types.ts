@@ -125,7 +125,8 @@ export interface Preferences {
   restoreLastView?: boolean;
   lastViewedDate?: string;
   lastViewedMode?: 'decade' | 'year' | 'month' | 'week' | 'day';
-  defaultCalendar?: string; // Calendar system (e.g., 'gregorian', 'islamic', 'hebrew')
+  defaultCalendar?: string; // Calendar system (e.g., 'gregorian', 'islamic', 'hebrew') - deprecated, use 'calendar' instead
+  calendar?: string; // Calendar system (e.g., 'gregorian', 'islamic', 'hebrew') - syncs with active profile
   showMultipleCalendars?: boolean; // Show date in multiple calendars simultaneously
   backgroundImage?: string; // Path to custom background image, or empty for procedural art
   timeFormat?: '12h' | '24h'; // Time format: 12-hour (AM/PM) or 24-hour

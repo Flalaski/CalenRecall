@@ -1839,7 +1839,8 @@ export interface Preferences {
   restoreLastView?: boolean;
   lastViewedDate?: string;
   lastViewedMode?: 'decade' | 'year' | 'month' | 'week' | 'day';
-  defaultCalendar?: string; // Calendar system (e.g., 'gregorian', 'islamic', 'hebrew')
+  defaultCalendar?: string; // Calendar system (e.g., 'gregorian', 'islamic', 'hebrew') - deprecated, use 'calendar' instead
+  calendar?: string; // Calendar system (e.g., 'gregorian', 'islamic', 'hebrew') - syncs with active profile
   showMultipleCalendars?: boolean; // Show date in multiple calendars simultaneously
   backgroundImage?: string; // Path to custom background image, or empty for procedural art
   enableProceduralArt?: boolean; // Enable procedural background art (default: true)
@@ -1889,13 +1890,77 @@ export function getPreference<K extends keyof Preferences>(key: K): Preferences[
 
 export function setPreference<K extends keyof Preferences>(key: K, value: Preferences[K]): void {
   const database = getDatabase();
+  if (!database) {
+    console.error(`[Database] ❌ Cannot set preference ${key}: database not initialized`);
+    throw new Error(`Database not initialized when trying to set preference ${key}`);
+  }
+  
+  // Verify database is ready by checking if preferences table exists
+  try {
+    const tableCheck = database.prepare(`
+      SELECT name FROM sqlite_master WHERE type='table' AND name='preferences'
+    `).get();
+    if (!tableCheck) {
+      console.error(`[Database] ❌ Preferences table does not exist`);
+      throw new Error(`Preferences table does not exist`);
+    }
+  } catch (error) {
+    console.error(`[Database] ❌ Error checking preferences table:`, error);
+    throw error;
+  }
+  
   const stmt = database.prepare(`
     INSERT OR REPLACE INTO preferences (key, value)
     VALUES (?, ?)
   `);
   const jsonValue = JSON.stringify(value);
-  stmt.run(key, jsonValue);
-  console.log(`[Database] Set preference: ${key} = ${jsonValue}`);
+  
+  try {
+    // Execute the insert/replace
+    const result = stmt.run(key, jsonValue);
+    console.log(`[Database] ✅ Set preference: ${key} = ${jsonValue} (changes: ${result.changes})`);
+    
+    // For critical preferences like calendar, use FULL checkpoint to ensure immediate persistence
+    // This ensures the preference is immediately available for profile details and persists across restarts
+    if (key === 'calendar') {
+      try {
+        // Use FULL checkpoint for calendar to ensure it's written to the main database file
+        // FULL checkpoint is more reliable than TRUNCATE for ensuring data persistence
+        database.exec('PRAGMA wal_checkpoint(FULL)');
+        console.log(`[Database] ✅ Calendar preference flushed to disk with FULL checkpoint`);
+        
+        // Verify the save by reading it back
+        const verifyStmt = database.prepare('SELECT value FROM preferences WHERE key = ?');
+        const verifyRow = verifyStmt.get(key) as { value: string } | undefined;
+        if (verifyRow && JSON.parse(verifyRow.value) === value) {
+          console.log(`[Database] ✅ Calendar preference verified in database`);
+        } else {
+          console.warn(`[Database] ⚠️ Calendar preference verification failed - value may not have persisted`);
+        }
+      } catch (error) {
+        // If FULL fails, try TRUNCATE as fallback
+        try {
+          console.warn(`[Database] ⚠️ FULL checkpoint failed, trying TRUNCATE:`, error);
+          database.exec('PRAGMA wal_checkpoint(TRUNCATE)');
+          console.log(`[Database] ✅ Calendar preference flushed to disk with TRUNCATE checkpoint`);
+        } catch (fallbackError) {
+          console.error(`[Database] ❌ Failed to checkpoint calendar preference:`, fallbackError);
+          // Don't throw - the data is still in WAL and will be checkpointed later
+        }
+      }
+    } else {
+      // For other preferences, use TRUNCATE checkpoint (faster but less aggressive)
+      try {
+        database.exec('PRAGMA wal_checkpoint(TRUNCATE)');
+      } catch (error) {
+        // Non-critical - WAL checkpoint might fail in some edge cases
+        console.warn(`[Database] WAL checkpoint warning (non-critical) for preference ${key}:`, error);
+      }
+    }
+  } catch (error) {
+    console.error(`[Database] ❌ Error setting preference ${key}:`, error);
+    throw error;
+  }
 }
 
 export function getAllPreferences(): Preferences {

@@ -1005,14 +1005,37 @@ export function setupIpcHandlers() {
       };
     }
     console.log('[IPC] set-preference called:', key, value, 'type:', typeof value);
-    setPreference(key, value);
+    try {
+      setPreference(key, value);
+      console.log('[IPC] ✅ Preference saved successfully:', key);
+      
+      // For calendar preference, verify it was saved correctly
+      if (key === 'calendar') {
+        try {
+          const verifyPref = getPreference('calendar');
+          if (verifyPref === value) {
+            console.log('[IPC] ✅ Calendar preference verified after save');
+          } else {
+            console.warn('[IPC] ⚠️ Calendar preference verification mismatch:', { saved: value, read: verifyPref });
+          }
+        } catch (verifyError) {
+          console.error('[IPC] ❌ Error verifying calendar preference:', verifyError);
+        }
+      }
+    } catch (error) {
+      console.error('[IPC] ❌ Error setting preference:', key, error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error setting preference'
+      };
+    }
     
     // Notify main window of preference changes that need immediate UI updates
     // This allows the main window to update immediately without waiting for window events
     // Use type assertion to check string keys since TypeScript can't narrow keyof types
     const keyStr = key as string;
-    // Send notification for theme, fontSize, minimapCrystalUseDefaultColors, backgroundImage, minimapSize, showMinimap, weekStartsOn, and soundEffectsEnabled
-    if (keyStr === 'theme' || keyStr === 'fontSize' || keyStr === 'minimapCrystalUseDefaultColors' || keyStr === 'backgroundImage' || keyStr === 'minimapSize' || keyStr === 'showMinimap' || keyStr === 'weekStartsOn' || keyStr === 'soundEffectsEnabled') {
+    // Send notification for theme, fontSize, minimapCrystalUseDefaultColors, backgroundImage, minimapSize, showMinimap, weekStartsOn, soundEffectsEnabled, and calendar
+    if (keyStr === 'theme' || keyStr === 'fontSize' || keyStr === 'minimapCrystalUseDefaultColors' || keyStr === 'backgroundImage' || keyStr === 'minimapSize' || keyStr === 'showMinimap' || keyStr === 'weekStartsOn' || keyStr === 'soundEffectsEnabled' || keyStr === 'calendar') {
       console.log('[IPC] Preference', keyStr, 'is in notification list, will send to main window');
       const senderWindow = BrowserWindow.fromWebContents(event.sender);
       
@@ -1141,14 +1164,42 @@ export function setupIpcHandlers() {
             console.error('[IPC] Error sending preference-updated message:', error);
           }
         } else {
-          console.log('[IPC] Sender is main window, not sending notification');
+          console.log('[IPC] Sender is main window, not sending notification to main window');
         }
       } else {
         console.log('[IPC] Main window not available or destroyed');
       }
       
-      // Also send to profile selector window if it exists and is not the sender
-      if (profileSelectorWindowRef && !profileSelectorWindowRef.isDestroyed()) {
+      // Always send calendar updates to profile selector window (if it exists) regardless of sender
+      // This ensures the profile selector updates in real-time when calendar is changed from main window
+      if (keyStr === 'calendar' && profileSelectorWindowRef && !profileSelectorWindowRef.isDestroyed()) {
+        console.log('[IPC] 📤 Sending calendar preference-updated to profile selector window (from any sender):', value);
+        try {
+          profileSelectorWindowRef.webContents.send('preference-updated', { key: keyStr, value });
+          console.log('[IPC] ✅ Calendar message sent to profile selector window');
+          
+          // Send fallback messages to ensure calendar update is received
+          const sendFallback = (delay: number) => {
+            setTimeout(() => {
+              if (profileSelectorWindowRef && !profileSelectorWindowRef.isDestroyed()) {
+                try {
+                  profileSelectorWindowRef.webContents.send('preference-updated', { key: keyStr, value });
+                  console.log(`[IPC] ✅ Fallback calendar message sent to profile selector at ${delay}ms`);
+                } catch (err) {
+                  console.error(`[IPC] ❌ Error sending fallback calendar to profile selector at ${delay}ms:`, err);
+                }
+              }
+            }, delay);
+          };
+          
+          sendFallback(50);
+          sendFallback(100);
+          sendFallback(200);
+        } catch (error) {
+          console.error('[IPC] Error sending calendar preference-updated to profile selector:', error);
+        }
+      } else if (profileSelectorWindowRef && !profileSelectorWindowRef.isDestroyed()) {
+        // For other preferences, only send if sender is not the profile selector
         if (senderWindow !== profileSelectorWindowRef) {
           console.log('[IPC] 📤 Sending preference-updated to profile selector window:', keyStr, value);
           try {
