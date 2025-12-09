@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Preferences, ExportFormat } from '../types';
 import { playResetSound, playExportSound } from '../utils/audioUtils';
 import { CALENDAR_INFO } from '../utils/calendars/types';
@@ -11,6 +11,7 @@ import './Preferences.css';
 
 export default function PreferencesComponent() {
   const { calendar, setCalendar } = useCalendar();
+  const themeCleanupRef = useRef<(() => void) | undefined>(undefined);
   const [preferences, setPreferences] = useState<Preferences>({});
   const [autoLoadProfile, setAutoLoadProfile] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -51,16 +52,13 @@ export default function PreferencesComponent() {
         
         // Initialize theme with system preference listener for 'auto' theme
         const cleanup = initializeTheme(theme);
+        themeCleanupRef.current = cleanup;
         
         applyFontSize(prefs.fontSize);
-        
-        return cleanup;
       }
-      return () => {};
     };
     
-    let cleanup: (() => void) | undefined;
-    setupTheme().then(fn => cleanup = fn);
+    setupTheme();
     
     // Set up import progress listener
     if (window.electronAPI && window.electronAPI.onImportProgress) {
@@ -91,14 +89,76 @@ export default function PreferencesComponent() {
         await loadPreferences();
       });
     }
+
+    // Set up profile switch listener (for profile changes)
+    if (window.electronAPI && (window.electronAPI as any).onProfileSwitched) {
+      const handleProfileSwitch = async () => {
+        console.log('[Preferences] Profile switched, reloading preferences for new profile');
+        // Wait a moment for the database to initialize
+        await new Promise(resolve => setTimeout(resolve, 500));
+        // Reload all preferences to reflect the new profile
+        await loadPreferences();
+        // Re-apply theme and font size for the new profile
+        const prefs = await window.electronAPI.getAllPreferences();
+        const theme = (prefs.theme || 'light') as any;
+        applyTheme(theme);
+        if (themeCleanupRef.current) {
+          themeCleanupRef.current();
+        }
+        const newCleanup = initializeTheme(theme);
+        themeCleanupRef.current = newCleanup;
+        applyFontSize(prefs.fontSize);
+      };
+      
+      (window.electronAPI as any).onProfileSwitched(handleProfileSwitch);
+    }
+
+    // Set up preference update listener (for changes from main window)
+    if (window.electronAPI && window.electronAPI.onPreferenceUpdated) {
+      const handlePreferenceUpdate = (data: { key: string; value: any }) => {
+        console.log('[Preferences] Received preference update:', data);
+        if (data.key === 'theme') {
+          // Apply theme immediately
+          const theme = (data.value || 'light') as any;
+          applyTheme(theme);
+          // Re-initialize theme with system preference listener for 'auto' theme
+          if (themeCleanupRef.current) {
+            themeCleanupRef.current();
+          }
+          const newCleanup = initializeTheme(theme);
+          themeCleanupRef.current = newCleanup;
+          // Update preferences state
+          setPreferences(prev => ({ ...prev, theme: data.value }));
+        } else if (data.key === 'fontSize') {
+          // Apply font size immediately
+          applyFontSize(data.value);
+          // Update preferences state
+          setPreferences(prev => ({ ...prev, fontSize: data.value }));
+        } else {
+          // Update preferences state for other keys
+          setPreferences(prev => ({ ...prev, [data.key]: data.value }));
+        }
+      };
+      
+      window.electronAPI.onPreferenceUpdated(handlePreferenceUpdate);
+    }
     
     return () => {
-      if (cleanup) cleanup();
+      if (themeCleanupRef.current) {
+        themeCleanupRef.current();
+        themeCleanupRef.current = undefined;
+      }
       if (window.electronAPI && window.electronAPI.removeImportProgressListener) {
         window.electronAPI.removeImportProgressListener();
       }
       if (window.electronAPI && window.electronAPI.removeAutoLoadProfileUpdatedListener) {
         window.electronAPI.removeAutoLoadProfileUpdatedListener();
+      }
+      if (window.electronAPI && window.electronAPI.removePreferenceUpdatedListener) {
+        window.electronAPI.removePreferenceUpdatedListener();
+      }
+      if (window.electronAPI && (window.electronAPI as any).removeProfileListeners) {
+        (window.electronAPI as any).removeProfileListeners();
       }
     };
   }, []);

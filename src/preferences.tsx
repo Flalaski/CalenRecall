@@ -1,6 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import PreferencesComponent from './components/Preferences';
+import { CalendarProvider } from './contexts/CalendarContext';
 import './utils/themeLoader'; // Load all theme CSS files automatically
 import { loadCustomThemes } from './utils/customThemeLoader'; // Load custom themes from AppData
 import './index.css';
@@ -12,7 +13,9 @@ loadCustomThemes().catch(error => {
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    <PreferencesComponent />
+    <CalendarProvider>
+      <PreferencesComponent />
+    </CalendarProvider>
   </React.StrictMode>
 );
 

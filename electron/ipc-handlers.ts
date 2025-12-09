@@ -102,6 +102,7 @@ import { EntryTemplate, getAllTemplates, getTemplate, saveTemplate, deleteTempla
 
 let mainWindowRef: Electron.BrowserWindow | null = null;
 let profileSelectorWindowRef: Electron.BrowserWindow | null = null;
+let preferencesWindowRef: Electron.BrowserWindow | null = null;
 let menuUpdateCallback: (() => void) | null = null;
 
 /**
@@ -375,6 +376,10 @@ export function setMainWindow(window: Electron.BrowserWindow | null) {
 
 export function setProfileSelectorWindow(window: Electron.BrowserWindow | null) {
   profileSelectorWindowRef = window;
+}
+
+export function setPreferencesWindow(window: Electron.BrowserWindow | null) {
+  preferencesWindowRef = window;
 }
 
 export function setMenuUpdateCallback(callback: (() => void) | null) {
@@ -1051,23 +1056,41 @@ export function setupIpcHandlers() {
             if (keyStr === 'soundEffectsEnabled') {
               console.log('[IPC] 🔊 Sound effects preference update sent - value:', value, 'type:', typeof value);
             }
+          } catch (err) {
+            console.error('[IPC] ❌ Error sending preference-updated to main window:', err);
+          }
+        }
+      }
+      
+      // Send to preferences window if it exists and is not the sender
+      if (preferencesWindowRef && !preferencesWindowRef.isDestroyed()) {
+        // Only send if the sender is not the preferences window (i.e., it's the main window)
+        if (senderWindow !== preferencesWindowRef) {
+          console.log('[IPC] 📤 Sending preference-updated to preferences window:', keyStr, value, 'type:', typeof value);
+          try {
+            // Send immediately
+            preferencesWindowRef.webContents.send('preference-updated', { key: keyStr, value });
+            console.log('[IPC] ✅ Message sent to preferences window (send returns void, but no error thrown)');
+            if (keyStr === 'soundEffectsEnabled') {
+              console.log('[IPC] 🔊 Sound effects preference update sent to preferences window - value:', value, 'type:', typeof value);
+            }
             
             // For theme, fontSize, and minimapSize changes, send multiple fallback messages to ensure it's received
             // This handles cases where the listener might not be ready or there are timing issues
             if (keyStr === 'theme' || keyStr === 'fontSize' || keyStr === 'minimapSize') {
-              // Send fallback messages for critical UI updates
+              // Send fallback messages for critical UI updates to preferences window
               const sendFallback = (delay: number) => {
                 setTimeout(() => {
-                  if (mainWindowRef && !mainWindowRef.isDestroyed()) {
-                    console.log(`[IPC] 📤 Sending fallback preference-updated for ${keyStr} (${delay}ms):`, value);
+                  if (preferencesWindowRef && !preferencesWindowRef.isDestroyed()) {
+                    console.log(`[IPC] 📤 Sending fallback preference-updated to preferences window for ${keyStr} (${delay}ms):`, value);
                     try {
-                      mainWindowRef.webContents.send('preference-updated', { key: keyStr, value });
-                      console.log(`[IPC] ✅ Fallback message sent at ${delay}ms`);
+                      preferencesWindowRef.webContents.send('preference-updated', { key: keyStr, value });
+                      console.log(`[IPC] ✅ Fallback message sent to preferences window at ${delay}ms`);
                     } catch (err) {
-                      console.error(`[IPC] ❌ Error sending fallback at ${delay}ms:`, err);
+                      console.error(`[IPC] ❌ Error sending fallback to preferences window at ${delay}ms:`, err);
                     }
                   } else {
-                    console.log(`[IPC] ⚠️ Main window not available at ${delay}ms, skipping fallback`);
+                    console.log(`[IPC] ⚠️ Preferences window not available at ${delay}ms, skipping fallback`);
                   }
                 }, delay);
               };

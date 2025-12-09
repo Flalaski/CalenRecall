@@ -15,10 +15,12 @@ import { playNewEntrySound, initializeSoundEffectsCache, updateSoundEffectsCache
 import { formatDateToISO, parseISODate } from './utils/dateUtils';
 import { applyTheme, initializeTheme, applyFontSize } from './utils/themes';
 import { useEntries } from './contexts/EntriesContext';
+import { useCalendar } from './contexts/CalendarContext';
 import './App.css';
 
 function App() {
   const { setEntries, isLoading, setIsLoading } = useEntries();
+  const { setCalendar } = useCalendar();
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [viewMode, setViewMode] = useState<TimeRange>('month');
   const [selectedEntry, setSelectedEntry] = useState<JournalEntry | null>(null);
@@ -289,11 +291,17 @@ function App() {
       }).catch((error) => {
         console.error('[App] Error re-initializing sound effects cache:', error);
       });
+    } else if (key === 'calendar') {
+      // Update CalendarContext when calendar preference changes
+      console.log('[App] Updating calendar:', value);
+      setCalendar(value as any);
+      // Also update preferences state
+      setPreferences(prev => ({ ...prev, calendar: value }));
     } else {
       // For all other preferences, update state (they may not need immediate UI updates)
       setPreferences(prev => ({ ...prev, [key]: value }));
     }
-  }, [setBackgroundImagePath]);
+  }, [setBackgroundImagePath, setCalendar]);
 
   // Load current profile on startup
   useEffect(() => {

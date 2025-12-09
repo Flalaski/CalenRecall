@@ -2,7 +2,7 @@ import { app, BrowserWindow, ipcMain, Menu, shell, screen } from 'electron';
 import * as path from 'path';
 import * as fs from 'fs';
 import { initDatabase, getAllPreferences, setPreference, closeDatabase, switchProfile, getCurrentProfile, Preferences } from './database';
-import { setupIpcHandlers, setMainWindow, setProfileSelectorWindow, setMenuUpdateCallback, setImportProgressWindow, setCreateImportProgressWindowCallback } from './ipc-handlers';
+import { setupIpcHandlers, setMainWindow, setProfileSelectorWindow, setPreferencesWindow, setMenuUpdateCallback, setImportProgressWindow, setCreateImportProgressWindowCallback } from './ipc-handlers';
 import { getAutoLoadProfileId, setAutoLoadProfileId } from './profile-manager';
 
 let mainWindow: BrowserWindow | null = null;
@@ -855,6 +855,27 @@ function createMenu() {
           }
         }, 100);
       }
+      // Also notify the preferences window if it exists
+      if (preferencesWindow && !preferencesWindow.isDestroyed()) {
+        console.log('[Main] 📤 Sending theme update to preferences window from menu:', theme.name);
+        preferencesWindow.webContents.send('preference-updated', { key: 'theme', value: theme.name });
+        // Send fallback messages to ensure it's received
+        setTimeout(() => {
+          if (preferencesWindow && !preferencesWindow.isDestroyed()) {
+            preferencesWindow.webContents.send('preference-updated', { key: 'theme', value: theme.name });
+          }
+        }, 50);
+        setTimeout(() => {
+          if (preferencesWindow && !preferencesWindow.isDestroyed()) {
+            preferencesWindow.webContents.send('preference-updated', { key: 'theme', value: theme.name });
+          }
+        }, 100);
+        setTimeout(() => {
+          if (preferencesWindow && !preferencesWindow.isDestroyed()) {
+            preferencesWindow.webContents.send('preference-updated', { key: 'theme', value: theme.name });
+          }
+        }, 200);
+      }
       // Update the menu to reflect the change
       updateMenu();
     },
@@ -1204,13 +1225,18 @@ function createPreferencesWindow() {
     preferencesWindow.loadFile(path.join(__dirname, '../dist/preferences.html'));
   }
 
+  // Register the preferences window with IPC handlers so it can receive preference updates
+  setPreferencesWindow(preferencesWindow);
+
   preferencesWindow.on('closed', () => {
+    setPreferencesWindow(null);
     preferencesWindow = null;
   });
 
   // Ensure window is properly destroyed on close
   preferencesWindow.on('close', (event) => {
     // Allow normal close behavior
+    setPreferencesWindow(null);
     preferencesWindow = null;
   });
 }
