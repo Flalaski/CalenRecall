@@ -85,6 +85,7 @@ import {
   renameProfile,
   getAutoLoadProfileId,
   setAutoLoadProfileId,
+  getProfileDetails,
   type Profile,
 } from './profile-manager';
 import { EntryVersion } from './types';
@@ -92,6 +93,7 @@ import { JournalEntry, TimeRange, ExportFormat, EntryAttachment, ExportMetadata 
 import { EntryTemplate, getAllTemplates, getTemplate, saveTemplate, deleteTemplate } from './database';
 
 let mainWindowRef: Electron.BrowserWindow | null = null;
+let profileSelectorWindowRef: Electron.BrowserWindow | null = null;
 let menuUpdateCallback: (() => void) | null = null;
 
 /**
@@ -363,8 +365,23 @@ export function setMainWindow(window: Electron.BrowserWindow | null) {
   mainWindowRef = window;
 }
 
+export function setProfileSelectorWindow(window: Electron.BrowserWindow | null) {
+  profileSelectorWindowRef = window;
+}
+
 export function setMenuUpdateCallback(callback: (() => void) | null) {
   menuUpdateCallback = callback;
+}
+
+let importProgressWindowRef: Electron.BrowserWindow | null = null;
+let createImportProgressWindowCallback: (() => Electron.BrowserWindow) | null = null;
+
+export function setImportProgressWindow(window: Electron.BrowserWindow | null) {
+  importProgressWindowRef = window;
+}
+
+export function setCreateImportProgressWindowCallback(callback: (() => Electron.BrowserWindow) | null) {
+  createImportProgressWindowCallback = callback;
 }
 
 export function setupIpcHandlers() {
@@ -985,9 +1002,10 @@ export function setupIpcHandlers() {
     // Send notification for theme, fontSize, minimapCrystalUseDefaultColors, backgroundImage, minimapSize, showMinimap, weekStartsOn, and soundEffectsEnabled
     if (keyStr === 'theme' || keyStr === 'fontSize' || keyStr === 'minimapCrystalUseDefaultColors' || keyStr === 'backgroundImage' || keyStr === 'minimapSize' || keyStr === 'showMinimap' || keyStr === 'weekStartsOn' || keyStr === 'soundEffectsEnabled') {
       console.log('[IPC] Preference', keyStr, 'is in notification list, will send to main window');
+      const senderWindow = BrowserWindow.fromWebContents(event.sender);
+      
       // Send to main window if it exists and is not the sender
       if (mainWindowRef && !mainWindowRef.isDestroyed()) {
-        const senderWindow = BrowserWindow.fromWebContents(event.sender);
         // Only send if the sender is not the main window (i.e., it's the preferences window)
         if (senderWindow !== mainWindowRef) {
           console.log('[IPC] 📤 Sending preference-updated to main window:', keyStr, value, 'type:', typeof value);
@@ -1116,6 +1134,39 @@ export function setupIpcHandlers() {
       } else {
         console.log('[IPC] Main window not available or destroyed');
       }
+      
+      // Also send to profile selector window if it exists and is not the sender
+      if (profileSelectorWindowRef && !profileSelectorWindowRef.isDestroyed()) {
+        if (senderWindow !== profileSelectorWindowRef) {
+          console.log('[IPC] 📤 Sending preference-updated to profile selector window:', keyStr, value);
+          try {
+            profileSelectorWindowRef.webContents.send('preference-updated', { key: keyStr, value });
+            console.log('[IPC] ✅ Message sent to profile selector window');
+            
+            // For theme changes, send fallback messages to ensure it's received
+            if (keyStr === 'theme') {
+              const sendFallback = (delay: number) => {
+                setTimeout(() => {
+                  if (profileSelectorWindowRef && !profileSelectorWindowRef.isDestroyed()) {
+                    try {
+                      profileSelectorWindowRef.webContents.send('preference-updated', { key: keyStr, value });
+                      console.log(`[IPC] ✅ Fallback theme message sent to profile selector at ${delay}ms`);
+                    } catch (err) {
+                      console.error(`[IPC] ❌ Error sending fallback to profile selector at ${delay}ms:`, err);
+                    }
+                  }
+                }, delay);
+              };
+              
+              sendFallback(50);
+              sendFallback(100);
+              sendFallback(200);
+            }
+          } catch (error) {
+            console.error('[IPC] Error sending preference-updated to profile selector:', error);
+          }
+        }
+      }
     }
     
     return { success: true };
@@ -1239,9 +1290,30 @@ export function setupIpcHandlers() {
   });
 
   /**
+   * Helper function to send progress updates to the progress window
+   */
+  function sendImportProgress(progress: {
+    stage: string;
+    progress: number;
+    message: string;
+    total?: number;
+    imported?: number;
+    skipped?: number;
+  }) {
+    // Send to progress window if it exists
+    if (importProgressWindowRef && !importProgressWindowRef.isDestroyed()) {
+      importProgressWindowRef.webContents.send('import-progress', progress);
+    }
+    // Also send to main window for backward compatibility (if no progress window)
+    if (mainWindowRef && !mainWindowRef.isDestroyed() && !importProgressWindowRef) {
+      mainWindowRef.webContents.send('import-progress', progress);
+    }
+  }
+
+  /**
    * Import journal entries from a file.
    * Supports JSON and Markdown formats.
-   * Sends progress updates via IPC events.
+   * Runs asynchronously and sends progress updates to a separate progress window.
    */
   ipcMain.handle('import-entries', async (event, format: 'json' | 'markdown') => {
     // Get current profile information for user feedback
@@ -1263,106 +1335,148 @@ export function setupIpcHandlers() {
 
     const filePath = filePaths[0];
 
-    try {
-      // Send progress: Reading file
-      event.sender.send('import-progress', { 
-        stage: 'reading', 
-        progress: 0, 
-        message: `Reading file for profile: ${profileName}...` 
-      });
-      
-      const content = fs.readFileSync(filePath, { encoding: 'utf-8' });
-      
-      // Send progress: Parsing content
-      event.sender.send('import-progress', { 
-        stage: 'parsing', 
-        progress: 25, 
-        message: `Parsing entries for profile: ${profileName}...` 
-      });
-      
-      const entries = parseImportContent(content, format);
-
-      if (entries.length === 0) {
-        return { success: false, canceled: false, error: 'no_entries', message: 'No entries found in file' };
+    // Create and show import progress window
+    if (createImportProgressWindowCallback) {
+      try {
+        createImportProgressWindowCallback();
+        // Small delay to ensure window is ready
+        await new Promise(resolve => setTimeout(resolve, 100));
+      } catch (error) {
+        console.error('Error creating import progress window:', error);
+        // Continue anyway - progress will go to main window
       }
+    }
 
-      // Send progress: Starting import
-      event.sender.send('import-progress', { 
-        stage: 'importing', 
-        progress: 30, 
-        message: `Importing ${entries.length} entries into profile: ${profileName}...`, 
-        total: entries.length, 
-        imported: 0, 
-        skipped: 0 
-      });
-
-      // Save all entries with progress updates
-      let imported = 0;
-      let skipped = 0;
-      const total = entries.length;
-      const progressInterval = Math.max(1, Math.floor(total / 50)); // Update every 2% or at least every entry
-      
-      for (let i = 0; i < entries.length; i++) {
-        const entry = entries[i];
+    // Run import asynchronously so it doesn't block
+    return new Promise((resolve) => {
+      // Use setImmediate to run import in next tick, ensuring window is ready
+      setImmediate(async () => {
         try {
-          // Don't import entries with IDs (they're duplicates)
-          if (!entry.id) {
-            saveEntry(entry);
-            imported++;
-          } else {
-            skipped++;
+          // Send progress: Reading file
+          sendImportProgress({ 
+            stage: 'reading', 
+            progress: 0, 
+            message: `Reading file for profile: ${profileName}...` 
+          });
+          
+          const content = fs.readFileSync(filePath, { encoding: 'utf-8' });
+          
+          // Send progress: Parsing content
+          sendImportProgress({ 
+            stage: 'parsing', 
+            progress: 25, 
+            message: `Parsing entries for profile: ${profileName}...` 
+          });
+          
+          const entries = parseImportContent(content, format);
+
+          if (entries.length === 0) {
+            sendImportProgress({
+              stage: 'error',
+              progress: 0,
+              message: 'No entries found in file',
+            });
+            resolve({ success: false, canceled: false, error: 'no_entries', message: 'No entries found in file' });
+            return;
           }
-        } catch (error) {
-          console.error('Error importing entry:', error);
-          skipped++;
-        }
-        
-        // Send progress update periodically
-        if (i % progressInterval === 0 || i === entries.length - 1) {
-          const progress = 30 + Math.floor((i / total) * 70); // 30-100%
-          event.sender.send('import-progress', {
-            stage: 'importing',
-            progress,
-            message: `Profile: ${profileName} - Imported ${imported} entries${skipped > 0 ? `, skipped ${skipped}` : ''}...`,
+
+          // Send progress: Starting import
+          sendImportProgress({ 
+            stage: 'importing', 
+            progress: 30, 
+            message: `Importing ${entries.length} entries into profile: ${profileName}...`, 
+            total: entries.length, 
+            imported: 0, 
+            skipped: 0 
+          });
+
+          // Save all entries with progress updates
+          let imported = 0;
+          let skipped = 0;
+          const total = entries.length;
+          const progressInterval = Math.max(1, Math.floor(total / 100)); // Update every 1% or at least every entry
+          
+          // Process entries in batches to avoid blocking
+          const batchSize = 100;
+          for (let batchStart = 0; batchStart < total; batchStart += batchSize) {
+            const batchEnd = Math.min(batchStart + batchSize, total);
+            
+            // Process batch synchronously
+            for (let i = batchStart; i < batchEnd; i++) {
+              const entry = entries[i];
+              try {
+                // Don't import entries with IDs (they're duplicates)
+                if (!entry.id) {
+                  saveEntry(entry);
+                  imported++;
+                } else {
+                  skipped++;
+                }
+              } catch (error) {
+                console.error('Error importing entry:', error);
+                skipped++;
+              }
+            }
+            
+            // Send progress update after each batch
+            const progress = 30 + Math.floor((batchEnd / total) * 70); // 30-100%
+            sendImportProgress({
+              stage: 'importing',
+              progress,
+              message: `Profile: ${profileName} - Imported ${imported} entries${skipped > 0 ? `, skipped ${skipped}` : ''}...`,
+              total,
+              imported,
+              skipped,
+            });
+
+            // Yield to event loop between batches to keep UI responsive
+            await new Promise(resolve => setImmediate(resolve));
+          }
+
+          // Send completion
+          sendImportProgress({
+            stage: 'complete',
+            progress: 100,
+            message: `Import complete for profile: ${profileName}! Imported ${imported} entries${skipped > 0 ? `, skipped ${skipped} duplicates` : ''}.`,
             total,
             imported,
             skipped,
           });
+
+          resolve({
+            success: true,
+            canceled: false,
+            imported,
+            skipped,
+            total: entries.length,
+          });
+        } catch (error: unknown) {
+          console.error('Error importing entries:', error);
+          const importErrorMessage = error instanceof Error ? error.message : 'Unknown error';
+          sendImportProgress({
+            stage: 'error',
+            progress: 0,
+            message: `Import failed for profile: ${profileName} - ${importErrorMessage}`,
+          });
+          const readErrorMessage = error instanceof Error ? error.message : 'Failed to read file';
+          resolve({
+            success: false,
+            canceled: false,
+            error: 'read_failed',
+            message: readErrorMessage,
+          });
         }
-      }
-
-      // Send completion
-      event.sender.send('import-progress', {
-        stage: 'complete',
-        progress: 100,
-        message: `Import complete for profile: ${profileName}! Imported ${imported} entries${skipped > 0 ? `, skipped ${skipped} duplicates` : ''}.`,
-        total,
-        imported,
-        skipped,
       });
+    });
+  });
 
-      return {
-        success: true,
-        canceled: false,
-        imported,
-        skipped,
-        total: entries.length,
-      };
-    } catch (error: unknown) {
-      console.error('Error importing entries:', error);
-      const importErrorMessage = error instanceof Error ? error.message : 'Unknown error';
-      event.sender.send('import-progress', {
-        stage: 'error',
-        progress: 0,
-        message: `Import failed for profile: ${profileName} - ${importErrorMessage}`,
-      });
-      const readErrorMessage = error instanceof Error ? error.message : 'Failed to read file';
-      return {
-        success: false,
-        canceled: false,
-        error: 'read_failed',
-        message: readErrorMessage,
-      };
+  /**
+   * Close the import progress window
+   */
+  ipcMain.handle('close-import-progress-window', async () => {
+    if (importProgressWindowRef && !importProgressWindowRef.isDestroyed()) {
+      importProgressWindowRef.close();
+      importProgressWindowRef = null;
     }
   });
 
@@ -1750,6 +1864,18 @@ export function setupIpcHandlers() {
       return getProfile(profileId);
     } catch (error) {
       console.error('[IPC] Error getting profile:', error);
+      throw error;
+    }
+  });
+
+  ipcMain.handle('get-profile-details', async (_event, profileId: string) => {
+    try {
+      if (!profileId || typeof profileId !== 'string') {
+        throw new Error('Invalid profile ID');
+      }
+      return getProfileDetails(profileId);
+    } catch (error) {
+      console.error('[IPC] Error getting profile details:', error);
       throw error;
     }
   });

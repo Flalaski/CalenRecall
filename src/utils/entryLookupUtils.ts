@@ -394,20 +394,19 @@ export function getAllEntriesForMonthOptimized(
   }
 
   // Add day entries for this month
-  // Iterate through byDateString and filter by year-month prefix
+  // OPTIMIZATION: Use prefix matching more efficiently
   const yearMonthPrefix = `${year}-${String(month + 1).padStart(2, '0')}`;
+  const negativeYearMonthPrefix = `-${Math.abs(year)}-${String(month + 1).padStart(2, '0')}`;
+  
   for (const [dateStr, dayEntries] of lookup.byDateString.entries()) {
-    // Check if date string starts with the year-month prefix
-    // Handle negative years
+    // OPTIMIZATION: Fast prefix check first, then detailed parsing only if needed
     if (dateStr.startsWith('-')) {
-      const cleanDateStr = dateStr.substring(1);
-      const [yearStr, monthStr] = cleanDateStr.split('-');
-      const entryYear = -parseInt(yearStr, 10);
-      const entryMonth = parseInt(monthStr, 10);
-      if (entryYear === year && entryMonth === month + 1) {
+      // Negative year - check prefix match first
+      if (dateStr.startsWith(negativeYearMonthPrefix)) {
         results.push(...dayEntries);
       }
     } else {
+      // Positive year - simple prefix match
       if (dateStr.startsWith(yearMonthPrefix)) {
         results.push(...dayEntries);
       }

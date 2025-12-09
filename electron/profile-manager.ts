@@ -908,3 +908,84 @@ export function setAutoLoadProfileId(profileId: string | null): void {
   }
 }
 
+/**
+ * Profile details interface with additional metadata
+ */
+export interface ProfileDetails extends Profile {
+  entryCount?: number;
+  defaultExportMetadata?: any; // ExportMetadata from preferences
+  preferences?: any; // Partial preferences from database
+  databaseSize?: number; // Database file size in bytes
+  firstEntryDate?: string | null; // Date of first entry
+  lastEntryDate?: string | null; // Date of last entry
+}
+
+/**
+ * Get detailed information about a profile including preferences and export metadata
+ */
+export function getProfileDetails(profileId: string): ProfileDetails | null {
+  const profile = getProfile(profileId);
+  if (!profile) {
+    return null;
+  }
+  
+  const userDataPath = app.getPath('userData');
+  const dbPath = path.join(userDataPath, profile.databasePath);
+  
+  const details: ProfileDetails = {
+    ...profile,
+  };
+  
+  // Try to get additional details from the database
+  if (fs.existsSync(dbPath)) {
+    try {
+      // Get database file size
+      const stats = fs.statSync(dbPath);
+      details.databaseSize = stats.size;
+      
+      // Open database to get entry counts and preferences
+      const tempDb = new Database(dbPath);
+      
+      try {
+        // Get entry count
+        const entryCountResult = tempDb.prepare(`
+          SELECT COUNT(*) as count FROM journal_entries
+        `).get() as { count: number } | undefined;
+        details.entryCount = entryCountResult?.count || 0;
+        
+        // Get first and last entry dates
+        const firstEntry = tempDb.prepare(`
+          SELECT MIN(date) as first_date FROM journal_entries
+        `).get() as { first_date: string | null } | undefined;
+        details.firstEntryDate = firstEntry?.first_date || null;
+        
+        const lastEntry = tempDb.prepare(`
+          SELECT MAX(date) as last_date FROM journal_entries
+        `).get() as { last_date: string | null } | undefined;
+        details.lastEntryDate = lastEntry?.last_date || null;
+        
+        // Get default export metadata from preferences
+        // This contains all project properties and export fields
+        const exportMetadataRow = tempDb.prepare(`
+          SELECT value FROM preferences WHERE key = 'defaultExportMetadata'
+        `).get() as { value: string } | undefined;
+        
+        if (exportMetadataRow?.value) {
+          try {
+            details.defaultExportMetadata = JSON.parse(exportMetadataRow.value);
+          } catch {
+            // Ignore parse errors
+          }
+        }
+      } finally {
+        tempDb.close();
+      }
+    } catch (error) {
+      console.error(`[Profile Manager] Error getting profile details for ${profileId}:`, error);
+      // Return basic profile info even if we can't get details
+    }
+  }
+  
+  return details;
+}
+

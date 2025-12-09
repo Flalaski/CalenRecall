@@ -18,6 +18,8 @@ export default defineConfig({
         preferences: path.resolve(__dirname, 'preferences.html'),
         about: path.resolve(__dirname, 'about.html'),
         'profile-selector': path.resolve(__dirname, 'profile-selector.html'),
+        'import-progress': path.resolve(__dirname, 'import-progress.html'),
+        'startup-loading': path.resolve(__dirname, 'startup-loading.html'),
       },
     },
   },

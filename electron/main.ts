@@ -3,7 +3,7 @@ import * as path from 'path';
 import * as fs from 'fs';
 import { config } from 'dotenv';
 import { initDatabase, getAllPreferences, setPreference, closeDatabase, switchProfile, getCurrentProfile } from './database';
-import { setupIpcHandlers, setMainWindow, setMenuUpdateCallback } from './ipc-handlers';
+import { setupIpcHandlers, setMainWindow, setProfileSelectorWindow, setMenuUpdateCallback, setImportProgressWindow, setCreateImportProgressWindowCallback } from './ipc-handlers';
 import { getAutoLoadProfileId, setAutoLoadProfileId } from './profile-manager';
 
 // Load environment variables from .env file (if it exists)
@@ -14,6 +14,8 @@ let mainWindow: BrowserWindow | null = null;
 let preferencesWindow: BrowserWindow | null = null;
 let aboutWindow: BrowserWindow | null = null;
 let profileSelectorWindow: BrowserWindow | null = null;
+let importProgressWindow: BrowserWindow | null = null;
+let startupLoadingWindow: BrowserWindow | null = null;
 
 const isDev = process.env.NODE_ENV === 'development' || !app.isPackaged;
 
@@ -349,6 +351,72 @@ function discoverThemes(): ThemeInfo[] {
   return [...coreThemes, ...sortedThemes];
 }
 
+function createStartupLoadingWindow() {
+  if (startupLoadingWindow) {
+    return startupLoadingWindow;
+  }
+
+  console.log('[Main] Creating startup loading window...');
+
+  // Calculate window position (center of screen)
+  const primaryDisplay = screen.getPrimaryDisplay();
+  const { width: screenWidth, height: screenHeight } = primaryDisplay.workAreaSize;
+  const windowWidth = 400;
+  const windowHeight = 400;
+  const x = Math.floor((screenWidth - windowWidth) / 2);
+  const y = Math.floor((screenHeight - windowHeight) / 2);
+
+  startupLoadingWindow = new BrowserWindow({
+    width: windowWidth,
+    height: windowHeight,
+    x,
+    y,
+    resizable: false,
+    minimizable: false,
+    maximizable: false,
+    frame: false, // Frameless for a cleaner look
+    transparent: true, // Allow transparency
+    alwaysOnTop: true,
+    skipTaskbar: false,
+    title: 'CalenRecall - Starting...',
+    webPreferences: {
+      nodeIntegration: false,
+      contextIsolation: true,
+    },
+    ...(process.platform === 'win32' && {
+      icon: path.join(__dirname, '../assets/icon.png'),
+    }),
+    show: false, // Show after loading
+  });
+
+  if (isDev) {
+    startupLoadingWindow.loadFile(path.join(__dirname, '../../startup-loading.html'));
+  } else {
+    startupLoadingWindow.loadFile(path.join(__dirname, '../startup-loading.html'));
+  }
+
+  startupLoadingWindow.once('ready-to-show', () => {
+    if (startupLoadingWindow) {
+      startupLoadingWindow.show();
+      console.log('[Main] Startup loading window shown');
+    }
+  });
+
+  startupLoadingWindow.on('closed', () => {
+    startupLoadingWindow = null;
+  });
+
+  return startupLoadingWindow;
+}
+
+function closeStartupLoadingWindow() {
+  if (startupLoadingWindow && !startupLoadingWindow.isDestroyed()) {
+    startupLoadingWindow.close();
+    startupLoadingWindow = null;
+    console.log('[Main] Startup loading window closed');
+  }
+}
+
 function createProfileSelectorWindow() {
   if (profileSelectorWindow) {
     profileSelectorWindow.focus();
@@ -359,7 +427,7 @@ function createProfileSelectorWindow() {
 
   profileSelectorWindow = new BrowserWindow({
     width: 900,
-    height: 700,
+    height: 1000,
     minWidth: 600,
     minHeight: 500,
     resizable: true,
@@ -374,6 +442,9 @@ function createProfileSelectorWindow() {
     }),
     show: false, // Don't show until ready and sized
   });
+  
+  // Register the profile selector window with IPC handlers so it can receive preference updates
+  setProfileSelectorWindow(profileSelectorWindow);
 
   // Wait a bit to ensure IPC handlers are fully registered
   setTimeout(() => {
@@ -399,7 +470,7 @@ function createProfileSelectorWindow() {
               const html = document.documentElement;
               
               if (!container) {
-                return { width: 900, height: 700 };
+                return { width: 900, height: 1000 };
               }
               
               // Get the actual content dimensions
@@ -452,6 +523,9 @@ function createProfileSelectorWindow() {
               profileSelectorWindow.setPosition(x, y, false);
               profileSelectorWindow.show();
               console.log('[Main] Profile selector window shown and positioned');
+              
+              // Close startup loading window now that profile selector is ready
+              closeStartupLoadingWindow();
             }
           }).catch((error) => {
             console.error('Error auto-sizing Profile Selector window:', error);
@@ -461,13 +535,16 @@ function createProfileSelectorWindow() {
               const { width: screenWidth, height: screenHeight } = primaryDisplay.workAreaSize;
               
               const width = 900;
-              const height = 700;
+              const height = 1000;
               const x = Math.floor((screenWidth - width) / 2);
               const y = Math.floor(screenHeight * 0.15);
               
               profileSelectorWindow.setSize(width, height, false);
               profileSelectorWindow.setPosition(x, y, false);
               profileSelectorWindow.show();
+              
+              // Close startup loading window now that profile selector is ready
+              closeStartupLoadingWindow();
             }
           });
         }, 300); // Wait for styles to fully apply
@@ -476,6 +553,7 @@ function createProfileSelectorWindow() {
   }, 100);
 
   profileSelectorWindow.on('closed', () => {
+    setProfileSelectorWindow(null);
     profileSelectorWindow = null;
   });
 
@@ -629,6 +707,22 @@ function createMenu() {
       // Notify the renderer process about the theme change
       if (mainWindow && !mainWindow.isDestroyed()) {
         mainWindow.webContents.send('preference-updated', { key: 'theme', value: theme.name });
+      }
+      // Also notify the profile selector window if it exists
+      if (profileSelectorWindow && !profileSelectorWindow.isDestroyed()) {
+        console.log('[Main] 📤 Sending theme update to profile selector window from menu:', theme.name);
+        profileSelectorWindow.webContents.send('preference-updated', { key: 'theme', value: theme.name });
+        // Send fallback messages to ensure it's received
+        setTimeout(() => {
+          if (profileSelectorWindow && !profileSelectorWindow.isDestroyed()) {
+            profileSelectorWindow.webContents.send('preference-updated', { key: 'theme', value: theme.name });
+          }
+        }, 50);
+        setTimeout(() => {
+          if (profileSelectorWindow && !profileSelectorWindow.isDestroyed()) {
+            profileSelectorWindow.webContents.send('preference-updated', { key: 'theme', value: theme.name });
+          }
+        }, 100);
       }
       // Update the menu to reflect the change
       updateMenu();
@@ -983,6 +1077,66 @@ function createPreferencesWindow() {
   });
 }
 
+function createImportProgressWindow() {
+  // If window already exists, just focus it
+  if (importProgressWindow && !importProgressWindow.isDestroyed()) {
+    importProgressWindow.focus();
+    return importProgressWindow;
+  }
+
+  // Calculate window position (center of screen)
+  const primaryDisplay = screen.getPrimaryDisplay();
+  const { width: screenWidth, height: screenHeight } = primaryDisplay.workAreaSize;
+  const windowWidth = 700;
+  const windowHeight = 400;
+  const x = Math.floor((screenWidth - windowWidth) / 2);
+  const y = Math.floor((screenHeight - windowHeight) / 2);
+
+  importProgressWindow = new BrowserWindow({
+    width: windowWidth,
+    height: windowHeight,
+    x,
+    y,
+    resizable: false,
+    minimizable: false,
+    maximizable: false,
+    modal: false,
+    alwaysOnTop: true,
+    skipTaskbar: false,
+    title: 'Import Progress - CalenRecall',
+    webPreferences: {
+      preload: path.join(__dirname, 'preload.js'),
+      nodeIntegration: false,
+      contextIsolation: true,
+    },
+    ...(process.platform === 'win32' && {
+      icon: path.join(__dirname, '../assets/icon.png'),
+    }),
+  });
+
+  // Register with IPC handlers so it can receive progress updates
+  setImportProgressWindow(importProgressWindow);
+
+  if (isDev) {
+    importProgressWindow.loadURL('http://localhost:5173/import-progress.html');
+  } else {
+    importProgressWindow.loadFile(path.join(__dirname, '../dist/import-progress.html'));
+  }
+
+  importProgressWindow.on('closed', () => {
+    importProgressWindow = null;
+    setImportProgressWindow(null);
+  });
+
+  // Prevent closing during active import (user can still force close)
+  importProgressWindow.on('close', (event) => {
+    // Allow normal close - we'll handle cleanup in the import handler
+    // The window will auto-close when import completes
+  });
+
+  return importProgressWindow;
+}
+
 function createAboutWindow() {
   if (aboutWindow) {
     aboutWindow.focus();
@@ -1154,6 +1308,9 @@ function createAboutWindow() {
 }
 
 app.whenReady().then(() => {
+  // Show startup loading window immediately
+  createStartupLoadingWindow();
+  
   // Initialize database (this will handle migration to profiles if needed)
   // The initDatabase function will automatically migrate existing users
   // Note: We initialize with no profile ID first, which will use the current/default profile
@@ -1166,6 +1323,9 @@ app.whenReady().then(() => {
   console.log('[Main] About to setup IPC handlers...');
   try {
     setupIpcHandlers();
+  
+  // Register callback to create import progress window
+  setCreateImportProgressWindowCallback(() => createImportProgressWindow());
     console.log('[Main] ✅ IPC handlers setup completed successfully');
     
     // Verify handlers are registered
@@ -1237,6 +1397,9 @@ app.whenReady().then(() => {
       // Update menu to reflect theme from auto-loaded profile's database
       updateMenu();
       console.log(`[Main] ✅ Auto-load complete - main window opened`);
+      
+      // Close startup loading window now that main window is ready
+      closeStartupLoadingWindow();
     } catch (error) {
       console.error('[Main] ❌ Error auto-loading profile:', error);
       // Fall back to showing profile selector if auto-load fails

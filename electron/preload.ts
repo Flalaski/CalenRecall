@@ -151,6 +151,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.removeAllListeners('import-progress');
   },
 
+  closeImportProgress: (): Promise<void> =>
+    ipcRenderer.invoke('close-import-progress-window'),
+
   // Background image operations
   selectBackgroundImage: (): Promise<{ success: boolean; canceled?: boolean; error?: string; message?: string; path?: string; fullPath?: string }> =>
     ipcRenderer.invoke('select-background-image'),
@@ -222,6 +225,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
   getProfile: (profileId: string): Promise<Profile | null> =>
     ipcRenderer.invoke('get-profile', profileId),
+
+  getProfileDetails: (profileId: string): Promise<any> =>
+    ipcRenderer.invoke('get-profile-details', profileId),
 
   createProfile: (name: string): Promise<Profile> =>
     ipcRenderer.invoke('create-profile', name),

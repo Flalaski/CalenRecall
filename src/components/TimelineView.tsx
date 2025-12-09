@@ -170,22 +170,34 @@ export default function TimelineView({
   }, [entryLookup, weekStartsOn]);
 
   // Create pixel map for a year (12 months x ~30 days = 360 pixels, but we'll use 12x30 grid)
-  const createYearPixelMap = (yearEntries: JournalEntry[]): string[] => {
+  // OPTIMIZED: Limit processing to first N entries to avoid performance issues with thousands of entries
+  const createYearPixelMap = useCallback((yearEntries: JournalEntry[]): string[] => {
     // Create a 12x30 grid (12 months, 30 days each)
     // Each pixel represents one entry, colored using crystal colors
     const pixels: string[] = [];
     const totalPixels = 12 * 30; // 360 pixels
     
-    // Sort entries by date
-    const sortedEntries = [...yearEntries].sort((a, b) => {
-      const dateA = parseISODate(a.date);
-      const dateB = parseISODate(b.date);
-      return dateA.getTime() - dateB.getTime();
-    });
+    // OPTIMIZATION: For performance, limit to first 360 entries instead of sorting all
+    // If there are many entries, we'll sample them rather than processing all
+    const maxEntriesToProcess = Math.min(yearEntries.length, totalPixels * 2); // Process up to 2x pixels worth
+    
+    // Only sort if we have a reasonable number of entries
+    let entriesToUse: JournalEntry[];
+    if (yearEntries.length <= maxEntriesToProcess) {
+      // Sort entries by date
+      entriesToUse = [...yearEntries].sort((a, b) => {
+        const dateA = parseISODate(a.date);
+        const dateB = parseISODate(b.date);
+        return dateA.getTime() - dateB.getTime();
+      });
+    } else {
+      // For very large sets, just take first N entries (already likely sorted by date from lookup)
+      entriesToUse = yearEntries.slice(0, maxEntriesToProcess);
+    }
     
     // Create pixel array - one entry per pixel, using crystal colors
-    for (let i = 0; i < Math.min(sortedEntries.length, totalPixels); i++) {
-      const entry = sortedEntries[i];
+    for (let i = 0; i < Math.min(entriesToUse.length, totalPixels); i++) {
+      const entry = entriesToUse[i];
       pixels.push(calculateEntryColor(entry));
     }
     
@@ -195,25 +207,36 @@ export default function TimelineView({
     }
     
     return pixels;
-  };
+  }, []);
 
   // Create pixel map for a month (7 days x 5 weeks = 35 pixels)
-  const createMonthPixelMap = (monthEntries: JournalEntry[]): string[] => {
+  // OPTIMIZED: Limit processing to avoid performance issues with many entries
+  const createMonthPixelMap = useCallback((monthEntries: JournalEntry[]): string[] => {
     // Create a 7x5 grid (7 days per week, 5 weeks max)
     // Each pixel represents one entry, colored by time range
     const pixels: string[] = [];
     const totalPixels = 7 * 5; // 35 pixels
     
-    // Sort entries by date
-    const sortedEntries = [...monthEntries].sort((a, b) => {
-      const dateA = parseISODate(a.date);
-      const dateB = parseISODate(b.date);
-      return dateA.getTime() - dateB.getTime();
-    });
+    // OPTIMIZATION: For performance, limit processing
+    const maxEntriesToProcess = Math.min(monthEntries.length, totalPixels * 2); // Process up to 2x pixels worth
+    
+    // Only sort if we have a reasonable number of entries
+    let entriesToUse: JournalEntry[];
+    if (monthEntries.length <= maxEntriesToProcess) {
+      // Sort entries by date
+      entriesToUse = [...monthEntries].sort((a, b) => {
+        const dateA = parseISODate(a.date);
+        const dateB = parseISODate(b.date);
+        return dateA.getTime() - dateB.getTime();
+      });
+    } else {
+      // For very large sets, just take first N entries
+      entriesToUse = monthEntries.slice(0, maxEntriesToProcess);
+    }
     
     // Create pixel array - one entry per pixel, using crystal colors
-    for (let i = 0; i < Math.min(sortedEntries.length, totalPixels); i++) {
-      const entry = sortedEntries[i];
+    for (let i = 0; i < Math.min(entriesToUse.length, totalPixels); i++) {
+      const entry = entriesToUse[i];
       pixels.push(calculateEntryColor(entry));
     }
     
@@ -223,7 +246,7 @@ export default function TimelineView({
     }
     
     return pixels;
-  };
+  }, []);
 
   const renderMonthView = () => {
     const days = getDaysInMonth(selectedDate);
@@ -836,19 +859,34 @@ export default function TimelineView({
     );
   };
 
-  const renderYearView = () => {
+  // OPTIMIZATION: Memoize month data to avoid recalculating on every render
+  const selectedYear = selectedDate.getFullYear();
+  const yearViewMonthData = useMemo(() => {
     const months = [];
     for (let i = 0; i < 12; i++) {
-      months.push(new Date(selectedDate.getFullYear(), i, 1));
+      months.push(new Date(selectedYear, i, 1));
     }
     
+    return months.map((month) => {
+      const monthEntries = getEntriesForDate(month, 'year');
+      const allMonthEntries = getAllEntriesForMonth(month.getFullYear(), month.getMonth());
+      const pixelMap = createMonthPixelMap(allMonthEntries);
+      
+      return {
+        month,
+        monthEntries,
+        allMonthEntries,
+        pixelMap,
+      };
+    });
+  }, [selectedYear, entryLookup, getEntriesForDate, getAllEntriesForMonth, createMonthPixelMap]);
+
+  const renderYearView = () => {
     return (
       <div className="timeline-year-view">
         <div className="year-grid">
-          {months.map((month, idx) => {
-            const monthEntries = getEntriesForDate(month, 'year');
-            const allMonthEntries = getAllEntriesForMonth(month.getFullYear(), month.getMonth());
-            const pixelMap = createMonthPixelMap(allMonthEntries);
+          {yearViewMonthData.map((monthData, idx) => {
+            const { month, monthEntries, allMonthEntries, pixelMap } = monthData;
             
             return (
               <div
@@ -908,21 +946,37 @@ export default function TimelineView({
     );
   };
 
-  const renderDecadeView = () => {
-    const decadeStart = Math.floor(selectedDate.getFullYear() / 10) * 10;
+  // OPTIMIZATION: Memoize decade year data to avoid recalculating on every render
+  const selectedYearForDecade = selectedDate.getFullYear();
+  const decadeViewYearData = useMemo(() => {
+    const decadeStart = Math.floor(selectedYearForDecade / 10) * 10;
     const years = [];
     for (let i = 0; i < 10; i++) {
       years.push(new Date(decadeStart + i, 0, 1));
     }
     
+    return years.map((year) => {
+      const yearEntries = getEntriesForDate(year, 'decade');
+      const allYearEntries = getAllEntriesForYear(year.getFullYear());
+      const pixelMap = createYearPixelMap(allYearEntries);
+      const yearGradientColor = getZodiacGradientColorForYear(year.getFullYear());
+      
+      return {
+        year,
+        yearEntries,
+        allYearEntries,
+        pixelMap,
+        yearGradientColor,
+      };
+    });
+  }, [selectedYearForDecade, entryLookup, getEntriesForDate, getAllEntriesForYear, createYearPixelMap]);
+
+  const renderDecadeView = () => {
     return (
       <div className="timeline-decade-view">
         <div className="decade-grid">
-          {years.map((year, idx) => {
-            const yearEntries = getEntriesForDate(year, 'decade');
-            const allYearEntries = getAllEntriesForYear(year.getFullYear());
-            const pixelMap = createYearPixelMap(allYearEntries);
-            const yearGradientColor = getZodiacGradientColorForYear(year.getFullYear());
+          {decadeViewYearData.map((yearData, idx) => {
+            const { year, yearEntries, allYearEntries, pixelMap, yearGradientColor } = yearData;
             
             return (
               <div

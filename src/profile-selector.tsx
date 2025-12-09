@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { createRoot } from 'react-dom/client';
 import './profile-selector.css';
+import './themes.css';
+import { applyTheme, initializeTheme, type ThemeName } from './utils/themes';
 
 interface Profile {
   id: string;
@@ -12,11 +14,21 @@ interface Profile {
   autoLoad?: boolean;
 }
 
+interface ProfileDetails extends Profile {
+  entryCount?: number;
+  defaultExportMetadata?: any;
+  preferences?: any;
+  databaseSize?: number;
+  firstEntryDate?: string | null;
+  lastEntryDate?: string | null;
+}
+
 declare global {
   interface Window {
     electronAPI: {
       getAllProfiles: () => Promise<Profile[]>;
       getCurrentProfile: () => Promise<Profile | null>;
+      getProfileDetails: (profileId: string) => Promise<ProfileDetails | null>;
       createProfile: (name: string) => Promise<Profile>;
       deleteProfile: (profileId: string) => Promise<{ success: boolean }>;
       renameProfile: (profileId: string, newName: string) => Promise<Profile>;
@@ -26,6 +38,10 @@ declare global {
       setAutoLoadProfileId: (profileId: string | null) => Promise<{ success: boolean }>;
       onProfileSwitched: (callback: (data: { profileId: string }) => void) => void;
       removeProfileListeners: () => void;
+      getAllPreferences?: () => Promise<any>;
+      setPreference?: (key: string, value: any) => Promise<{ success: boolean }>;
+      onPreferenceUpdated?: (callback: (data: { key: string; value: any }) => void) => void;
+      removePreferenceUpdatedListener?: () => void;
     };
   }
 }
@@ -41,6 +57,121 @@ function ProfileSelector() {
   const [editingProfile, setEditingProfile] = useState<Profile | null>(null);
   const [editName, setEditName] = useState('');
   const [autoLoadProfileId, setAutoLoadProfileId] = useState<string | null>(null);
+  const [profileDetails, setProfileDetails] = useState<Map<string, ProfileDetails>>(new Map());
+  const [theme, setTheme] = useState<ThemeName>('light');
+  const themeCleanupRef = React.useRef<(() => void) | null>(null);
+
+  // Load theme from current profile's preferences
+  const loadThemeFromProfile = async () => {
+    try {
+      // Try to get theme from current profile's preferences
+      // Note: This might fail if no database is initialized yet (e.g., first launch)
+      if (currentProfile && window.electronAPI.getAllPreferences) {
+        try {
+          const preferences = await window.electronAPI.getAllPreferences();
+          if (preferences && preferences.theme) {
+            return preferences.theme as ThemeName;
+          }
+        } catch (dbError) {
+          // Database might not be initialized yet - this is okay
+          console.log('Database not initialized yet, using fallback theme');
+        }
+      }
+    } catch (err) {
+      console.error('Error loading theme from profile:', err);
+    }
+    
+    // Fallback to localStorage or default
+    const savedTheme = localStorage.getItem('profileManagerTheme') as ThemeName | null;
+    return savedTheme || 'light';
+  };
+
+  // Initialize theme on mount
+  useEffect(() => {
+    const initializeThemeSystem = async () => {
+      // Load theme from current profile or fallback
+      const initialTheme = await loadThemeFromProfile();
+      setTheme(initialTheme);
+      
+      // Apply theme and set up auto theme listener if needed
+      const cleanup = initializeTheme(initialTheme);
+      themeCleanupRef.current = cleanup;
+    };
+    
+    initializeThemeSystem();
+    
+    return () => {
+      if (themeCleanupRef.current) {
+        themeCleanupRef.current();
+      }
+    };
+  }, []);
+
+  // Update theme when current profile changes
+  useEffect(() => {
+    const updateThemeForProfile = async () => {
+      if (currentProfile) {
+        const profileTheme = await loadThemeFromProfile();
+        console.log('[Profile Selector] Profile changed, loading theme:', profileTheme, 'for profile:', currentProfile.id);
+        
+        if (profileTheme !== theme) {
+          // Update state - this will update the dropdown
+          setTheme(profileTheme);
+          // Also update localStorage to keep it in sync
+          localStorage.setItem('profileManagerTheme', profileTheme);
+          
+          // Clean up previous theme listener
+          if (themeCleanupRef.current) {
+            themeCleanupRef.current();
+            themeCleanupRef.current = null;
+          }
+          
+          // Apply new theme
+          const cleanup = initializeTheme(profileTheme);
+          themeCleanupRef.current = cleanup;
+        }
+      }
+    };
+    
+    updateThemeForProfile();
+  }, [currentProfile]);
+
+  // Listen for preference updates from main window
+  useEffect(() => {
+    if (!window.electronAPI.onPreferenceUpdated) {
+      return;
+    }
+
+    const handlePreferenceUpdate = async (data: { key: string; value: any }) => {
+      if (data.key === 'theme') {
+        const newTheme = (data.value || 'light') as ThemeName;
+        console.log('[Profile Selector] Theme updated from main window:', newTheme);
+        
+        // Update state - this will automatically update the dropdown since it's controlled
+        setTheme(newTheme);
+        localStorage.setItem('profileManagerTheme', newTheme);
+        
+        // Clean up previous theme listener
+        if (themeCleanupRef.current) {
+          themeCleanupRef.current();
+          themeCleanupRef.current = null;
+        }
+        
+        // Apply new theme
+        const cleanup = initializeTheme(newTheme);
+        themeCleanupRef.current = cleanup;
+      }
+    };
+
+    window.electronAPI.onPreferenceUpdated(handlePreferenceUpdate);
+
+    return () => {
+      if (window.electronAPI.removePreferenceUpdatedListener) {
+        window.electronAPI.removePreferenceUpdatedListener();
+      }
+    };
+  }, []);
+
 
   useEffect(() => {
     loadProfiles();
@@ -68,6 +199,20 @@ function ProfileSelector() {
       // Load auto-load profile ID
       const autoLoadId = await window.electronAPI.getAutoLoadProfileId();
       setAutoLoadProfileId(autoLoadId);
+      
+      // Load entry counts for all profiles (lightweight operation)
+      const detailsMap = new Map<string, ProfileDetails>();
+      for (const profile of allProfiles) {
+        try {
+          const details = await window.electronAPI.getProfileDetails(profile.id);
+          if (details) {
+            detailsMap.set(profile.id, details);
+          }
+        } catch (err) {
+          console.error(`Error loading details for profile ${profile.id}:`, err);
+        }
+      }
+      setProfileDetails(detailsMap);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load profiles');
       console.error('Error loading profiles:', err);
@@ -184,6 +329,20 @@ function ProfileSelector() {
     }
   };
 
+  const formatFileSize = (bytes: number | undefined): string => {
+    if (!bytes) return 'Unknown';
+    const kb = bytes / 1024;
+    const mb = kb / 1024;
+    if (mb >= 1) {
+      return `${mb.toFixed(2)} MB`;
+    }
+    return `${kb.toFixed(2)} KB`;
+  };
+
+  const getProfileDetail = (profile: Profile): ProfileDetails | undefined => {
+    return profileDetails.get(profile.id);
+  };
+
   if (loading) {
     return (
       <div className="profile-selector">
@@ -234,43 +393,149 @@ function ProfileSelector() {
                 key={profile.id}
                 className={`profile-card ${currentProfile?.id === profile.id ? 'active' : ''}`}
               >
+                {editingProfile?.id === profile.id ? (
+                  <div className="profile-header-edit">
+                    <input
+                      type="text"
+                      value={editName}
+                      onChange={(e) => setEditName(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') handleSaveEdit();
+                        if (e.key === 'Escape') handleCancelEdit();
+                      }}
+                      autoFocus
+                      className="edit-input-header"
+                    />
+                    <div className="edit-actions-header">
+                      <button onClick={handleSaveEdit} className="btn-save">Save</button>
+                      <button onClick={handleCancelEdit} className="btn-cancel">Cancel</button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="profile-header">
+                    <h2 
+                      className={`profile-name-header ${currentProfile?.id === profile.id ? 'active-title' : 'clickable-title'}`}
+                      onClick={() => handleSelectProfile(profile.id)}
+                      title={currentProfile?.id === profile.id ? 'Currently active profile' : 'Click to load this profile'}
+                    >
+                      {profile.name}
+                      {profile.isDefault && <span className="default-badge">Default</span>}
+                      {currentProfile?.id === profile.id && <span className="active-badge">Active</span>}
+                    </h2>
+                  </div>
+                )}
                 <div className="profile-card-content">
                   <div className="profile-info">
-                    {editingProfile?.id === profile.id ? (
-                      <div className="edit-profile-form">
-                        <input
-                          type="text"
-                          value={editName}
-                          onChange={(e) => setEditName(e.target.value)}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter') handleSaveEdit();
-                            if (e.key === 'Escape') handleCancelEdit();
-                          }}
-                          autoFocus
-                          className="edit-input"
-                        />
-                        <div className="edit-actions">
-                          <button onClick={handleSaveEdit} className="btn-save">Save</button>
-                          <button onClick={handleCancelEdit} className="btn-cancel">Cancel</button>
-                        </div>
-                      </div>
-                    ) : (
+                    {editingProfile?.id !== profile.id && (
                       <>
-                        <h3 
-                          className={`profile-name ${currentProfile?.id === profile.id ? 'active-title' : 'clickable-title'}`}
-                          onClick={() => handleSelectProfile(profile.id)}
-                          title={currentProfile?.id === profile.id ? 'Currently active profile' : 'Click to load this profile'}
-                        >
-                          {profile.name}
-                          {profile.isDefault && <span className="default-badge">Default</span>}
-                          {currentProfile?.id === profile.id && <span className="active-badge">Active</span>}
-                        </h3>
-                        <p className="profile-meta">
-                          Last used: {formatDate(profile.lastUsed)}
-                        </p>
-                        <label style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '8px', cursor: 'pointer' }}>
+                        <div className="profile-meta-group">
+                          <p className="profile-meta">
+                            Last used: {formatDate(profile.lastUsed)}
+                          </p>
+                          {(() => {
+                            const details = getProfileDetail(profile);
+                            return (
+                              <>
+                                {details?.entryCount !== undefined && (
+                                  <p className="profile-meta">
+                                    Entries: {details.entryCount.toLocaleString()}
+                                  </p>
+                                )}
+                                {details?.databaseSize && (
+                                  <p className="profile-meta">
+                                    Size: {formatFileSize(details.databaseSize)}
+                                  </p>
+                                )}
+                                {details?.firstEntryDate && (
+                                  <p className="profile-meta">
+                                    First: {formatDate(details.firstEntryDate)}
+                                  </p>
+                                )}
+                                {details?.lastEntryDate && (
+                                  <p className="profile-meta">
+                                    Last: {formatDate(details.lastEntryDate)}
+                                  </p>
+                                )}
+                              </>
+                            );
+                          })()}
+                        </div>
+                        
+                        {(() => {
+                          const details = getProfileDetail(profile);
+                          const metadata = details?.defaultExportMetadata;
+                          if (!metadata) return null;
+                          
+                          return (
+                            <div className="profile-metadata-section">
+                              {metadata.projectTitle && (
+                                <div className="metadata-item">
+                                  <span className="metadata-label">Project:</span>
+                                  <span className="metadata-value">{metadata.projectTitle}</span>
+                                </div>
+                              )}
+                              {metadata.author && (
+                                <div className="metadata-item">
+                                  <span className="metadata-label">Author:</span>
+                                  <span className="metadata-value">{metadata.author}</span>
+                                </div>
+                              )}
+                              {metadata.organization && (
+                                <div className="metadata-item">
+                                  <span className="metadata-label">Organization:</span>
+                                  <span className="metadata-value">{metadata.organization}</span>
+                                </div>
+                              )}
+                              {metadata.purpose && (
+                                <div className="metadata-item">
+                                  <span className="metadata-label">Purpose:</span>
+                                  <span className="metadata-value">{metadata.purpose}</span>
+                                </div>
+                              )}
+                              {metadata.exportPurpose && (
+                                <div className="metadata-item">
+                                  <span className="metadata-label">Export Purpose:</span>
+                                  <span className="metadata-value">{metadata.exportPurpose}</span>
+                                </div>
+                              )}
+                              {metadata.description && (
+                                <div className="metadata-item">
+                                  <span className="metadata-label">Description:</span>
+                                  <span className="metadata-value">{metadata.description}</span>
+                                </div>
+                              )}
+                              {metadata.version && (
+                                <div className="metadata-item">
+                                  <span className="metadata-label">Version:</span>
+                                  <span className="metadata-value">{metadata.version}</span>
+                                </div>
+                              )}
+                              {metadata.classification && (
+                                <div className="metadata-item">
+                                  <span className="metadata-label">Classification:</span>
+                                  <span className="metadata-value">{metadata.classification}</span>
+                                </div>
+                              )}
+                              {metadata.keywords && metadata.keywords.length > 0 && (
+                                <div className="metadata-item">
+                                  <span className="metadata-label">Keywords:</span>
+                                  <span className="metadata-value">{Array.isArray(metadata.keywords) ? metadata.keywords.join(', ') : metadata.keywords}</span>
+                                </div>
+                              )}
+                              {metadata.copyright && (
+                                <div className="metadata-item">
+                                  <span className="metadata-label">Copyright:</span>
+                                  <span className="metadata-value">{metadata.copyright}</span>
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })()}
+                        
+                        <label className="auto-load-label">
                           <input
                             type="checkbox"
+                            className="auto-load-checkbox"
                             checked={autoLoadProfileId === profile.id}
                             onChange={async (e) => {
                               e.stopPropagation();
@@ -298,7 +563,7 @@ function ProfileSelector() {
                             }}
                             onClick={(e) => e.stopPropagation()}
                           />
-                          <span style={{ fontSize: '0.9rem' }}>Auto-load on startup</span>
+                          <span className="auto-load-text">Auto-load on startup</span>
                         </label>
                       </>
                     )}
