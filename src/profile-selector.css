@@ -4,7 +4,7 @@
   box-sizing: border-box;
 }
 
-body {
+html, body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
     'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
     sans-serif;
@@ -13,6 +13,11 @@ body {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   min-height: 100vh;
   height: 100vh;
+  margin: 0;
+  padding: 0;
+}
+
+body {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -21,6 +26,7 @@ body {
 }
 
 /* Theme-aware body background - use theme body background if available */
+[data-theme] html,
 [data-theme] body {
   background: var(--theme-body-bg, linear-gradient(135deg, #667eea 0%, #764ba2 100%));
   color: var(--theme-text, inherit);
@@ -313,6 +319,8 @@ body {
 }
 
 .profiles-list {
+  border: var(--theme-border, 1px solid rgba(0, 0, 0, 0.1));
+  border-radius: 8px;
   display: flex;
   flex-direction: column;
   gap: 16px;
@@ -321,8 +329,7 @@ body {
   min-height: 0;
   overflow-y: auto;
   overflow-x: hidden;
-  padding-right: 8px;
-  padding-bottom: 8px;
+  padding: 16px;
 }
 
 .profiles-list::-webkit-scrollbar {

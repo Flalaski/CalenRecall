@@ -43,7 +43,11 @@
   --theme-input-hover: #4d2f2a;
   --theme-accent-hover: #e4b584;
   --theme-overlay: rgba(0, 0, 0, 0.7);
-  --theme-divider: linear-gradient(90deg, transparent 0%, rgba(212, 165, 116, 0.4) 50%, transparent 100%);
+  --theme-divider: linear-gradient(90deg, transparent 0%, rgba(102, 126, 234, 0.5) 50%, transparent 100%);
+
+  background: #3d1f1a;
+  --theme-body-bg: #3d1f1a;
+  color: #e0e0e0;
   
   /* Profile Selector Theme Variables */
   --theme-text: #f5d5b8;

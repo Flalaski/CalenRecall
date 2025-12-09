@@ -45,7 +45,11 @@
   --theme-input-hover: #909090;
   --theme-accent-hover: #d0d0d0;
   --theme-overlay: rgba(0, 0, 0, 0.8);
-  --theme-divider: linear-gradient(90deg, transparent 0%, rgba(192, 192, 192, 0.5) 50%, transparent 100%);
+  --theme-divider: linear-gradient(90deg, transparent 0%, rgba(102, 126, 234, 0.5) 50%, transparent 100%);
+
+  background: #000080;
+  --theme-body-bg: #000080;
+  color: #e0e0e0;
   font-family: 'Fixedsys', 'Terminal', 'MS Sans Serif', system-ui, monospace;
   -webkit-font-smoothing: none;
   -moz-osx-font-smoothing: unset;

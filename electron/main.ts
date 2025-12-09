@@ -365,42 +365,119 @@ function createStartupLoadingWindow() {
   const windowHeight = 400;
   const x = Math.floor((screenWidth - windowWidth) / 2);
   const y = Math.floor((screenHeight - windowHeight) / 2);
+  
+  console.log('[Main] Startup loading window position:', { x, y, screenWidth, screenHeight, windowWidth, windowHeight });
 
   startupLoadingWindow = new BrowserWindow({
     width: windowWidth,
     height: windowHeight,
-    x,
-    y,
     resizable: false,
     minimizable: false,
     maximizable: false,
     frame: false, // Frameless for a cleaner look
     transparent: true, // Allow transparency
+    backgroundColor: '#1a1a2e', // Set background color for transparent windows (matches HTML gradient start)
     alwaysOnTop: true,
-    skipTaskbar: false,
+    skipTaskbar: true, // Don't show in taskbar
     title: 'CalenRecall - Starting...',
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
+      backgroundThrottling: false, // Prevent throttling during startup
     },
     ...(process.platform === 'win32' && {
       icon: path.join(__dirname, '../assets/icon.png'),
     }),
-    show: false, // Show after loading
+    show: true, // Show immediately
+    center: true, // Center the window on screen
   });
-
-  if (isDev) {
-    startupLoadingWindow.loadFile(path.join(__dirname, '../../startup-loading.html'));
-  } else {
-    startupLoadingWindow.loadFile(path.join(__dirname, '../startup-loading.html'));
+  
+  // Window is already set to show: true, so it should appear immediately
+  // Just ensure it's on top and focused
+  if (startupLoadingWindow && !startupLoadingWindow.isDestroyed()) {
+    startupLoadingWindow.focus();
+    startupLoadingWindow.moveTop();
   }
 
-  startupLoadingWindow.once('ready-to-show', () => {
-    if (startupLoadingWindow) {
-      startupLoadingWindow.show();
-      console.log('[Main] Startup loading window shown');
+  let loadingHtmlPath = isDev 
+    ? path.join(__dirname, '../../startup-loading.html')
+    : path.join(__dirname, '../dist/startup-loading.html');
+  
+  console.log('[Main] Loading startup loading HTML from:', loadingHtmlPath);
+  console.log('[Main] File exists:', fs.existsSync(loadingHtmlPath));
+  
+  // Verify file exists before loading
+  if (!fs.existsSync(loadingHtmlPath)) {
+    console.error('[Main] Startup loading HTML file not found at:', loadingHtmlPath);
+    // Try alternative paths
+    const altPaths = [
+      path.join(process.cwd(), 'startup-loading.html'),
+      path.join(app.getAppPath(), 'startup-loading.html'),
+      path.join(__dirname, '../../dist/startup-loading.html'),
+    ];
+    
+    let foundPath = null;
+    for (const altPath of altPaths) {
+      if (fs.existsSync(altPath)) {
+        foundPath = altPath;
+        console.log('[Main] Found startup loading HTML at alternative path:', foundPath);
+        break;
+      }
+    }
+    
+    if (!foundPath) {
+      console.error('[Main] Could not find startup loading HTML file anywhere');
+      // Show fallback content immediately
+      if (startupLoadingWindow && !startupLoadingWindow.isDestroyed()) {
+        startupLoadingWindow.webContents.executeJavaScript(`
+          document.body.innerHTML = '<div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; width: 100vw; background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%); color: white; font-family: sans-serif; font-size: 18px; gap: 20px;"><div style="width: 60px; height: 60px; border: 4px solid rgba(255,255,255,0.1); border-top-color: white; border-radius: 50%; animation: spin 1s linear infinite;"></div><div>Starting...</div></div>';
+          const style = document.createElement('style');
+          style.textContent = '@keyframes spin { to { transform: rotate(360deg); } }';
+          document.head.appendChild(style);
+        `);
+      }
+      return startupLoadingWindow;
+    }
+    
+    loadingHtmlPath = foundPath;
+  }
+  
+  startupLoadingWindow.loadFile(loadingHtmlPath).catch((error) => {
+    console.error('[Main] Error loading startup loading HTML:', error);
+    // Try to show a basic message even if HTML fails to load
+    if (startupLoadingWindow && !startupLoadingWindow.isDestroyed()) {
+      startupLoadingWindow.webContents.executeJavaScript(`
+        document.body.innerHTML = '<div style="display: flex; align-items: center; justify-content: center; height: 100vh; background: #1a1a2e; color: white; font-family: sans-serif; font-size: 18px;">CalenRecall - Starting...</div>';
+      `);
     }
   });
+
+  startupLoadingWindow.webContents.on('did-fail-load', (event, errorCode, errorDescription, validatedURL) => {
+    console.error('[Main] Startup loading window failed to load:', errorCode, errorDescription, validatedURL);
+    // Show fallback content if HTML fails to load
+    if (startupLoadingWindow && !startupLoadingWindow.isDestroyed()) {
+      startupLoadingWindow.webContents.executeJavaScript(`
+        document.body.innerHTML = '<div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; width: 100vw; background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%); color: white; font-family: sans-serif; font-size: 18px; gap: 20px;"><div style="width: 60px; height: 60px; border: 4px solid rgba(255,255,255,0.1); border-top-color: white; border-radius: 50%; animation: spin 1s linear infinite;"></div><div>Starting...</div></div>';
+        const style = document.createElement('style');
+        style.textContent = '@keyframes spin { to { transform: rotate(360deg); } }';
+        document.head.appendChild(style);
+      `).then(() => {
+        if (startupLoadingWindow && !startupLoadingWindow.isDestroyed()) {
+          startupLoadingWindow.center();
+          startupLoadingWindow.show();
+          startupLoadingWindow.focus();
+          startupLoadingWindow.moveTop();
+        }
+      });
+    }
+  });
+
+  startupLoadingWindow.webContents.on('did-finish-load', () => {
+    console.log('[Main] Startup loading HTML finished loading successfully');
+    // Window is already shown, no need to show again
+  });
+
+  // Note: ready-to-show handler is already set above to show the window immediately
 
   startupLoadingWindow.on('closed', () => {
     startupLoadingWindow = null;
@@ -1308,9 +1385,13 @@ function createAboutWindow() {
 }
 
 app.whenReady().then(() => {
-  // Show startup loading window immediately
+  // Show startup loading window IMMEDIATELY - before any other initialization
+  // This ensures the user sees the loading screen right away
+  // Create synchronously so it appears immediately
   createStartupLoadingWindow();
+  console.log('[Main] Startup loading window created');
   
+  // Now do initialization in the background (window is already visible)
   // Initialize database (this will handle migration to profiles if needed)
   // The initDatabase function will automatically migrate existing users
   // Note: We initialize with no profile ID first, which will use the current/default profile

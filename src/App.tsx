@@ -30,6 +30,7 @@ function App() {
   const [showSearch, setShowSearch] = useState(false);
   const [loadingProgress, setLoadingProgress] = useState(0);
   const [loadingMessage, setLoadingMessage] = useState('Initializing...');
+  const [totalEntryCount, setTotalEntryCount] = useState<number | undefined>(undefined);
   const [backgroundImagePath, setBackgroundImagePath] = useState<string | null>(null);
   const [showExportModal, setShowExportModal] = useState(false);
   const [pendingExportFormat, setPendingExportFormat] = useState<ExportFormat | null>(null);
@@ -58,6 +59,10 @@ function App() {
         setLoadingProgress(5);
         
         if (window.electronAPI) {
+          // Get total entry count first (fast query) for crystal size calculation
+          const count = await window.electronAPI.getEntryCount();
+          setTotalEntryCount(count);
+          
           // Load all entries at once
           const allEntries = await window.electronAPI.getAllEntries();
           
@@ -892,7 +897,7 @@ function App() {
 
   // Show loading screen while entries are being preloaded or preferences are loading
   if (isLoading || !preferencesLoaded) {
-    return <LoadingScreen progress={loadingProgress} message={loadingMessage} />;
+    return <LoadingScreen progress={loadingProgress} message={loadingMessage} totalEntryCount={totalEntryCount} />;
   }
 
   return (

@@ -942,6 +942,14 @@ export function switchProfile(profileId: string): void {
  * Get all journal entries in the database, ordered chronologically.
  * This is used for full-archive exports (\"storybook\" export).
  */
+export function getEntryCount(includeArchived: boolean = false): number {
+  const database = getDatabase();
+  const whereClause = includeArchived ? '' : 'WHERE archived = 0';
+  const stmt = database.prepare(`SELECT COUNT(*) as count FROM journal_entries ${whereClause}`);
+  const result = stmt.get() as { count: number } | undefined;
+  return result?.count || 0;
+}
+
 export function getAllEntries(includeArchived: boolean = false): JournalEntry[] {
   const database = getDatabase();
   const whereClause = includeArchived ? '' : 'WHERE archived = 0';

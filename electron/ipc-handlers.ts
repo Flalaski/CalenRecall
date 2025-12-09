@@ -58,6 +58,7 @@ import {
   searchEntries,
   getEntriesByRange,
   getAllEntries,
+  getEntryCount,
   getPreference,
   setPreference,
   getAllPreferences,
@@ -393,6 +394,10 @@ export function setupIpcHandlers() {
 
   ipcMain.handle('get-all-entries', async () => {
     return getAllEntries();
+  });
+
+  ipcMain.handle('get-entry-count', async () => {
+    return getEntryCount();
   });
 
   ipcMain.handle('get-entry', async (_event, date: string, timeRange: TimeRange) => {

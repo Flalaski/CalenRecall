@@ -8,6 +8,7 @@ import './LoadingScreen.css';
 interface LoadingScreenProps {
   progress?: number;
   message?: string;
+  totalEntryCount?: number; // Total entry count for efficient crystal size calculation
 }
 
 // Constants for loading screen configuration
@@ -723,7 +724,7 @@ function generateNebulaPattern(width: number, height: number): string {
 }
 
 
-export default function LoadingScreen({ progress, message = 'Loading your journal...' }: LoadingScreenProps) {
+export default function LoadingScreen({ progress, message = 'Loading your journal...', totalEntryCount }: LoadingScreenProps) {
   const { entries } = useEntries();
   const [polarityPhase, setPolarityPhase] = useState(0);
   const [rotationAngle, setRotationAngle] = useState(0); // Track infinity rotation angle
@@ -852,6 +853,33 @@ export default function LoadingScreen({ progress, message = 'Loading your journa
     const count = Math.floor(easedProgress * entryOrnaments.length);
     return entryOrnaments.slice(0, Math.max(0, count));
   }, [entryOrnaments, progress]);
+
+  // Calculate crystal size scale based on number of entries
+  // Larger databases get smaller crystals to prevent overlapping
+  // Use totalEntryCount if provided (calculated before loading starts), otherwise fall back to entries.length
+  const crystalSizeScale = useMemo(() => {
+    const entryCount = totalEntryCount !== undefined ? totalEntryCount : entries.length;
+    if (entryCount <= 50) {
+      // Small databases: full size
+      return 1.0;
+    } else if (entryCount <= 500) {
+      // Medium databases: scale down gradually
+      // Scale from 1.0 at 50 entries to ~0.4 at 500 entries
+      const normalized = (entryCount - 50) / 450; // 0 to 1 as entries go from 50 to 500
+      return Math.max(0.4, 1.0 - normalized * 0.6);
+    } else if (entryCount <= 2000) {
+      // Large databases: scale down more aggressively
+      // Scale from ~0.4 at 500 entries to ~0.15 at 2000 entries
+      const normalized = (entryCount - 500) / 1500; // 0 to 1 as entries go from 500 to 2000
+      return Math.max(0.15, 0.4 - normalized * 0.25);
+    } else {
+      // Very large databases (2000+): scale down aggressively using logarithmic approach
+      // Scale from ~0.15 at 2000 entries to ~0.05 at 10000+ entries
+      // Use logarithmic scaling for smoother curve with very large databases
+      const logNormalized = Math.min(1, Math.log10(entryCount / 2000) / Math.log10(10000 / 2000)); // 0 to 1 as entries go from 2000 to 10000
+      return Math.max(0.05, 0.15 - logNormalized * 0.1);
+    }
+  }, [totalEntryCount, entries.length]);
 
   useEffect(() => {
     // Generate nebula pattern once
@@ -1411,8 +1439,8 @@ export default function LoadingScreen({ progress, message = 'Loading your journa
               const entryColor = calculateEntryColor(entry);
               const delay = Math.min(idx * 0.01, LOADING_SCREEN_CONSTANTS.MAX_ANIMATION_DELAY);
               
-              // Parse color for sphere gradient
-              const sphereSize = LOADING_SCREEN_CONSTANTS.ORNAMENT_SIZE;
+              // Calculate sphere size with scaling based on entry count
+              const sphereSize = LOADING_SCREEN_CONSTANTS.ORNAMENT_SIZE * crystalSizeScale;
               
               return (
                 <div
@@ -1434,7 +1462,7 @@ export default function LoadingScreen({ progress, message = 'Loading your journa
                       width: '100%',
                       height: '100%',
                       background: `radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.6), ${entryColor} 50%, ${entryColor} 100%)`,
-                      boxShadow: `inset -2px -2px 4px rgba(0, 0, 0, 0.3), inset 2px 2px 4px rgba(255, 255, 255, 0.2), 0 0 8px ${entryColor}`,
+                      boxShadow: `inset -${2 * crystalSizeScale}px -${2 * crystalSizeScale}px ${4 * crystalSizeScale}px rgba(0, 0, 0, 0.3), inset ${2 * crystalSizeScale}px ${2 * crystalSizeScale}px ${4 * crystalSizeScale}px rgba(255, 255, 255, 0.2), 0 0 ${8 * crystalSizeScale}px ${entryColor}`,
                     }}
                   />
                   {/* Sphere highlight for 3D depth */}

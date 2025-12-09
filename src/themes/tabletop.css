@@ -46,6 +46,10 @@
   --theme-overlay: rgba(0, 0, 0, 0.5);
   --theme-divider: linear-gradient(90deg, transparent 0%, rgba(102, 126, 234, 0.5) 50%, transparent 100%);
 
+  background: #efebe9;
+  --theme-body-bg: #efebe9;
+  color: #3e2723;
+
   
   /* Profile Selector Theme Variables */
   --theme-text: #3e2723;

@@ -2993,6 +2993,9 @@ export default function GlobalTimelineMinimap({
         
         for (let k = 0; k < connectionsToMake && entryConnectionCount < maxEntryConnections && connections.length < maxConnectionsPerFrame; k++) {
           const target = nearbyEntries[k];
+          if (!target || !target.entry) {
+            continue; // Skip if target doesn't exist or is invalid
+          }
           const sourceStrategyHash = (sourceEntry.entry.id || 0) + sourceEntry.entry.date.charCodeAt(0);
           const targetStrategyHash = (target.entry.id || 0) + target.entry.date.charCodeAt(0);
           const combinedHash = sourceStrategyHash + targetStrategyHash;

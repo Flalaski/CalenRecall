@@ -107,6 +107,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
   getAllEntries: (): Promise<JournalEntry[]> =>
     ipcRenderer.invoke('get-all-entries'),
 
+  getEntryCount: (): Promise<number> =>
+    ipcRenderer.invoke('get-entry-count'),
+
   // Export operations
   exportEntries: (format: ExportFormat, metadata?: ExportMetadata): Promise<{ success: boolean; canceled?: boolean; error?: string; path?: string }> =>
     ipcRenderer.invoke('export-entries', format, metadata),

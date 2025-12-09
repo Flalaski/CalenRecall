@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { createRoot } from 'react-dom/client';
 import './profile-selector.css';
 import './themes.css';
-import { applyTheme, initializeTheme, type ThemeName } from './utils/themes';
+import { initializeTheme, type ThemeName } from './utils/themes';
 
 interface Profile {
   id: string;
@@ -23,28 +23,32 @@ interface ProfileDetails extends Profile {
   lastEntryDate?: string | null;
 }
 
-declare global {
-  interface Window {
-    electronAPI: {
-      getAllProfiles: () => Promise<Profile[]>;
-      getCurrentProfile: () => Promise<Profile | null>;
-      getProfileDetails: (profileId: string) => Promise<ProfileDetails | null>;
-      createProfile: (name: string) => Promise<Profile>;
-      deleteProfile: (profileId: string) => Promise<{ success: boolean }>;
-      renameProfile: (profileId: string, newName: string) => Promise<Profile>;
-      switchProfile: (profileId: string) => Promise<{ success: boolean; profileId: string }>;
-      openMainWindow: () => Promise<{ success: boolean }>;
-      getAutoLoadProfileId: () => Promise<string | null>;
-      setAutoLoadProfileId: (profileId: string | null) => Promise<{ success: boolean }>;
-      onProfileSwitched: (callback: (data: { profileId: string }) => void) => void;
-      removeProfileListeners: () => void;
-      getAllPreferences?: () => Promise<any>;
-      setPreference?: (key: string, value: any) => Promise<{ success: boolean }>;
-      onPreferenceUpdated?: (callback: (data: { key: string; value: any }) => void) => void;
-      removePreferenceUpdatedListener?: () => void;
-    };
-  }
-}
+// Type for profile selector's electronAPI - extends base type with profile-specific methods
+type ProfileSelectorElectronAPI = {
+  // Profile management methods (available in profile selector window)
+  getAllProfiles: () => Promise<Profile[]>;
+  getCurrentProfile: () => Promise<Profile | null>;
+  getProfileDetails: (profileId: string) => Promise<ProfileDetails | null>;
+  createProfile: (name: string) => Promise<Profile>;
+  deleteProfile: (profileId: string) => Promise<{ success: boolean }>;
+  renameProfile: (profileId: string, newName: string) => Promise<Profile>;
+  switchProfile: (profileId: string) => Promise<{ success: boolean; profileId: string }>;
+  openMainWindow: () => Promise<{ success: boolean }>;
+  getAutoLoadProfileId: () => Promise<string | null>;
+  setAutoLoadProfileId: (profileId: string | null) => Promise<{ success: boolean }>;
+  onProfileSwitched: (callback: (data: { profileId: string }) => void) => void;
+  removeProfileListeners: () => void;
+  // Preference methods (may be available if database is initialized)
+  getAllPreferences?: () => Promise<any>;
+  setPreference?: (key: string, value: any) => Promise<{ success: boolean }>;
+  onPreferenceUpdated?: (callback: (data: { key: string; value: any }) => void) => void;
+  removePreferenceUpdatedListener?: () => void;
+};
+
+// Type assertion helper for profile selector window
+const getProfileSelectorAPI = (): ProfileSelectorElectronAPI => {
+  return window.electronAPI as unknown as ProfileSelectorElectronAPI;
+};
 
 function ProfileSelector() {
   const [profiles, setProfiles] = useState<Profile[]>([]);
@@ -58,7 +62,7 @@ function ProfileSelector() {
   const [editName, setEditName] = useState('');
   const [autoLoadProfileId, setAutoLoadProfileId] = useState<string | null>(null);
   const [profileDetails, setProfileDetails] = useState<Map<string, ProfileDetails>>(new Map());
-  const [theme, setTheme] = useState<ThemeName>('light');
+  const [theme, setTheme] = useState<ThemeName>('aero');
   const themeCleanupRef = React.useRef<(() => void) | null>(null);
 
   // Load theme from current profile's preferences
@@ -66,9 +70,10 @@ function ProfileSelector() {
     try {
       // Try to get theme from current profile's preferences
       // Note: This might fail if no database is initialized yet (e.g., first launch)
-      if (currentProfile && window.electronAPI.getAllPreferences) {
+      const api = getProfileSelectorAPI();
+      if (currentProfile && api.getAllPreferences) {
         try {
-          const preferences = await window.electronAPI.getAllPreferences();
+          const preferences = await api.getAllPreferences();
           if (preferences && preferences.theme) {
             return preferences.theme as ThemeName;
           }
@@ -83,7 +88,7 @@ function ProfileSelector() {
     
     // Fallback to localStorage or default
     const savedTheme = localStorage.getItem('profileManagerTheme') as ThemeName | null;
-    return savedTheme || 'light';
+    return savedTheme || 'aero';
   };
 
   // Initialize theme on mount
@@ -138,13 +143,14 @@ function ProfileSelector() {
 
   // Listen for preference updates from main window
   useEffect(() => {
-    if (!window.electronAPI.onPreferenceUpdated) {
+    const api = getProfileSelectorAPI();
+    if (!api.onPreferenceUpdated) {
       return;
     }
 
-    const handlePreferenceUpdate = async (data: { key: string; value: any }) => {
+    const handlePreferenceUpdate = (data: { key: string; value: any }) => {
       if (data.key === 'theme') {
-        const newTheme = (data.value || 'light') as ThemeName;
+        const newTheme = (data.value || 'aero') as ThemeName;
         console.log('[Profile Selector] Theme updated from main window:', newTheme);
         
         // Update state - this will automatically update the dropdown since it's controlled
@@ -163,11 +169,11 @@ function ProfileSelector() {
       }
     };
 
-    window.electronAPI.onPreferenceUpdated(handlePreferenceUpdate);
+    api.onPreferenceUpdated(handlePreferenceUpdate);
 
     return () => {
-      if (window.electronAPI.removePreferenceUpdatedListener) {
-        window.electronAPI.removePreferenceUpdatedListener();
+      if (api.removePreferenceUpdatedListener) {
+        api.removePreferenceUpdatedListener();
       }
     };
   }, []);
@@ -177,12 +183,13 @@ function ProfileSelector() {
     loadProfiles();
     
     // Listen for profile switch events
-    window.electronAPI.onProfileSwitched((data) => {
+    const api = getProfileSelectorAPI();
+    api.onProfileSwitched(() => {
       loadProfiles();
     });
 
     return () => {
-      window.electronAPI.removeProfileListeners();
+      api.removeProfileListeners();
     };
   }, []);
 
@@ -190,21 +197,22 @@ function ProfileSelector() {
     try {
       setLoading(true);
       setError(null);
-      const allProfiles = await window.electronAPI.getAllProfiles();
+      const api = getProfileSelectorAPI();
+      const allProfiles = await api.getAllProfiles();
       setProfiles(allProfiles);
       
-      const current = await window.electronAPI.getCurrentProfile();
+      const current = await api.getCurrentProfile();
       setCurrentProfile(current);
       
       // Load auto-load profile ID
-      const autoLoadId = await window.electronAPI.getAutoLoadProfileId();
+      const autoLoadId = await api.getAutoLoadProfileId();
       setAutoLoadProfileId(autoLoadId);
       
       // Load entry counts for all profiles (lightweight operation)
       const detailsMap = new Map<string, ProfileDetails>();
       for (const profile of allProfiles) {
         try {
-          const details = await window.electronAPI.getProfileDetails(profile.id);
+          const details = await api.getProfileDetails(profile.id);
           if (details) {
             detailsMap.set(profile.id, details);
           }
@@ -226,15 +234,16 @@ function ProfileSelector() {
       setError(null);
       
       // Only switch if it's a different profile
+      const api = getProfileSelectorAPI();
       if (currentProfile?.id !== profileId) {
-        await window.electronAPI.switchProfile(profileId);
+        await api.switchProfile(profileId);
         // Wait a moment for the database to initialize
         await new Promise(resolve => setTimeout(resolve, 500));
       }
       
       // Open main window
       try {
-        await window.electronAPI.openMainWindow();
+        await api.openMainWindow();
       } catch (err) {
         console.error('Error opening main window:', err);
         setError('Failed to open main window. Please restart the application.');
@@ -254,7 +263,8 @@ function ProfileSelector() {
     try {
       setCreating(true);
       setError(null);
-      await window.electronAPI.createProfile(newProfileName.trim());
+      const api = getProfileSelectorAPI();
+      await api.createProfile(newProfileName.trim());
       setNewProfileName('');
       setShowCreateDialog(false);
       await loadProfiles();
@@ -278,7 +288,8 @@ function ProfileSelector() {
 
     try {
       setError(null);
-      await window.electronAPI.deleteProfile(profile.id);
+      const api = getProfileSelectorAPI();
+      await api.deleteProfile(profile.id);
       await loadProfiles();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to delete profile');
@@ -299,7 +310,8 @@ function ProfileSelector() {
 
     try {
       setError(null);
-      await window.electronAPI.renameProfile(editingProfile.id, editName.trim());
+      const api = getProfileSelectorAPI();
+      await api.renameProfile(editingProfile.id, editName.trim());
       setEditingProfile(null);
       setEditName('');
       await loadProfiles();
@@ -545,10 +557,11 @@ function ProfileSelector() {
                                 
                                 console.log('[Profile Selector] Setting auto-load profile:', { newValue, newAutoLoadId, profileId: profile.id });
                                 
-                                await window.electronAPI.setAutoLoadProfileId(newAutoLoadId);
+                                const api = getProfileSelectorAPI();
+                                await api.setAutoLoadProfileId(newAutoLoadId);
                                 
                                 // Reload the auto-load status to ensure consistency
-                                const updatedAutoLoadId = await window.electronAPI.getAutoLoadProfileId();
+                                const updatedAutoLoadId = await api.getAutoLoadProfileId();
                                 
                                 console.log('[Profile Selector] Auto-load status after update:', { updatedAutoLoadId, profileId: profile.id });
                                 
@@ -557,7 +570,8 @@ function ProfileSelector() {
                                 console.error('Error setting auto-load profile:', err);
                                 setError('Failed to set auto-load profile');
                                 // Reload to restore correct state
-                                const autoLoadId = await window.electronAPI.getAutoLoadProfileId();
+                                const api = getProfileSelectorAPI();
+                                const autoLoadId = await api.getAutoLoadProfileId();
                                 setAutoLoadProfileId(autoLoadId);
                               }
                             }}

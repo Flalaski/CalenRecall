@@ -44,48 +44,11 @@
   --theme-input-hover: #e8edff;
   --theme-accent-hover: #764ba2;
   --theme-overlay: rgba(0, 0, 0, 0.5);
-  --theme-divider: linear-gradient(90deg, transparent 0%, rgba(102, 126, 234, 0.5) 50%, transparent 100%);
-
-  
-  /* Profile Selector Theme Variables */
-  --theme-text: #1565c0;
-  --theme-panel-bg: rgba(255, 255, 255, 0.7);
-  --theme-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  --theme-border: 1px solid rgba(21, 101, 192, 0.3);
-  --theme-gradient: linear-gradient(135deg, #64b5f6 0%, #42a5f5 100%);
-  --theme-heading: #0d47a1;
-  --theme-text-secondary: #1976d2;
-  --theme-panel-bg-secondary: rgba(255, 255, 255, 0.5);
-  --theme-input-bg: rgba(255, 255, 255, 0.9);
-  --theme-accent: #1976d2;
-  --theme-focus-ring: rgba(25, 118, 210, 0.3);
-  --theme-error-bg: #ffebee;
-  --theme-error-border: #f44336;
-  --theme-error-text: #c62828;
-  --theme-card-bg: rgba(255, 255, 255, 0.7);
-  --theme-card-active-bg: rgba(255, 255, 255, 0.5);
-  --theme-card-header-bg: rgba(255, 255, 255, 0.5);
-  --theme-button-hover-bg: rgba(25, 118, 210, 0.1);
-  --theme-button-active-bg: rgba(25, 118, 210, 0.2);
-  --theme-badge-default-bg: rgba(227, 242, 253, 0.8);
-  --theme-badge-default-text: #1976d2;
-  --theme-badge-active-bg: rgba(200, 230, 201, 0.8);
-  --theme-badge-active-text: #2e7d32;
-  --theme-scrollbar-track: rgba(227, 242, 253, 0.5);
-  --theme-scrollbar-thumb: rgba(25, 118, 210, 0.5);
-  --theme-scrollbar-thumb-hover: #1976d2;
-  --theme-button-primary-bg: linear-gradient(135deg, #1976d2 0%, #1565c0 100%);
-  --theme-button-primary-text: #ffffff;
-  --theme-button-secondary-bg: rgba(255, 255, 255, 0.7);
-  --theme-button-secondary-text: #1565c0;
-  --theme-button-secondary-hover: rgba(255, 255, 255, 0.5);
-  --theme-button-danger-bg: #ffebee;
-  --theme-button-danger-text: #c62828;
-  --theme-button-danger-hover: #ffcdd2;
-  --theme-input-hover: rgba(255, 255, 255, 0.8);
-  --theme-accent-hover: #1e88e5;
-  --theme-overlay: rgba(0, 0, 0, 0.5);
   --theme-divider: linear-gradient(90deg, transparent 0%, rgba(25, 118, 210, 0.3) 50%, transparent 100%);
+  
+  background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 50%, #90caf9 100%);
+  --theme-body-bg: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 50%, #90caf9 100%);
+  color: #1565c0;
   
   /* Profile Selector Theme Variables */
   --theme-text: #1565c0;
