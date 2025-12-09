@@ -1,7 +1,21 @@
 import Database from 'better-sqlite3';
 import * as path from 'path';
+import * as fs from 'fs';
 import { app } from 'electron';
 import { JournalEntry, TimeRange, ExportFormat, ExportMetadata } from './types';
+import {
+  getAllProfiles,
+  getProfile,
+  getCurrentProfileId,
+  setCurrentProfileId,
+  migrateToProfiles,
+  verifyProfileDatabase,
+  needsMigration as checkNeedsMigration,
+  hasOriginalDatabase,
+  getOriginalDatabasePath,
+  recoverFromOrphanedWAL,
+  type Profile,
+} from './profile-manager';
 import {
   JournalEntryRow,
   EntryVersionRow,
@@ -100,6 +114,7 @@ function extractTimeFields(row: JournalEntryRow): TimeFields {
 }
 
 let db: Database.Database | null = null;
+let currentProfile: Profile | null = null;
 
 function checkColumnExists(database: Database.Database, tableName: string, columnName: string): boolean {
   try {
@@ -305,28 +320,196 @@ function migrateDatabase(database: Database.Database) {
 }
 
 /**
- * Initializes the SQLite database connection.
+ * Initializes the SQLite database connection for a specific profile.
  * Creates the database file if it doesn't exist and runs migrations.
  * Configures database for optimal performance and data integrity.
  * 
+ * @param profileId - Optional profile ID to initialize. If not provided, uses current profile.
  * @returns The database instance
  * @throws Error if database initialization fails
  * 
  * @example
  * ```typescript
  * try {
- *   const db = initDatabase();
+ *   const db = initDatabase('default');
  *   console.log('Database initialized successfully');
  * } catch (error) {
  *   console.error('Failed to initialize database:', error);
  * }
  * ```
  */
-export function initDatabase() {
-  const userDataPath = app.getPath('userData');
-  const dbPath = path.join(userDataPath, 'calenrecall.db');
+export function initDatabase(profileId?: string) {
+  // Migrate existing users to profiles system if needed
+  if (checkNeedsMigration()) {
+    console.log('[Database Init] Migrating to profiles system...');
+    migrateToProfiles();
+  }
   
+  // Determine which profile to use
+  const targetProfileId = profileId || getCurrentProfileId();
+  const profile = getProfile(targetProfileId);
+  
+  if (!profile) {
+    throw new Error(`Profile not found: ${targetProfileId}`);
+  }
+  
+  // If already connected to this profile, return existing connection
+  if (db && currentProfile?.id === profile.id) {
+    return db;
+  }
+  
+  // Close existing connection if switching profiles
+  if (db) {
+    console.log(`[Database Init] Closing connection to profile: ${currentProfile?.id}`);
+    try {
+      flushDatabase();
+      closeDatabase();
+    } catch (error) {
+      console.warn('[Database Init] Error closing previous connection:', error);
+    }
+  }
+  
+  const userDataPath = app.getPath('userData');
+  const dbPath = path.join(userDataPath, profile.databasePath);
+  
+  // Validate path
+  const userDataResolved = path.resolve(userDataPath);
+  const dbPathResolved = path.resolve(dbPath);
+  if (!dbPathResolved.startsWith(userDataResolved)) {
+    throw new Error(`Invalid profile path: ${profile.databasePath}`);
+  }
+  
+  // Ensure directory exists
+  const dbDir = path.dirname(dbPath);
+  if (!fs.existsSync(dbDir)) {
+    fs.mkdirSync(dbDir, { recursive: true });
+  }
+  
+  console.log(`[Database Init] Initializing database for profile: ${profile.id} (${profile.name})`);
+  console.log(`[Database Init] Database path: ${dbPath}`);
+  
+  // Verify database file exists
+  if (!fs.existsSync(dbPath)) {
+    console.error(`[Database Init] ❌ Database file does not exist: ${dbPath}`);
+    
+    // CRITICAL: Check if original database still exists (migration might have failed)
+    if (hasOriginalDatabase()) {
+      const originalDbPath = getOriginalDatabasePath();
+      console.error(`[Database Init] ⚠️ Original database still exists at: ${originalDbPath}`);
+      console.error(`[Database Init] This suggests migration did not complete. Attempting recovery...`);
+      
+      // Try to recover by running migration again
+      try {
+        migrateToProfiles();
+        
+        // Re-check if database now exists
+        if (fs.existsSync(dbPath)) {
+          console.log(`[Database Init] ✅ Recovery successful - database now exists`);
+        } else {
+          throw new Error(`Recovery failed - database still missing after migration retry`);
+        }
+      } catch (recoveryError) {
+        console.error(`[Database Init] ❌ Recovery failed:`, recoveryError);
+        throw new Error(`Database file not found and recovery failed. Original database may still exist at: ${originalDbPath}`);
+      }
+    } else {
+      throw new Error(`Database file not found: ${dbPath}. Original database also not found.`);
+    }
+  }
+  
+  // Check database file size and modification time
+  try {
+    const stats = fs.statSync(dbPath);
+    console.log(`[Database Init] Database file size: ${stats.size} bytes`);
+    console.log(`[Database Init] Database file modified: ${stats.mtime.toISOString()}`);
+    
+    // Warn if database is suspiciously small (likely empty)
+    if (stats.size < 1000) {
+      console.warn(`[Database Init] ⚠️ Database file is very small (${stats.size} bytes) - may be empty or corrupted`);
+    }
+  } catch (statsError) {
+    console.warn('[Database Init] Could not get database file stats:', statsError);
+  }
+  
+  // Open database - better-sqlite3 will create an empty database if file doesn't exist
+  // So we MUST check file exists first (which we did above)
   db = new Database(dbPath);
+  currentProfile = profile;
+  
+  // Verify database has entries - CRITICAL CHECK
+  try {
+    // First check if table exists
+    const tableExists = db.prepare(`
+      SELECT name FROM sqlite_master WHERE type='table' AND name='journal_entries'
+    `).get();
+    
+    if (!tableExists) {
+      console.error(`[Database Init] ❌ Database exists but journal_entries table is missing!`);
+      console.error(`[Database Init] This database appears to be empty or corrupted.`);
+      
+      // Check if original database still exists
+      if (hasOriginalDatabase()) {
+        const originalDbPath = getOriginalDatabasePath();
+        console.error(`[Database Init] ⚠️ Original database still exists - attempting recovery...`);
+        db.close();
+        
+        migrateToProfiles();
+        
+        // Re-open database
+        db = new Database(dbPath);
+        currentProfile = profile;
+        const retryTableExists = db.prepare(`
+          SELECT name FROM sqlite_master WHERE type='table' AND name='journal_entries'
+        `).get();
+        
+        if (!retryTableExists) {
+          throw new Error(`Database is empty. Original database may still exist at: ${originalDbPath}`);
+        }
+      } else {
+        throw new Error(`Database is empty and original database not found. Data may be lost.`);
+      }
+    }
+    
+    const entryCount = db.prepare('SELECT COUNT(*) as count FROM journal_entries').get() as { count: number } | undefined;
+    let count = entryCount?.count || 0;
+    console.log(`[Database Init] Database contains ${count} journal entries`);
+    
+    // CRITICAL: Check for orphaned WAL file in root directory
+    const userDataPath = app.getPath('userData');
+    const orphanedWalPath = path.join(userDataPath, 'calenrecall.db-wal');
+    
+    if (fs.existsSync(orphanedWalPath)) {
+      console.warn(`[Database Init] ⚠️ Found orphaned WAL file in root directory!`);
+      console.warn(`[Database Init] This likely contains recent entries that weren't migrated.`);
+      console.warn(`[Database Init] Attempting to recover data from orphaned WAL...`);
+      
+      db.close();
+      const recovered = recoverFromOrphanedWAL(profile.id);
+      db = new Database(dbPath);
+      currentProfile = profile;
+      
+      if (recovered) {
+        // Re-count entries after recovery
+        const newCount = (db.prepare('SELECT COUNT(*) as count FROM journal_entries').get() as { count: number } | undefined)?.count || 0;
+        console.log(`[Database Init] ✅ After WAL recovery: ${newCount} entries (was ${count})`);
+        count = newCount;
+      }
+    }
+    
+    if (count === 0) {
+      console.warn(`[Database Init] ⚠️ WARNING: Database has 0 entries!`);
+      
+      // Check if original database still exists
+      if (hasOriginalDatabase()) {
+        const originalDbPath = getOriginalDatabasePath();
+        console.warn(`[Database Init] ⚠️ Original database still exists - data may not have been migrated`);
+        console.warn(`[Database Init] Original database path: ${originalDbPath}`);
+      }
+    }
+  } catch (countError) {
+    console.error('[Database Init] ❌ Could not count entries:', countError);
+    // Don't throw - might be a new database, but log the error
+  }
   
   // CRITICAL: Ensure robust persistence - force synchronous writes and enable WAL mode
   console.log('[Database Init] Configuring database for robust persistence...');
@@ -688,12 +871,72 @@ export function flushDatabase(): void {
 }
 
 /**
- * Get the path to the database file.
+ * Get the path to the database file for the current profile.
  */
 export function getDatabasePath(): string {
+  if (!currentProfile) {
+    // Fallback to default if no profile is set
+    const userDataPath = app.getPath('userData');
+    return path.join(userDataPath, 'profiles', 'default', 'calenrecall.db');
+  }
+  
   const userDataPath = app.getPath('userData');
-  return path.join(userDataPath, 'calenrecall.db');
+  return path.join(userDataPath, currentProfile.databasePath);
 }
+
+/**
+ * Get the current active profile.
+ */
+export function getCurrentProfile(): Profile | null {
+  return currentProfile;
+}
+
+/**
+ * Switch to a different profile.
+ * This will close the current database connection and open a new one.
+ * 
+ * @param profileId - The ID of the profile to switch to
+ * @throws Error if profile not found or switch fails
+ */
+export function switchProfile(profileId: string): void {
+  if (currentProfile?.id === profileId) {
+    console.log(`[Database] Already on profile: ${profileId}`);
+    return; // Already on this profile
+  }
+  
+  console.log(`[Database] Switching from profile ${currentProfile?.id || 'none'} to ${profileId}`);
+  
+  // Validate profile exists
+  const profile = getProfile(profileId);
+  if (!profile) {
+    throw new Error(`Profile "${profileId}" not found`);
+  }
+  
+  // Verify profile database is valid
+  if (!verifyProfileDatabase(profileId)) {
+    throw new Error(`Profile "${profileId}" database is invalid or corrupted`);
+  }
+  
+  // Flush and close current database
+  if (db) {
+    try {
+      flushDatabase();
+      closeDatabase();
+    } catch (error) {
+      console.error('[Database] Error closing current database:', error);
+      throw new Error(`Failed to close current database: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  }
+  
+  // Update current profile ID in metadata
+  setCurrentProfileId(profileId);
+  
+  // Initialize new profile database
+  initDatabase(profileId);
+  
+  console.log(`[Database] ✅ Successfully switched to profile: ${profileId}`);
+}
+
 
 /**
  * Get all journal entries in the database, ordered chronologically.

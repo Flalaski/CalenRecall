@@ -1,9 +1,10 @@
-import { app, BrowserWindow, ipcMain, Menu, shell } from 'electron';
+import { app, BrowserWindow, ipcMain, Menu, shell, screen } from 'electron';
 import * as path from 'path';
 import * as fs from 'fs';
 import { config } from 'dotenv';
-import { initDatabase, getAllPreferences, setPreference, closeDatabase } from './database';
+import { initDatabase, getAllPreferences, setPreference, closeDatabase, switchProfile, getCurrentProfile } from './database';
 import { setupIpcHandlers, setMainWindow, setMenuUpdateCallback } from './ipc-handlers';
+import { getAutoLoadProfileId, setAutoLoadProfileId } from './profile-manager';
 
 // Load environment variables from .env file (if it exists)
 // This allows configuration without hardcoding values
@@ -12,6 +13,7 @@ config();
 let mainWindow: BrowserWindow | null = null;
 let preferencesWindow: BrowserWindow | null = null;
 let aboutWindow: BrowserWindow | null = null;
+let profileSelectorWindow: BrowserWindow | null = null;
 
 const isDev = process.env.NODE_ENV === 'development' || !app.isPackaged;
 
@@ -347,6 +349,145 @@ function discoverThemes(): ThemeInfo[] {
   return [...coreThemes, ...sortedThemes];
 }
 
+function createProfileSelectorWindow() {
+  if (profileSelectorWindow) {
+    profileSelectorWindow.focus();
+    return;
+  }
+
+  console.log('[Main] Creating profile selector window...');
+
+  profileSelectorWindow = new BrowserWindow({
+    width: 900,
+    height: 700,
+    minWidth: 600,
+    minHeight: 500,
+    resizable: true,
+    title: 'CalenRecall - Select Profile',
+    webPreferences: {
+      preload: path.join(__dirname, 'preload.js'),
+      nodeIntegration: false,
+      contextIsolation: true,
+    },
+    ...(process.platform === 'win32' && {
+      icon: path.join(__dirname, '../assets/icon.png'),
+    }),
+    show: false, // Don't show until ready and sized
+  });
+
+  // Wait a bit to ensure IPC handlers are fully registered
+  setTimeout(() => {
+    if (profileSelectorWindow && !profileSelectorWindow.isDestroyed()) {
+      if (isDev) {
+        profileSelectorWindow.loadURL('http://localhost:5173/profile-selector.html');
+      } else {
+        profileSelectorWindow.loadFile(path.join(__dirname, '../dist/profile-selector.html'));
+      }
+
+      // Auto-size window to fit content after page loads
+      profileSelectorWindow.webContents.once('did-finish-load', () => {
+        if (!profileSelectorWindow) return;
+        
+        // Wait for layout to settle, then measure and resize
+        setTimeout(() => {
+          if (!profileSelectorWindow) return;
+          
+          profileSelectorWindow.webContents.executeJavaScript(`
+            (function() {
+              const container = document.querySelector('.profile-selector-container');
+              const body = document.body;
+              const html = document.documentElement;
+              
+              if (!container) {
+                return { width: 900, height: 700 };
+              }
+              
+              // Get the actual content dimensions
+              // Content max-width is 800px, container padding is 40px each side = 880px minimum
+              // Add extra for window chrome and comfort
+              const contentWidth = container.offsetWidth || container.scrollWidth || 800;
+              const optimalWidth = Math.max(880, Math.ceil(contentWidth + 40));
+              
+              // Get content height - use scrollHeight to include all content
+              const contentHeight = Math.max(
+                container.scrollHeight || 0,
+                container.offsetHeight || 0,
+                body.scrollHeight || 0,
+                body.offsetHeight || 0,
+                html.scrollHeight || 0,
+                html.offsetHeight || 0
+              );
+              
+              // Calculate optimal height: content + padding + window chrome
+              // Ensure minimum height for readability
+              const screenHeight = window.screen.availHeight;
+              const maxViewportHeight = Math.floor(screenHeight * 0.85);
+              
+              const optimalHeight = Math.min(
+                Math.max(500, Math.ceil(contentHeight + 100)), // Content height + padding
+                maxViewportHeight // But cap at screen size
+              );
+              
+              return {
+                width: optimalWidth,
+                height: optimalHeight
+              };
+            })();
+          `).then((size: { width: number; height: number }) => {
+            if (profileSelectorWindow && size) {
+              const width = size.width || 900;
+              const height = size.height || 700;
+              
+              profileSelectorWindow.setSize(width, height, false);
+              
+              // Position in upper center of screen
+              const primaryDisplay = screen.getPrimaryDisplay();
+              const { width: screenWidth, height: screenHeight } = primaryDisplay.workAreaSize;
+              
+              // Calculate position: center horizontally, upper portion vertically
+              // Position at 15% from top of screen (upper center)
+              const x = Math.floor((screenWidth - width) / 2);
+              const y = Math.floor(screenHeight * 0.15);
+              
+              profileSelectorWindow.setPosition(x, y, false);
+              profileSelectorWindow.show();
+              console.log('[Main] Profile selector window shown and positioned');
+            }
+          }).catch((error) => {
+            console.error('Error auto-sizing Profile Selector window:', error);
+            // Show with default size and position if measurement fails
+            if (profileSelectorWindow) {
+              const primaryDisplay = screen.getPrimaryDisplay();
+              const { width: screenWidth, height: screenHeight } = primaryDisplay.workAreaSize;
+              
+              const width = 900;
+              const height = 700;
+              const x = Math.floor((screenWidth - width) / 2);
+              const y = Math.floor(screenHeight * 0.15);
+              
+              profileSelectorWindow.setSize(width, height, false);
+              profileSelectorWindow.setPosition(x, y, false);
+              profileSelectorWindow.show();
+            }
+          });
+        }, 300); // Wait for styles to fully apply
+      });
+    }
+  }, 100);
+
+  profileSelectorWindow.on('closed', () => {
+    profileSelectorWindow = null;
+  });
+
+  // Listen for profile selection to open main window
+  ipcMain.once('profile-selected', () => {
+    if (profileSelectorWindow) {
+      profileSelectorWindow.close();
+    }
+    createWindow();
+  });
+}
+
 function createWindow() {
   // Load preferences for window size/position
   // Note: Database must be initialized before calling getAllPreferences
@@ -420,6 +561,9 @@ function createWindow() {
       theme: currentPrefs.theme
     });
     
+    // Update menu to reflect theme from current profile's database
+    updateMenu();
+    
     // Send preference update events to ensure they're applied
     if (currentPrefs.fontSize) {
       mainWindow?.webContents.send('preference-updated', { key: 'fontSize', value: currentPrefs.fontSize });
@@ -469,6 +613,11 @@ function createMenu() {
   const currentTheme = getAllPreferences().theme || 'light';
   
   console.log(`[Main] Creating menu with ${themes.length} themes:`, themes.map(t => t.name));
+  
+  // Get current profile and auto-load status
+  const currentProfile = getCurrentProfile();
+  const autoLoadProfileId = getAutoLoadProfileId();
+  const isAutoLoadEnabled = !!(currentProfile && autoLoadProfileId === currentProfile.id);
   
   // Build theme menu items
   const themeMenuItems: Electron.MenuItemConstructorOptions[] = themes.map(theme => ({
@@ -581,6 +730,50 @@ function createMenu() {
               },
             },
           ],
+        },
+        { type: 'separator' },
+        {
+          label: 'Manage Profiles...',
+          accelerator: process.platform === 'darwin' ? 'Cmd+Shift+P' : 'Ctrl+Shift+P',
+          click: () => {
+            createProfileSelectorWindow();
+          },
+        },
+        {
+          label: 'Auto-load This Profile on Startup',
+          type: 'checkbox',
+          checked: isAutoLoadEnabled,
+          enabled: currentProfile !== null,
+          click: async () => {
+            try {
+              const profile = getCurrentProfile();
+              if (!profile) {
+                console.warn('[Main] No current profile to set auto-load');
+                return;
+              }
+              
+              const currentAutoLoadId = getAutoLoadProfileId();
+              const newAutoLoadId = currentAutoLoadId === profile.id ? null : profile.id;
+              
+              console.log(`[Main] Toggling auto-load: ${currentAutoLoadId} -> ${newAutoLoadId}`);
+              setAutoLoadProfileId(newAutoLoadId);
+              
+              // Notify preferences window if it's open
+              if (preferencesWindow && !preferencesWindow.isDestroyed()) {
+                const updatedAutoLoadId = getAutoLoadProfileId();
+                const isAutoLoad = updatedAutoLoadId === profile.id;
+                preferencesWindow.webContents.send('auto-load-profile-updated', { 
+                  enabled: isAutoLoad,
+                  profileId: profile.id 
+                });
+              }
+              
+              // Update the menu to reflect the change
+              updateMenu();
+            } catch (error) {
+              console.error('[Main] Error toggling auto-load profile:', error);
+            }
+          },
         },
         { type: 'separator' },
         {
@@ -961,14 +1154,28 @@ function createAboutWindow() {
 }
 
 app.whenReady().then(() => {
-  // Initialize database
+  // Initialize database (this will handle migration to profiles if needed)
+  // The initDatabase function will automatically migrate existing users
+  // Note: We initialize with no profile ID first, which will use the current/default profile
   initDatabase();
   
   // Initialize custom themes folder (creates folder and copies template if needed)
   initializeCustomThemesFolder();
   
-  // Setup IPC handlers
-  setupIpcHandlers();
+  // Setup IPC handlers - MUST be called before creating any windows
+  console.log('[Main] About to setup IPC handlers...');
+  try {
+    setupIpcHandlers();
+    console.log('[Main] ✅ IPC handlers setup completed successfully');
+    
+    // Verify handlers are registered
+    const handlers = (ipcMain as any).listeners?.('get-all-profiles') || [];
+    console.log('[Main] Verified get-all-profiles handler registered:', handlers.length > 0);
+  } catch (error) {
+    console.error('[Main] ❌ Error setting up IPC handlers:', error);
+    console.error('[Main] Error stack:', error instanceof Error ? error.stack : 'No stack');
+    throw error;
+  }
   
   // Register menu update callback with IPC handlers
   setMenuUpdateCallback(() => {
@@ -995,8 +1202,51 @@ app.whenReady().then(() => {
     console.log('[Main] Menu update requested via IPC');
     updateMenu();
   });
+
+  // Handle profile selection - open main window
+  ipcMain.handle('open-main-window', () => {
+    if (profileSelectorWindow) {
+      profileSelectorWindow.close();
+    }
+    // Close existing main window if it exists to prevent multiple windows
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      console.log('[Main] Closing existing main window before opening new profile');
+      mainWindow.close();
+      mainWindow = null;
+    }
+    createWindow();
+    // Update menu to reflect theme from new profile's database
+    updateMenu();
+    return { success: true };
+  });
   
-  createWindow();
+  // Check for auto-load profile and load it, otherwise show profile selector
+  const autoLoadProfileId = getAutoLoadProfileId();
+  console.log(`[Main] Checking for auto-load profile...`);
+  console.log(`[Main] Auto-load profile ID: ${autoLoadProfileId || 'none'}`);
+  
+  if (autoLoadProfileId) {
+    console.log(`[Main] ✅ Auto-load profile found: ${autoLoadProfileId}`);
+    try {
+      // Switch to the auto-load profile
+      console.log(`[Main] Switching to auto-load profile: ${autoLoadProfileId}`);
+      switchProfile(autoLoadProfileId);
+      console.log(`[Main] Successfully switched to profile: ${autoLoadProfileId}`);
+      // Open main window directly
+      createWindow();
+      // Update menu to reflect theme from auto-loaded profile's database
+      updateMenu();
+      console.log(`[Main] ✅ Auto-load complete - main window opened`);
+    } catch (error) {
+      console.error('[Main] ❌ Error auto-loading profile:', error);
+      // Fall back to showing profile selector if auto-load fails
+      createProfileSelectorWindow();
+    }
+  } else {
+    console.log(`[Main] No auto-load profile set - showing profile selector`);
+    // Show profile selector window if no auto-load profile is set
+    createProfileSelectorWindow();
+  }
   
   // Update menu after a delay to ensure custom themes folder is fully initialized
   // This gives time for the folder to be created and any templates to be copied
@@ -1007,7 +1257,8 @@ app.whenReady().then(() => {
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {
-      createWindow();
+      // If no windows, show profile selector first
+      createProfileSelectorWindow();
     }
   });
 });

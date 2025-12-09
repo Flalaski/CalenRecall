@@ -82,11 +82,23 @@ export default function PreferencesComponent() {
         }
       });
     }
+
+    // Set up auto-load profile update listener (for menu changes)
+    if (window.electronAPI && window.electronAPI.onAutoLoadProfileUpdated) {
+      window.electronAPI.onAutoLoadProfileUpdated(async (data) => {
+        console.log('[Preferences] Auto-load profile updated from menu:', data);
+        // Reload preferences to get the updated auto-load status
+        await loadPreferences();
+      });
+    }
     
     return () => {
       if (cleanup) cleanup();
       if (window.electronAPI && window.electronAPI.removeImportProgressListener) {
         window.electronAPI.removeImportProgressListener();
+      }
+      if (window.electronAPI && window.electronAPI.removeAutoLoadProfileUpdatedListener) {
+        window.electronAPI.removeAutoLoadProfileUpdatedListener();
       }
     };
   }, []);
@@ -99,7 +111,13 @@ export default function PreferencesComponent() {
       const prefs = await window.electronAPI.getAllPreferences();
       console.log('[Preferences] Loaded all preferences:', prefs);
       console.log('[Preferences] backgroundImage value:', prefs.backgroundImage);
-      setPreferences(prefs);
+      
+      // Check if current profile is set to auto-load
+      const autoLoadProfileId = await window.electronAPI.getAutoLoadProfileId();
+      const currentProfile = await window.electronAPI.getCurrentProfile();
+      const isAutoLoad = autoLoadProfileId === currentProfile?.id;
+      
+      setPreferences({ ...prefs, autoLoadProfile: isAutoLoad });
 
       // Load background image preview
       if (prefs.backgroundImage) {
@@ -550,6 +568,74 @@ export default function PreferencesComponent() {
               Restore last viewed position on startup
             </label>
             <small>When enabled, the app will automatically restore the date and view mode you were last viewing when you restart the app.</small>
+          </div>
+
+          <div className="preference-item">
+            <label>
+              <input
+                type="checkbox"
+                checked={!!preferences.autoLoadProfile}
+                onChange={async (e) => {
+                  if (!window.electronAPI) return;
+                  
+                  const newValue = e.target.checked;
+                  
+                  // Update state immediately for instant UI feedback
+                  setPreferences(prev => ({ ...prev, autoLoadProfile: newValue }));
+                  
+                  try {
+                    const currentProfile = await window.electronAPI.getCurrentProfile();
+                    if (!currentProfile) {
+                      console.warn('[Preferences] No current profile found');
+                      // Revert state change
+                      setPreferences(prev => ({ ...prev, autoLoadProfile: !newValue }));
+                      alert('No current profile found. Please select a profile first.');
+                      return;
+                    }
+                    
+                    const profileIdToSet = newValue ? currentProfile.id : null;
+                    
+                    console.log('[Preferences] Setting auto-load profile:', { 
+                      newValue, 
+                      profileIdToSet, 
+                      currentProfileId: currentProfile.id 
+                    });
+                    
+                    // Set the auto-load profile ID
+                    await window.electronAPI.setAutoLoadProfileId(profileIdToSet);
+                    
+                    // Verify the setting was saved correctly
+                    const autoLoadProfileId = await window.electronAPI.getAutoLoadProfileId();
+                    const isAutoLoad = autoLoadProfileId === currentProfile.id;
+                    
+                    console.log('[Preferences] Auto-load status after update:', { 
+                      autoLoadProfileId, 
+                      isAutoLoad, 
+                      currentProfileId: currentProfile.id, 
+                      expected: newValue 
+                    });
+                    
+                    // Update state with verified value
+                    setPreferences(prev => ({ ...prev, autoLoadProfile: isAutoLoad }));
+                    
+                    // If there's a mismatch, reload preferences to get correct state
+                    if (isAutoLoad !== newValue) {
+                      console.warn('[Preferences] Auto-load state mismatch! Expected:', newValue, 'Got:', isAutoLoad);
+                      await loadPreferences();
+                    }
+                  } catch (error) {
+                    console.error('Error setting auto-load profile:', error);
+                    // Revert state change on error
+                    setPreferences(prev => ({ ...prev, autoLoadProfile: !newValue }));
+                    alert('Failed to set auto-load profile. Please try again.');
+                    // Reload preferences to restore correct state
+                    await loadPreferences();
+                  }
+                }}
+              />
+              Auto-load this profile on startup
+            </label>
+            <small>When enabled, this profile will automatically load when you start the application, bypassing the profile selector.</small>
           </div>
 
           <div className="preference-item">

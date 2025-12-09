@@ -170,6 +170,14 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.removeAllListeners('preference-updated');
   },
 
+  onAutoLoadProfileUpdated: (callback: (data: { enabled: boolean; profileId: string }) => void) => {
+    ipcRenderer.on('auto-load-profile-updated', (_event, data) => callback(data));
+  },
+
+  removeAutoLoadProfileUpdatedListener: () => {
+    ipcRenderer.removeAllListeners('auto-load-profile-updated');
+  },
+
   // Force main window to refresh theme (called from preferences window)
   refreshMainWindowTheme: (): Promise<{ success: boolean; error?: string }> =>
     ipcRenderer.invoke('refresh-main-window-theme'),
@@ -204,5 +212,73 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // Open external URL in the default browser
   openExternalBrowser: (url: string): Promise<{ success: boolean; error?: string }> =>
     ipcRenderer.invoke('open-external-browser', url),
+
+  // Profile management operations
+  getAllProfiles: (): Promise<Profile[]> =>
+    ipcRenderer.invoke('get-all-profiles'),
+
+  getCurrentProfile: (): Promise<Profile | null> =>
+    ipcRenderer.invoke('get-current-profile'),
+
+  getProfile: (profileId: string): Promise<Profile | null> =>
+    ipcRenderer.invoke('get-profile', profileId),
+
+  createProfile: (name: string): Promise<Profile> =>
+    ipcRenderer.invoke('create-profile', name),
+
+  deleteProfile: (profileId: string): Promise<{ success: boolean }> =>
+    ipcRenderer.invoke('delete-profile', profileId),
+
+  renameProfile: (profileId: string, newName: string): Promise<Profile> =>
+    ipcRenderer.invoke('rename-profile', profileId, newName),
+
+  switchProfile: (profileId: string): Promise<{ success: boolean; profileId: string }> =>
+    ipcRenderer.invoke('switch-profile', profileId),
+
+  // Profile event listeners
+  onProfileSwitched: (callback: (data: { profileId: string }) => void) => {
+    ipcRenderer.on('profile-switched', (_event, data) => callback(data));
+  },
+
+  onProfileCreated: (callback: (profile: Profile) => void) => {
+    ipcRenderer.on('profile-created', (_event, profile) => callback(profile));
+  },
+
+  onProfileDeleted: (callback: (data: { profileId: string }) => void) => {
+    ipcRenderer.on('profile-deleted', (_event, data) => callback(data));
+  },
+
+  onProfileRenamed: (callback: (profile: Profile) => void) => {
+    ipcRenderer.on('profile-renamed', (_event, profile) => callback(profile));
+  },
+
+  removeProfileListeners: () => {
+    ipcRenderer.removeAllListeners('profile-switched');
+    ipcRenderer.removeAllListeners('profile-created');
+    ipcRenderer.removeAllListeners('profile-deleted');
+    ipcRenderer.removeAllListeners('profile-renamed');
+  },
+
+  // Open main window (called from profile selector)
+  openMainWindow: (): Promise<{ success: boolean }> =>
+    ipcRenderer.invoke('open-main-window'),
+
+  // Auto-load profile functions
+  getAutoLoadProfileId: (): Promise<string | null> =>
+    ipcRenderer.invoke('get-auto-load-profile-id'),
+
+  setAutoLoadProfileId: (profileId: string | null): Promise<{ success: boolean }> =>
+    ipcRenderer.invoke('set-auto-load-profile-id', profileId),
 });
+
+// Profile type for preload
+interface Profile {
+  id: string;
+  name: string;
+  createdAt: string;
+  lastUsed: string;
+  databasePath: string;
+  isDefault: boolean;
+  autoLoad?: boolean;
+}
 

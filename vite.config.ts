@@ -17,6 +17,7 @@ export default defineConfig({
         main: path.resolve(__dirname, 'index.html'),
         preferences: path.resolve(__dirname, 'preferences.html'),
         about: path.resolve(__dirname, 'about.html'),
+        'profile-selector': path.resolve(__dirname, 'profile-selector.html'),
       },
     },
   },

@@ -184,12 +184,17 @@ declare global {
       getBackgroundImagePath: () => Promise<{ success: boolean; error?: string; message?: string; path?: string | null }>;
       onPreferenceUpdated: (callback: (data: { key: string; value: any }) => void) => void;
       removePreferenceUpdatedListener: () => void;
+      onAutoLoadProfileUpdated: (callback: (data: { enabled: boolean; profileId: string }) => void) => void;
+      removeAutoLoadProfileUpdatedListener: () => void;
       onMenuNewEntry: (callback: () => void) => void;
       onMenuImport: (callback: (format: 'json' | 'markdown') => void) => void;
       onMenuExport: (callback: (format: ExportFormat) => void) => void;
       removeMenuListeners: () => void;
       openExternalUrl: (url: string, width: number, height: number) => Promise<{ success: boolean; error?: string }>;
       openExternalBrowser: (url: string) => Promise<{ success: boolean; error?: string }>;
+      getAutoLoadProfileId: () => Promise<string | null>;
+      setAutoLoadProfileId: (profileId: string | null) => Promise<{ success: boolean }>;
+      getCurrentProfile: () => Promise<{ id: string; name: string; createdAt: string; lastUsed: string; databasePath: string; isDefault: boolean; autoLoad?: boolean } | null>;
     };
   }
 }

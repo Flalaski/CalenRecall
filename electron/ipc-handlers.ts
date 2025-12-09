@@ -73,7 +73,20 @@ import {
   unpinEntry,
   getPinnedEntries,
   flushDatabase,
+  getCurrentProfile,
+  switchProfile,
 } from './database';
+import {
+  getAllProfiles,
+  getProfile,
+  getCurrentProfileId,
+  createProfile,
+  deleteProfile,
+  renameProfile,
+  getAutoLoadProfileId,
+  setAutoLoadProfileId,
+  type Profile,
+} from './profile-manager';
 import { EntryVersion } from './types';
 import { JournalEntry, TimeRange, ExportFormat, EntryAttachment, ExportMetadata } from './types';
 import { EntryTemplate, getAllTemplates, getTemplate, saveTemplate, deleteTemplate } from './database';
@@ -355,6 +368,8 @@ export function setMenuUpdateCallback(callback: (() => void) | null) {
 }
 
 export function setupIpcHandlers() {
+  console.log('[IPC] Setting up IPC handlers...');
+  
   ipcMain.handle('get-entries', async (_event, startDate: string, endDate: string) => {
     return getEntries(startDate, endDate);
   });
@@ -1229,6 +1244,10 @@ export function setupIpcHandlers() {
    * Sends progress updates via IPC events.
    */
   ipcMain.handle('import-entries', async (event, format: 'json' | 'markdown') => {
+    // Get current profile information for user feedback
+    const currentProfile = getCurrentProfile();
+    const profileName = currentProfile?.name || 'current profile';
+    
     const { canceled, filePaths } = await dialog.showOpenDialog({
       title: 'Import Entries',
       filters:
@@ -1246,12 +1265,20 @@ export function setupIpcHandlers() {
 
     try {
       // Send progress: Reading file
-      event.sender.send('import-progress', { stage: 'reading', progress: 0, message: 'Reading file...' });
+      event.sender.send('import-progress', { 
+        stage: 'reading', 
+        progress: 0, 
+        message: `Reading file for profile: ${profileName}...` 
+      });
       
       const content = fs.readFileSync(filePath, { encoding: 'utf-8' });
       
       // Send progress: Parsing content
-      event.sender.send('import-progress', { stage: 'parsing', progress: 25, message: 'Parsing entries...' });
+      event.sender.send('import-progress', { 
+        stage: 'parsing', 
+        progress: 25, 
+        message: `Parsing entries for profile: ${profileName}...` 
+      });
       
       const entries = parseImportContent(content, format);
 
@@ -1260,7 +1287,14 @@ export function setupIpcHandlers() {
       }
 
       // Send progress: Starting import
-      event.sender.send('import-progress', { stage: 'importing', progress: 30, message: `Importing ${entries.length} entries...`, total: entries.length, imported: 0, skipped: 0 });
+      event.sender.send('import-progress', { 
+        stage: 'importing', 
+        progress: 30, 
+        message: `Importing ${entries.length} entries into profile: ${profileName}...`, 
+        total: entries.length, 
+        imported: 0, 
+        skipped: 0 
+      });
 
       // Save all entries with progress updates
       let imported = 0;
@@ -1289,7 +1323,7 @@ export function setupIpcHandlers() {
           event.sender.send('import-progress', {
             stage: 'importing',
             progress,
-            message: `Imported ${imported} entries${skipped > 0 ? `, skipped ${skipped}` : ''}...`,
+            message: `Profile: ${profileName} - Imported ${imported} entries${skipped > 0 ? `, skipped ${skipped}` : ''}...`,
             total,
             imported,
             skipped,
@@ -1301,7 +1335,7 @@ export function setupIpcHandlers() {
       event.sender.send('import-progress', {
         stage: 'complete',
         progress: 100,
-        message: `Import complete! Imported ${imported} entries${skipped > 0 ? `, skipped ${skipped} duplicates` : ''}.`,
+        message: `Import complete for profile: ${profileName}! Imported ${imported} entries${skipped > 0 ? `, skipped ${skipped} duplicates` : ''}.`,
         total,
         imported,
         skipped,
@@ -1320,7 +1354,7 @@ export function setupIpcHandlers() {
       event.sender.send('import-progress', {
         stage: 'error',
         progress: 0,
-        message: `Import failed: ${importErrorMessage}`,
+        message: `Import failed for profile: ${profileName} - ${importErrorMessage}`,
       });
       const readErrorMessage = error instanceof Error ? error.message : 'Failed to read file';
       return {
@@ -1334,16 +1368,21 @@ export function setupIpcHandlers() {
 
   /**
    * Backup the database to a user-selected location.
+   * Backs up the current profile's database.
    */
   ipcMain.handle('backup-database', async () => {
+    const currentProfile = getCurrentProfile();
+    const profileName = currentProfile?.name || 'default';
+    const profileId = currentProfile?.id || 'default';
     const dbPath = getDatabasePath();
     
     if (!fs.existsSync(dbPath)) {
-      return { success: false, error: 'database_not_found', message: 'Database file not found' };
+      return { success: false, error: 'database_not_found', message: `Database file not found for profile: ${profileName}` };
     }
 
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-    const defaultFileName = `calenrecall-backup-${timestamp}.db`;
+    const sanitizedProfileName = profileName.replace(/[^a-zA-Z0-9-_]/g, '_');
+    const defaultFileName = `calenrecall-backup-${sanitizedProfileName}-${timestamp}.db`;
 
     const { canceled, filePath } = await dialog.showSaveDialog({
       title: 'Backup Database',
@@ -1372,10 +1411,14 @@ export function setupIpcHandlers() {
 
   /**
    * Restore the database from a backup file.
+   * Restores the current profile's database from a backup.
    */
   ipcMain.handle('restore-database', async () => {
+    const currentProfile = getCurrentProfile();
+    const profileName = currentProfile?.name || 'current profile';
+    
     const { canceled, filePaths } = await dialog.showOpenDialog({
-      title: 'Restore Database from Backup',
+      title: `Restore Database from Backup - Profile: ${profileName}`,
       filters: [{ name: 'SQLite Database', extensions: ['db'] }],
       properties: ['openFile'],
     });
@@ -1391,8 +1434,8 @@ export function setupIpcHandlers() {
     const response = await dialog.showMessageBox({
       type: 'warning',
       title: 'Confirm Restore',
-      message: 'Restoring will replace your current database with the backup.',
-      detail: 'This action cannot be undone. Make sure you have a current backup before proceeding.',
+      message: `Restoring will replace the database for profile "${profileName}" with the backup.`,
+      detail: 'This action cannot be undone. Make sure you have a current backup before proceeding. The backup will be restored to the currently active profile.',
       buttons: ['Cancel', 'Restore'],
       defaultId: 0,
       cancelId: 0,
@@ -1670,6 +1713,168 @@ export function setupIpcHandlers() {
       };
     }
   });
+
+  // Profile management handlers
+  console.log('[IPC] Registering profile management handlers...');
+  console.log('[IPC] getAllProfiles function available:', typeof getAllProfiles);
+  
+  ipcMain.handle('get-all-profiles', async () => {
+    try {
+      console.log('[IPC] get-all-profiles handler called');
+      const profiles = getAllProfiles();
+      console.log('[IPC] get-all-profiles returning', profiles.length, 'profiles');
+      return profiles;
+    } catch (error) {
+      console.error('[IPC] Error getting all profiles:', error);
+      throw error;
+    }
+  });
+  
+  console.log('[IPC] get-all-profiles handler registered');
+
+  ipcMain.handle('get-current-profile', async () => {
+    try {
+      const profileId = getCurrentProfileId();
+      return getProfile(profileId);
+    } catch (error) {
+      console.error('[IPC] Error getting current profile:', error);
+      throw error;
+    }
+  });
+
+  ipcMain.handle('get-profile', async (_event, profileId: string) => {
+    try {
+      if (!profileId || typeof profileId !== 'string') {
+        throw new Error('Invalid profile ID');
+      }
+      return getProfile(profileId);
+    } catch (error) {
+      console.error('[IPC] Error getting profile:', error);
+      throw error;
+    }
+  });
+
+  ipcMain.handle('create-profile', async (_event, name: string) => {
+    try {
+      if (!name || typeof name !== 'string' || name.trim().length === 0) {
+        throw new Error('Profile name cannot be empty');
+      }
+      const profile = createProfile(name);
+      
+      // Notify renderer process
+      if (mainWindowRef && !mainWindowRef.isDestroyed()) {
+        mainWindowRef.webContents.send('profile-created', profile);
+      }
+      
+      return profile;
+    } catch (error) {
+      console.error('[IPC] Error creating profile:', error);
+      throw error;
+    }
+  });
+
+  ipcMain.handle('delete-profile', async (_event, profileId: string) => {
+    try {
+      if (!profileId || typeof profileId !== 'string') {
+        throw new Error('Invalid profile ID');
+      }
+      
+      // Get current profile before deletion
+      const currentProfile = getCurrentProfile();
+      const wasCurrentProfile = currentProfile?.id === profileId;
+      
+      deleteProfile(profileId);
+      
+      // If we deleted the current profile, switch to default
+      if (wasCurrentProfile) {
+        switchProfile('default');
+        
+        // Notify renderer process
+        if (mainWindowRef && !mainWindowRef.isDestroyed()) {
+          mainWindowRef.webContents.send('profile-switched', { profileId: 'default' });
+        }
+      }
+      
+      // Notify renderer process
+      if (mainWindowRef && !mainWindowRef.isDestroyed()) {
+        mainWindowRef.webContents.send('profile-deleted', { profileId });
+      }
+      
+      return { success: true };
+    } catch (error) {
+      console.error('[IPC] Error deleting profile:', error);
+      throw error;
+    }
+  });
+
+  ipcMain.handle('rename-profile', async (_event, profileId: string, newName: string) => {
+    try {
+      if (!profileId || typeof profileId !== 'string') {
+        throw new Error('Invalid profile ID');
+      }
+      if (!newName || typeof newName !== 'string' || newName.trim().length === 0) {
+        throw new Error('Profile name cannot be empty');
+      }
+      
+      const profile = renameProfile(profileId, newName);
+      
+      // Notify renderer process
+      if (mainWindowRef && !mainWindowRef.isDestroyed()) {
+        mainWindowRef.webContents.send('profile-renamed', profile);
+      }
+      
+      return profile;
+    } catch (error) {
+      console.error('[IPC] Error renaming profile:', error);
+      throw error;
+    }
+  });
+
+  ipcMain.handle('switch-profile', async (_event, profileId: string) => {
+    try {
+      if (!profileId || typeof profileId !== 'string') {
+        throw new Error('Invalid profile ID');
+      }
+      
+      switchProfile(profileId);
+      
+      // Notify renderer process
+      if (mainWindowRef && !mainWindowRef.isDestroyed()) {
+        mainWindowRef.webContents.send('profile-switched', { profileId });
+      }
+      
+      return { success: true, profileId };
+    } catch (error) {
+      console.error('[IPC] Error switching profile:', error);
+      throw error;
+    }
+  });
+
+  ipcMain.handle('get-auto-load-profile-id', async () => {
+    try {
+      return getAutoLoadProfileId();
+    } catch (error) {
+      console.error('[IPC] Error getting auto-load profile ID:', error);
+      throw error;
+    }
+  });
+
+  ipcMain.handle('set-auto-load-profile-id', async (_event, profileId: string | null) => {
+    try {
+      if (profileId !== null && (typeof profileId !== 'string' || profileId.trim().length === 0)) {
+        throw new Error('Invalid profile ID');
+      }
+      
+      setAutoLoadProfileId(profileId);
+      
+      return { success: true };
+    } catch (error) {
+      console.error('[IPC] Error setting auto-load profile ID:', error);
+      throw error;
+    }
+  });
+  
+  console.log('[IPC] All IPC handlers registered successfully');
 }
 
 /**
@@ -1709,6 +1914,7 @@ function parseImportContent(content: string, format: 'json' | 'markdown'): Journ
 /**
  * Parse JSON import format.
  * Expects an array of JournalEntry objects.
+ * Supports all JournalEntry fields including time fields, linkedEntries, archived, pinned.
  */
 function parseJsonImport(content: string): JournalEntry[] {
   try {
@@ -1716,15 +1922,60 @@ function parseJsonImport(content: string): JournalEntry[] {
     
     // Handle array of entries
     if (Array.isArray(data)) {
-      return data.map(entry => ({
-        date: entry.date,
-        timeRange: entry.timeRange || 'day',
-        title: entry.title || '',
-        content: entry.content || '',
-        tags: entry.tags || [],
-        createdAt: entry.createdAt || new Date().toISOString(),
-        updatedAt: entry.updatedAt || new Date().toISOString(),
-      }));
+      return data.map(entry => {
+        // Validate and normalize hour (0-23 or null)
+        let hour: number | null = null;
+        if (entry.hour !== null && entry.hour !== undefined) {
+          const h = Number(entry.hour);
+          if (!isNaN(h) && h >= 0 && h <= 23) {
+            hour = h;
+          }
+        }
+        
+        // Validate and normalize minute (0-59, default 0)
+        let minute: number | null = null;
+        if (entry.minute !== null && entry.minute !== undefined) {
+          const m = Number(entry.minute);
+          if (!isNaN(m) && m >= 0 && m <= 59) {
+            minute = m;
+          }
+        }
+        
+        // Validate and normalize second (0-59, default 0)
+        let second: number | null = null;
+        if (entry.second !== null && entry.second !== undefined) {
+          const s = Number(entry.second);
+          if (!isNaN(s) && s >= 0 && s <= 59) {
+            second = s;
+          }
+        }
+        
+        return {
+          // Core required fields
+          date: entry.date,
+          timeRange: entry.timeRange || 'day',
+          title: entry.title || '',
+          content: entry.content || '',
+          
+          // Time fields (optional)
+          hour: hour,
+          minute: minute,
+          second: second,
+          
+          // Metadata fields
+          tags: Array.isArray(entry.tags) ? entry.tags : [],
+          linkedEntries: Array.isArray(entry.linkedEntries) ? entry.linkedEntries : [],
+          archived: entry.archived === true,
+          pinned: entry.pinned === true,
+          
+          // Timestamps
+          createdAt: entry.createdAt || new Date().toISOString(),
+          updatedAt: entry.updatedAt || new Date().toISOString(),
+          
+          // Note: id field is intentionally omitted - entries with id are skipped during import
+          // Note: attachments cannot be imported (must be added manually after import)
+        };
+      });
     }
     
     return [];
@@ -3030,4 +3281,3 @@ async function exportEntriesAsPdf(entries: JournalEntry[], filePath: string, met
     }
   });
 }
-

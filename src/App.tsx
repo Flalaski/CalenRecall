@@ -34,6 +34,7 @@ function App() {
   const [showExportModal, setShowExportModal] = useState(false);
   const [pendingExportFormat, setPendingExportFormat] = useState<ExportFormat | null>(null);
   const [entryCount, setEntryCount] = useState(0);
+  const [currentProfile, setCurrentProfile] = useState<{ name: string; id: string } | null>(null);
   
   // Track if initial load has completed - after this, default view mode should NEVER be applied
   const initialLoadCompleteRef = useRef(false);
@@ -285,6 +286,37 @@ function App() {
       setPreferences(prev => ({ ...prev, [key]: value }));
     }
   }, [setBackgroundImagePath]);
+
+  // Load current profile on startup
+  useEffect(() => {
+    const loadCurrentProfile = async () => {
+      try {
+        if (window.electronAPI && (window.electronAPI as any).getCurrentProfile) {
+          const profile = await (window.electronAPI as any).getCurrentProfile();
+          if (profile) {
+            setCurrentProfile({ name: profile.name, id: profile.id });
+          }
+        }
+      } catch (error) {
+        console.error('Error loading current profile:', error);
+      }
+    };
+    
+    loadCurrentProfile();
+    
+    // Listen for profile switch events
+    if (window.electronAPI && (window.electronAPI as any).onProfileSwitched) {
+      (window.electronAPI as any).onProfileSwitched((data: { profileId: string }) => {
+        loadCurrentProfile();
+      });
+    }
+    
+    return () => {
+      if (window.electronAPI && (window.electronAPI as any).removeProfileListeners) {
+        (window.electronAPI as any).removeProfileListeners();
+      }
+    };
+  }, []);
 
   // Load preferences on startup - ONLY ONCE, on initial mount
   useEffect(() => {
@@ -870,6 +902,11 @@ function App() {
         theme={preferences.theme}
       />
       <div className="app">
+      {currentProfile && (
+        <div className="profile-name-display">
+          {currentProfile.name}
+        </div>
+      )}
       <NavigationBar
         viewMode={viewMode}
         onViewModeChange={handleViewModeChange}
