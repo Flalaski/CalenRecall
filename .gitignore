@@ -32,6 +32,10 @@ release
 # Build info
 .build-info.json
 
+# Trace files
+Trace-*.json
+Trace-*.json.gz
+
 # Batch files (optional - uncomment if you don't want to track them)
 # *.bat
 
