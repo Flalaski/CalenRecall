@@ -103,7 +103,7 @@ export default function BackgroundArt({ backgroundImage, className = '', theme }
         left: 0,
         right: 0,
         bottom: 0,
-        width: '100vw',
+        width: '100%',
         height: '100vh',
         zIndex: 0, /* Will be behind .app which has z-index: 1 */
         pointerEvents: 'none',

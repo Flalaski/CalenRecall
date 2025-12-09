@@ -49,7 +49,6 @@
   align-items: center;
   justify-content: center;
   overflow-x: hidden;
-  will-change: transform;
 }
 
 .calendar-cell.day-cell {

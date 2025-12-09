@@ -4,6 +4,9 @@
   height: 100vh;
   background: #f5f5f5;
   overflow-y: auto;
+  overflow-x: hidden;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .preferences-loading {
@@ -23,6 +26,9 @@
   background: white;
   border-bottom: 1px solid #e0e0e0;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  box-sizing: border-box;
+  width: 100%;
+  overflow-x: hidden;
 }
 
 .preferences-header h1 {
@@ -35,6 +41,8 @@
 .preferences-actions {
   display: flex;
   gap: 10px;
+  flex-wrap: wrap;
+  align-items: center;
 }
 
 .preferences-button {
@@ -76,6 +84,8 @@
   max-width: 800px;
   margin: 0 auto;
   width: 100%;
+  box-sizing: border-box;
+  overflow-x: hidden;
 }
 
 .preferences-section {
@@ -84,6 +94,9 @@
   padding: 25px;
   margin-bottom: 20px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  box-sizing: border-box;
+  width: 100%;
+  overflow-x: hidden;
 }
 
 .preferences-section h2 {
@@ -121,6 +134,8 @@
   font-size: 14px;
   font-family: inherit;
   transition: border-color 0.2s;
+  box-sizing: border-box;
+  max-width: 100%;
 }
 
 .preference-item input[type="text"]:focus,
@@ -156,10 +171,12 @@
   display: flex;
   gap: 10px;
   align-items: center;
+  flex-wrap: wrap;
 }
 
 .export-toolbar .export-controls select {
   max-width: 220px;
+  box-sizing: border-box;
 }
 
 .preference-note {

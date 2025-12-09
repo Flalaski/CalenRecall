@@ -421,7 +421,6 @@
   overflow: hidden;
   overflow-x: hidden;
   transition: background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
-  will-change: background-color, border-color;
 }
 
 .timeline-cell.day-cell {
@@ -574,10 +573,10 @@
   box-sizing: border-box;
   overflow-wrap: break-word;
   word-wrap: break-word;
-  will-change: transform;
 }
 
 .entry-badge:hover {
+  will-change: transform;
   transform: translate3d(2px, 0, 0);
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
 }
@@ -664,10 +663,10 @@
   overflow-wrap: break-word;
   word-wrap: break-word;
   overflow-x: hidden;
-  will-change: transform;
 }
 
 .entry-card:hover {
+  will-change: transform;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
   transform: translate3d(0, -1px, 0);
 }
@@ -834,10 +833,10 @@
   cursor: pointer;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
   border-left: 5px solid;
-  will-change: transform;
 }
 
 .entry-card-full:hover {
+  will-change: transform;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   transform: translate3d(4px, 0, 0);
 }

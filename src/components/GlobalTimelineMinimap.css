@@ -5,6 +5,8 @@
   position: relative;
   z-index: 10;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  box-sizing: border-box;
+  overflow-x: hidden;
 }
 
 .radial-dial {
@@ -16,6 +18,9 @@
   z-index: 1000;
   animation: radialDialAppear 0.2s ease-out;
   will-change: transform, opacity;
+  /* Ensure radial dial doesn't overflow viewport */
+  box-sizing: border-box;
+  overflow: hidden;
 }
 
 @keyframes radialDialAppear {
@@ -52,7 +57,6 @@
   gap: 8px;
   opacity: 0.7;
   transition: opacity 0.2s ease;
-  will-change: opacity;
 }
 
 .radial-dial-direction:hover {
@@ -69,6 +73,10 @@
   right: 0;
   top: 50%;
   transform: translateY(-50%);
+  /* Ensure label doesn't overflow viewport - constrain to parent */
+  max-width: 100%;
+  overflow: hidden;
+  box-sizing: border-box;
 }
 
 .radial-dial-up {
@@ -103,6 +111,10 @@
   border: 1px solid rgba(74, 144, 226, 0.3);
   text-align: center;
   max-width: 120px;
+  /* Ensure label doesn't overflow viewport */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  box-sizing: border-box;
 }
 
 .mechanical-click-feedback {
@@ -129,7 +141,6 @@
   position: relative;
   margin: 0 auto 10px;
   animation: gearRotate 0.3s ease-out;
-  will-change: transform;
   transform: translateZ(0);
 }
 
@@ -278,9 +289,6 @@
   -moz-osx-font-smoothing: unset;
   /* HIGH-PERFORMANCE: CSS containment for layout isolation */
   contain: layout style paint;
-  /* HIGH-PERFORMANCE: GPU acceleration for smooth navigation */
-  transform: translateZ(0);
-  will-change: transform;
   /* Optimize for smooth dragging */
   -webkit-tap-highlight-color: transparent;
   touch-action: none; /* Prevent touch scrolling during drag */
@@ -514,6 +522,8 @@
 
 .minimap-container.dragging {
   cursor: grabbing;
+  /* Only apply will-change when actively dragging */
+  will-change: transform;
 }
 
 .minimap-container.dragging * {
@@ -580,7 +590,8 @@
   /* Optimized: Replaced drop-shadow with box-shadow for better performance */
   box-shadow: 0 0 4px rgba(74, 144, 226, 0.6);
   animation: pathGlow 3s ease-in-out infinite;
-  will-change: opacity, box-shadow;
+  /* Only apply will-change when animating */
+  will-change: opacity;
 }
 
 .timeline-path-glow {
@@ -594,7 +605,6 @@
 .infinity-tree-trunk {
   /* Optimized: Replaced drop-shadow with simpler styling */
   opacity: 0.9;
-  will-change: opacity;
 }
 
 .infinity-tree-branch {
@@ -926,7 +936,6 @@
   cursor: pointer;
   transition: transform 0.3s ease, z-index 0.3s ease;
   z-index: 2;
-  will-change: transform;
 }
 
 .timeline-segment:hover {
@@ -942,7 +951,6 @@
   border: calc(var(--segment-indicator-size, 8px) * 0.25) solid #fff;
   box-shadow: 0 calc(var(--segment-indicator-size, 8px) * 0.125) calc(var(--segment-indicator-size, 8px) * 0.375) rgba(0, 0, 0, 0.2);
   transition: transform 0.3s ease, opacity 0.3s ease, box-shadow 0.3s ease;
-  will-change: transform, opacity;
 }
 
 .timeline-segment.near-current .segment-indicator {
@@ -1033,7 +1041,6 @@
   animation: indicatorGlow 2s ease-in-out infinite;
   border-radius: calc(var(--minimap-scale, 1) * 2px);
   overflow: visible;
-  will-change: opacity, box-shadow;
 }
 
 .micro-indicator {
@@ -1048,7 +1055,6 @@
   transition: opacity 0.3s ease, box-shadow 0.3s ease;
   box-shadow: inset 0 0 4px rgba(255, 255, 255, 0.2);
   box-sizing: border-box;
-  will-change: opacity;
 }
 
 .micro-indicator:hover {
@@ -1141,7 +1147,6 @@
   pointer-events: all;
   z-index: 4;
   transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1), z-index 0.5s ease;
-  will-change: transform;
 }
 
 /* Scale up crystals in focused time section */
@@ -1348,7 +1353,6 @@
   height: 100%;
   transform: translate3d(-50%, -50%, 0) rotate(-45deg);
   pointer-events: none;
-  will-change: transform, opacity;
   /* Create soft starburst using radial gradient with gem color rays */
   background: 
     /* Outer soft rays - using gem color */
@@ -1396,7 +1400,6 @@
   height: 80%;
   transform: translate3d(-50%, -50%, 0) rotate(-45deg);
   pointer-events: none;
-  will-change: transform, opacity;
   /* Secondary starburst layer with color tint */
   background: 
     repeating-conic-gradient(
@@ -1536,7 +1539,6 @@
   image-rendering: crisp-edges;
   /* Smooth transitions for magnification effect */
   transition: font-size 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease, color 0.3s ease;
-  will-change: transform, opacity;
 }
 
 .scale-label.decade-label {
@@ -1638,6 +1640,11 @@
   z-index: 1001;
   margin-left: -200px;
   margin-top: -1000px;
+  /* Ensure overlay doesn't overflow viewport */
+  max-width: calc(100vw - 20px);
+  max-height: calc(100vh - 20px);
+  overflow: hidden;
+  box-sizing: border-box;
 }
 
 .dead-zone-line {
@@ -1707,6 +1714,12 @@
   white-space: nowrap;
   pointer-events: none;
   font-weight: 600;
+  /* Ensure label doesn't overflow viewport - use right constraint */
+  right: auto;
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  box-sizing: border-box;
 }
 
 .current-movement-indicator {
@@ -1735,11 +1748,17 @@
   font-weight: 600;
   top: 50%;
   transform: translateY(-50%);
+  /* Ensure label doesn't overflow viewport - use right constraint */
+  right: auto;
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  box-sizing: border-box;
 }
 
 .compact-scale-indicator {
   position: absolute;
-  right: -140px;
+  right: 0;
   top: -400px;
   width: 120px;
   height: 800px;
@@ -1747,6 +1766,11 @@
   z-index: 1004;
   border-left: 1px solid rgba(200, 200, 200, 0.3);
   padding-left: 8px;
+  /* Ensure it doesn't overflow the viewport - constrain to parent container */
+  max-width: calc(100% - 8px);
+  box-sizing: border-box;
+  /* Hide if it would overflow */
+  overflow: hidden;
 }
 
 .scale-line {
@@ -1804,6 +1828,8 @@
 .edge-labels-right {
   right: 0;
   padding-right: 8px;
+  max-width: calc(100% - 8px);
+  box-sizing: border-box;
 }
 
 .edge-label {

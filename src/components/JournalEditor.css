@@ -83,7 +83,6 @@
   font-size: 0.85rem;
   font-weight: 400;
   transition: background-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
-  will-change: transform;
   font-family: 'Bebas Neue', 'Impact', 'Arial Black', 'Franklin Gothic Heavy', 'Arial Narrow', sans-serif;
   letter-spacing: 0.05em;
   text-transform: uppercase;

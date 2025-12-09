@@ -7,6 +7,16 @@
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:;" />
     <!-- Fonts are now bundled locally for offline use -->
     <title>CalenRecall - Calendar Journal</title>
+    <style>
+      /* Prevent horizontal overflow globally */
+      html, body {
+        overflow-x: hidden !important;
+        box-sizing: border-box !important;
+      }
+      * {
+        box-sizing: border-box;
+      }
+    </style>
   </head>
   <body>
     <div id="root"></div>

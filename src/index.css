@@ -18,31 +18,18 @@
 html,
 body,
 #root {
-  /* Force GPU layer creation */
-  transform: translateZ(0);
-  -webkit-transform: translateZ(0);
-  /* Enable hardware acceleration */
-  will-change: auto;
   /* Optimize compositing */
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
-  /* Enable 3D transforms */
-  transform-style: preserve-3d;
-  -webkit-transform-style: preserve-3d;
 }
 
 /* GPU acceleration for main app container */
 .app {
-  /* Force GPU layer */
-  transform: translateZ(0);
-  will-change: transform;
   /* Optimize rendering */
   contain: layout style paint;
-  /* Enable 3D transforms */
-  transform-style: preserve-3d;
 }
 
-/* GPU acceleration for scrollable containers */
+/* GPU acceleration for scrollable containers - only enable will-change when scrolling */
 .app-content,
 .timeline-section,
 .editor-section,
@@ -50,16 +37,24 @@ body,
 .entry-viewer,
 .viewer-content,
 .journal-editor {
-  /* Force GPU layer for smooth scrolling */
-  transform: translateZ(0);
-  will-change: scroll-position;
   /* Optimize scrolling performance */
   -webkit-overflow-scrolling: touch;
   /* Contain layout recalculations */
   contain: layout style paint;
 }
 
-/* GPU acceleration for interactive elements */
+/* Only apply will-change when scrolling */
+.app-content:active,
+.timeline-section:active,
+.editor-section:active,
+.journal-list:active,
+.entry-viewer:active,
+.viewer-content:active,
+.journal-editor:active {
+  will-change: scroll-position;
+}
+
+/* GPU acceleration for interactive elements - only enable will-change on hover/active */
 button,
 .nav-button,
 .view-mode-button,
@@ -68,13 +63,25 @@ button,
 .journal-entry-item,
 .entry-card,
 .entry-card-full {
-  /* Force GPU layer for smooth interactions */
-  transform: translateZ(0);
-  will-change: transform, opacity;
   /* Optimize hover/click animations */
   backface-visibility: hidden;
   /* Enable smooth transitions */
   transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+/* Only apply will-change when interacting */
+button:hover,
+button:active,
+.nav-button:hover,
+.nav-button:active,
+.view-mode-button:hover,
+.view-mode-button:active,
+.entry-badge:hover,
+.timeline-cell:hover,
+.journal-entry-item:hover,
+.entry-card:hover,
+.entry-card-full:hover {
+  will-change: transform, opacity;
 }
 
 /* GPU acceleration for animated elements */
@@ -98,49 +105,64 @@ button,
   }
 }
 
-/* GPU acceleration for minimap (already has some, enhancing) */
+/* GPU acceleration for minimap - only enable will-change when dragging */
 .minimap-container,
 .global-timeline-minimap {
-  /* Force GPU layer */
-  transform: translateZ(0);
-  will-change: transform, scroll-position;
   /* Optimize for smooth dragging */
   contain: layout style paint;
-  /* Enable 3D transforms for depth effects */
-  transform-style: preserve-3d;
 }
 
-/* GPU acceleration for entry indicators in minimap */
+/* Only apply will-change when dragging */
+.minimap-container.dragging,
+.global-timeline-minimap.dragging {
+  will-change: transform, scroll-position;
+}
+
+/* GPU acceleration for entry indicators in minimap - only when animating */
 .entry-indicator,
 .timeline-segment,
 .segment-indicator {
-  /* Force GPU layer for smooth movement */
-  transform: translate3d(0, 0, 0);
-  will-change: transform, opacity;
   /* Optimize for animations */
   backface-visibility: hidden;
 }
 
-/* GPU acceleration for timeline grid */
+/* Only apply will-change when actively animating */
+.entry-indicator:hover,
+.entry-indicator.active,
+.timeline-segment:hover,
+.timeline-segment.active,
+.segment-indicator:hover,
+.segment-indicator.active {
+  will-change: transform, opacity;
+}
+
+/* GPU acceleration for timeline grid - only when scrolling */
 .timeline-grid {
-  /* Force GPU layer */
-  transform: translateZ(0);
-  will-change: scroll-position;
   /* Optimize grid rendering */
   contain: layout style paint;
 }
 
-/* GPU acceleration for modals and overlays */
+.timeline-grid:active {
+  will-change: scroll-position;
+}
+
+/* GPU acceleration for modals and overlays - only when animating */
 .modal,
 .overlay,
 .confirm-dialog,
 .entry-edit-modal,
 .export-metadata-modal {
-  /* Force GPU layer for smooth animations */
-  transform: translateZ(0);
-  will-change: transform, opacity;
   /* Optimize modal rendering */
   contain: layout style paint;
+}
+
+/* Only apply will-change when modals are animating in/out */
+.modal.animating,
+.overlay.animating,
+.confirm-dialog.animating,
+.entry-edit-modal.animating,
+.export-metadata-modal.animating {
+  will-change: transform, opacity;
 }
 
 /* Content visibility optimization for off-screen elements */
@@ -154,23 +176,21 @@ button,
 
 /* GPU acceleration for background art */
 .background-art {
-  /* Force GPU layer for background rendering */
-  transform: translateZ(0);
-  will-change: transform, opacity;
   /* Optimize background rendering */
   contain: layout style paint;
-  /* Enable 3D transforms */
-  transform-style: preserve-3d;
 }
 
-/* GPU acceleration for loading screen */
+/* GPU acceleration for loading screen - only when animating */
 .loading-screen,
 .startup-loading {
-  /* Force GPU layer */
-  transform: translateZ(0);
-  will-change: transform, opacity;
   /* Optimize loading animations */
   contain: layout style paint;
+}
+
+/* Only apply will-change when loading screen is visible/animating */
+.loading-screen.animating,
+.startup-loading.animating {
+  will-change: transform, opacity;
 }
 
 /* Optimize font rendering with GPU */
@@ -185,11 +205,10 @@ body {
 /* GPU acceleration for paper texture (pseudo-elements) */
 .paper-texture::before,
 .paper-texture::after {
-  /* Force GPU layer for texture rendering */
-  transform: translateZ(0);
-  will-change: transform, opacity, background-position;
   /* Optimize texture animation */
   backface-visibility: hidden;
+  /* Only apply will-change when texture is animating */
+  will-change: background-position;
 }
 
 /* Disable will-change after animations complete to free GPU memory */
@@ -202,11 +221,15 @@ html {
   height: 100%;
   width: 100%;
   /* Background will be set by theme CSS */
+  overflow-x: hidden;
+  box-sizing: border-box;
 }
 
 #root {
-  height: 100%;
+  height: 100vh;
   width: 100%;
+  overflow-x: hidden;
+  box-sizing: border-box;
   /* Background will be set by theme CSS */
 }
 
@@ -216,6 +239,27 @@ body {
   margin: 0;
   padding: 0;
   /* Background will be set by theme CSS */
+  overflow-x: hidden;
+  box-sizing: border-box;
+  position: relative;
+}
+
+/* Ensure containers clip their content without creating gaps */
+.app {
+  overflow-x: hidden;
+  position: relative;
+}
+
+.app-content {
+  overflow-x: hidden;
+}
+
+.timeline-section {
+  overflow-x: hidden;
+}
+
+.editor-section {
+  overflow-x: hidden;
 }
 
 /* Ensure html and #root match body background when theme is active */
@@ -535,6 +579,10 @@ body::before,
   filter: saturate(1.5) contrast(1.2);
   image-rendering: pixelated;
   image-rendering: crisp-edges;
+  /* Ensure pseudo-element doesn't extend beyond parent */
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
 }
 
 /* Dark theme - enhanced glow in shadows with deeper saturation */
@@ -1373,9 +1421,10 @@ html[data-font-size="xxxLarge"] {
 }
 
 #root {
-  width: 100vw;
+  width: 100%;
   height: 100vh;
   overflow: hidden;
+  box-sizing: border-box;
 }
 
 code {
