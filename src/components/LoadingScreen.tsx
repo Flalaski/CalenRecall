@@ -982,50 +982,21 @@ export default function LoadingScreen({ progress, message = 'Loading your journa
     return segments;
   }, []);
 
-  // Pre-calculate mathematically accurate polarity assignment based on parametric phase
-  // Uses the lemniscate's parametric structure to determine alternating polarities
+  // Pre-calculate polarity assignment based on left/right split of infinity symbol
+  // Left loop (x < midpoint) = past/purple, Right loop (x >= midpoint) = future/golden
   const infinitySegmentColors = useMemo(() => {
     const assignments: boolean[] = []; // true = past/purple, false = future/golden
+    const midpoint = LOADING_SCREEN_CONSTANTS.MIDPOINT_X;
     
-    // Assign polarity based on parametric parameter t (mathematically accurate)
-    // The lemniscate has 4 distinct phases as t goes from 0 to 1
-    // We alternate polarity: [past, future, past, future] for the 4 lobes
+    // Assign polarity based on X position relative to midpoint
+    // Left side (x < midpoint) = past, Right side (x >= midpoint) = future
     infinitySegments3D.forEach((segment) => {
-      // Use the stored parametric parameter t to determine polarity
-      // Quadrants 0,2 = past (true), quadrants 1,3 = future (false)
-      const quadrant = Math.floor(segment.t * 4) % 4;
-      const isPast = quadrant % 2 === 0;
+      // Use the midpoint X coordinate to determine which loop the segment belongs to
+      // Average X position of the segment to handle segments that might cross the boundary
+      const segmentCenterX = (segment.x1 + segment.x2) / 2;
+      const isPast = segmentCenterX < midpoint;
       assignments.push(isPast);
     });
-    
-    // Verify mathematical balance (should be exactly half each if numSegments is even)
-    const pastCount = assignments.filter(a => a).length;
-    const futureCount = assignments.length - pastCount;
-    
-    // If there's an imbalance due to rounding, adjust segments at phase boundaries
-    const imbalance = pastCount - futureCount;
-    if (Math.abs(imbalance) > 0) {
-      // Find segments at phase boundaries (where t is close to 0.25, 0.5, 0.75, or 1.0)
-      const phaseBoundaries = [0.25, 0.5, 0.75, 1.0];
-      const boundarySegments = infinitySegments3D.map((seg, idx) => ({
-        idx,
-        t: seg.t,
-        distToBoundary: Math.min(...phaseBoundaries.map(b => Math.abs(seg.t - b)))
-      })).sort((a, b) => a.distToBoundary - b.distToBoundary);
-      
-      // Flip segments at boundaries to balance
-      let flipsNeeded = Math.abs(imbalance);
-      for (const { idx } of boundarySegments) {
-        if (flipsNeeded === 0) break;
-        if (imbalance > 0 && assignments[idx]) {
-          assignments[idx] = false;
-          flipsNeeded--;
-        } else if (imbalance < 0 && !assignments[idx]) {
-          assignments[idx] = true;
-          flipsNeeded--;
-        }
-      }
-    }
     
     return assignments;
   }, [infinitySegments3D]);
