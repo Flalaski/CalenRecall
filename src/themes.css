@@ -45,6 +45,7 @@
 @import './themes/temple-of-light.css';
 @import './themes/temple-of-darkness.css';
 @import './themes/tabletop.css';
+@import './themes/out-there.css';
 
 /* Custom themes are automatically imported via themeLoader.ts */
 /* You can still manually add @import statements here if needed for explicit control */
