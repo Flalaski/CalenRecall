@@ -455,8 +455,8 @@ export default function EntryEditModal({
                     id="modal-hour-input"
                     type="number"
                     className="modal-time-input"
-                    min={preferences.timeFormat === '12h' ? 1 : 0}
-                    max={preferences.timeFormat === '12h' ? 12 : 23}
+                    min={(preferences.timeFormat || '12h') === '12h' ? 1 : 0}
+                    max={(preferences.timeFormat || '12h') === '12h' ? 12 : 23}
                     placeholder="--"
                     value={hour !== undefined && hour !== null ? hour : ''}
                     onChange={(e) => {
@@ -471,7 +471,7 @@ export default function EntryEditModal({
                     onKeyDown={handleKeyPress}
                   />
                 </div>
-                {preferences.timeFormat === '12h' && (
+                {(preferences.timeFormat || '12h') === '12h' && (
                   <div className="modal-time-input-group modal-time-input-group-ampm">
                     <label htmlFor="modal-ampm-input">AM/PM</label>
                     <select

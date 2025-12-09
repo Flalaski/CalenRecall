@@ -2,6 +2,14 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { app } from 'electron';
 import Database from 'better-sqlite3';
+import { 
+  hashPassword, 
+  verifyPassword, 
+  generateRecoveryKey, 
+  hashRecoveryKey, 
+  verifyRecoveryKey,
+  formatRecoveryKey
+} from './utils/passwordUtils';
 
 /**
  * Profile interface representing a database profile
@@ -14,6 +22,7 @@ export interface Profile {
   databasePath: string;
   isDefault: boolean;
   autoLoad?: boolean;
+  hasPassword?: boolean; // Indicates if profile is password protected (password hash is stored separately)
 }
 
 /**
@@ -26,11 +35,92 @@ interface ProfilesMetadata {
 }
 
 /**
+ * Password hashes structure stored in passwords.json (separate file for security)
+ */
+interface PasswordHashes {
+  [profileId: string]: {
+    passwordHash: string; // Password hash
+    recoveryKeyHash?: string; // Recovery key hash (optional, for password recovery)
+  };
+}
+
+/**
  * Get the path to the profiles metadata file
  */
 function getProfilesMetadataPath(): string {
   const userDataPath = app.getPath('userData');
   return path.join(userDataPath, 'profiles.json');
+}
+
+/**
+ * Get the path to the password hashes file
+ */
+function getPasswordsPath(): string {
+  const userDataPath = app.getPath('userData');
+  return path.join(userDataPath, 'passwords.json');
+}
+
+/**
+ * Load password hashes from disk
+ */
+function loadPasswordHashes(): PasswordHashes {
+  const passwordsPath = getPasswordsPath();
+  
+  if (!fs.existsSync(passwordsPath)) {
+    return {};
+  }
+
+  try {
+    const data = fs.readFileSync(passwordsPath, 'utf-8');
+    const parsed = JSON.parse(data) as any;
+    
+    // Migrate old format (string) to new format (object)
+    const migrated: PasswordHashes = {};
+    for (const [profileId, value] of Object.entries(parsed)) {
+      if (typeof value === 'string') {
+        // Old format: just password hash
+        migrated[profileId] = { passwordHash: value };
+      } else if (value && typeof value === 'object' && 'passwordHash' in value) {
+        // New format: object with passwordHash and optional recoveryKeyHash
+        migrated[profileId] = value as PasswordHashes[string];
+      }
+    }
+    
+    return migrated;
+  } catch (error) {
+    console.error('[Profile Manager] Error loading password hashes:', error);
+    return {};
+  }
+}
+
+/**
+ * Save password hashes to disk
+ */
+function savePasswordHashes(hashes: PasswordHashes): void {
+  const passwordsPath = getPasswordsPath();
+  const userDataPath = app.getPath('userData');
+  
+  // Ensure userData directory exists
+  if (!fs.existsSync(userDataPath)) {
+    fs.mkdirSync(userDataPath, { recursive: true });
+  }
+  
+  try {
+    fs.writeFileSync(
+      passwordsPath,
+      JSON.stringify(hashes, null, 2),
+      'utf-8'
+    );
+    // Set restrictive permissions on Windows (if possible)
+    try {
+      fs.chmodSync(passwordsPath, 0o600); // Read/write for owner only
+    } catch {
+      // chmod may not work on Windows, ignore
+    }
+  } catch (error) {
+    console.error('[Profile Manager] Error saving password hashes:', error);
+    throw error;
+  }
 }
 
 /**
@@ -1035,4 +1125,268 @@ export function getProfileDetails(profileId: string): ProfileDetails | null {
   
   return details;
 }
+
+/**
+ * Set a password for a profile
+ * 
+ * @param profileId - Profile ID
+ * @param password - Plain text password
+ * @param generateRecovery - Whether to generate a recovery key (default: true)
+ * @returns Recovery key if generated, null otherwise
+ */
+export function setProfilePassword(profileId: string, password: string, generateRecovery: boolean = true): string | null {
+  const profile = getProfile(profileId);
+  if (!profile) {
+    throw new Error(`Profile "${profileId}" not found`);
+  }
+
+  if (!password || password.length === 0) {
+    throw new Error('Password cannot be empty');
+  }
+
+  // Hash the password
+  const passwordHash = hashPassword(password);
+
+  // Generate recovery key if requested
+  let recoveryKey: string | null = null;
+  let recoveryKeyHash: string | undefined = undefined;
+  
+  if (generateRecovery) {
+    recoveryKey = generateRecoveryKey();
+    recoveryKeyHash = hashRecoveryKey(recoveryKey);
+  }
+
+  // Load existing password hashes
+  const hashes = loadPasswordHashes();
+  hashes[profileId] = {
+    passwordHash,
+    recoveryKeyHash,
+  };
+  savePasswordHashes(hashes);
+
+  // Update profile metadata to indicate password protection
+  const metadata = loadProfilesMetadata();
+  if (metadata) {
+    const profileIndex = metadata.profiles.findIndex(p => p.id === profileId);
+    if (profileIndex !== -1) {
+      metadata.profiles[profileIndex].hasPassword = true;
+      saveProfilesMetadata(metadata);
+    }
+  }
+
+  console.log(`[Profile Manager] Password set for profile: ${profileId}`);
+  
+  return recoveryKey;
+}
+
+/**
+ * Recover/reset a profile password using a recovery key
+ * 
+ * @param profileId - Profile ID
+ * @param recoveryKey - Recovery key (spaces will be removed)
+ * @param newPassword - New password to set
+ * @returns New recovery key
+ */
+export function recoverProfilePassword(profileId: string, recoveryKey: string, newPassword: string): string {
+  const profile = getProfile(profileId);
+  if (!profile) {
+    throw new Error(`Profile "${profileId}" not found`);
+  }
+
+  // Remove spaces from recovery key for easier pasting
+  const cleanRecoveryKey = recoveryKey.replace(/\s/g, '');
+
+  if (!cleanRecoveryKey || cleanRecoveryKey.length === 0) {
+    throw new Error('Recovery key cannot be empty');
+  }
+
+  if (!newPassword || newPassword.length === 0) {
+    throw new Error('New password cannot be empty');
+  }
+
+  // Load password hashes
+  const hashes = loadPasswordHashes();
+  const profileData = hashes[profileId];
+
+  if (!profileData) {
+    throw new Error(`No password set for profile "${profileId}"`);
+  }
+
+  // Handle both old format (string) and new format (object)
+  if (typeof profileData === 'string') {
+    throw new Error('No recovery key available for this profile (created before recovery key support)');
+  }
+
+  // Verify recovery key
+  if (!profileData.recoveryKeyHash) {
+    throw new Error('No recovery key available for this profile');
+  }
+
+  if (!verifyRecoveryKey(cleanRecoveryKey, profileData.recoveryKeyHash)) {
+    throw new Error('Invalid recovery key');
+  }
+
+  // Set new password (generate new recovery key)
+  const newRecoveryKey = generateRecoveryKey();
+  const newRecoveryKeyHash = hashRecoveryKey(newRecoveryKey);
+  const newPasswordHash = hashPassword(newPassword);
+
+  hashes[profileId] = {
+    passwordHash: newPasswordHash,
+    recoveryKeyHash: newRecoveryKeyHash,
+  };
+  savePasswordHashes(hashes);
+
+  console.log(`[Profile Manager] Password recovered/reset for profile: ${profileId}`);
+  
+  return newRecoveryKey;
+}
+
+/**
+ * Verify a password for a profile
+ */
+export function verifyProfilePassword(profileId: string, password: string): boolean {
+  const profile = getProfile(profileId);
+  if (!profile) {
+    return false;
+  }
+
+  // Load password hashes
+  const hashes = loadPasswordHashes();
+  const profileData = hashes[profileId];
+
+  if (!profileData) {
+    // No password set for this profile
+    return true; // Allow access if no password is set
+  }
+
+  // Handle both old format (string) and new format (object)
+  const passwordHash = typeof profileData === 'string' 
+    ? profileData 
+    : profileData.passwordHash;
+
+  // Verify password
+  return verifyPassword(password, passwordHash);
+}
+
+/**
+ * Change a profile's password (requires old password)
+ * 
+ * @param profileId - Profile ID
+ * @param oldPassword - Current password
+ * @param newPassword - New password
+ * @param generateNewRecovery - Whether to generate a new recovery key (default: true)
+ * @returns New recovery key if generated, null otherwise
+ */
+export function changeProfilePassword(profileId: string, oldPassword: string, newPassword: string, generateNewRecovery: boolean = true): string | null {
+  const profile = getProfile(profileId);
+  if (!profile) {
+    throw new Error(`Profile "${profileId}" not found`);
+  }
+
+  // Verify old password
+  if (!verifyProfilePassword(profileId, oldPassword)) {
+    throw new Error('Incorrect password');
+  }
+
+  if (!newPassword || newPassword.length === 0) {
+    throw new Error('New password cannot be empty');
+  }
+
+  // Set new password (with new recovery key)
+  const recoveryKey = setProfilePassword(profileId, newPassword, generateNewRecovery);
+  console.log(`[Profile Manager] Password changed for profile: ${profileId}`);
+  
+  return recoveryKey;
+}
+
+/**
+ * Remove password protection from a profile (requires current password)
+ */
+export function removeProfilePassword(profileId: string, password: string): void {
+  const profile = getProfile(profileId);
+  if (!profile) {
+    throw new Error(`Profile "${profileId}" not found`);
+  }
+
+  // Verify password
+  if (!verifyProfilePassword(profileId, password)) {
+    throw new Error('Incorrect password');
+  }
+
+  // Remove password hash
+  const hashes = loadPasswordHashes();
+  delete hashes[profileId];
+  savePasswordHashes(hashes);
+
+  // Update profile metadata
+  const metadata = loadProfilesMetadata();
+  if (metadata) {
+    const profileIndex = metadata.profiles.findIndex(p => p.id === profileId);
+    if (profileIndex !== -1) {
+      metadata.profiles[profileIndex].hasPassword = false;
+      saveProfilesMetadata(metadata);
+    }
+  }
+
+  console.log(`[Profile Manager] Password removed from profile: ${profileId}`);
+}
+
+/**
+ * Check if a profile has password protection
+ */
+export function profileHasPassword(profileId: string): boolean {
+  const hashes = loadPasswordHashes();
+  const profileData = hashes[profileId];
+  
+  if (!profileData) {
+    return false;
+  }
+  
+  // Handle both old format (string) and new format (object)
+  return typeof profileData === 'string' ? true : !!profileData.passwordHash;
+}
+
+/**
+ * Check if a profile has a recovery key available
+ */
+export function profileHasRecoveryKey(profileId: string): boolean {
+  const hashes = loadPasswordHashes();
+  const profileData = hashes[profileId];
+  
+  if (!profileData || typeof profileData === 'string') {
+    return false; // Old format or no password
+  }
+  
+  return !!profileData.recoveryKeyHash;
+}
+
+/**
+ * Update profile metadata to reflect password status
+ * This should be called when loading profiles to ensure hasPassword is accurate
+ */
+function updateProfilePasswordStatus(): void {
+  const metadata = loadProfilesMetadata();
+  if (!metadata) {
+    return;
+  }
+
+  const hashes = loadPasswordHashes();
+  let updated = false;
+
+  for (const profile of metadata.profiles) {
+    const hasPassword = !!hashes[profile.id];
+    if (profile.hasPassword !== hasPassword) {
+      profile.hasPassword = hasPassword;
+      updated = true;
+    }
+  }
+
+  if (updated) {
+    saveProfilesMetadata(metadata);
+  }
+}
+
+// Update password status when module loads
+updateProfilePasswordStatus();
 

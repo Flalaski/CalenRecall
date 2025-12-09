@@ -11,7 +11,7 @@ import { filterEntriesByDateRange } from '../utils/entryFilterUtils';
 import { getCalendarTierNames } from '../utils/calendarTierNames';
 import { getCalendarEpoch } from '../utils/calendars/epochUtils';
 import { jdnToDate } from '../utils/calendars/julianDayUtils';
-import { useTaskScheduler, useStyleBatcher, useThrottledCallback } from '../hooks/usePerformanceOptimized';
+import { useTaskScheduler, useThrottledCallback } from '../hooks/usePerformanceOptimized';
 import './GlobalTimelineMinimap.css';
 
 interface GlobalTimelineMinimapProps {
@@ -352,7 +352,6 @@ export default function GlobalTimelineMinimap({
 
   // HIGH-PERFORMANCE: Performance optimization hooks
   const { schedule } = useTaskScheduler();
-  const { queueStyle } = useStyleBatcher();
 
   // Invalidate bounding rect cache on window resize
   useEffect(() => {
@@ -3560,385 +3559,389 @@ export default function GlobalTimelineMinimap({
     };
   }, []); // Empty deps - we use refs to access current values
 
+  // RESPONSIVE: Create throttled mouse move handler for smooth visual feedback at native refresh rate
+  // This ensures visual updates happen every frame, matching audio feedback
+  const handleMouseMoveThrottled = useThrottledCallback((e: MouseEvent) => {
+    if (!isDragging || !dragStartPositionRef.current) {
+      return;
+    }
+    
+    const currentTimelineData = timelineDataRef.current;
+    const currentViewMode = viewModeRef.current;
+    const currentSelectedDate = selectedDateRef.current;
+    const currentOnTimePeriodSelect = onTimePeriodSelectRef.current;
+    
+    if (!containerRef.current || !currentTimelineData.startDate || !currentTimelineData.endDate || !dragStartPositionRef.current) {
+      return;
+    }
+
+    const now = Date.now();
+    // Use cached bounding rect to avoid forced reflows - only update if not cached
+    let rect = cachedBoundingRectRef.current;
+    if (!rect && containerRef.current) {
+      rect = containerRef.current.getBoundingClientRect();
+      cachedBoundingRectRef.current = rect;
+    }
+    if (!rect) {
+      return; // Can't proceed without bounding rect
+    }
+    
+    // Calculate total movement from start
+    const totalHorizontalDelta = e.clientX - dragStartPositionRef.current.x;
+    const totalVerticalDelta = e.clientY - dragStartPositionRef.current.y;
+    
+    // Track initial movement direction to determine lock
+    if (initialMovementRef.current) {
+      initialMovementRef.current.horizontal = totalHorizontalDelta;
+      initialMovementRef.current.vertical = totalVerticalDelta;
+    }
+    
+    // Horizontal dead zone: suppress horizontal movement when primarily moving vertically
+    // This makes it easier to zoom without accidentally moving the blips left/right
+    const horizontalDeadZone = 30; // pixels - ignore horizontal movement if within this
+    const verticalToHorizontalRatio = 2.0; // If vertical movement is X times horizontal, lock horizontal
+    
+    // Calculate if movement is primarily vertical
+    const absVertical = Math.abs(totalVerticalDelta);
+    const absHorizontal = Math.abs(totalHorizontalDelta);
+    
+    // Lock horizontal if:
+    // 1. Horizontal movement is within dead zone AND vertical movement is significant, OR
+    // 2. Vertical movement is significantly more than horizontal (ratio-based)
+    const shouldLockHorizontal = 
+      (absVertical > 10 && absHorizontal < horizontalDeadZone) || 
+      (absVertical > 15 && absVertical > absHorizontal * verticalToHorizontalRatio);
+    
+    if (shouldLockHorizontal && !horizontalLockedRef.current) {
+      setHorizontalLocked(true);
+      horizontalLockedRef.current = true;
+    } else if (!shouldLockHorizontal && horizontalLockedRef.current && absHorizontal > horizontalDeadZone) {
+      // Unlock if user explicitly moves horizontally beyond dead zone
+      setHorizontalLocked(false);
+      horizontalLockedRef.current = false;
+    }
+    
+    // Calculate incremental vertical movement (scale change)
+    const verticalDelta = e.clientY - lastVerticalPositionRef.current;
+    const verticalThreshold = 800; // Increased threshold for more deliberate movement
+    const deadZoneSize = 300; // Dead zone pixels after scale change
+    
+    // Accumulate vertical movement for mechanical feel
+    verticalMovementAccumulatorRef.current += verticalDelta;
+    
+    // Check if we're at a limit (can't zoom in/out further) and trying to move beyond it
+    const scaleOrder: TimeRange[] = ['decade', 'year', 'month', 'week', 'day'];
+    const currentIndex = scaleOrder.indexOf(currentViewMode);
+    const absAccumulator = Math.abs(verticalMovementAccumulatorRef.current);
+    
+    // At top limit: moving up (negative) and at finest scale (day), past threshold
+    const isAtTopLimit = verticalMovementAccumulatorRef.current < 0 && 
+                         currentIndex >= scaleOrder.length - 1 && 
+                         absAccumulator > verticalThreshold;
+    
+    // At bottom limit: moving down (positive) and at coarsest scale (decade), past threshold
+    const isAtBottomLimit = verticalMovementAccumulatorRef.current > 0 && 
+                            currentIndex <= 0 && 
+                            absAccumulator > verticalThreshold;
+    
+    const isAtLimit = isAtTopLimit || isAtBottomLimit;
+    
+    // Update slider noise based on distance from center to threshold
+    // This provides real-time audio feedback indicating proximity to level change threshold
+    if (sliderNoiseRef.current) {
+      const distanceFromCenter = absAccumulator;
+      sliderNoiseRef.current.update(distanceFromCenter, verticalThreshold);
+      
+      // Set limit state for dampened null wall effect when at limits
+      // This creates a pitch-down portamento effect with dampened volume
+      sliderNoiseRef.current.setLimitState(isAtLimit);
+    }
+    
+    // Check if we're in the dead zone (must move back toward center after scale change)
+    const inDeadZone = Math.abs(verticalMovementAccumulatorRef.current - lastScaleChangeAccumulatorRef.current) < deadZoneSize;
+    
+    // Update drag limits visualization relative to radial dial position
+    if (dragStartPositionRef.current) {
+      // Calculate dead zone boundaries relative to start position
+      // Dead zone is relative to the last scale change accumulator value
+      // The accumulator tracks total vertical movement from start
+      const deadZoneCenter = lastScaleChangeAccumulatorRef.current;
+      const deadZoneTop = -(deadZoneCenter + deadZoneSize); // Negative = above dial
+      const deadZoneBottom = -(deadZoneCenter - deadZoneSize); // Negative = above dial
+      
+      // Vertical threshold lines (800px from start)
+      // These represent the actual pixel distances, but we'll show them scaled for visibility
+      const thresholdTop = -800; // Above dial
+      const thresholdBottom = 800; // Below dial
+      
+      // Calculate current vertical movement from start
+      const currentVerticalMovement = verticalMovementAccumulatorRef.current;
+      
+      // Only update state if values have actually changed to prevent infinite re-render loops
+      const newDragLimits = {
+        deadZoneTop: deadZoneTop,
+        deadZoneBottom: deadZoneBottom,
+        thresholdTop: thresholdTop,
+        thresholdBottom: thresholdBottom,
+        currentMovement: currentVerticalMovement, // Track current position for visual feedback
+      };
+      
+      // Compare with last values - only update if something changed
+      const lastLimits = lastDragLimitsRef.current;
+      if (!lastLimits || 
+          lastLimits.deadZoneTop !== newDragLimits.deadZoneTop ||
+          lastLimits.deadZoneBottom !== newDragLimits.deadZoneBottom ||
+          lastLimits.thresholdTop !== newDragLimits.thresholdTop ||
+          lastLimits.thresholdBottom !== newDragLimits.thresholdBottom ||
+          lastLimits.currentMovement !== newDragLimits.currentMovement) {
+        lastDragLimitsRef.current = newDragLimits;
+        setDragLimits(newDragLimits);
+      }
+    }
+    
+    // Handle vertical movement for scale changes with lock-in mechanism and dead zone
+    // Note: scaleOrder is already defined above for limit detection
+    if (!scaleChangeLockRef.current && !inDeadZone && Math.abs(verticalMovementAccumulatorRef.current) > verticalThreshold) {
+      
+      // Check if we've moved enough in the new direction (past the dead zone)
+      const movementFromLastChange = verticalMovementAccumulatorRef.current - lastScaleChangeAccumulatorRef.current;
+      const hasCrossedDeadZone = Math.abs(movementFromLastChange) >= deadZoneSize;
+      
+      if (verticalMovementAccumulatorRef.current < 0 && currentIndex < scaleOrder.length - 1 && hasCrossedDeadZone) {
+        // Moving up - zoom in (more detail)
+        scaleChangeLockRef.current = true; // Lock to prevent rapid changes
+        const newViewMode = scaleOrder[currentIndex + 1];
+        
+        // Play mechanical click sound
+        playMechanicalClick('up');
+        
+        // Trigger portamento drop in slider noise (momentary volume dip, then return)
+        if (sliderNoiseRef.current) {
+          sliderNoiseRef.current.portamentoDrop();
+        }
+        
+        // Trigger visual feedback
+        setMechanicalClick({ scale: newViewMode, direction: 'up' });
+        setTimeout(() => setMechanicalClick(null), 300);
+        
+        // View mode change will trigger timeline range recalculation via useEffect
+        currentOnTimePeriodSelect(currentSelectedDate, newViewMode);
+        
+        // Update drag start position to maintain relative position
+        if (dragStartPositionRef.current) {
+          dragStartPositionRef.current.date = currentSelectedDate;
+        }
+        
+        // Store accumulator value at scale change and set dead zone
+        lastScaleChangeAccumulatorRef.current = verticalMovementAccumulatorRef.current;
+        deadZoneRef.current = deadZoneSize;
+        
+        // Reset accumulator position but keep the value for dead zone calculation
+        lastVerticalPositionRef.current = e.clientY;
+        setTimeout(() => {
+          scaleChangeLockRef.current = false;
+        }, 200); // Lock for 200ms to prevent rapid clicking
+        return;
+      } else if (verticalMovementAccumulatorRef.current > 0 && currentIndex > 0 && hasCrossedDeadZone) {
+        // Moving down - zoom out (less detail)
+        scaleChangeLockRef.current = true; // Lock to prevent rapid changes
+        const newViewMode = scaleOrder[currentIndex - 1];
+        
+        // Play mechanical click sound
+        playMechanicalClick('down');
+        
+        // Trigger portamento drop in slider noise (momentary volume dip, then return)
+        if (sliderNoiseRef.current) {
+          sliderNoiseRef.current.portamentoDrop();
+        }
+        
+        // Trigger visual feedback
+        setMechanicalClick({ scale: newViewMode, direction: 'down' });
+        setTimeout(() => setMechanicalClick(null), 300);
+        
+        // View mode change will trigger timeline range recalculation via useEffect
+        currentOnTimePeriodSelect(currentSelectedDate, newViewMode);
+        
+        // Update drag start position to maintain relative position
+        if (dragStartPositionRef.current) {
+          dragStartPositionRef.current.date = currentSelectedDate;
+        }
+        
+        // Store accumulator value at scale change and set dead zone
+        lastScaleChangeAccumulatorRef.current = verticalMovementAccumulatorRef.current;
+        deadZoneRef.current = deadZoneSize;
+        
+        // Reset accumulator position but keep the value for dead zone calculation
+        lastVerticalPositionRef.current = e.clientY;
+        setTimeout(() => {
+          scaleChangeLockRef.current = false;
+        }, 200); // Lock for 200ms to prevent rapid clicking
+        return;
+      }
+    }
+    
+    // Decay accumulator if not enough movement or in dead zone
+    if (Math.abs(verticalMovementAccumulatorRef.current) < verticalThreshold || inDeadZone) {
+      verticalMovementAccumulatorRef.current *= 0.95; // Decay slowly
+    }
+    
+    // If horizontal is locked, skip horizontal movement calculation
+    if (horizontalLockedRef.current) {
+      // Only process vertical movement for scale changes
+      // Horizontal movement is blocked
+      return;
+    }
+    
+    // Calculate horizontal movement (time navigation) - smooth and fluid with fret-like resistance
+    // Movement is relative to center indicator's position for consistent haptic interaction
+    const totalTime = currentTimelineData.endDate.getTime() - currentTimelineData.startDate.getTime();
+    
+    if (!dragStartPositionRef.current) {
+      return;
+    }
+    
+    // Calculate horizontal delta from center indicator's position (not from click position)
+    // dragStartPositionRef.current.x is the center indicator's screen X position when drag started
+    const horizontalDelta = e.clientX - dragStartPositionRef.current.x;
+    
+    // Convert pixel delta to timeline percentage (0-1)
+    const deltaPercentage = horizontalDelta / rect.width;
+    
+    // Get the starting timeline position (center indicator position when drag started)
+    const startTimelinePosition = dragStartPositionRef.current.timelinePosition / 100; // Convert to 0-1
+    
+    // Calculate current selected date position (may have changed during drag)
+    const currentTimeOffset = currentSelectedDate.getTime() - currentTimelineData.startDate.getTime();
+    const currentTimelinePosition = (currentTimeOffset / totalTime);
+    
+    // Calculate target position by applying delta relative to center indicator's current position
+    // This ensures consistent haptic interaction regardless of where user started drag
+    const rawTargetPosition = currentTimelinePosition + deltaPercentage;
+    
+    // Calculate distance from center when drag started (for dampening adjustment)
+    const distanceFromCenter = Math.abs(startTimelinePosition - 0.5);
+    
+    // Apply distance-based dampening: the further from center, the more dampening
+    // Scale from 0.02 (at edges) to 0.05 (at center) for molasses-like mechanical lever feel
+    const baseDampening = 0.05 - (distanceFromCenter * 0.06); // Range: 0.05 at center, 0.02 at edges
+    
+    // Additional dampening for large distances to prevent fast jumps
+    const distanceMagnitude = Math.abs(deltaPercentage);
+    const distanceMultiplier = distanceMagnitude > 0.3 ? 0.6 : 1.0; // Extra dampening for large movements
+    
+    const combinedDampening = baseDampening * distanceMultiplier;
+    
+    // Apply fret-like resistance: deeper valleys between time points require more drag
+    // Get all time points (frets) for the current view mode
+    const currentAllScaleMarkings = allScaleMarkingsRef.current;
+    const allMarks = currentAllScaleMarkings[currentViewMode];
+    const allTimePoints = [...allMarks.major, ...allMarks.minor]
+      .map(mark => mark.position / 100) // Convert to 0-1 range
+      .sort((a, b) => a - b); // Sort for easier valley calculation
+    
+    // Calculate target position with gradual movement and fret resistance
+    let targetMousePosition = rawTargetPosition;
+    
+    if (allTimePoints.length > 0) {
+      // Find the two nearest time points (frets) to determine which valley we're in
+      let leftFret = 0;
+      let rightFret = 1;
+      
+      for (let i = 0; i < allTimePoints.length; i++) {
+        if (allTimePoints[i] <= rawTargetPosition) {
+          leftFret = allTimePoints[i];
+        }
+        if (allTimePoints[i] >= rawTargetPosition && rightFret === 1) {
+          rightFret = allTimePoints[i];
+          break;
+        }
+      }
+      
+      // Calculate position within the valley (between two frets)
+      const valleyWidth = rightFret - leftFret;
+      if (valleyWidth > 0) {
+        const positionInValley = (rawTargetPosition - leftFret) / valleyWidth; // 0 to 1
+        
+        // Apply resistance curve: valleys require more drag - stronger curve for molasses-like mechanical lever feel
+        const resistanceCurve = Math.pow(positionInValley, 5.0);
+        
+        // Map the resisted position back to timeline coordinates
+        targetMousePosition = leftFret + (resistanceCurve * valleyWidth);
+      }
+    }
+    
+    // Gradually move from current position toward target position
+    // Use current selected date position as the reference, not the start position
+    const targetPosition = currentTimelinePosition + (targetMousePosition - currentTimelinePosition) * combinedDampening;
+    
+    // Clamp the target position
+    const clampedTargetPosition = Math.max(0, Math.min(1, targetPosition));
+    
+    // Calculate time from target position
+    const timeOffset = clampedTargetPosition * totalTime;
+    const targetTime = currentTimelineData.startDate.getTime() + timeOffset;
+    
+    // Create date from time with resistance applied
+    const finalDate = new Date(targetTime);
+    
+    // Clamp to visible range (shouldn't be necessary but safety check)
+    let clampedDate: Date;
+    if (finalDate < currentTimelineData.startDate) {
+      clampedDate = currentTimelineData.startDate;
+    } else if (finalDate > currentTimelineData.endDate) {
+      clampedDate = currentTimelineData.endDate;
+    } else {
+      clampedDate = finalDate;
+    }
+    
+    // Play micro blip for every date change during dragging
+    // Compare dates at day level (ignore time component) - check BEFORE throttling
+    // This ensures blips play immediately even if the update callback is throttled
+    const lastBlipDate = lastBlipDateRef.current;
+    const clampedDateDay = createDate(clampedDate.getFullYear(), clampedDate.getMonth(), clampedDate.getDate());
+    const lastBlipDateDay = lastBlipDate ? createDate(lastBlipDate.getFullYear(), lastBlipDate.getMonth(), lastBlipDate.getDate()) : null;
+    
+    // Detect ALL date changes, even if we skip some updates due to throttling
+    // If the date changed, play blip immediately (don't wait for throttle)
+    if (!lastBlipDateDay || clampedDateDay.getTime() !== lastBlipDateDay.getTime()) {
+      // Date has changed - play tier-aware micro blip immediately
+      // Try to resume audio context if suspended, but don't wait - play blip anyway
+      const audioContext = getAudioContext();
+      if (audioContext && audioContext.state === 'suspended') {
+        audioContext.resume().catch(() => {
+          // Silently fail - we'll try to play anyway
+        });
+      }
+      
+      // Determine direction by comparing old and new dates
+      let blipDirection: 'next' | 'prev' | null = null;
+      if (lastBlipDateDay) {
+        blipDirection = clampedDateDay.getTime() > lastBlipDateDay.getTime() ? 'next' : 'prev';
+      }
+      
+      // Play tier-aware micro blip with direction
+      playMicroBlip(currentViewMode, blipDirection);
+      
+      // Store normalized date (day level only) for accurate comparison
+      lastBlipDateRef.current = new Date(clampedDateDay);
+    }
+    
+    // RESPONSIVE: Use display refresh rate for smooth, immediate visual feedback
+    // Update immediately - let the throttled callback handle frame rate limiting
+    // This ensures visual movement matches audio feedback
+    schedule(() => {
+      currentOnTimePeriodSelect(clampedDate, currentViewMode);
+    }, 'critical'); // Critical priority for immediate visual feedback
+    
+    lastUpdateTimeRef.current = now;
+  }, undefined); // undefined = use native refresh rate (unlocked)
+
   // Set up global mouse event listeners for dragging
   useEffect(() => {
     if (!isDragging || !dragStartPositionRef.current) {
       return;
     }
     
-    const handleMouseMoveGlobal = (e: MouseEvent) => {
-      const currentTimelineData = timelineDataRef.current;
-      const currentViewMode = viewModeRef.current;
-      const currentSelectedDate = selectedDateRef.current;
-      const currentOnTimePeriodSelect = onTimePeriodSelectRef.current;
-      
-      if (!containerRef.current || !currentTimelineData.startDate || !currentTimelineData.endDate || !dragStartPositionRef.current) {
-        return;
-      }
-
-      const now = Date.now();
-      // Use cached bounding rect to avoid forced reflows - only update if not cached
-      let rect = cachedBoundingRectRef.current;
-      if (!rect && containerRef.current) {
-        rect = containerRef.current.getBoundingClientRect();
-        cachedBoundingRectRef.current = rect;
-      }
-      if (!rect) {
-        return; // Can't proceed without bounding rect
-      }
-      
-      // Calculate total movement from start
-      const totalHorizontalDelta = e.clientX - dragStartPositionRef.current.x;
-      const totalVerticalDelta = e.clientY - dragStartPositionRef.current.y;
-      
-      // Track initial movement direction to determine lock
-      if (initialMovementRef.current) {
-        initialMovementRef.current.horizontal = totalHorizontalDelta;
-        initialMovementRef.current.vertical = totalVerticalDelta;
-      }
-      
-      // Horizontal dead zone: suppress horizontal movement when primarily moving vertically
-      // This makes it easier to zoom without accidentally moving the blips left/right
-      const horizontalDeadZone = 30; // pixels - ignore horizontal movement if within this
-      const verticalToHorizontalRatio = 2.0; // If vertical movement is X times horizontal, lock horizontal
-      
-      // Calculate if movement is primarily vertical
-      const absVertical = Math.abs(totalVerticalDelta);
-      const absHorizontal = Math.abs(totalHorizontalDelta);
-      
-      // Lock horizontal if:
-      // 1. Horizontal movement is within dead zone AND vertical movement is significant, OR
-      // 2. Vertical movement is significantly more than horizontal (ratio-based)
-      const shouldLockHorizontal = 
-        (absVertical > 10 && absHorizontal < horizontalDeadZone) || 
-        (absVertical > 15 && absVertical > absHorizontal * verticalToHorizontalRatio);
-      
-      if (shouldLockHorizontal && !horizontalLockedRef.current) {
-        setHorizontalLocked(true);
-        horizontalLockedRef.current = true;
-      } else if (!shouldLockHorizontal && horizontalLockedRef.current && absHorizontal > horizontalDeadZone) {
-        // Unlock if user explicitly moves horizontally beyond dead zone
-        setHorizontalLocked(false);
-        horizontalLockedRef.current = false;
-      }
-      
-      // Calculate incremental vertical movement (scale change)
-      const verticalDelta = e.clientY - lastVerticalPositionRef.current;
-      const verticalThreshold = 800; // Increased threshold for more deliberate movement
-      const deadZoneSize = 300; // Dead zone pixels after scale change
-      
-      // Accumulate vertical movement for mechanical feel
-      verticalMovementAccumulatorRef.current += verticalDelta;
-      
-      // Check if we're at a limit (can't zoom in/out further) and trying to move beyond it
-      const scaleOrder: TimeRange[] = ['decade', 'year', 'month', 'week', 'day'];
-      const currentIndex = scaleOrder.indexOf(currentViewMode);
-      const absAccumulator = Math.abs(verticalMovementAccumulatorRef.current);
-      
-      // At top limit: moving up (negative) and at finest scale (day), past threshold
-      const isAtTopLimit = verticalMovementAccumulatorRef.current < 0 && 
-                           currentIndex >= scaleOrder.length - 1 && 
-                           absAccumulator > verticalThreshold;
-      
-      // At bottom limit: moving down (positive) and at coarsest scale (decade), past threshold
-      const isAtBottomLimit = verticalMovementAccumulatorRef.current > 0 && 
-                              currentIndex <= 0 && 
-                              absAccumulator > verticalThreshold;
-      
-      const isAtLimit = isAtTopLimit || isAtBottomLimit;
-      
-      // Update slider noise based on distance from center to threshold
-      // This provides real-time audio feedback indicating proximity to level change threshold
-      if (sliderNoiseRef.current) {
-        const distanceFromCenter = absAccumulator;
-        sliderNoiseRef.current.update(distanceFromCenter, verticalThreshold);
-        
-        // Set limit state for dampened null wall effect when at limits
-        // This creates a pitch-down portamento effect with dampened volume
-        sliderNoiseRef.current.setLimitState(isAtLimit);
-      }
-      
-      // Check if we're in the dead zone (must move back toward center after scale change)
-      const inDeadZone = Math.abs(verticalMovementAccumulatorRef.current - lastScaleChangeAccumulatorRef.current) < deadZoneSize;
-      
-      // Update drag limits visualization relative to radial dial position
-      if (dragStartPositionRef.current) {
-        // Calculate dead zone boundaries relative to start position
-        // Dead zone is relative to the last scale change accumulator value
-        // The accumulator tracks total vertical movement from start
-        const deadZoneCenter = lastScaleChangeAccumulatorRef.current;
-        const deadZoneTop = -(deadZoneCenter + deadZoneSize); // Negative = above dial
-        const deadZoneBottom = -(deadZoneCenter - deadZoneSize); // Negative = above dial
-        
-        // Vertical threshold lines (800px from start)
-        // These represent the actual pixel distances, but we'll show them scaled for visibility
-        const thresholdTop = -800; // Above dial
-        const thresholdBottom = 800; // Below dial
-        
-        // Calculate current vertical movement from start
-        const currentVerticalMovement = verticalMovementAccumulatorRef.current;
-        
-        // Only update state if values have actually changed to prevent infinite re-render loops
-        const newDragLimits = {
-          deadZoneTop: deadZoneTop,
-          deadZoneBottom: deadZoneBottom,
-          thresholdTop: thresholdTop,
-          thresholdBottom: thresholdBottom,
-          currentMovement: currentVerticalMovement, // Track current position for visual feedback
-        };
-        
-        // Compare with last values - only update if something changed
-        const lastLimits = lastDragLimitsRef.current;
-        if (!lastLimits || 
-            lastLimits.deadZoneTop !== newDragLimits.deadZoneTop ||
-            lastLimits.deadZoneBottom !== newDragLimits.deadZoneBottom ||
-            lastLimits.thresholdTop !== newDragLimits.thresholdTop ||
-            lastLimits.thresholdBottom !== newDragLimits.thresholdBottom ||
-            lastLimits.currentMovement !== newDragLimits.currentMovement) {
-          lastDragLimitsRef.current = newDragLimits;
-          setDragLimits(newDragLimits);
-        }
-      }
-      
-      // Handle vertical movement for scale changes with lock-in mechanism and dead zone
-      // Note: scaleOrder is already defined above for limit detection
-      if (!scaleChangeLockRef.current && !inDeadZone && Math.abs(verticalMovementAccumulatorRef.current) > verticalThreshold) {
-        
-        // Check if we've moved enough in the new direction (past the dead zone)
-        const movementFromLastChange = verticalMovementAccumulatorRef.current - lastScaleChangeAccumulatorRef.current;
-        const hasCrossedDeadZone = Math.abs(movementFromLastChange) >= deadZoneSize;
-        
-        if (verticalMovementAccumulatorRef.current < 0 && currentIndex < scaleOrder.length - 1 && hasCrossedDeadZone) {
-          // Moving up - zoom in (more detail)
-          scaleChangeLockRef.current = true; // Lock to prevent rapid changes
-          const newViewMode = scaleOrder[currentIndex + 1];
-          
-          // Play mechanical click sound
-          playMechanicalClick('up');
-          
-          // Trigger portamento drop in slider noise (momentary volume dip, then return)
-          if (sliderNoiseRef.current) {
-            sliderNoiseRef.current.portamentoDrop();
-          }
-          
-          // Trigger visual feedback
-          setMechanicalClick({ scale: newViewMode, direction: 'up' });
-          setTimeout(() => setMechanicalClick(null), 300);
-          
-          // View mode change will trigger timeline range recalculation via useEffect
-          currentOnTimePeriodSelect(currentSelectedDate, newViewMode);
-          
-          // Update drag start position to maintain relative position
-          if (dragStartPositionRef.current) {
-            dragStartPositionRef.current.date = currentSelectedDate;
-          }
-          
-          // Store accumulator value at scale change and set dead zone
-          lastScaleChangeAccumulatorRef.current = verticalMovementAccumulatorRef.current;
-          deadZoneRef.current = deadZoneSize;
-          
-          // Reset accumulator position but keep the value for dead zone calculation
-          lastVerticalPositionRef.current = e.clientY;
-          setTimeout(() => {
-            scaleChangeLockRef.current = false;
-          }, 200); // Lock for 200ms to prevent rapid clicking
-          return;
-        } else if (verticalMovementAccumulatorRef.current > 0 && currentIndex > 0 && hasCrossedDeadZone) {
-          // Moving down - zoom out (less detail)
-          scaleChangeLockRef.current = true; // Lock to prevent rapid changes
-          const newViewMode = scaleOrder[currentIndex - 1];
-          
-          // Play mechanical click sound
-          playMechanicalClick('down');
-          
-          // Trigger portamento drop in slider noise (momentary volume dip, then return)
-          if (sliderNoiseRef.current) {
-            sliderNoiseRef.current.portamentoDrop();
-          }
-          
-          // Trigger visual feedback
-          setMechanicalClick({ scale: newViewMode, direction: 'down' });
-          setTimeout(() => setMechanicalClick(null), 300);
-          
-          // View mode change will trigger timeline range recalculation via useEffect
-          currentOnTimePeriodSelect(currentSelectedDate, newViewMode);
-          
-          // Update drag start position to maintain relative position
-          if (dragStartPositionRef.current) {
-            dragStartPositionRef.current.date = currentSelectedDate;
-          }
-          
-          // Store accumulator value at scale change and set dead zone
-          lastScaleChangeAccumulatorRef.current = verticalMovementAccumulatorRef.current;
-          deadZoneRef.current = deadZoneSize;
-          
-          // Reset accumulator position but keep the value for dead zone calculation
-          lastVerticalPositionRef.current = e.clientY;
-          setTimeout(() => {
-            scaleChangeLockRef.current = false;
-          }, 200); // Lock for 200ms to prevent rapid clicking
-          return;
-        }
-      }
-      
-      // Decay accumulator if not enough movement or in dead zone
-      if (Math.abs(verticalMovementAccumulatorRef.current) < verticalThreshold || inDeadZone) {
-        verticalMovementAccumulatorRef.current *= 0.95; // Decay slowly
-      }
-      
-      // If horizontal is locked, skip horizontal movement calculation
-      if (horizontalLockedRef.current) {
-        // Only process vertical movement for scale changes
-        // Horizontal movement is blocked
-        return;
-      }
-      
-      // Calculate horizontal movement (time navigation) - smooth and fluid with fret-like resistance
-      // Movement is relative to center indicator's position for consistent haptic interaction
-      const totalTime = currentTimelineData.endDate.getTime() - currentTimelineData.startDate.getTime();
-      
-      if (!dragStartPositionRef.current) {
-        return;
-      }
-      
-      // Calculate horizontal delta from center indicator's position (not from click position)
-      // dragStartPositionRef.current.x is the center indicator's screen X position when drag started
-      const horizontalDelta = e.clientX - dragStartPositionRef.current.x;
-      
-      // Convert pixel delta to timeline percentage (0-1)
-      const deltaPercentage = horizontalDelta / rect.width;
-      
-      // Get the starting timeline position (center indicator position when drag started)
-      const startTimelinePosition = dragStartPositionRef.current.timelinePosition / 100; // Convert to 0-1
-      
-      // Calculate current selected date position (may have changed during drag)
-      const currentTimeOffset = currentSelectedDate.getTime() - currentTimelineData.startDate.getTime();
-      const currentTimelinePosition = (currentTimeOffset / totalTime);
-      
-      // Calculate target position by applying delta relative to center indicator's current position
-      // This ensures consistent haptic interaction regardless of where user started drag
-      const rawTargetPosition = currentTimelinePosition + deltaPercentage;
-      
-      // Calculate distance from center when drag started (for dampening adjustment)
-      const distanceFromCenter = Math.abs(startTimelinePosition - 0.5);
-      
-      // Apply distance-based dampening: the further from center, the more dampening
-      // Scale from 0.02 (at edges) to 0.05 (at center) for molasses-like mechanical lever feel
-      const baseDampening = 0.05 - (distanceFromCenter * 0.06); // Range: 0.05 at center, 0.02 at edges
-      
-      // Additional dampening for large distances to prevent fast jumps
-      const distanceMagnitude = Math.abs(deltaPercentage);
-      const distanceMultiplier = distanceMagnitude > 0.3 ? 0.6 : 1.0; // Extra dampening for large movements
-      
-      const combinedDampening = baseDampening * distanceMultiplier;
-      
-      // Apply fret-like resistance: deeper valleys between time points require more drag
-      // Get all time points (frets) for the current view mode
-      const currentAllScaleMarkings = allScaleMarkingsRef.current;
-      const allMarks = currentAllScaleMarkings[currentViewMode];
-      const allTimePoints = [...allMarks.major, ...allMarks.minor]
-        .map(mark => mark.position / 100) // Convert to 0-1 range
-        .sort((a, b) => a - b); // Sort for easier valley calculation
-      
-      // Calculate target position with gradual movement and fret resistance
-      let targetMousePosition = rawTargetPosition;
-      
-      if (allTimePoints.length > 0) {
-        // Find the two nearest time points (frets) to determine which valley we're in
-        let leftFret = 0;
-        let rightFret = 1;
-        
-        for (let i = 0; i < allTimePoints.length; i++) {
-          if (allTimePoints[i] <= rawTargetPosition) {
-            leftFret = allTimePoints[i];
-          }
-          if (allTimePoints[i] >= rawTargetPosition && rightFret === 1) {
-            rightFret = allTimePoints[i];
-            break;
-          }
-        }
-        
-        // Calculate position within the valley (between two frets)
-        const valleyWidth = rightFret - leftFret;
-        if (valleyWidth > 0) {
-          const positionInValley = (rawTargetPosition - leftFret) / valleyWidth; // 0 to 1
-          
-          // Apply resistance curve: valleys require more drag - stronger curve for molasses-like mechanical lever feel
-          const resistanceCurve = Math.pow(positionInValley, 5.0);
-          
-          // Map the resisted position back to timeline coordinates
-          targetMousePosition = leftFret + (resistanceCurve * valleyWidth);
-        }
-      }
-      
-      // Gradually move from current position toward target position
-      // Use current selected date position as the reference, not the start position
-      const targetPosition = currentTimelinePosition + (targetMousePosition - currentTimelinePosition) * combinedDampening;
-      
-      // Clamp the target position
-      const clampedTargetPosition = Math.max(0, Math.min(1, targetPosition));
-      
-      // Calculate time from target position
-      const timeOffset = clampedTargetPosition * totalTime;
-      const targetTime = currentTimelineData.startDate.getTime() + timeOffset;
-      
-      // Create date from time with resistance applied
-      const finalDate = new Date(targetTime);
-      
-      // Clamp to visible range (shouldn't be necessary but safety check)
-      let clampedDate: Date;
-      if (finalDate < currentTimelineData.startDate) {
-        clampedDate = currentTimelineData.startDate;
-      } else if (finalDate > currentTimelineData.endDate) {
-        clampedDate = currentTimelineData.endDate;
-      } else {
-        clampedDate = finalDate;
-      }
-      
-      // Play micro blip for every date change during dragging
-      // Compare dates at day level (ignore time component) - check BEFORE throttling
-      // This ensures blips play immediately even if the update callback is throttled
-      const lastBlipDate = lastBlipDateRef.current;
-      const clampedDateDay = createDate(clampedDate.getFullYear(), clampedDate.getMonth(), clampedDate.getDate());
-      const lastBlipDateDay = lastBlipDate ? createDate(lastBlipDate.getFullYear(), lastBlipDate.getMonth(), lastBlipDate.getDate()) : null;
-      
-      // Detect ALL date changes, even if we skip some updates due to throttling
-      // If the date changed, play blip immediately (don't wait for throttle)
-      if (!lastBlipDateDay || clampedDateDay.getTime() !== lastBlipDateDay.getTime()) {
-        // Date has changed - play tier-aware micro blip immediately
-        // Try to resume audio context if suspended, but don't wait - play blip anyway
-        const audioContext = getAudioContext();
-        if (audioContext && audioContext.state === 'suspended') {
-          audioContext.resume().catch(() => {
-            // Silently fail - we'll try to play anyway
-          });
-        }
-        
-        // Determine direction by comparing old and new dates
-        let blipDirection: 'next' | 'prev' | null = null;
-        if (lastBlipDateDay) {
-          blipDirection = clampedDateDay.getTime() > lastBlipDateDay.getTime() ? 'next' : 'prev';
-        }
-        
-        // Play tier-aware micro blip with direction
-        playMicroBlip(viewMode, blipDirection);
-        
-        // Store normalized date (day level only) for accurate comparison
-        lastBlipDateRef.current = new Date(clampedDateDay);
-      }
-      
-      // Reduced throttling for smoother movement - 16ms for ~60fps
-      // This allows smooth fluid movement while still preventing excessive updates
-      if (now - lastUpdateTimeRef.current < 16) {
-        return;
-      }
-      
-      lastUpdateTimeRef.current = now;
-      
-      // Update the selected date with smooth continuous movement
-      currentOnTimePeriodSelect(clampedDate, currentViewMode);
-    };
-
     const handleMouseUpGlobal = () => {
       setIsDragging(false);
       setHorizontalLocked(false);
@@ -3969,18 +3972,19 @@ export default function GlobalTimelineMinimap({
       // Timeline range remains locked - it only updates when viewMode changes
     };
 
-    window.addEventListener('mousemove', handleMouseMoveGlobal);
+    // RESPONSIVE: Use throttled handler for smooth, immediate visual feedback
+    window.addEventListener('mousemove', handleMouseMoveThrottled, { passive: true });
     window.addEventListener('mouseup', handleMouseUpGlobal);
     document.body.style.cursor = 'grabbing';
     document.body.style.userSelect = 'none';
     
     return () => {
-      window.removeEventListener('mousemove', handleMouseMoveGlobal);
+      window.removeEventListener('mousemove', handleMouseMoveThrottled);
       window.removeEventListener('mouseup', handleMouseUpGlobal);
       document.body.style.cursor = '';
       document.body.style.userSelect = '';
     };
-  }, [isDragging]); // Only depend on isDragging to avoid recreating handlers
+  }, [isDragging, handleMouseMoveThrottled]); // Include throttled handler in deps
 
   // Get context-aware labels for radial dial
   const getRadialDialLabels = () => {

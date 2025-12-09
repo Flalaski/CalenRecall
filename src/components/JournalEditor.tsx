@@ -787,8 +787,8 @@ export default function JournalEditor({
                   id="hour-input"
                   type="number"
                   className="time-input"
-                  min={preferences.timeFormat === '12h' ? 1 : 0}
-                  max={preferences.timeFormat === '12h' ? 12 : 23}
+                  min={(preferences.timeFormat || '12h') === '12h' ? 1 : 0}
+                  max={(preferences.timeFormat || '12h') === '12h' ? 12 : 23}
                   placeholder="--"
                   value={hour !== undefined && hour !== null ? hour : ''}
                   onFocus={() => playTimeFieldFocusSound()}
@@ -820,7 +820,7 @@ export default function JournalEditor({
                   }}
                 />
               </div>
-              {preferences.timeFormat === '12h' && (
+              {(preferences.timeFormat || '12h') === '12h' && (
                 <div className="time-input-group time-input-group-ampm">
                   <label htmlFor="ampm-input">AM/PM</label>
                   <select

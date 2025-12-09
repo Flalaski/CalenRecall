@@ -1,4 +1,4 @@
-import { ipcMain, dialog, app, BrowserWindow, shell } from 'electron';
+import { ipcMain, dialog, app, BrowserWindow, shell, clipboard } from 'electron';
 import * as fs from 'fs';
 import * as path from 'path';
 import PDFDocument from 'pdfkit';
@@ -87,6 +87,13 @@ import {
   getAutoLoadProfileId,
   setAutoLoadProfileId,
   getProfileDetails,
+  setProfilePassword,
+  verifyProfilePassword,
+  changeProfilePassword,
+  removeProfilePassword,
+  recoverProfilePassword,
+  profileHasPassword,
+  profileHasRecoveryKey,
   type Profile,
 } from './profile-manager';
 import { EntryVersion } from './types';
@@ -1904,6 +1911,61 @@ export function setupIpcHandlers() {
     }
   });
 
+  ipcMain.handle('export-profile-database', async (_event, profileId: string) => {
+    try {
+      if (!profileId || typeof profileId !== 'string') {
+        return { success: false, error: 'Invalid profile ID' };
+      }
+      
+      const profile = getProfile(profileId);
+      if (!profile) {
+        return { success: false, error: 'Profile not found' };
+      }
+      
+      const userDataPath = app.getPath('userData');
+      const dbPath = path.join(userDataPath, profile.databasePath);
+      
+      if (!fs.existsSync(dbPath)) {
+        return { success: false, error: 'database_not_found', message: `Database file not found for profile: ${profile.name}` };
+      }
+
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+      const sanitizedProfileName = profile.name.replace(/[^a-zA-Z0-9-_]/g, '_');
+      const defaultFileName = `calenrecall-export-${sanitizedProfileName}-${timestamp}.db`;
+
+      const { canceled, filePath } = await dialog.showSaveDialog({
+        title: `Export Database - ${profile.name}`,
+        defaultPath: defaultFileName,
+        filters: [{ name: 'SQLite Database', extensions: ['db'] }],
+      });
+
+      if (canceled || !filePath) {
+        return { success: false, canceled: true };
+      }
+
+      try {
+        fs.copyFileSync(dbPath, filePath);
+        return { success: true, canceled: false, path: filePath };
+      } catch (error: unknown) {
+        console.error('Error exporting profile database:', error);
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        return {
+          success: false,
+          canceled: false,
+          error: 'export_failed',
+          message: errorMessage,
+        };
+      }
+    } catch (error) {
+      console.error('[IPC] Error exporting profile database:', error);
+      return {
+        success: false,
+        error: 'export_failed',
+        message: error instanceof Error ? error.message : 'Unknown error',
+      };
+    }
+  });
+
   ipcMain.handle('delete-profile', async (_event, profileId: string) => {
     try {
       if (!profileId || typeof profileId !== 'string') {
@@ -2004,7 +2066,249 @@ export function setupIpcHandlers() {
       throw error;
     }
   });
+
+  // Password management handlers
+  console.log('[IPC] Registering password management handlers...');
+
+  ipcMain.handle('set-profile-password', async (_event, profileId: string, password: string, generateRecovery: boolean = true) => {
+    try {
+      if (!profileId || typeof profileId !== 'string') {
+        throw new Error('Invalid profile ID');
+      }
+      if (!password || typeof password !== 'string' || password.length === 0) {
+        throw new Error('Password cannot be empty');
+      }
+
+      const recoveryKey = setProfilePassword(profileId, password, generateRecovery);
+      
+      // Notify renderer process
+      if (mainWindowRef && !mainWindowRef.isDestroyed()) {
+        mainWindowRef.webContents.send('profile-password-set', { profileId, recoveryKey });
+      }
+      if (profileSelectorWindowRef && !profileSelectorWindowRef.isDestroyed()) {
+        profileSelectorWindowRef.webContents.send('profile-password-set', { profileId, recoveryKey });
+      }
+      
+      return { success: true, recoveryKey };
+    } catch (error) {
+      console.error('[IPC] Error setting profile password:', error);
+      throw error;
+    }
+  });
+
+  ipcMain.handle('verify-profile-password', async (_event, profileId: string, password: string) => {
+    try {
+      if (!profileId || typeof profileId !== 'string') {
+        throw new Error('Invalid profile ID');
+      }
+      if (!password || typeof password !== 'string') {
+        return { success: false, error: 'Password cannot be empty' };
+      }
+
+      const isValid = verifyProfilePassword(profileId, password);
+      return { success: isValid };
+    } catch (error) {
+      console.error('[IPC] Error verifying profile password:', error);
+      return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+    }
+  });
+
+  ipcMain.handle('change-profile-password', async (_event, profileId: string, oldPassword: string, newPassword: string, generateNewRecovery: boolean = true) => {
+    try {
+      if (!profileId || typeof profileId !== 'string') {
+        throw new Error('Invalid profile ID');
+      }
+      if (!oldPassword || typeof oldPassword !== 'string' || oldPassword.length === 0) {
+        throw new Error('Old password cannot be empty');
+      }
+      if (!newPassword || typeof newPassword !== 'string' || newPassword.length === 0) {
+        throw new Error('New password cannot be empty');
+      }
+
+      const recoveryKey = changeProfilePassword(profileId, oldPassword, newPassword, generateNewRecovery);
+      
+      // Notify renderer process
+      if (mainWindowRef && !mainWindowRef.isDestroyed()) {
+        mainWindowRef.webContents.send('profile-password-changed', { profileId, recoveryKey });
+      }
+      if (profileSelectorWindowRef && !profileSelectorWindowRef.isDestroyed()) {
+        profileSelectorWindowRef.webContents.send('profile-password-changed', { profileId, recoveryKey });
+      }
+      
+      return { success: true, recoveryKey };
+    } catch (error) {
+      console.error('[IPC] Error changing profile password:', error);
+      throw error;
+    }
+  });
+
+  ipcMain.handle('remove-profile-password', async (_event, profileId: string, password: string) => {
+    try {
+      if (!profileId || typeof profileId !== 'string') {
+        throw new Error('Invalid profile ID');
+      }
+      if (!password || typeof password !== 'string' || password.length === 0) {
+        throw new Error('Password cannot be empty');
+      }
+
+      removeProfilePassword(profileId, password);
+      
+      // Notify renderer process
+      if (mainWindowRef && !mainWindowRef.isDestroyed()) {
+        mainWindowRef.webContents.send('profile-password-removed', { profileId });
+      }
+      if (profileSelectorWindowRef && !profileSelectorWindowRef.isDestroyed()) {
+        profileSelectorWindowRef.webContents.send('profile-password-removed', { profileId });
+      }
+      
+      return { success: true };
+    } catch (error) {
+      console.error('[IPC] Error removing profile password:', error);
+      throw error;
+    }
+  });
+
+  ipcMain.handle('profile-has-password', async (_event, profileId: string) => {
+    try {
+      if (!profileId || typeof profileId !== 'string') {
+        throw new Error('Invalid profile ID');
+      }
+
+      return { hasPassword: profileHasPassword(profileId) };
+    } catch (error) {
+      console.error('[IPC] Error checking profile password:', error);
+      throw error;
+    }
+  });
+
+  ipcMain.handle('recover-profile-password', async (_event, profileId: string, recoveryKey: string, newPassword: string) => {
+    try {
+      if (!profileId || typeof profileId !== 'string') {
+        throw new Error('Invalid profile ID');
+      }
+      if (!recoveryKey || typeof recoveryKey !== 'string' || recoveryKey.length === 0) {
+        throw new Error('Recovery key cannot be empty');
+      }
+      if (!newPassword || typeof newPassword !== 'string' || newPassword.length === 0) {
+        throw new Error('New password cannot be empty');
+      }
+
+      const newRecoveryKey = recoverProfilePassword(profileId, recoveryKey, newPassword);
+      
+      // Notify renderer process
+      if (mainWindowRef && !mainWindowRef.isDestroyed()) {
+        mainWindowRef.webContents.send('profile-password-recovered', { profileId, newRecoveryKey });
+      }
+      if (profileSelectorWindowRef && !profileSelectorWindowRef.isDestroyed()) {
+        profileSelectorWindowRef.webContents.send('profile-password-recovered', { profileId, newRecoveryKey });
+      }
+      
+      return { success: true, recoveryKey: newRecoveryKey };
+    } catch (error) {
+      console.error('[IPC] Error recovering profile password:', error);
+      throw error;
+    }
+  });
+
+  ipcMain.handle('profile-has-recovery-key', async (_event, profileId: string) => {
+    try {
+      if (!profileId || typeof profileId !== 'string') {
+        throw new Error('Invalid profile ID');
+      }
+
+      return { hasRecoveryKey: profileHasRecoveryKey(profileId) };
+    } catch (error) {
+      console.error('[IPC] Error checking profile recovery key:', error);
+      throw error;
+    }
+  });
+
+  // Register copy-to-clipboard handler - CRITICAL for password recovery
+  try {
+    ipcMain.handle('copy-to-clipboard', async (_event, text: string) => {
+      try {
+        if (!text || typeof text !== 'string') {
+          throw new Error('Invalid text to copy');
+        }
+
+        clipboard.writeText(text);
+        console.log('[IPC] Successfully copied text to clipboard');
+        return { success: true };
+      } catch (error) {
+        console.error('[IPC] Error copying to clipboard:', error);
+        throw error;
+      }
+    });
+    console.log('[IPC] ✅ Registered handler: copy-to-clipboard');
+  } catch (error) {
+    console.error('[IPC] ❌ FAILED to register copy-to-clipboard handler:', error);
+    throw error;
+  }
+
+  // Register save-recovery-key-to-file handler - CRITICAL for password recovery
+  try {
+    ipcMain.handle('save-recovery-key-to-file', async (_event, recoveryKey: string, profileName: string) => {
+      try {
+        if (!recoveryKey || typeof recoveryKey !== 'string') {
+          throw new Error('Invalid recovery key');
+        }
+
+        if (!profileName || typeof profileName !== 'string') {
+          throw new Error('Invalid profile name');
+        }
+
+        const sanitizedProfileName = sanitizeFileName(profileName);
+        const defaultFileName = `calenrecall-recovery-key-${sanitizedProfileName}.txt`;
+        
+        // Default to user's Documents folder
+        const documentsPath = app.getPath('documents');
+        const defaultPath = path.join(documentsPath, defaultFileName);
+
+        const result = await dialog.showSaveDialog({
+          title: 'Save Recovery Key',
+          defaultPath: defaultPath,
+          filters: [
+            { name: 'Text Files', extensions: ['txt'] },
+            { name: 'All Files', extensions: ['*'] },
+          ],
+        });
+
+        if (result.canceled) {
+          return { success: false, canceled: true };
+        }
+
+        if (!result.filePath) {
+          throw new Error('No file path selected');
+        }
+
+        const filePath = result.filePath;
+        
+        // For save dialog, the path is already validated by Electron
+        // We just need to ensure it's a valid absolute path
+        const resolvedPath = path.resolve(filePath);
+        if (!resolvedPath || resolvedPath.length === 0) {
+          throw new Error('Invalid file path');
+        }
+
+        const content = `CalenRecall Recovery Key\n\nProfile: ${profileName}\nRecovery Key: ${recoveryKey}\n\nIMPORTANT: Keep this file safe. You can use this recovery key to reset your profile password if you forget it.\n\nGenerated: ${new Date().toISOString()}`;
+
+        fs.writeFileSync(resolvedPath, content, 'utf-8');
+        console.log(`[IPC] Successfully saved recovery key to: ${resolvedPath}`);
+        return { success: true, path: resolvedPath };
+      } catch (error) {
+        console.error('[IPC] Error saving recovery key to file:', error);
+        throw error;
+      }
+    });
+    console.log('[IPC] ✅ Registered handler: save-recovery-key-to-file');
+  } catch (error) {
+    console.error('[IPC] ❌ FAILED to register save-recovery-key-to-file handler:', error);
+    throw error;
+  }
   
+  // Verify critical handlers are registered by attempting to list them
+  // Note: This is a best-effort verification - handlers should be registered at this point
+  console.log('[IPC] Critical password recovery handlers registration completed');
   console.log('[IPC] All IPC handlers registered successfully');
 }
 

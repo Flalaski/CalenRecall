@@ -1468,9 +1468,14 @@ app.whenReady().then(() => {
   setCreateImportProgressWindowCallback(() => createImportProgressWindow());
     console.log('[Main] ✅ IPC handlers setup completed successfully');
     
-    // Verify handlers are registered
+    // Verify critical handlers are registered
     const handlers = (ipcMain as any).listeners?.('get-all-profiles') || [];
     console.log('[Main] Verified get-all-profiles handler registered:', handlers.length > 0);
+    
+    // Verify critical password recovery handlers
+    console.log('[Main] Verifying critical password recovery handlers...');
+    // Note: We can't directly check if handlers exist, but the setupIpcHandlers function
+    // should have logged their registration. If those logs don't appear, registration failed.
   } catch (error) {
     console.error('[Main] ❌ Error setting up IPC handlers:', error);
     console.error('[Main] Error stack:', error instanceof Error ? error.stack : 'No stack');

@@ -521,6 +521,8 @@
   /* HIGH-PERFORMANCE: Disable animations during drag for better performance */
   animation: none !important;
   will-change: auto !important;
+  /* RESPONSIVE: Disable transitions during drag for immediate visual feedback */
+  transition: none !important;
 }
 
 .minimap-container.dragging .entry-indicator,
@@ -1269,7 +1271,8 @@
   width: 100%;
   height: 100%;
   transform: translateZ(0) rotate(45deg);
-  transition: transform 0.3s ease, opacity 0.3s ease;
+  /* RESPONSIVE: Faster transitions for immediate visual feedback */
+  transition: transform 0.1s ease-out, opacity 0.1s ease-out;
   /* HIGH-PERFORMANCE: CSS containment for layout isolation */
   contain: layout style paint;
   /* HIGH-PERFORMANCE: Compositor-friendly properties only */

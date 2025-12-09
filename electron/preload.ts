@@ -236,6 +236,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
   createProfile: (name: string): Promise<Profile> =>
     ipcRenderer.invoke('create-profile', name),
 
+  exportProfileDatabase: (profileId: string): Promise<{ success: boolean; canceled?: boolean; error?: string; message?: string; path?: string }> =>
+    ipcRenderer.invoke('export-profile-database', profileId),
+
   deleteProfile: (profileId: string): Promise<{ success: boolean }> =>
     ipcRenderer.invoke('delete-profile', profileId),
 
@@ -279,6 +282,51 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
   setAutoLoadProfileId: (profileId: string | null): Promise<{ success: boolean }> =>
     ipcRenderer.invoke('set-auto-load-profile-id', profileId),
+
+  // Password management operations
+  setProfilePassword: (profileId: string, password: string): Promise<{ success: boolean }> =>
+    ipcRenderer.invoke('set-profile-password', profileId, password),
+
+  verifyProfilePassword: (profileId: string, password: string): Promise<{ success: boolean; error?: string }> =>
+    ipcRenderer.invoke('verify-profile-password', profileId, password),
+
+  changeProfilePassword: (profileId: string, oldPassword: string, newPassword: string): Promise<{ success: boolean }> =>
+    ipcRenderer.invoke('change-profile-password', profileId, oldPassword, newPassword),
+
+  removeProfilePassword: (profileId: string, password: string): Promise<{ success: boolean }> =>
+    ipcRenderer.invoke('remove-profile-password', profileId, password),
+
+  profileHasPassword: (profileId: string): Promise<{ hasPassword: boolean }> =>
+    ipcRenderer.invoke('profile-has-password', profileId),
+
+  recoverProfilePassword: (profileId: string, recoveryKey: string, newPassword: string): Promise<{ success: boolean; recoveryKey: string | null }> =>
+    ipcRenderer.invoke('recover-profile-password', profileId, recoveryKey, newPassword),
+
+  profileHasRecoveryKey: (profileId: string): Promise<{ hasRecoveryKey: boolean }> =>
+    ipcRenderer.invoke('profile-has-recovery-key', profileId),
+
+  copyToClipboard: (text: string): Promise<{ success: boolean }> =>
+    ipcRenderer.invoke('copy-to-clipboard', text),
+
+  saveRecoveryKeyToFile: (recoveryKey: string, profileName: string): Promise<{ success: boolean; canceled?: boolean; path?: string }> =>
+    ipcRenderer.invoke('save-recovery-key-to-file', recoveryKey, profileName),
+
+  // Password event listeners
+  onProfilePasswordSet: (callback: (data: { profileId: string; recoveryKey?: string | null }) => void) => {
+    ipcRenderer.on('profile-password-set', (_event, data) => callback(data));
+  },
+
+  onProfilePasswordChanged: (callback: (data: { profileId: string; recoveryKey?: string | null }) => void) => {
+    ipcRenderer.on('profile-password-changed', (_event, data) => callback(data));
+  },
+
+  onProfilePasswordRemoved: (callback: (data: { profileId: string }) => void) => {
+    ipcRenderer.on('profile-password-removed', (_event, data) => callback(data));
+  },
+
+  onProfilePasswordRecovered: (callback: (data: { profileId: string; newRecoveryKey?: string | null }) => void) => {
+    ipcRenderer.on('profile-password-recovered', (_event, data) => callback(data));
+  },
 });
 
 // Profile type for preload
@@ -290,5 +338,6 @@ interface Profile {
   databasePath: string;
   isDefault: boolean;
   autoLoad?: boolean;
+  hasPassword?: boolean;
 }
 
