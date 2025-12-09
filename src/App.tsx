@@ -60,20 +60,23 @@ function App() {
         
         if (window.electronAPI) {
           // Get total entry count first (fast query) for crystal size calculation
-          const count = await window.electronAPI.getEntryCount();
+          const count = await (window.electronAPI as any).getEntryCount();
           setTotalEntryCount(count);
           
           // Load all entries at once
           const allEntries = await window.electronAPI.getAllEntries();
           
-          // Progressive loading simulation - show entries appearing on tree
+          // OPTIMIZATION: Set entries only once at the end to avoid rebuilding lookup structure 50+ times
+          // Progressive visual updates are handled by LoadingScreen using progress percentage and totalEntryCount
+          // This prevents expensive entryLookup and entryColors rebuilds during loading
+          
+          // Simulate progressive loading for visual feedback (without actually setting partial entries)
           const totalEntries = allEntries.length;
-          const batchSize = Math.max(1, Math.floor(totalEntries / 50)); // 50 batches
+          const batchCount = 50;
+          const batchSize = Math.max(1, Math.floor(totalEntries / batchCount));
           
           for (let i = 0; i < totalEntries; i += batchSize) {
-            const batch = allEntries.slice(0, i + batchSize);
-            setEntries(batch);
-            
+            // Update progress for visual feedback only
             const progress = 10 + (i / totalEntries) * 70; // 10% to 80%
             setLoadingProgress(progress);
             
@@ -81,12 +84,12 @@ function App() {
             await new Promise(resolve => setTimeout(resolve, 50));
           }
           
-          // Set all entries
+          // Set all entries ONCE after loading completes - this triggers lookup/color build only once
           setEntries(allEntries);
           setLoadingProgress(85);
           setLoadingMessage('Indexing entries...');
           
-          // Delay to show indexing
+          // Delay to show indexing (lookup structure is being built here)
           await new Promise(resolve => setTimeout(resolve, 500));
           
           setLoadingProgress(95);
@@ -311,7 +314,7 @@ function App() {
     
     // Listen for profile switch events
     if (window.electronAPI && (window.electronAPI as any).onProfileSwitched) {
-      (window.electronAPI as any).onProfileSwitched((data: { profileId: string }) => {
+      (window.electronAPI as any).onProfileSwitched(() => {
         loadCurrentProfile();
       });
     }
@@ -608,11 +611,8 @@ function App() {
         if (result.success) {
           console.log('Export successful:', result.path);
         } else if (!result.canceled) {
-          const errorMsg = result.message || result.error || 'Unknown error';
+          const errorMsg = result.error || 'Unknown error';
           console.error('Export failed:', errorMsg);
-          if (result.details) {
-            console.error('Error details:', result.details);
-          }
           // Show user-friendly error message
           alert(`Export failed: ${errorMsg}`);
         }
@@ -757,17 +757,74 @@ function App() {
     }
   };
 
-  const handleTimePeriodSelect = (date: Date, newViewMode: TimeRange) => {
+  // Debounced navigation refs to prevent excessive re-renders during rapid navigation
+  const navigationTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pendingDateRef = useRef<Date | null>(null);
+  const pendingViewModeRef = useRef<TimeRange | null>(null);
+  const rafIdRef = useRef<number | null>(null);
+
+  // Debounced date change handler for smooth navigation
+  const handleDateChange = useCallback((date: Date) => {
+    // Debounced date change for smooth navigation
+    pendingDateRef.current = date;
+    
+    if (navigationTimeoutRef.current) {
+      clearTimeout(navigationTimeoutRef.current);
+    }
+    if (rafIdRef.current !== null) {
+      cancelAnimationFrame(rafIdRef.current);
+    }
+    
+    rafIdRef.current = requestAnimationFrame(() => {
+      navigationTimeoutRef.current = setTimeout(() => {
+        if (pendingDateRef.current) {
+          setSelectedDate(pendingDateRef.current);
+          pendingDateRef.current = null;
+        }
+        navigationTimeoutRef.current = null;
+        rafIdRef.current = null;
+      }, 16);
+    });
+  }, []);
+
+  const handleTimePeriodSelect = useCallback((date: Date, newViewMode: TimeRange) => {
     hasUserInteractedRef.current = true; // Mark that user has interacted
     // Clear selected entry when changing date/view in day view
     if (newViewMode === 'day') {
       setSelectedEntry(null);
     }
-    setSelectedDate(date);
-    setViewMode(newViewMode);
-    setIsEditing(false);
-    setIsNewEntry(false);
-  };
+    
+    // Store pending updates
+    pendingDateRef.current = date;
+    pendingViewModeRef.current = newViewMode;
+    
+    // Clear any existing timeout/RAF
+    if (navigationTimeoutRef.current) {
+      clearTimeout(navigationTimeoutRef.current);
+      navigationTimeoutRef.current = null;
+    }
+    if (rafIdRef.current !== null) {
+      cancelAnimationFrame(rafIdRef.current);
+      rafIdRef.current = null;
+    }
+    
+    // Use requestAnimationFrame for smooth updates, with a small debounce
+    rafIdRef.current = requestAnimationFrame(() => {
+      // Small debounce to batch rapid navigation (1 frame at 60fps)
+      navigationTimeoutRef.current = setTimeout(() => {
+        if (pendingDateRef.current && pendingViewModeRef.current) {
+          setViewMode(pendingViewModeRef.current);
+          setSelectedDate(pendingDateRef.current);
+          setIsEditing(false);
+          setIsNewEntry(false);
+          pendingDateRef.current = null;
+          pendingViewModeRef.current = null;
+        }
+        navigationTimeoutRef.current = null;
+        rafIdRef.current = null;
+      }, 16);
+    });
+  }, []);
 
   const handleViewModeChange = (mode: TimeRange) => {
     hasUserInteractedRef.current = true; // Mark that user has interacted
@@ -916,7 +973,7 @@ function App() {
         viewMode={viewMode}
         onViewModeChange={handleViewModeChange}
         selectedDate={selectedDate}
-        onDateChange={setSelectedDate}
+        onDateChange={handleDateChange}
         onOpenPreferences={() => {
           if (window.electronAPI) {
             window.electronAPI.openPreferences();

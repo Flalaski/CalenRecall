@@ -5,6 +5,7 @@ import { playEditSound, playNewEntrySound } from '../utils/audioUtils';
 import { useCalendar } from '../contexts/CalendarContext';
 import { useEntries } from '../contexts/EntriesContext';
 import { filterEntriesForRange } from '../utils/entryFilterUtils';
+import { getAllEntriesForMonthOptimized, getAllEntriesForYearOptimized, filterEntriesByDateRangeOptimized } from '../utils/entryLookupUtils';
 import { getTimeRangeLabelInCalendar } from '../utils/calendars/timeRangeConverter';
 import { saveJournalEntry, deleteJournalEntry } from '../services/journalService';
 import './EntryViewer.css';
@@ -31,7 +32,7 @@ export default function EntryViewer({
   weekStartsOn = 0,
 }: EntryViewerProps) {
   const { calendar } = useCalendar();
-  const { entries: allEntries } = useEntries();
+  const { entries: allEntries, entryLookup } = useEntries();
   const [periodEntries, setPeriodEntries] = useState<JournalEntry[]>([]);
   const [loading, setLoading] = useState(false);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
@@ -109,72 +110,46 @@ export default function EntryViewer({
     }
   }, [entry?.id, entry?.linkedEntries, loadLinkedEntries]);
 
-  const loadPeriodEntries = async () => {
-    if (!window.electronAPI) return;
-    
+  // OPTIMIZATION: Use context entries and lookup structure instead of database query
+  // This eliminates database latency and uses already-loaded, indexed data
+  const loadPeriodEntries = useCallback(async () => {
     setLoading(true);
     try {
-      // Determine which entries to load based on viewMode
-      // For month view: load month and week entries
-      // For week view: load week entries
-      // For year view: load year, month, and week entries
-      // For decade view: load decade, year, month, and week entries
-      // For day view: load day entries (but those are shown in calendar cells)
+      let filteredEntries: JournalEntry[] = [];
       
-      let startDate: Date;
-      let endDate: Date;
-      
-      switch (viewMode) {
-        case 'decade':
-          startDate = getDecadeStart(date);
-          endDate = new Date(startDate.getFullYear() + 9, 11, 31);
-          break;
-        case 'year':
-          startDate = getYearStart(date);
-          endDate = new Date(startDate.getFullYear(), 11, 31);
-          break;
-        case 'month':
-          startDate = getMonthStart(date);
-          endDate = new Date(startDate.getFullYear(), startDate.getMonth() + 1, 0);
-          break;
-        case 'week':
-          startDate = getWeekStart(date, weekStartsOn ?? 0);
-          endDate = new Date(startDate);
-          endDate.setDate(endDate.getDate() + 6);
-          break;
-        case 'day':
-          startDate = date;
-          endDate = date;
-          break;
-        default:
-          startDate = date;
-          endDate = date;
+      // Use optimized lookup functions for fast filtering
+      if (viewMode === 'month') {
+        // Get all entries for the month (includes month, week, year, decade entries)
+        filteredEntries = getAllEntriesForMonthOptimized(
+          entryLookup,
+          date.getFullYear(),
+          date.getMonth(),
+          weekStartsOn
+        );
+        // Filter out day entries (they're shown in calendar cells)
+        filteredEntries = filteredEntries.filter(e => e.timeRange !== 'day');
+      } else if (viewMode === 'week') {
+        // Get entries for the week range
+        const weekStart = getWeekStart(date, weekStartsOn);
+        const weekEnd = new Date(weekStart);
+        weekEnd.setDate(weekEnd.getDate() + 6);
+        weekEnd.setHours(23, 59, 59, 999);
+        filteredEntries = filterEntriesByDateRangeOptimized(entryLookup, weekStart, weekEnd, weekStartsOn);
+        // Filter out day entries
+        filteredEntries = filteredEntries.filter(e => e.timeRange !== 'day');
+      } else if (viewMode === 'year') {
+        // Get all entries for the year (exclude day entries - not needed at year tier)
+        filteredEntries = getAllEntriesForYearOptimized(entryLookup, date.getFullYear(), weekStartsOn, true);
+      } else if (viewMode === 'decade') {
+        // Get entries for the decade range (exclude day entries - not needed at decade tier)
+        const decadeStart = getDecadeStart(date);
+        const decadeEnd = new Date(decadeStart.getFullYear() + 9, 11, 31);
+        decadeEnd.setHours(23, 59, 59, 999);
+        filteredEntries = filterEntriesByDateRangeOptimized(entryLookup, decadeStart, decadeEnd, weekStartsOn, true);
+      } else {
+        // Day view - no period entries to show
+        filteredEntries = [];
       }
-      
-      const startDateStr = formatDate(startDate);
-      const endDateStr = formatDate(endDate);
-      
-      const allEntries = await window.electronAPI.getEntries(startDateStr, endDateStr);
-      
-      // Filter entries based on viewMode - exclude day entries (they're shown in calendar)
-      const filteredEntries = allEntries.filter(e => {
-        if (viewMode === 'month') {
-          // Show month and week entries
-          return e.timeRange === 'month' || e.timeRange === 'week';
-        } else if (viewMode === 'week') {
-          // Show week entries
-          return e.timeRange === 'week';
-        } else if (viewMode === 'year') {
-          // Show year, month, and week entries
-          return e.timeRange === 'year' || e.timeRange === 'month' || e.timeRange === 'week';
-        } else if (viewMode === 'decade') {
-          // Show decade, year, month, and week entries
-          return e.timeRange === 'decade' || e.timeRange === 'year' || e.timeRange === 'month' || e.timeRange === 'week';
-        } else {
-          // Day view - no period entries to show
-          return false;
-        }
-      });
       
       // Sort by timeRange priority (decade > year > month > week) and then by date
       const timeRangeOrder: Record<TimeRange, number> = {
@@ -200,7 +175,7 @@ export default function EntryViewer({
     } finally {
       setLoading(false);
     }
-  };
+  }, [allEntries, entryLookup, viewMode, date, weekStartsOn]);
 
   // Memoize filtered and sorted entries to avoid recalculating on every render
   const filteredEntries = useMemo(() => {

@@ -2,7 +2,7 @@ import { app, BrowserWindow, ipcMain, Menu, shell, screen } from 'electron';
 import * as path from 'path';
 import * as fs from 'fs';
 import { config } from 'dotenv';
-import { initDatabase, getAllPreferences, setPreference, closeDatabase, switchProfile, getCurrentProfile } from './database';
+import { initDatabase, getAllPreferences, setPreference, closeDatabase, switchProfile, getCurrentProfile, Preferences } from './database';
 import { setupIpcHandlers, setMainWindow, setProfileSelectorWindow, setMenuUpdateCallback, setImportProgressWindow, setCreateImportProgressWindowCallback } from './ipc-handlers';
 import { getAutoLoadProfileId, setAutoLoadProfileId } from './profile-manager';
 
@@ -18,6 +18,12 @@ let importProgressWindow: BrowserWindow | null = null;
 let startupLoadingWindow: BrowserWindow | null = null;
 
 const isDev = process.env.NODE_ENV === 'development' || !app.isPackaged;
+
+// Hardware acceleration is enabled by default in Electron
+// We ensure it's not disabled for better performance
+// Note: Hardware acceleration cannot be explicitly enabled via API,
+// but it's enabled by default unless explicitly disabled
+console.log('[Main] Hardware acceleration is enabled by default in Electron');
 
 interface ThemeInfo {
   name: string;
@@ -384,6 +390,9 @@ function createStartupLoadingWindow() {
       nodeIntegration: false,
       contextIsolation: true,
       backgroundThrottling: false, // Prevent throttling during startup
+      // GPU acceleration optimizations
+      // WebGL is enabled by default in Electron
+      // offscreen: false is the default (on-screen rendering)
     },
     ...(process.platform === 'win32' && {
       icon: path.join(__dirname, '../assets/icon.png'),
@@ -508,11 +517,16 @@ function createProfileSelectorWindow() {
     minWidth: 600,
     minHeight: 500,
     resizable: true,
+    alwaysOnTop: true, // Show on top when first loads
     title: 'CalenRecall - Select Profile',
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       nodeIntegration: false,
       contextIsolation: true,
+      // GPU acceleration optimizations
+      // WebGL is enabled by default in Electron
+      // offscreen: false is the default (on-screen rendering)
+      backgroundThrottling: false,
     },
     ...(process.platform === 'win32' && {
       icon: path.join(__dirname, '../assets/icon.png'),
@@ -599,6 +613,7 @@ function createProfileSelectorWindow() {
               
               profileSelectorWindow.setPosition(x, y, false);
               profileSelectorWindow.show();
+              profileSelectorWindow.focus(); // Bring to front
               console.log('[Main] Profile selector window shown and positioned');
               
               // Close startup loading window now that profile selector is ready
@@ -619,6 +634,7 @@ function createProfileSelectorWindow() {
               profileSelectorWindow.setSize(width, height, false);
               profileSelectorWindow.setPosition(x, y, false);
               profileSelectorWindow.show();
+              profileSelectorWindow.focus(); // Bring to front
               
               // Close startup loading window now that profile selector is ready
               closeStartupLoadingWindow();
@@ -659,6 +675,10 @@ function createWindow() {
       preload: path.join(__dirname, 'preload.js'),
       nodeIntegration: false,
       contextIsolation: true,
+      // GPU acceleration optimizations
+      // WebGL is enabled by default in Electron
+      // offscreen: false is the default (on-screen rendering) // Keep on-screen rendering for better performance
+      backgroundThrottling: false, // Prevent throttling when window is in background
     },
     ...(process.platform === 'win32' && {
       icon: path.join(__dirname, '../assets/icon.png'),
@@ -685,6 +705,9 @@ function createWindow() {
         webPreferences: {
           nodeIntegration: false,
           contextIsolation: true,
+          // GPU acceleration optimizations
+          // WebGL is enabled by default in Electron
+          // offscreen: false is the default (on-screen rendering)
         },
         ...(process.platform === 'win32' && {
           icon: path.join(__dirname, '../assets/icon.png'),
@@ -705,6 +728,12 @@ function createWindow() {
     mainWindow.loadFile(path.join(__dirname, '../dist/index.html'));
   }
 
+  // Apply fullscreen preference if set
+  if (prefs.fullScreen === true) {
+    console.log('[Main] Applying fullscreen preference');
+    mainWindow.setFullScreen(true);
+  }
+
   // Apply preferences when window is fully loaded (especially important for built versions)
   mainWindow.webContents.once('did-finish-load', () => {
     // Send a message to the renderer to ensure preferences are applied
@@ -713,7 +742,8 @@ function createWindow() {
     console.log('[Main] Window finished loading, ensuring preferences are applied:', {
       fontSize: currentPrefs.fontSize,
       minimapSize: currentPrefs.minimapSize,
-      theme: currentPrefs.theme
+      theme: currentPrefs.theme,
+      fullScreen: currentPrefs.fullScreen
     });
     
     // Update menu to reflect theme from current profile's database
@@ -746,6 +776,17 @@ function createWindow() {
       setPreference('windowWidth', width);
       setPreference('windowHeight', height);
     }
+  });
+
+  // Save fullscreen state when it changes
+  mainWindow.on('enter-full-screen', () => {
+    console.log('[Main] Window entered fullscreen');
+    setPreference('fullScreen', true);
+  });
+
+  mainWindow.on('leave-full-screen', () => {
+    console.log('[Main] Window left fullscreen');
+    setPreference('fullScreen', false);
   });
 
   mainWindow.on('closed', () => {
@@ -1101,6 +1142,10 @@ function createPreferencesWindow() {
       preload: path.join(__dirname, 'preload.js'),
       nodeIntegration: false,
       contextIsolation: true,
+      // GPU acceleration optimizations
+      // WebGL is enabled by default in Electron
+      // offscreen: false is the default (on-screen rendering)
+      backgroundThrottling: false,
     },
     ...(process.platform === 'win32' && {
       icon: path.join(__dirname, '../assets/icon.png'),
@@ -1124,6 +1169,9 @@ function createPreferencesWindow() {
         webPreferences: {
           nodeIntegration: false,
           contextIsolation: true,
+          // GPU acceleration optimizations
+          // WebGL is enabled by default in Electron
+          // offscreen: false is the default (on-screen rendering)
         },
         ...(process.platform === 'win32' && {
           icon: path.join(__dirname, '../assets/icon.png'),
@@ -1185,6 +1233,10 @@ function createImportProgressWindow() {
       preload: path.join(__dirname, 'preload.js'),
       nodeIntegration: false,
       contextIsolation: true,
+      // GPU acceleration optimizations
+      // WebGL is enabled by default in Electron
+      // offscreen: false is the default (on-screen rendering)
+      backgroundThrottling: false,
     },
     ...(process.platform === 'win32' && {
       icon: path.join(__dirname, '../assets/icon.png'),
@@ -1239,6 +1291,10 @@ function createAboutWindow() {
       preload: path.join(__dirname, 'preload.js'),
       nodeIntegration: false,
       contextIsolation: true,
+      // GPU acceleration optimizations
+      // WebGL is enabled by default in Electron
+      // offscreen: false is the default (on-screen rendering)
+      backgroundThrottling: false,
     },
     ...(process.platform === 'win32' && {
       icon: path.join(__dirname, '../assets/icon.png'),
@@ -1262,6 +1318,9 @@ function createAboutWindow() {
         webPreferences: {
           nodeIntegration: false,
           contextIsolation: true,
+          // GPU acceleration optimizations
+          // WebGL is enabled by default in Electron
+          // offscreen: false is the default (on-screen rendering)
         },
         ...(process.platform === 'win32' && {
           icon: path.join(__dirname, '../assets/icon.png'),

@@ -1849,6 +1849,7 @@ export interface Preferences {
   defaultExportMetadata?: ExportMetadata; // Default export metadata to use for all exports
   soundEffectsEnabled?: boolean; // Whether sound effects are enabled
   showAstromonixToolbarButton?: boolean; // Whether to show the AstroMonix toolbar button in day view
+  fullScreen?: boolean; // Whether to load the profile in full screen mode
 }
 
 const DEFAULT_PREFERENCES: Preferences = {

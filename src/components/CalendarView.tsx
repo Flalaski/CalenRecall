@@ -115,7 +115,9 @@ export default function CalendarView({
     }
     
     // Use optimized lookup-based filtering instead of O(n) array filtering
-    return filterEntriesByDateRangeOptimized(entryLookup, startDate, endDate, weekStartsOn);
+    // Skip day entries for decade and year views (not needed at those tiers)
+    const excludeDayEntries = viewMode === 'decade' || viewMode === 'year';
+    return filterEntriesByDateRangeOptimized(entryLookup, startDate, endDate, weekStartsOn, excludeDayEntries);
   }, [entryLookup, selectedDate, viewMode, weekStartsOn]);
 
   // Removed loadEntries - now using EntriesContext with memoized filtering

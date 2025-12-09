@@ -6,7 +6,7 @@ import { playMechanicalClick, playMicroBlip, getAudioContext, createSliderNoise,
 import { calculateEntryColor } from '../utils/entryColorUtils';
 import { useCalendar } from '../contexts/CalendarContext';
 import { useEntries } from '../contexts/EntriesContext';
-import { filterEntriesByDateRange, filterEntriesForDate } from '../utils/entryFilterUtils';
+import { filterEntriesByDateRange } from '../utils/entryFilterUtils';
 import { getCalendarTierNames } from '../utils/calendarTierNames';
 import { getCalendarEpoch } from '../utils/calendars/epochUtils';
 import { jdnToDate } from '../utils/calendars/julianDayUtils';
@@ -3158,7 +3158,7 @@ export default function GlobalTimelineMinimap({
     currentViewMode: TimeRange,
     targetViewMode: TimeRange,
     entries: JournalEntry[],
-    weekStartsOn: number
+    weekStartsOn: 0 | 1 | 2 | 3 | 4 | 5 | 6
   ): Date => {
     // Get the date range of the current period
     let periodStart: Date;

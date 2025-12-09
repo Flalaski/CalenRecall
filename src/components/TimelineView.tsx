@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { JournalEntry, TimeRange, Preferences } from '../types';
-import { formatDate, getDaysInMonth, getDaysInWeek, isToday, getWeekStart, getWeekEnd, getZodiacColor, getZodiacGradientColor, getZodiacGradientColorForYear, parseISODate, getMonthStart, getMonthEnd, createDate, getWeekdayLabels, formatTime } from '../utils/dateUtils';
+import { formatDate, getDaysInMonth, getDaysInWeek, isToday, getWeekStart, getZodiacColor, getZodiacGradientColor, getZodiacGradientColorForYear, parseISODate, getWeekdayLabels, formatTime } from '../utils/dateUtils';
 import { isSameDay, isSameMonth, isSameYear } from 'date-fns';
 import { playCalendarSelectionSound, playEntrySelectionSound, playEditSound } from '../utils/audioUtils';
 import { calculateEntryColor } from '../utils/entryColorUtils';
@@ -9,8 +9,7 @@ import { useEntries } from '../contexts/EntriesContext';
 import { dateToCalendarDate } from '../utils/calendars/calendarConverter';
 import { formatCalendarDate } from '../utils/calendars/calendarConverter';
 import { deleteJournalEntry } from '../services/journalService';
-import { filterEntriesByDateRange } from '../utils/entryFilterUtils';
-import { buildEntryLookup, getDayEntriesOptimized, getMonthEntriesOptimized, getAllEntriesForYearOptimized, getAllEntriesForMonthOptimized, filterEntriesByDateRangeOptimized } from '../utils/entryLookupUtils';
+import { buildEntryLookup, getDayEntriesOptimized, getMonthEntriesOptimized, getAllEntriesForYearOptimized, getAllEntriesForMonthOptimized } from '../utils/entryLookupUtils';
 import './TimelineView.css';
 
 interface TimelineViewProps {
@@ -59,54 +58,6 @@ export default function TimelineView({
     return buildEntryLookup(allEntries, weekStartsOn);
   }, [contextEntryLookup, allEntries, weekStartsOn]);
 
-  // OPTIMIZATION: Filter entries using optimized lookup instead of O(n) filtering
-  const entries = useMemo(() => {
-    let startDate: Date;
-    let endDate: Date;
-    
-    switch (viewMode) {
-      case 'decade': {
-        const decadeStart = Math.floor(selectedDate.getFullYear() / 10) * 10;
-        startDate = createDate(decadeStart, 0, 1);
-        endDate = createDate(decadeStart + 9, 11, 31);
-        break;
-      }
-      case 'year': {
-        startDate = createDate(selectedDate.getFullYear(), 0, 1);
-        endDate = createDate(selectedDate.getFullYear(), 11, 31);
-        break;
-      }
-      case 'month': {
-        startDate = createDate(selectedDate.getFullYear(), selectedDate.getMonth(), 1);
-        // Use date-fns endOfMonth which handles negative years correctly
-        endDate = getMonthEnd(selectedDate);
-        break;
-      }
-      case 'week': {
-        startDate = getWeekStart(selectedDate, weekStartsOn);
-        endDate = getWeekEnd(selectedDate, weekStartsOn);
-        // Expand to include full month(s) to catch month entries
-        const weekStartMonth = getMonthStart(startDate);
-        const weekEndMonth = getMonthEnd(endDate);
-        if (weekStartMonth < startDate) startDate = weekStartMonth;
-        if (weekEndMonth > endDate) endDate = weekEndMonth;
-        break;
-      }
-      case 'day': {
-        // Load entries for the full month to catch month/week entries
-        startDate = getMonthStart(selectedDate);
-        endDate = getMonthEnd(selectedDate);
-        break;
-      }
-      default: {
-        startDate = selectedDate;
-        endDate = selectedDate;
-      }
-    }
-    
-    // Use optimized lookup-based filtering instead of O(n) array filtering
-    return filterEntriesByDateRangeOptimized(entryLookup, startDate, endDate, weekStartsOn);
-  }, [entryLookup, selectedDate, viewMode, weekStartsOn]);
 
   useEffect(() => {
     // Clear bulk selection when changing date/view
@@ -161,8 +112,9 @@ export default function TimelineView({
   }, [entryLookup, viewMode]);
 
   // OPTIMIZATION: Use optimized lookup functions instead of O(n) filtering
+  // Exclude day entries when used in decade/year views (not needed at those tiers)
   const getAllEntriesForYear = useCallback((year: number): JournalEntry[] => {
-    return getAllEntriesForYearOptimized(entryLookup, year, weekStartsOn);
+    return getAllEntriesForYearOptimized(entryLookup, year, weekStartsOn, true);
   }, [entryLookup, weekStartsOn]);
 
   const getAllEntriesForMonth = useCallback((year: number, month: number): JournalEntry[] => {

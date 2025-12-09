@@ -920,6 +920,18 @@ export default function PreferencesComponent() {
             />
             <small>Window height in pixels (600-2160)</small>
           </div>
+
+          <div className="preference-item">
+            <label>
+              <input
+                type="checkbox"
+                checked={preferences.fullScreen === true}
+                onChange={(e) => updatePreference('fullScreen', e.target.checked)}
+              />
+              Load in full screen mode
+            </label>
+            <small>When enabled, this profile will automatically load in full screen mode when opened. This preference is saved individually per profile.</small>
+          </div>
           <small className="preference-note">Note: Window position and size are saved automatically when you move or resize the window.</small>
         </div>
 

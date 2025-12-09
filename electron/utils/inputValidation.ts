@@ -46,6 +46,7 @@ const VALID_PREFERENCE_KEYS: Array<keyof Preferences> = [
   'defaultExportMetadata',
   'soundEffectsEnabled',
   'showAstromonixToolbarButton',
+  'fullScreen',
 ];
 
 /**

@@ -303,11 +303,14 @@ export function getYearEntriesOptimized(
 /**
  * Get all entries for a year (including day, week, month, year, and decade entries)
  * OPTIMIZED: Uses lookup structure instead of O(n) filtering
+ * 
+ * @param excludeDayEntries - If true, skip loading day entries (useful for decade/year views)
  */
 export function getAllEntriesForYearOptimized(
   lookup: EntryLookup,
   year: number,
-  weekStartsOn: number = 0
+  weekStartsOn: number = 0,
+  excludeDayEntries: boolean = false
 ): JournalEntry[] {
   const results: JournalEntry[] = [];
   const decadeStart = Math.floor(year / 10) * 10;
@@ -333,19 +336,21 @@ export function getAllEntriesForYearOptimized(
     }
   }
 
-  // Add day and week entries for this year
+  // Add day and week entries for this year (skip day entries if excludeDayEntries is true)
   // We need to check all dates in the year - but this is still O(365) which is acceptable
   // For better performance with thousands of entries, we iterate through byDateString
   // and filter by year prefix
-  for (const [dateStr, dayEntries] of lookup.byDateString.entries()) {
-    // Extract year from date string (handles negative years)
-    const isNegative = dateStr.startsWith('-');
-    const cleanDateStr = isNegative ? dateStr.substring(1) : dateStr;
-    const yearStr = cleanDateStr.split('-')[0];
-    const entryYear = isNegative ? -parseInt(yearStr, 10) : parseInt(yearStr, 10);
-    
-    if (entryYear === year) {
-      results.push(...dayEntries);
+  if (!excludeDayEntries) {
+    for (const [dateStr, dayEntries] of lookup.byDateString.entries()) {
+      // Extract year from date string (handles negative years)
+      const isNegative = dateStr.startsWith('-');
+      const cleanDateStr = isNegative ? dateStr.substring(1) : dateStr;
+      const yearStr = cleanDateStr.split('-')[0];
+      const entryYear = isNegative ? -parseInt(yearStr, 10) : parseInt(yearStr, 10);
+      
+      if (entryYear === year) {
+        results.push(...dayEntries);
+      }
     }
   }
 
@@ -439,12 +444,15 @@ export function getAllEntriesForMonthOptimized(
  * 
  * Note: For very large ranges, this may still need to iterate through many entries.
  * For best performance, use this only when the range is reasonably small (e.g., a month or year).
+ * 
+ * @param excludeDayEntries - If true, skip loading day entries (useful for decade/year views)
  */
 export function filterEntriesByDateRangeOptimized(
   lookup: EntryLookup,
   startDate: Date,
   endDate: Date,
-  weekStartsOn: number = 0
+  weekStartsOn: number = 0,
+  excludeDayEntries: boolean = false
 ): JournalEntry[] {
   const results: JournalEntry[] = [];
   const startDateStr = formatDate(startDate);
@@ -459,10 +467,12 @@ export function filterEntriesByDateRangeOptimized(
     return dateStr >= startDateStr && dateStr <= endDateStr;
   };
 
-  // Add day entries in range
-  for (const [dateStr, entries] of lookup.byDateString.entries()) {
-    if (isInRange(dateStr)) {
-      results.push(...entries);
+  // Add day entries in range (skip if excludeDayEntries is true)
+  if (!excludeDayEntries) {
+    for (const [dateStr, entries] of lookup.byDateString.entries()) {
+      if (isInRange(dateStr)) {
+        results.push(...entries);
+      }
     }
   }
 

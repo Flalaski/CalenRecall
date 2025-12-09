@@ -7,6 +7,197 @@
   box-sizing: border-box;
 }
 
+/* ============================================
+   GPU ACCELERATION OPTIMIZATIONS
+   ============================================
+   These styles enable hardware acceleration for
+   better rendering performance across the app.
+   ============================================ */
+
+/* Enable GPU acceleration for root elements */
+html,
+body,
+#root {
+  /* Force GPU layer creation */
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+  /* Enable hardware acceleration */
+  will-change: auto;
+  /* Optimize compositing */
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  /* Enable 3D transforms */
+  transform-style: preserve-3d;
+  -webkit-transform-style: preserve-3d;
+}
+
+/* GPU acceleration for main app container */
+.app {
+  /* Force GPU layer */
+  transform: translateZ(0);
+  will-change: transform;
+  /* Optimize rendering */
+  contain: layout style paint;
+  /* Enable 3D transforms */
+  transform-style: preserve-3d;
+}
+
+/* GPU acceleration for scrollable containers */
+.app-content,
+.timeline-section,
+.editor-section,
+.journal-list,
+.entry-viewer,
+.viewer-content,
+.journal-editor {
+  /* Force GPU layer for smooth scrolling */
+  transform: translateZ(0);
+  will-change: scroll-position;
+  /* Optimize scrolling performance */
+  -webkit-overflow-scrolling: touch;
+  /* Contain layout recalculations */
+  contain: layout style paint;
+}
+
+/* GPU acceleration for interactive elements */
+button,
+.nav-button,
+.view-mode-button,
+.entry-badge,
+.timeline-cell,
+.journal-entry-item,
+.entry-card,
+.entry-card-full {
+  /* Force GPU layer for smooth interactions */
+  transform: translateZ(0);
+  will-change: transform, opacity;
+  /* Optimize hover/click animations */
+  backface-visibility: hidden;
+  /* Enable smooth transitions */
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+/* GPU acceleration for animated elements */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateZ(0) translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateZ(0) translateY(0);
+  }
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateZ(0) translateX(-100%);
+  }
+  to {
+    transform: translateZ(0) translateX(0);
+  }
+}
+
+/* GPU acceleration for minimap (already has some, enhancing) */
+.minimap-container,
+.global-timeline-minimap {
+  /* Force GPU layer */
+  transform: translateZ(0);
+  will-change: transform, scroll-position;
+  /* Optimize for smooth dragging */
+  contain: layout style paint;
+  /* Enable 3D transforms for depth effects */
+  transform-style: preserve-3d;
+}
+
+/* GPU acceleration for entry indicators in minimap */
+.entry-indicator,
+.timeline-segment,
+.segment-indicator {
+  /* Force GPU layer for smooth movement */
+  transform: translate3d(0, 0, 0);
+  will-change: transform, opacity;
+  /* Optimize for animations */
+  backface-visibility: hidden;
+}
+
+/* GPU acceleration for timeline grid */
+.timeline-grid {
+  /* Force GPU layer */
+  transform: translateZ(0);
+  will-change: scroll-position;
+  /* Optimize grid rendering */
+  contain: layout style paint;
+}
+
+/* GPU acceleration for modals and overlays */
+.modal,
+.overlay,
+.confirm-dialog,
+.entry-edit-modal,
+.export-metadata-modal {
+  /* Force GPU layer for smooth animations */
+  transform: translateZ(0);
+  will-change: transform, opacity;
+  /* Optimize modal rendering */
+  contain: layout style paint;
+}
+
+/* Content visibility optimization for off-screen elements */
+.timeline-cell:not(:hover),
+.journal-entry-item:not(:hover),
+.entry-card:not(:hover) {
+  /* Optimize rendering of off-screen elements */
+  content-visibility: auto;
+  contain-intrinsic-size: auto 100px;
+}
+
+/* GPU acceleration for background art */
+.background-art {
+  /* Force GPU layer for background rendering */
+  transform: translateZ(0);
+  will-change: transform, opacity;
+  /* Optimize background rendering */
+  contain: layout style paint;
+  /* Enable 3D transforms */
+  transform-style: preserve-3d;
+}
+
+/* GPU acceleration for loading screen */
+.loading-screen,
+.startup-loading {
+  /* Force GPU layer */
+  transform: translateZ(0);
+  will-change: transform, opacity;
+  /* Optimize loading animations */
+  contain: layout style paint;
+}
+
+/* Optimize font rendering with GPU */
+body {
+  /* Enable subpixel rendering */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  /* Optimize text rendering */
+  text-rendering: optimizeLegibility;
+}
+
+/* GPU acceleration for paper texture (pseudo-elements) */
+.paper-texture::before,
+.paper-texture::after {
+  /* Force GPU layer for texture rendering */
+  transform: translateZ(0);
+  will-change: transform, opacity, background-position;
+  /* Optimize texture animation */
+  backface-visibility: hidden;
+}
+
+/* Disable will-change after animations complete to free GPU memory */
+.entry-indicator:not(:hover):not(.active),
+.timeline-segment:not(:hover):not(.active) {
+  will-change: auto;
+}
+
 html {
   height: 100%;
   width: 100%;

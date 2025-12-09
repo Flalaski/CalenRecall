@@ -3,6 +3,18 @@ import { createRoot } from 'react-dom/client';
 import './profile-selector.css';
 import './themes.css';
 import { initializeTheme, type ThemeName } from './utils/themes';
+import { 
+  playSaveSound, 
+  playNewEntrySound, 
+  playDeleteSound, 
+  playEditSound, 
+  playCancelSound, 
+  playAddSound,
+  playModeSelectionSound,
+  playCalendarSelectionSound,
+  initializeSoundEffectsCache,
+  updateSoundEffectsCache
+} from './utils/audioUtils';
 
 interface Profile {
   id: string;
@@ -18,7 +30,7 @@ interface ProfileDetails extends Profile {
   entryCount?: number;
   defaultExportMetadata?: any;
   preferences?: any;
-  databaseSize?: number;
+  databaseSize?: number; // Total disk usage size of the profile in bytes (includes database, WAL files, and all files in profile directory)
   firstEntryDate?: string | null;
   lastEntryDate?: string | null;
 }
@@ -166,6 +178,10 @@ function ProfileSelector() {
         // Apply new theme
         const cleanup = initializeTheme(newTheme);
         themeCleanupRef.current = cleanup;
+      } else if (data.key === 'soundEffectsEnabled') {
+        // Update sound effects cache when preference changes
+        const enabled = data.value !== false;
+        updateSoundEffectsCache(enabled);
       }
     };
 
@@ -180,6 +196,9 @@ function ProfileSelector() {
 
 
   useEffect(() => {
+    // Initialize sound effects cache
+    initializeSoundEffectsCache();
+    
     loadProfiles();
     
     // Listen for profile switch events
@@ -236,9 +255,12 @@ function ProfileSelector() {
       // Only switch if it's a different profile
       const api = getProfileSelectorAPI();
       if (currentProfile?.id !== profileId) {
+        playModeSelectionSound(); // Play sound when switching to a different profile
         await api.switchProfile(profileId);
         // Wait a moment for the database to initialize
         await new Promise(resolve => setTimeout(resolve, 500));
+      } else {
+        playCalendarSelectionSound(); // Play sound when opening main window with same profile
       }
       
       // Open main window
@@ -265,6 +287,7 @@ function ProfileSelector() {
       setError(null);
       const api = getProfileSelectorAPI();
       await api.createProfile(newProfileName.trim());
+      playNewEntrySound(); // Play creation sound
       setNewProfileName('');
       setShowCreateDialog(false);
       await loadProfiles();
@@ -283,11 +306,13 @@ function ProfileSelector() {
     }
 
     if (!confirm(`Are you sure you want to delete the profile "${profile.name}"?\n\nThis will permanently delete all entries, templates, and preferences in this profile.`)) {
+      playCancelSound(); // Play cancel sound if user cancels deletion
       return;
     }
 
     try {
       setError(null);
+      playDeleteSound(); // Play delete sound
       const api = getProfileSelectorAPI();
       await api.deleteProfile(profile.id);
       await loadProfiles();
@@ -298,6 +323,7 @@ function ProfileSelector() {
   };
 
   const handleStartEdit = (profile: Profile) => {
+    playEditSound(); // Play edit sound when entering edit mode
     setEditingProfile(profile);
     setEditName(profile.name);
   };
@@ -312,6 +338,7 @@ function ProfileSelector() {
       setError(null);
       const api = getProfileSelectorAPI();
       await api.renameProfile(editingProfile.id, editName.trim());
+      playSaveSound(); // Play save sound
       setEditingProfile(null);
       setEditName('');
       await loadProfiles();
@@ -322,6 +349,7 @@ function ProfileSelector() {
   };
 
   const handleCancelEdit = () => {
+    playCancelSound(); // Play cancel sound
     setEditingProfile(null);
     setEditName('');
   };
@@ -390,7 +418,10 @@ function ProfileSelector() {
         {error && (
           <div className="error-message">
             {error}
-            <button className="close-error" onClick={() => setError(null)}>×</button>
+            <button className="close-error" onClick={() => {
+              playCancelSound(); // Play cancel sound when dismissing error
+              setError(null);
+            }}>×</button>
           </div>
         )}
 
@@ -412,8 +443,12 @@ function ProfileSelector() {
                       value={editName}
                       onChange={(e) => setEditName(e.target.value)}
                       onKeyDown={(e) => {
-                        if (e.key === 'Enter') handleSaveEdit();
-                        if (e.key === 'Escape') handleCancelEdit();
+                        if (e.key === 'Enter') {
+                          handleSaveEdit();
+                        }
+                        if (e.key === 'Escape') {
+                          handleCancelEdit();
+                        }
                       }}
                       autoFocus
                       className="edit-input-header"
@@ -551,6 +586,7 @@ function ProfileSelector() {
                             checked={autoLoadProfileId === profile.id}
                             onChange={async (e) => {
                               e.stopPropagation();
+                              playCalendarSelectionSound(); // Play selection sound for checkbox toggle
                               try {
                                 const newValue = e.target.checked;
                                 const newAutoLoadId = newValue ? profile.id : null;
@@ -628,7 +664,10 @@ function ProfileSelector() {
 
         <div className="profile-selector-footer">
           <button
-            onClick={() => setShowCreateDialog(true)}
+            onClick={() => {
+              playAddSound(); // Play add sound when opening create dialog
+              setShowCreateDialog(true);
+            }}
             className="btn-create"
           >
             + Create New Profile
@@ -636,7 +675,10 @@ function ProfileSelector() {
         </div>
 
         {showCreateDialog && (
-          <div className="modal-overlay" onClick={() => setShowCreateDialog(false)}>
+          <div className="modal-overlay" onClick={() => {
+            playCancelSound(); // Play cancel sound when closing dialog via overlay
+            setShowCreateDialog(false);
+          }}>
             <div className="modal-content" onClick={(e) => e.stopPropagation()}>
               <h2>Create New Profile</h2>
               <p>Enter a name for your new profile. Each profile has its own separate database of entries.</p>
@@ -646,7 +688,10 @@ function ProfileSelector() {
                 onChange={(e) => setNewProfileName(e.target.value)}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') handleCreateProfile();
-                  if (e.key === 'Escape') setShowCreateDialog(false);
+                  if (e.key === 'Escape') {
+                    playCancelSound(); // Play cancel sound on Escape
+                    setShowCreateDialog(false);
+                  }
                 }}
                 placeholder="Profile name"
                 autoFocus
@@ -662,6 +707,7 @@ function ProfileSelector() {
                 </button>
                 <button
                   onClick={() => {
+                    playCancelSound(); // Play cancel sound
                     setShowCreateDialog(false);
                     setNewProfileName('');
                   }}

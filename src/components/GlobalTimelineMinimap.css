@@ -276,6 +276,12 @@
   image-rendering: crisp-edges;
   -webkit-font-smoothing: none;
   -moz-osx-font-smoothing: unset;
+  /* OPTIMIZATION: GPU acceleration for smooth navigation */
+  transform: translateZ(0);
+  will-change: transform;
+  /* Optimize for smooth dragging */
+  -webkit-tap-highlight-color: transparent;
+  touch-action: none; /* Prevent touch scrolling during drag */
   
   /* Base scale factor (medium = 1.0) */
   --minimap-scale: 1;

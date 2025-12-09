@@ -909,13 +909,50 @@ export function setAutoLoadProfileId(profileId: string | null): void {
 }
 
 /**
+ * Calculate the total size of a directory recursively
+ */
+function calculateDirectorySize(dirPath: string): number {
+  let totalSize = 0;
+  
+  try {
+    if (!fs.existsSync(dirPath)) {
+      return 0;
+    }
+    
+    const stats = fs.statSync(dirPath);
+    
+    if (stats.isFile()) {
+      return stats.size;
+    }
+    
+    if (stats.isDirectory()) {
+      const entries = fs.readdirSync(dirPath);
+      
+      for (const entry of entries) {
+        const entryPath = path.join(dirPath, entry);
+        try {
+          totalSize += calculateDirectorySize(entryPath);
+        } catch (err) {
+          // Ignore errors for individual files/directories (permissions, etc.)
+          console.warn(`[Profile Manager] Could not calculate size for ${entryPath}:`, err);
+        }
+      }
+    }
+  } catch (error) {
+    console.warn(`[Profile Manager] Error calculating directory size for ${dirPath}:`, error);
+  }
+  
+  return totalSize;
+}
+
+/**
  * Profile details interface with additional metadata
  */
 export interface ProfileDetails extends Profile {
   entryCount?: number;
   defaultExportMetadata?: any; // ExportMetadata from preferences
   preferences?: any; // Partial preferences from database
-  databaseSize?: number; // Database file size in bytes
+  databaseSize?: number; // Total disk usage size of the profile in bytes (includes database, WAL files, and all files in profile directory)
   firstEntryDate?: string | null; // Date of first entry
   lastEntryDate?: string | null; // Date of last entry
 }
@@ -931,18 +968,28 @@ export function getProfileDetails(profileId: string): ProfileDetails | null {
   
   const userDataPath = app.getPath('userData');
   const dbPath = path.join(userDataPath, profile.databasePath);
+  const profileDir = path.dirname(dbPath); // Profile directory containing database and related files
   
   const details: ProfileDetails = {
     ...profile,
   };
   
+  // Calculate total disk usage of the profile directory
+  try {
+    if (fs.existsSync(profileDir)) {
+      details.databaseSize = calculateDirectorySize(profileDir);
+    } else if (fs.existsSync(dbPath)) {
+      // Fallback: if profile directory doesn't exist but database does, just get database size
+      const stats = fs.statSync(dbPath);
+      details.databaseSize = stats.size;
+    }
+  } catch (error) {
+    console.warn(`[Profile Manager] Error calculating profile disk usage for ${profileId}:`, error);
+  }
+  
   // Try to get additional details from the database
   if (fs.existsSync(dbPath)) {
     try {
-      // Get database file size
-      const stats = fs.statSync(dbPath);
-      details.databaseSize = stats.size;
-      
       // Open database to get entry counts and preferences
       const tempDb = new Database(dbPath);
       
