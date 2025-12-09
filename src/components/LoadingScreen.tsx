@@ -50,6 +50,7 @@ interface BranchSegment3D {
   delay: number;
   duration: number;
   points: Array<{ x: number; y: number; z: number }>; // 3D points for ornaments
+  isPastBranch?: boolean; // Track branch type to prevent cross-boundary rendering
 }
 
 function generateInfinityBranches3D(): Array<BranchSegment3D> {
@@ -150,33 +151,63 @@ function generateInfinityBranches3D(): Array<BranchSegment3D> {
     // Moderate curve for sub-branches - organized but still flowing
     const curveStrength = depth === 0 ? 0.3 : 0.12; // Moderate curve for sub-branches
     const offset = length * curveStrength * (depth + 1) * 0.3 * curveDirection;
-    const controlX = midX + Math.cos(perpAngle) * offset;
+    let controlX = midX + Math.cos(perpAngle) * offset;
     const controlY = midY + Math.sin(perpAngle) * offset;
     const controlZ = midZ;
+    
+    // CRITICAL FIX: Constrain control point to prevent curve from crossing midpoint
+    // The control point determines curve shape, so it must also respect boundaries
+    if (isPastBranch !== undefined) {
+      if (isPastBranch && controlX > branchMidpoint - bufferZone) {
+        // Control point must stay on left side
+        controlX = Math.min(controlX, branchMidpoint - bufferZone);
+      } else if (!isPastBranch && controlX < branchMidpoint + bufferZone) {
+        // Control point must stay on right side
+        controlX = Math.max(controlX, branchMidpoint + bufferZone);
+      }
+    }
     
     const points: Array<{ x: number; y: number; z: number }> = [];
     
     // Fractal interpolation: create smooth curve with multiple points
+    // CRITICAL FIX: Validate all interpolated points to prevent crossing midpoint
     const numInterpolationPoints = 5;
     for (let i = 0; i <= numInterpolationPoints; i++) {
       const t = i / numInterpolationPoints;
-      const interpolated = fractalInterpolate(
+      let interpolated = fractalInterpolate(
         { x: startX, y: startY, z: startZ },
         { x: controlX, y: controlY, z: controlZ },
         { x: endX, y: endY, z: endZ },
         t
       );
-      if (t > 0 && t < 1) {
+      
+      // Constrain interpolated point to correct side
+      if (isPastBranch !== undefined && t > 0 && t < 1) {
+        if (isPastBranch && interpolated.x > branchMidpoint - bufferZone) {
+          interpolated.x = Math.min(interpolated.x, branchMidpoint - bufferZone);
+        } else if (!isPastBranch && interpolated.x < branchMidpoint + bufferZone) {
+          interpolated.x = Math.max(interpolated.x, branchMidpoint + bufferZone);
+        }
         points.push(interpolated);
       }
     }
     
     // Create main branch segment with extended endpoint to close gaps
     // Extend segment slightly beyond endpoint to ensure perfect connection
+    // CRITICAL FIX: Don't extend if it would cross the midpoint boundary
     const extensionFactor = 1.01; // 1% extension to close gaps
-    const extendedEndX = startX + (endX - startX) * extensionFactor;
-    const extendedEndY = startY + (endY - startY) * extensionFactor;
+    let extendedEndX = startX + (endX - startX) * extensionFactor;
+    let extendedEndY = startY + (endY - startY) * extensionFactor;
     const extendedEndZ = startZ + (endZ - startZ) * extensionFactor;
+    
+    // Constrain extended endpoint to prevent crossing boundary
+    if (isPastBranch !== undefined) {
+      if (isPastBranch && extendedEndX > branchMidpoint - bufferZone) {
+        extendedEndX = Math.min(extendedEndX, branchMidpoint - bufferZone);
+      } else if (!isPastBranch && extendedEndX < branchMidpoint + bufferZone) {
+        extendedEndX = Math.max(extendedEndX, branchMidpoint + bufferZone);
+      }
+    }
     
     const segment: BranchSegment3D = {
       startX,
@@ -190,6 +221,7 @@ function generateInfinityBranches3D(): Array<BranchSegment3D> {
       delay: delay + depth * 0.1,
       duration: 2.5 + Math.random() * 1.5,
       points,
+      isPastBranch, // Store branch type for correct color assignment during rendering
     };
     
     const allSegments = [segment];
@@ -226,6 +258,18 @@ function generateInfinityBranches3D(): Array<BranchSegment3D> {
         branchStartX = interpolated.x;
         branchStartY = interpolated.y;
         branchStartZ = interpolated.z;
+      }
+      
+      // CRITICAL FIX: Constrain sub-branch start position to ensure it's on the correct side
+      // Even with constrained parent endpoints, interpolated points could be near the boundary
+      if (isPastBranch !== undefined) {
+        if (isPastBranch && branchStartX > subBranchMidpoint - 20) {
+          // Clamp to left side boundary
+          branchStartX = Math.min(branchStartX, subBranchMidpoint - 20);
+        } else if (!isPastBranch && branchStartX < subBranchMidpoint + 20) {
+          // Clamp to right side boundary
+          branchStartX = Math.max(branchStartX, subBranchMidpoint + 20);
+        }
       }
       
       // Controlled angle spread - organized but still branching out
@@ -756,6 +800,10 @@ export default function LoadingScreen({ progress, message = 'Loading your journa
                 delay: segment.delay,
                 duration: segment.duration,
                 points: [],
+                // Preserve branch type from source segment for correct color assignment
+                isPastBranch: segment.isPastBranch !== undefined 
+                  ? segment.isPastBranch 
+                  : (segment.startX < LOADING_SCREEN_CONSTANTS.MIDPOINT_X),
               });
             }
           });
@@ -1201,7 +1249,10 @@ export default function LoadingScreen({ progress, message = 'Loading your journa
             
             {/* Branch connection lines - fill gaps between segments */}
             {branchConnections3D.map((connection, idx) => {
-              const isLeft = connection.startX < LOADING_SCREEN_CONSTANTS.MIDPOINT_X;
+              // CRITICAL FIX: Use stored isPastBranch flag if available, otherwise fall back to position check
+              const isLeft = connection.isPastBranch !== undefined 
+                ? connection.isPastBranch 
+                : connection.startX < LOADING_SCREEN_CONSTANTS.MIDPOINT_X;
               const color = isLeft ? leftColor : rightColor;
               // Calculate with mathematical precision
               const dx = connection.endX - connection.startX;
@@ -1277,7 +1328,11 @@ export default function LoadingScreen({ progress, message = 'Loading your journa
             
             {/* Branch segments - 3D cylindrical forms */}
             {branchSegments3D.map((segment, idx) => {
-              const isLeft = segment.startX < LOADING_SCREEN_CONSTANTS.MIDPOINT_X;
+              // CRITICAL FIX: Use stored isPastBranch flag if available, otherwise fall back to position check
+              // This ensures future branches that start near the boundary still get the correct color
+              const isLeft = segment.isPastBranch !== undefined 
+                ? segment.isPastBranch 
+                : segment.startX < LOADING_SCREEN_CONSTANTS.MIDPOINT_X;
               const color = isLeft ? leftColor : rightColor;
               // Calculate with mathematical precision for perfect connections
               const dx = segment.endX - segment.startX;
