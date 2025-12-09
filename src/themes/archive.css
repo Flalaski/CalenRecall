@@ -44,6 +44,46 @@
    ============================================ */
 [data-theme="archive"] html,
 [data-theme="archive"] body {
+  
+  /* Profile Selector Theme Variables */
+  --theme-text: #1a1a2e;
+  --theme-panel-bg: #faf8f3;
+  --theme-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  --theme-border: 1px solid #8b7366;
+  --theme-gradient: linear-gradient(135deg, #6b2d3a 0%, #2c3e50 100%);
+  --theme-heading: #1a1a2e;
+  --theme-text-secondary: #2d2d44;
+  --theme-panel-bg-secondary: #f5f1e8;
+  --theme-input-bg: #faf8f3;
+  --theme-accent: #6b2d3a;
+  --theme-focus-ring: rgba(107, 45, 58, 0.3);
+  --theme-error-bg: #f4e1e1;
+  --theme-error-border: #c62828;
+  --theme-error-text: #8b0000;
+  --theme-card-bg: #faf8f3;
+  --theme-card-active-bg: #f5f1e8;
+  --theme-card-header-bg: #efe8db;
+  --theme-button-hover-bg: rgba(107, 45, 58, 0.2);
+  --theme-button-active-bg: rgba(107, 45, 58, 0.3);
+  --theme-badge-default-bg: #efe8db;
+  --theme-badge-default-text: #6b2d3a;
+  --theme-badge-active-bg: #e8e0d0;
+  --theme-badge-active-text: #2e7d32;
+  --theme-scrollbar-track: #f5f1e8;
+  --theme-scrollbar-thumb: #8b7366;
+  --theme-scrollbar-thumb-hover: #5d4037;
+  --theme-button-primary-bg: linear-gradient(135deg, #6b2d3a 0%, #2c3e50 100%);
+  --theme-button-primary-text: #ffffff;
+  --theme-button-secondary-bg: #f5f1e8;
+  --theme-button-secondary-text: #1a1a2e;
+  --theme-button-secondary-hover: #efe8db;
+  --theme-button-danger-bg: #f4e1e1;
+  --theme-button-danger-text: #8b0000;
+  --theme-button-danger-hover: #f4d1d1;
+  --theme-input-hover: #faf8f3;
+  --theme-accent-hover: #7d3a47;
+  --theme-overlay: rgba(0, 0, 0, 0.5);
+  --theme-divider: linear-gradient(90deg, transparent 0%, rgba(107, 45, 58, 0.3) 50%, transparent 100%);
   background: var(--victorian-bg);
   color: var(--text-primary);
   --theme-body-bg: var(--victorian-bg);

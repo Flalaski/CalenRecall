@@ -13,6 +13,46 @@
   background: #2d2d2d;
   color: #e0e0e0;
   --theme-body-bg: #2d2d2d;
+  
+  /* Profile Selector Theme Variables */
+  --theme-text: #e0e0e0;
+  --theme-panel-bg: #404040;
+  --theme-shadow: none;
+  --theme-border: 2px outset #404040;
+  --theme-gradient: linear-gradient(135deg, #404040 0%, #2d2d2d 100%);
+  --theme-heading: #e0e0e0;
+  --theme-text-secondary: #a0a0a0;
+  --theme-panel-bg-secondary: #505050;
+  --theme-input-bg: #2d2d2d;
+  --theme-accent: #808080;
+  --theme-focus-ring: rgba(128, 128, 128, 0.3);
+  --theme-error-bg: #800000;
+  --theme-error-border: #ff0000;
+  --theme-error-text: #ffffff;
+  --theme-card-bg: #404040;
+  --theme-card-active-bg: #505050;
+  --theme-card-header-bg: #505050;
+  --theme-button-hover-bg: #505050;
+  --theme-button-active-bg: #303030;
+  --theme-badge-default-bg: #404040;
+  --theme-badge-default-text: #808080;
+  --theme-badge-active-bg: #404040;
+  --theme-badge-active-text: #00ff00;
+  --theme-scrollbar-track: #303030;
+  --theme-scrollbar-thumb: #808080;
+  --theme-scrollbar-thumb-hover: #a0a0a0;
+  --theme-button-primary-bg: #404040;
+  --theme-button-primary-text: #e0e0e0;
+  --theme-button-secondary-bg: #404040;
+  --theme-button-secondary-text: #e0e0e0;
+  --theme-button-secondary-hover: #505050;
+  --theme-button-danger-bg: #800000;
+  --theme-button-danger-text: #ffffff;
+  --theme-button-danger-hover: #900000;
+  --theme-input-hover: #353535;
+  --theme-accent-hover: #a0a0a0;
+  --theme-overlay: rgba(0, 0, 0, 0.8);
+  --theme-divider: linear-gradient(90deg, transparent 0%, rgba(224, 224, 224, 0.3) 50%, transparent 100%);
 }
 
 [data-theme="classic-dark"] #root {

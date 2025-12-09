@@ -6,6 +6,46 @@
 [data-theme="bios"] body {
   background: #000080;
   color: #ffffff;
+  
+  /* Profile Selector Theme Variables */
+  --theme-text: #ffffff;
+  --theme-panel-bg: #808080;
+  --theme-shadow: none;
+  --theme-border: 2px solid #c0c0c0;
+  --theme-gradient: linear-gradient(135deg, #c0c0c0 0%, #808080 100%);
+  --theme-heading: #ffffff;
+  --theme-text-secondary: #c0c0c0;
+  --theme-panel-bg-secondary: #808080;
+  --theme-input-bg: #c0c0c0;
+  --theme-accent: #c0c0c0;
+  --theme-focus-ring: rgba(192, 192, 192, 0.3);
+  --theme-error-bg: #800000;
+  --theme-error-border: #ff0000;
+  --theme-error-text: #ffffff;
+  --theme-card-bg: #808080;
+  --theme-card-active-bg: #606060;
+  --theme-card-header-bg: #707070;
+  --theme-button-hover-bg: #909090;
+  --theme-button-active-bg: #606060;
+  --theme-badge-default-bg: #000080;
+  --theme-badge-default-text: #c0c0c0;
+  --theme-badge-active-bg: #008000;
+  --theme-badge-active-text: #ffffff;
+  --theme-scrollbar-track: #606060;
+  --theme-scrollbar-thumb: #c0c0c0;
+  --theme-scrollbar-thumb-hover: #ffffff;
+  --theme-button-primary-bg: #808080;
+  --theme-button-primary-text: #ffffff;
+  --theme-button-secondary-bg: #808080;
+  --theme-button-secondary-text: #ffffff;
+  --theme-button-secondary-hover: #909090;
+  --theme-button-danger-bg: #800000;
+  --theme-button-danger-text: #ffffff;
+  --theme-button-danger-hover: #900000;
+  --theme-input-hover: #909090;
+  --theme-accent-hover: #d0d0d0;
+  --theme-overlay: rgba(0, 0, 0, 0.8);
+  --theme-divider: linear-gradient(90deg, transparent 0%, rgba(192, 192, 192, 0.5) 50%, transparent 100%);
   font-family: 'Fixedsys', 'Terminal', 'MS Sans Serif', system-ui, monospace;
   -webkit-font-smoothing: none;
   -moz-osx-font-smoothing: unset;

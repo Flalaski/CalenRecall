@@ -13,6 +13,127 @@
  */
 
 [data-theme="football"] body {
+  
+  /* Profile Selector Theme Variables */
+  --theme-text: inherit;
+  --theme-panel-bg: var(--theme-body-bg, white);
+  --theme-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  --theme-border: 1px solid rgba(0, 0, 0, 0.1);
+  --theme-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  --theme-heading: var(--theme-text, inherit);
+  --theme-text-secondary: var(--theme-text, #666);
+  --theme-panel-bg-secondary: rgba(255, 255, 255, 0.1);
+  --theme-input-bg: var(--theme-panel-bg, white);
+  --theme-accent: #667eea;
+  --theme-focus-ring: rgba(102, 126, 234, 0.1);
+  --theme-error-bg: #fee;
+  --theme-error-border: #fcc;
+  --theme-error-text: #c33;
+  --theme-card-bg: var(--theme-panel-bg, white);
+  --theme-card-active-bg: var(--theme-panel-bg-secondary, rgba(102, 126, 234, 0.05));
+  --theme-card-header-bg: var(--theme-panel-bg-secondary, rgba(102, 126, 234, 0.05));
+  --theme-button-hover-bg: rgba(102, 126, 234, 0.15);
+  --theme-button-active-bg: rgba(102, 126, 234, 0.2);
+  --theme-badge-default-bg: #e3f2fd;
+  --theme-badge-default-text: #1976d2;
+  --theme-badge-active-bg: #c8e6c9;
+  --theme-badge-active-text: #2e7d32;
+  --theme-scrollbar-track: var(--theme-panel-bg-secondary, #f1f1f1);
+  --theme-scrollbar-thumb: var(--theme-text-secondary, #888);
+  --theme-scrollbar-thumb-hover: var(--theme-text, #555);
+  --theme-button-primary-bg: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  --theme-button-primary-text: white;
+  --theme-button-secondary-bg: #f5f5f5;
+  --theme-button-secondary-text: var(--theme-text, #333);
+  --theme-button-secondary-hover: #e0e0e0;
+  --theme-button-danger-bg: #fee;
+  --theme-button-danger-text: #c33;
+  --theme-button-danger-hover: #fcc;
+  --theme-input-hover: #e8edff;
+  --theme-accent-hover: #764ba2;
+  --theme-overlay: rgba(0, 0, 0, 0.5);
+  --theme-divider: linear-gradient(90deg, transparent 0%, rgba(102, 126, 234, 0.5) 50%, transparent 100%);
+
+  
+  /* Profile Selector Theme Variables */
+  --theme-text: #ffffff;
+  --theme-panel-bg: #2d5016;
+  --theme-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  --theme-border: 2px solid #3a6b1f;
+  --theme-gradient: linear-gradient(135deg, #3a6b1f 0%, #1a3d0a 100%);
+  --theme-heading: #ffffff;
+  --theme-text-secondary: #a5d6a7;
+  --theme-panel-bg-secondary: #3a6b1f;
+  --theme-input-bg: #1a3d0a;
+  --theme-accent: #ff6b00;
+  --theme-focus-ring: rgba(255, 107, 0, 0.3);
+  --theme-error-bg: #4a1a1a;
+  --theme-error-border: #ff0000;
+  --theme-error-text: #ff6666;
+  --theme-card-bg: #2d5016;
+  --theme-card-active-bg: #3a6b1f;
+  --theme-card-header-bg: #3a6b1f;
+  --theme-button-hover-bg: rgba(255, 107, 0, 0.2);
+  --theme-button-active-bg: rgba(255, 107, 0, 0.3);
+  --theme-badge-default-bg: #2d5016;
+  --theme-badge-default-text: #a5d6a7;
+  --theme-badge-active-bg: #1a3d0a;
+  --theme-badge-active-text: #00ff00;
+  --theme-scrollbar-track: #1a3d0a;
+  --theme-scrollbar-thumb: #4a7c2a;
+  --theme-scrollbar-thumb-hover: #5a8c3a;
+  --theme-button-primary-bg: linear-gradient(135deg, #ff6b00 0%, #ff8c00 100%);
+  --theme-button-primary-text: #ffffff;
+  --theme-button-secondary-bg: #3a6b1f;
+  --theme-button-secondary-text: #ffffff;
+  --theme-button-secondary-hover: #4a7c2a;
+  --theme-button-danger-bg: #4a1a1a;
+  --theme-button-danger-text: #ff6666;
+  --theme-button-danger-hover: #5a2a2a;
+  --theme-input-hover: #2d5016;
+  --theme-accent-hover: #ff8c20;
+  --theme-overlay: rgba(0, 0, 0, 0.7);
+  --theme-divider: linear-gradient(90deg, transparent 0%, rgba(255, 107, 0, 0.4) 50%, transparent 100%);
+  
+  /* Profile Selector Theme Variables */
+  --theme-text: #ffffff;
+  --theme-panel-bg: #2d5016;
+  --theme-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  --theme-border: 2px solid #3a6b1f;
+  --theme-gradient: linear-gradient(135deg, #3a6b1f 0%, #1a3d0a 100%);
+  --theme-heading: #ffffff;
+  --theme-text-secondary: #a5d6a7;
+  --theme-panel-bg-secondary: #3a6b1f;
+  --theme-input-bg: #1a3d0a;
+  --theme-accent: #ff6b00;
+  --theme-focus-ring: rgba(255, 107, 0, 0.3);
+  --theme-error-bg: #4a1a1a;
+  --theme-error-border: #ff0000;
+  --theme-error-text: #ff6666;
+  --theme-card-bg: #2d5016;
+  --theme-card-active-bg: #3a6b1f;
+  --theme-card-header-bg: #3a6b1f;
+  --theme-button-hover-bg: rgba(255, 107, 0, 0.2);
+  --theme-button-active-bg: rgba(255, 107, 0, 0.3);
+  --theme-badge-default-bg: #2d5016;
+  --theme-badge-default-text: #a5d6a7;
+  --theme-badge-active-bg: #1a3d0a;
+  --theme-badge-active-text: #00ff00;
+  --theme-scrollbar-track: #1a3d0a;
+  --theme-scrollbar-thumb: #4a7c2a;
+  --theme-scrollbar-thumb-hover: #5a8c3a;
+  --theme-button-primary-bg: linear-gradient(135deg, #ff6b00 0%, #ff8c00 100%);
+  --theme-button-primary-text: #ffffff;
+  --theme-button-secondary-bg: #3a6b1f;
+  --theme-button-secondary-text: #ffffff;
+  --theme-button-secondary-hover: #4a7c2a;
+  --theme-button-danger-bg: #4a1a1a;
+  --theme-button-danger-text: #ff6666;
+  --theme-button-danger-hover: #5a2a2a;
+  --theme-input-hover: #2d5016;
+  --theme-accent-hover: #ff8c20;
+  --theme-overlay: rgba(0, 0, 0, 0.7);
+  --theme-divider: linear-gradient(90deg, transparent 0%, rgba(255, 107, 0, 0.4) 50%, transparent 100%);
   background: #2d5016;
   color: #ffffff;
 }

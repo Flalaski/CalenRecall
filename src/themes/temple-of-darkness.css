@@ -115,6 +115,46 @@
    ============================================ */
 [data-theme="temple-of-darkness"] html,
 [data-theme="temple-of-darkness"] body {
+  
+  /* Profile Selector Theme Variables */
+  --theme-text: #b0b0b0;
+  --theme-panel-bg: #1a1a1a;
+  --theme-shadow: 0 0 10px rgba(139, 0, 0, 0.3);
+  --theme-border: 1px solid #3a3a3a;
+  --theme-gradient: linear-gradient(135deg, #8b0000 0%, #5a0000 100%);
+  --theme-heading: #f0f0f0;
+  --theme-text-secondary: #c0c0c0;
+  --theme-panel-bg-secondary: #252525;
+  --theme-input-bg: #0f0f0f;
+  --theme-accent: #8b0000;
+  --theme-focus-ring: rgba(139, 0, 0, 0.5);
+  --theme-error-bg: #330000;
+  --theme-error-border: #ff0000;
+  --theme-error-text: #ff6666;
+  --theme-card-bg: #1a1a1a;
+  --theme-card-active-bg: #252525;
+  --theme-card-header-bg: #252525;
+  --theme-button-hover-bg: rgba(139, 0, 0, 0.2);
+  --theme-button-active-bg: rgba(139, 0, 0, 0.3);
+  --theme-badge-default-bg: #1a1a1a;
+  --theme-badge-default-text: #b0b0b0;
+  --theme-badge-active-bg: #1a0000;
+  --theme-badge-active-text: #ff6666;
+  --theme-scrollbar-track: #0f0f0f;
+  --theme-scrollbar-thumb: #3a3a3a;
+  --theme-scrollbar-thumb-hover: #5a5a5a;
+  --theme-button-primary-bg: linear-gradient(135deg, #8b0000 0%, #5a0000 100%);
+  --theme-button-primary-text: #ffffff;
+  --theme-button-secondary-bg: #252525;
+  --theme-button-secondary-text: #b0b0b0;
+  --theme-button-secondary-hover: #353535;
+  --theme-button-danger-bg: #330000;
+  --theme-button-danger-text: #ff6666;
+  --theme-button-danger-hover: #440000;
+  --theme-input-hover: #1a1a1a;
+  --theme-accent-hover: #ab0000;
+  --theme-overlay: rgba(0, 0, 0, 0.9);
+  --theme-divider: linear-gradient(90deg, transparent 0%, rgba(139, 0, 0, 0.5) 50%, transparent 100%);
   background: var(--temple-bg);
   color: var(--text-primary);
   text-shadow: var(--text-glow);
