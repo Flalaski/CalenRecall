@@ -276,12 +276,17 @@
   image-rendering: crisp-edges;
   -webkit-font-smoothing: none;
   -moz-osx-font-smoothing: unset;
-  /* OPTIMIZATION: GPU acceleration for smooth navigation */
+  /* HIGH-PERFORMANCE: CSS containment for layout isolation */
+  contain: layout style paint;
+  /* HIGH-PERFORMANCE: GPU acceleration for smooth navigation */
   transform: translateZ(0);
   will-change: transform;
   /* Optimize for smooth dragging */
   -webkit-tap-highlight-color: transparent;
   touch-action: none; /* Prevent touch scrolling during drag */
+  /* HIGH-PERFORMANCE: Backface visibility for transform optimization */
+  backface-visibility: hidden;
+  perspective: 1000px;
   
   /* Base scale factor (medium = 1.0) */
   --minimap-scale: 1;
@@ -513,6 +518,9 @@
 
 .minimap-container.dragging * {
   pointer-events: none;
+  /* HIGH-PERFORMANCE: Disable animations during drag for better performance */
+  animation: none !important;
+  will-change: auto !important;
 }
 
 .minimap-container.dragging .entry-indicator,
@@ -1262,6 +1270,10 @@
   height: 100%;
   transform: translateZ(0) rotate(45deg);
   transition: transform 0.3s ease, opacity 0.3s ease;
+  /* HIGH-PERFORMANCE: CSS containment for layout isolation */
+  contain: layout style paint;
+  /* HIGH-PERFORMANCE: Compositor-friendly properties only */
+  /* will-change: transform; */ /* Only add when animating */
   /* Optimized: Removed expensive drop-shadow filters - use box-shadow instead */
   filter: brightness(1.1) saturate(3.5);
   box-shadow: 

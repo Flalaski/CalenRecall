@@ -1,4 +1,5 @@
 import { useMemo, useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { TimeRange, JournalEntry } from '../types';
 import { getWeekStart, getWeekEnd, getMonthStart, getMonthEnd, getYearEnd, getDecadeEnd, getZodiacColor, getZodiacColorForDecade, getCanonicalDate, parseISODate, createDate, getYearStart, isToday } from '../utils/dateUtils';
 import { addDays, addWeeks, addMonths, addYears, getYear, getMonth, getDate } from 'date-fns';
@@ -10,6 +11,7 @@ import { filterEntriesByDateRange } from '../utils/entryFilterUtils';
 import { getCalendarTierNames } from '../utils/calendarTierNames';
 import { getCalendarEpoch } from '../utils/calendars/epochUtils';
 import { jdnToDate } from '../utils/calendars/julianDayUtils';
+import { useTaskScheduler, useStyleBatcher, useThrottledCallback } from '../hooks/usePerformanceOptimized';
 import './GlobalTimelineMinimap.css';
 
 interface GlobalTimelineMinimapProps {
@@ -347,13 +349,18 @@ export default function GlobalTimelineMinimap({
     currentMovement?: number;
   } | null>(null);
   
+
+  // HIGH-PERFORMANCE: Performance optimization hooks
+  const { schedule } = useTaskScheduler();
+  const { queueStyle } = useStyleBatcher();
+
   // Invalidate bounding rect cache on window resize
   useEffect(() => {
     const handleResize = () => {
       cachedBoundingRectRef.current = null;
     };
     
-    window.addEventListener('resize', handleResize);
+    window.addEventListener('resize', handleResize, { passive: true });
     return () => {
       window.removeEventListener('resize', handleResize);
     };
@@ -3101,7 +3108,9 @@ export default function GlobalTimelineMinimap({
     // Timeline range is already locked via timelineRangeRef - no need to lock again
     
     // Show radial dial at mouse position
-    setRadialDial({ x: e.clientX, y: e.clientY });
+    // Use native event coordinates for precise positioning with position: fixed
+    const nativeEvent = e.nativeEvent;
+    setRadialDial({ x: nativeEvent.clientX, y: nativeEvent.clientY });
     
     // Initialize drag limits visualization
     const initialDragLimits = {
@@ -4195,8 +4204,8 @@ export default function GlobalTimelineMinimap({
           )}
         </div>
       )}
-      {/* Radial dial for directional movement */}
-      {radialDial && isDragging && (
+      {/* Radial dial for directional movement - rendered via portal to avoid parent transform issues */}
+      {radialDial && isDragging && createPortal(
         <div 
           className="radial-dial"
           style={{
@@ -4221,7 +4230,8 @@ export default function GlobalTimelineMinimap({
             <div className="radial-arrow">↓</div>
             <div className="radial-label">{getRadialDialLabels().down}</div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
       {/* Mechanical click visual feedback */}
       {mechanicalClick && (

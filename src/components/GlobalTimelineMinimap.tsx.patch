@@ -1,0 +1,37 @@
+--- a/src/components/GlobalTimelineMinimap.tsx
++++ b/src/components/GlobalTimelineMinimap.tsx
+@@ -1,7 +1,6 @@
+ import { useMemo, useState, useEffect, useRef } from 'react';
+ import { createPortal } from 'react-dom';
+-import { createPortal } from 'react-dom';
+ import { TimeRange, JournalEntry } from '../types';
+ import { getWeekStart, getWeekEnd, getMonthStart, getMonthEnd, getYearEnd, getDecadeEnd, getZodiacColor, getZodiacColorForDecade, getCanonicalDate, parseISODate, createDate, getYearStart, isToday } from '../utils/dateUtils';
+ import { addDays, addWeeks, addMonths, addYears, getYear, getMonth, getDate } from 'date-fns';
+ import { playMechanicalClick, playMicroBlip, getAudioContext, createSliderNoise, SliderNoise } from '../utils/audioUtils';
+@@ -11,6 +10,7 @@
+ import { getCalendarTierNames } from '../utils/calendarTierNames';
+ import { getCalendarEpoch } from '../utils/calendars/epochUtils';
+ import { jdnToDate } from '../utils/calendars/julianDayUtils';
++import { useTaskScheduler, useStyleBatcher, useThrottledCallback } from '../hooks/usePerformanceOptimized';
+ import './GlobalTimelineMinimap.css';
+ 
+ interface GlobalTimelineMinimapProps {
+@@ -348,6 +348,10 @@
+   } | null>(null);
+   
++  // HIGH-PERFORMANCE: Performance optimization hooks
++  const { schedule } = useTaskScheduler();
++  const { queueStyle } = useStyleBatcher();
++  
+   // Invalidate bounding rect cache on window resize
+   useEffect(() => {
+     const handleResize = () => {
+@@ -355,7 +359,7 @@
+     };
+     
+-    window.addEventListener('resize', handleResize);
++    window.addEventListener('resize', handleResize, { passive: true });
+     return () => {
+       window.removeEventListener('resize', handleResize);
+     };
+

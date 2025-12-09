@@ -77,45 +77,41 @@ function ProfileSelector() {
   const [theme, setTheme] = useState<ThemeName>('aero');
   const themeCleanupRef = React.useRef<(() => void) | null>(null);
 
-  // Load theme from current profile's preferences
-  const loadThemeFromProfile = async () => {
-    try {
-      // Try to get theme from current profile's preferences
-      // Note: This might fail if no database is initialized yet (e.g., first launch)
-      const api = getProfileSelectorAPI();
-      if (currentProfile && api.getAllPreferences) {
-        try {
-          const preferences = await api.getAllPreferences();
-          if (preferences && preferences.theme) {
-            return preferences.theme as ThemeName;
-          }
-        } catch (dbError) {
-          // Database might not be initialized yet - this is okay
-          console.log('Database not initialized yet, using fallback theme');
-        }
-      }
-    } catch (err) {
-      console.error('Error loading theme from profile:', err);
-    }
-    
-    // Fallback to localStorage or default
-    const savedTheme = localStorage.getItem('profileManagerTheme') as ThemeName | null;
+  // Load theme from profile selector's own localStorage (independent from profile preferences)
+  const loadProfileSelectorTheme = (): ThemeName => {
+    const savedTheme = localStorage.getItem('profileSelectorTheme') as ThemeName | null;
     return savedTheme || 'aero';
   };
 
-  // Initialize theme on mount
-  useEffect(() => {
-    const initializeThemeSystem = async () => {
-      // Load theme from current profile or fallback
-      const initialTheme = await loadThemeFromProfile();
-      setTheme(initialTheme);
-      
-      // Apply theme and set up auto theme listener if needed
-      const cleanup = initializeTheme(initialTheme);
-      themeCleanupRef.current = cleanup;
-    };
+  // Save theme to profile selector's own localStorage
+  const saveProfileSelectorTheme = (themeName: ThemeName) => {
+    localStorage.setItem('profileSelectorTheme', themeName);
+  };
+
+  // Handle theme change - updates both state and localStorage, and applies the theme
+  const handleThemeChange = (newTheme: ThemeName) => {
+    setTheme(newTheme);
+    saveProfileSelectorTheme(newTheme);
     
-    initializeThemeSystem();
+    // Clean up previous theme listener
+    if (themeCleanupRef.current) {
+      themeCleanupRef.current();
+      themeCleanupRef.current = null;
+    }
+    
+    // Apply new theme
+    const cleanup = initializeTheme(newTheme);
+    themeCleanupRef.current = cleanup;
+  };
+
+  // Initialize theme on mount - only from profile selector's own storage
+  useEffect(() => {
+    const initialTheme = loadProfileSelectorTheme();
+    setTheme(initialTheme);
+    
+    // Apply theme and set up auto theme listener if needed
+    const cleanup = initializeTheme(initialTheme);
+    themeCleanupRef.current = cleanup;
     
     return () => {
       if (themeCleanupRef.current) {
@@ -124,36 +120,7 @@ function ProfileSelector() {
     };
   }, []);
 
-  // Update theme when current profile changes
-  useEffect(() => {
-    const updateThemeForProfile = async () => {
-      if (currentProfile) {
-        const profileTheme = await loadThemeFromProfile();
-        console.log('[Profile Selector] Profile changed, loading theme:', profileTheme, 'for profile:', currentProfile.id);
-        
-        if (profileTheme !== theme) {
-          // Update state - this will update the dropdown
-          setTheme(profileTheme);
-          // Also update localStorage to keep it in sync
-          localStorage.setItem('profileManagerTheme', profileTheme);
-          
-          // Clean up previous theme listener
-          if (themeCleanupRef.current) {
-            themeCleanupRef.current();
-            themeCleanupRef.current = null;
-          }
-          
-          // Apply new theme
-          const cleanup = initializeTheme(profileTheme);
-          themeCleanupRef.current = cleanup;
-        }
-      }
-    };
-    
-    updateThemeForProfile();
-  }, [currentProfile]);
-
-  // Listen for preference updates from main window
+  // Listen for preference updates from main window (but ignore theme updates)
   useEffect(() => {
     const api = getProfileSelectorAPI();
     if (!api.onPreferenceUpdated) {
@@ -161,23 +128,9 @@ function ProfileSelector() {
     }
 
     const handlePreferenceUpdate = (data: { key: string; value: any }) => {
+      // Ignore theme updates - profile selector has its own independent theme
       if (data.key === 'theme') {
-        const newTheme = (data.value || 'aero') as ThemeName;
-        console.log('[Profile Selector] Theme updated from main window:', newTheme);
-        
-        // Update state - this will automatically update the dropdown since it's controlled
-        setTheme(newTheme);
-        localStorage.setItem('profileManagerTheme', newTheme);
-        
-        // Clean up previous theme listener
-        if (themeCleanupRef.current) {
-          themeCleanupRef.current();
-          themeCleanupRef.current = null;
-        }
-        
-        // Apply new theme
-        const cleanup = initializeTheme(newTheme);
-        themeCleanupRef.current = cleanup;
+        return; // Do nothing - profile selector theme is independent
       } else if (data.key === 'soundEffectsEnabled') {
         // Update sound effects cache when preference changes
         const enabled = data.value !== false;
