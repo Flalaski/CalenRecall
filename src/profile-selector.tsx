@@ -192,6 +192,22 @@ function ProfileSelector() {
     }
   }, [showCreateDialog]);
 
+  // Automatically copy recovery key to clipboard when recovery key dialog opens
+  useEffect(() => {
+    if (showRecoveryKey && recoveryKeyToShow) {
+      const api = getProfileSelectorAPI();
+      api.copyToClipboard(recoveryKeyToShow).then(() => {
+        setCopySuccess(true);
+        playSaveSound();
+        // Reset copy success indicator after 2 seconds
+        setTimeout(() => setCopySuccess(false), 2000);
+      }).catch((err) => {
+        console.error('Failed to copy recovery key to clipboard:', err);
+        // Don't show error to user, just log it - the key is still visible in the dialog
+      });
+    }
+  }, [showRecoveryKey, recoveryKeyToShow]);
+
 
   useEffect(() => {
     // Initialize sound effects cache
