@@ -444,8 +444,69 @@ export function playEraSwitchSound(era: 'CE' | 'BCE'): void {
   }
 }
 
-// General typing sound - for typing in any text field
-export function playTypingSound(): void {
+// Typing sound options - allows context-aware sounds based on key pressed
+export interface TypingSoundOptions {
+  key?: string;           // The key that was pressed (e.g., 'a', '1', 'Enter', 'Backspace')
+  char?: string;          // The character being typed (for character-based sounds)
+  keyCode?: number;       // Optional key code for precise identification
+  isShift?: boolean;      // Whether shift was held
+  isCtrl?: boolean;       // Whether ctrl was held
+  isAlt?: boolean;        // Whether alt was held
+}
+
+// Character type classification for sound variation
+type CharType = 'letter' | 'number' | 'punctuation' | 'space' | 'special' | 'unknown';
+
+// Classify character type for sound generation
+function classifyCharType(key: string | undefined, char: string | undefined): CharType {
+  const testChar = char || key || '';
+  
+  if (!testChar || testChar.length === 0) return 'unknown';
+  
+  // Single character analysis
+  const singleChar = testChar.length === 1 ? testChar : testChar.charAt(0);
+  
+  // Special keys (non-printable)
+  if (key && (key.length > 1 || key === ' ')) {
+    if (['Backspace', 'Delete', 'Enter', 'Tab', 'Escape'].includes(key)) {
+      return 'special';
+    }
+    if (key === ' ') return 'space';
+  }
+  
+  // Check if it's a letter
+  if (/[a-zA-Z]/.test(singleChar)) return 'letter';
+  
+  // Check if it's a number
+  if (/[0-9]/.test(singleChar)) return 'number';
+  
+  // Check if it's punctuation
+  if (/[.,!?;:'"\-_=+[\]{}()<>@#$%^&*|\\/~`]/.test(singleChar)) return 'punctuation';
+  
+  // Check if it's a space
+  if (singleChar === ' ' || singleChar === '\t') return 'space';
+  
+  return 'unknown';
+}
+
+// Get keyboard row position for letters (affects pitch)
+// Top row: qwertyuiop -> higher pitch
+// Home row: asdfghjkl -> medium pitch
+// Bottom row: zxcvbnm -> lower pitch
+function getLetterRowPosition(char: string): 'top' | 'home' | 'bottom' | 'unknown' {
+  const topRow = 'qwertyuiop';
+  const homeRow = 'asdfghjkl';
+  const bottomRow = 'zxcvbnm';
+  
+  const lowerChar = char.toLowerCase();
+  if (topRow.includes(lowerChar)) return 'top';
+  if (homeRow.includes(lowerChar)) return 'home';
+  if (bottomRow.includes(lowerChar)) return 'bottom';
+  return 'unknown';
+}
+
+// Generate context-aware typing sound based on key pressed
+export function playTypingSound(options?: TypingSoundOptions | string): void {
   if (!areSoundEffectsEnabled()) return;
   const audioContext = getAudioContext();
   if (!audioContext) return;
@@ -454,34 +515,183 @@ export function playTypingSound(): void {
   
   try {
     const now = audioContext.currentTime;
+    
+    // Handle backward compatibility - if string is passed, treat as key
+    let opts: TypingSoundOptions;
+    if (typeof options === 'string') {
+      opts = { key: options };
+    } else {
+      opts = options || {};
+    }
+    
+    const key = opts.key;
+    const char = opts.char || key;
+    const charType = classifyCharType(key, char);
+    
+    // Base frequency varies by character type
+    let baseFreq: number;
+    let freqVariation: number;
+    let duration: number;
+    let volume: number;
+    let waveType: OscillatorType;
+    
+    switch (charType) {
+      case 'letter': {
+        // Letters: pitch varies by keyboard row position
+        const row = getLetterRowPosition(char || '');
+        switch (row) {
+          case 'top':
+            baseFreq = 1100;  // Higher pitch for top row
+            break;
+          case 'home':
+            baseFreq = 1000;  // Medium pitch for home row
+            break;
+          case 'bottom':
+            baseFreq = 900;   // Lower pitch for bottom row
+            break;
+          default:
+            baseFreq = 1000;
+        }
+        // Add slight variation based on character position in alphabet
+        if (char) {
+          const charCode = char.toLowerCase().charCodeAt(0);
+          const alphabetPos = charCode - 97; // a=0, z=25
+          baseFreq += (alphabetPos % 5) * 20 - 40; // Subtle variation
+        }
+        freqVariation = 100;
+        duration = 0.04;
+        volume = 0.15;
+        waveType = 'sine';
+        break;
+      }
+      
+      case 'number': {
+        // Numbers: crisp, precise sound with pitch based on digit value
+        const digit = char ? parseInt(char) : 5;
+        // Map 0-9 to frequency range 850-1150
+        baseFreq = 850 + (digit * 30);
+        freqVariation = 80;
+        duration = 0.035;
+        volume = 0.18; // Slightly louder for numbers
+        waveType = 'sine';
+        break;
+      }
+      
+      case 'punctuation': {
+        // Punctuation: sharper, more percussive
+        baseFreq = 1200;
+        freqVariation = 150;
+        duration = 0.03;
+        volume = 0.12; // Quieter for punctuation
+        waveType = 'sine';
+        break;
+      }
+      
+      case 'space': {
+        // Space: very subtle, low thud
+        baseFreq = 400;
+        freqVariation = 50;
+        duration = 0.05;
+        volume = 0.08; // Very quiet
+        waveType = 'sine';
+        break;
+      }
+      
+      case 'special': {
+        // Special keys: distinct sounds based on key
+        if (key === 'Backspace' || key === 'Delete') {
+          // Deletion: descending, softer
+          baseFreq = 800;
+          freqVariation = -200; // Descending
+          duration = 0.05;
+          volume = 0.1;
+          waveType = 'sine';
+        } else if (key === 'Enter') {
+          // Enter: ascending, confident
+          baseFreq = 700;
+          freqVariation = 300; // Ascending
+          duration = 0.06;
+          volume = 0.2;
+          waveType = 'sine';
+        } else if (key === 'Tab') {
+          // Tab: quick step
+          baseFreq = 900;
+          freqVariation = 100;
+          duration = 0.03;
+          volume = 0.12;
+          waveType = 'sine';
+        } else {
+          // Other special keys: neutral
+          baseFreq = 1000;
+          freqVariation = 100;
+          duration = 0.04;
+          volume = 0.15;
+          waveType = 'sine';
+        }
+        break;
+      }
+      
+      default: {
+        // Unknown/fallback: default typing sound
+        baseFreq = 1000;
+        freqVariation = 100;
+        duration = 0.04;
+        volume = 0.15;
+        waveType = 'sine';
+      }
+    }
+    
+    // Apply shift modifier (slightly higher pitch when shift is held)
+    if (opts.isShift && charType === 'letter') {
+      baseFreq += 50;
+    }
+    
     const oscillator = audioContext.createOscillator();
     const gainNode = audioContext.createGain();
     
-    // Quick, crisp tick for typing - subtle and non-intrusive
-    oscillator.type = 'sine';
-    oscillator.frequency.setValueAtTime(1000, now);
-    oscillator.frequency.linearRampToValueAtTime(1100, now + 0.01);
-    oscillator.frequency.linearRampToValueAtTime(950, now + 0.03);
+    oscillator.type = waveType;
     
+    // Frequency envelope based on character type
+    if (charType === 'special' && (key === 'Backspace' || key === 'Delete')) {
+      // Descending for deletion
+      oscillator.frequency.setValueAtTime(baseFreq, now);
+      oscillator.frequency.linearRampToValueAtTime(baseFreq + freqVariation, now + duration);
+    } else if (charType === 'special' && key === 'Enter') {
+      // Ascending for Enter
+      oscillator.frequency.setValueAtTime(baseFreq, now);
+      oscillator.frequency.linearRampToValueAtTime(baseFreq + freqVariation, now + duration * 0.6);
+      oscillator.frequency.linearRampToValueAtTime(baseFreq + freqVariation * 0.7, now + duration);
+    } else {
+      // Standard: quick rise and fall
+      oscillator.frequency.setValueAtTime(baseFreq, now);
+      oscillator.frequency.linearRampToValueAtTime(baseFreq + freqVariation * 0.5, now + duration * 0.3);
+      oscillator.frequency.linearRampToValueAtTime(baseFreq - freqVariation * 0.3, now + duration);
+    }
+    
+    // Volume envelope
     gainNode.gain.setValueAtTime(0, now);
-    gainNode.gain.linearRampToValueAtTime(0.15, now + 0.001);
-    gainNode.gain.exponentialRampToValueAtTime(0.03, now + 0.02);
-    gainNode.gain.linearRampToValueAtTime(0, now + 0.04);
+    gainNode.gain.linearRampToValueAtTime(volume, now + 0.001);
+    gainNode.gain.exponentialRampToValueAtTime(volume * 0.2, now + duration * 0.5);
+    gainNode.gain.linearRampToValueAtTime(0, now + duration);
     
     oscillator.connect(gainNode);
     gainNode.connect(audioContext.destination);
     
     oscillator.start(now);
-    oscillator.stop(now + 0.04);
+    oscillator.stop(now + duration);
   } catch (error) {
     console.debug('Typing sound error:', error);
   }
 }
 
 // Number typing sound - for typing digits in date fields
-export function playNumberTypingSound(): void {
-  // Use the same sound as general typing
-  playTypingSound();
+export function playNumberTypingSound(key?: string): void {
+  // Use enhanced typing sound with number context
+  if (key) {
+    playTypingSound({ key, char: key });
+  } else {
+    playTypingSound({ char: '5' }); // Default to middle number if no key provided
+  }
 }
 
 // Navigation sound - for prev/next/today buttons

@@ -257,11 +257,22 @@ export default function SearchView({ onEntrySelect, onClose }: SearchViewProps) 
             value={query}
             onChange={(e) => {
               setQuery(e.target.value);
-              playTypingSound();
+              // Typing sound is handled in onKeyDown for better key context
             }}
             onKeyDown={(e) => {
               if (e.key === 'Escape' && onClose) {
                 onClose();
+              } else {
+                // Play context-aware typing sound for printable keys
+                if (e.key.length === 1 || ['Backspace', 'Delete', 'Enter'].includes(e.key)) {
+                  playTypingSound({
+                    key: e.key,
+                    char: e.key.length === 1 ? e.key : undefined,
+                    isShift: e.shiftKey,
+                    isCtrl: e.ctrlKey,
+                    isAlt: e.altKey,
+                  });
+                }
               }
             }}
           />
@@ -325,7 +336,19 @@ export default function SearchView({ onEntrySelect, onClose }: SearchViewProps) 
                 value={startDate}
                 onChange={(e) => {
                   setStartDate(e.target.value);
-                  playTypingSound();
+                  // Typing sound is handled in onKeyDown for better key context
+                }}
+                onKeyDown={(e) => {
+                  // Play context-aware typing sound for printable keys
+                  if (e.key.length === 1 || ['Backspace', 'Delete', 'Enter'].includes(e.key)) {
+                    playTypingSound({
+                      key: e.key,
+                      char: e.key.length === 1 ? e.key : undefined,
+                      isShift: e.shiftKey,
+                      isCtrl: e.ctrlKey,
+                      isAlt: e.altKey,
+                    });
+                  }
                 }}
                 placeholder="Start date"
               />
@@ -335,7 +358,19 @@ export default function SearchView({ onEntrySelect, onClose }: SearchViewProps) 
                 value={endDate}
                 onChange={(e) => {
                   setEndDate(e.target.value);
-                  playTypingSound();
+                  // Typing sound is handled in onKeyDown for better key context
+                }}
+                onKeyDown={(e) => {
+                  // Play context-aware typing sound for printable keys
+                  if (e.key.length === 1 || ['Backspace', 'Delete', 'Enter'].includes(e.key)) {
+                    playTypingSound({
+                      key: e.key,
+                      char: e.key.length === 1 ? e.key : undefined,
+                      isShift: e.shiftKey,
+                      isCtrl: e.ctrlKey,
+                      isAlt: e.altKey,
+                    });
+                  }
                 }}
                 placeholder="End date"
               />

@@ -427,8 +427,7 @@ export default function NavigationBar({
             // User typed positive year while in BCE mode, keep BCE mode
             // (the value will be converted to negative on parse)
           } else if (numValue > 0) {
-            // User typed a number - play typing sound
-            playNumberTypingSound();
+            // Typing sound is handled in onKeyDown for better key context
           }
         }
       }
@@ -453,13 +452,7 @@ export default function NavigationBar({
     setDateInputValues(newValues);
     setDateInputError(false);
     
-    // Play number typing sound when typing digits (not for special characters like - or +)
-    // Check if the value contains digits and is not just a special character
-    const hasDigits = /\d/.test(value);
-    const isJustSpecialChar = value === '-' || value === '+' || value === '';
-    if (hasDigits && !isJustSpecialChar) {
-      playNumberTypingSound();
-    }
+    // Typing sound is handled in onKeyDown for better key context
   };
 
   const handleDateInputFocus = (index: number) => () => {
@@ -964,10 +957,18 @@ export default function NavigationBar({
         e.preventDefault();
       }
     } else if (e.key === 'Backspace') {
+      // Play context-aware typing sound for backspace
+      playNumberTypingSound(e.key);
       // If backspace on empty field or at start, go to previous field
       if ((e.currentTarget.value === '' || e.currentTarget.selectionStart === 0) && index > 0) {
         inputRefs.current[index - 1]?.focus();
         e.preventDefault();
+      }
+    } else {
+      // Play context-aware typing sound for number keys and other printable characters
+      // Skip for arrow keys and other navigation keys
+      if (e.key.length === 1 || ['Delete'].includes(e.key)) {
+        playNumberTypingSound(e.key);
       }
     }
     // Let Tab key work normally - don't intercept it

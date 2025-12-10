@@ -351,6 +351,18 @@ export default function EntryEditModal({
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && e.ctrlKey) {
       handleSave();
+    } else {
+      // Play context-aware typing sound for printable keys
+      // Skip for modifier keys and special shortcuts
+      if (e.key.length === 1 || ['Backspace', 'Delete', 'Enter'].includes(e.key)) {
+        playTypingSound({
+          key: e.key,
+          char: e.key.length === 1 ? e.key : undefined,
+          isShift: e.shiftKey,
+          isCtrl: e.ctrlKey,
+          isAlt: e.altKey,
+        });
+      }
     }
   };
 
@@ -558,7 +570,7 @@ export default function EntryEditModal({
             value={title}
             onChange={(e) => {
               setTitle(e.target.value);
-              playTypingSound();
+              // Typing sound is handled in onKeyDown for better key context
             }}
             onKeyDown={handleKeyPress}
             autoFocus
@@ -570,7 +582,7 @@ export default function EntryEditModal({
             value={content}
             onChange={(e) => {
               setContent(e.target.value);
-              playTypingSound();
+              // Typing sound is handled in onKeyDown for better key context
             }}
             onKeyDown={handleKeyPress}
           />
@@ -584,9 +596,21 @@ export default function EntryEditModal({
                 value={tagInput}
                 onChange={(e) => {
                   setTagInput(e.target.value);
-                  playTypingSound();
+                  // Typing sound is handled in onKeyDown for better key context
                 }}
                 onKeyDown={(e) => {
+                  // Play context-aware typing sound for printable keys
+                  if (e.key.length === 1 || ['Backspace', 'Delete', 'Enter'].includes(e.key)) {
+                    playTypingSound({
+                      key: e.key,
+                      char: e.key.length === 1 ? e.key : undefined,
+                      isShift: e.shiftKey,
+                      isCtrl: e.ctrlKey,
+                      isAlt: e.altKey,
+                    });
+                  }
+                  
+                  // Handle Enter key for tag input
                   if (e.key === 'Enter' && e.ctrlKey) {
                     e.preventDefault();
                     handleSave();
