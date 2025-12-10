@@ -1002,6 +1002,204 @@ export function setupIpcHandlers() {
     }
   });
 
+  /**
+   * Export entries from a specific profile.
+   * Temporarily switches to the profile, exports entries, then switches back.
+   * If the profile is password-protected, the password must be provided.
+   */
+  ipcMain.handle('export-entries-from-profile', async (_event, profileId: string, format: ExportFormat, metadata?: ExportMetadata, password?: string) => {
+    // Validate input
+    if (!isValidExportFormat(format)) {
+      return {
+        success: false,
+        canceled: false,
+        error: 'invalid_format',
+        message: 'Invalid export format',
+      };
+    }
+
+    // Validate profile ID
+    const profile = getProfile(profileId);
+    if (!profile) {
+      return {
+        success: false,
+        canceled: false,
+        error: 'invalid_profile',
+        message: 'Profile not found',
+      };
+    }
+
+    // Check if profile has password
+    const hasPassword = profileHasPassword(profileId);
+    if (hasPassword) {
+      // Password is required for password-protected profiles
+      if (!password) {
+        return {
+          success: false,
+          canceled: false,
+          error: 'password_required',
+          message: 'Password is required for this profile',
+        };
+      }
+
+      // Verify password before switching
+      const isValid = verifyProfilePassword(profileId, password);
+      if (!isValid) {
+        return {
+          success: false,
+          canceled: false,
+          error: 'invalid_password',
+          message: 'Incorrect password',
+        };
+      }
+
+      // Password is verified and will be cached internally by verifyProfilePassword
+      // This cached password will be used by switchProfile/initDatabase when opening the encrypted database
+      console.log('[Export] Password verified for profile:', profileId);
+    }
+
+    // Save current profile ID to restore later
+    const originalProfileId = getCurrentProfileId();
+    let profileSwitched = false;
+
+    try {
+      // Switch to the target profile if it's different
+      if (originalProfileId !== profileId) {
+        console.log(`[Export] Switching from profile ${originalProfileId} to ${profileId} for export`);
+        try {
+          switchProfile(profileId);
+          profileSwitched = true;
+        } catch (switchError) {
+          console.error('[Export] Failed to switch profile:', switchError);
+          return {
+            success: false,
+            canceled: false,
+            error: 'switch_failed',
+            message: 'Failed to switch to profile',
+          };
+        }
+      }
+
+      // Now use the existing export-entries logic
+      // We'll call the export logic directly here
+      const entries = getAllEntries();
+      console.log('[Export] Retrieved entries for export from profile:', profileId, entries.length);
+
+      if (!entries.length) {
+        return { success: false, canceled: false, error: 'no_entries' };
+      }
+
+      // Suggest filename based on metadata or profile name
+      let defaultBaseName: string;
+      if (metadata?.exportName) {
+        defaultBaseName = metadata.exportName;
+      } else if (metadata?.projectTitle) {
+        defaultBaseName = metadata.projectTitle;
+      } else {
+        const sanitizedProfileName = profile.name.replace(/[^a-zA-Z0-9]/g, '-');
+        const now = new Date();
+        const timestamp = now.toISOString().replace(/[:.]/g, '-');
+        defaultBaseName = `CalenRecall-${sanitizedProfileName}-${timestamp}`;
+      }
+
+      const filters =
+        format === 'markdown'
+          ? [{ name: 'Markdown', extensions: ['md'] }]
+          : format === 'text'
+          ? [{ name: 'Text', extensions: ['txt'] }]
+          : format === 'json'
+          ? [{ name: 'JSON', extensions: ['json'] }]
+          : format === 'rtf'
+          ? [{ name: 'Rich Text', extensions: ['rtf'] }]
+          : format === 'pdf'
+          ? [{ name: 'PDF', extensions: ['pdf'] }]
+          : format === 'csv'
+          ? [{ name: 'CSV', extensions: ['csv'] }]
+          : [{ name: 'Decades Export', extensions: ['dec'] }];
+
+      const { canceled, filePath } = await dialog.showSaveDialog({
+        title: `Export ${format.toUpperCase()} from ${profile.name}`,
+        defaultPath: `${defaultBaseName}.${filters[0].extensions[0]}`,
+        filters,
+      });
+
+      if (canceled || !filePath) {
+        return { success: false, canceled: true };
+      }
+
+      // Ensure directory exists
+      const dir = path.dirname(filePath);
+      if (!fs.existsSync(dir)) {
+        return { success: false, canceled: false, error: 'invalid_directory' };
+      }
+
+      // Set export date if not provided
+      const finalMetadata: ExportMetadata = {
+        ...metadata,
+        exportDate: metadata?.exportDate || new Date().toISOString(),
+      };
+
+      if (format === 'pdf') {
+        await exportEntriesAsPdf(entries, filePath, finalMetadata);
+      } else {
+        const content = formatExportContent(entries, format, finalMetadata);
+        fs.writeFileSync(filePath, content, { encoding: 'utf-8' });
+      }
+
+      // Verify file was written successfully
+      if (!fs.existsSync(filePath)) {
+        console.error('[Export] File was not created:', filePath);
+        return { 
+          success: false, 
+          canceled: false, 
+          error: 'write_failed', 
+          message: 'File was not created. Check disk space and permissions.' 
+        };
+      }
+
+      // Open the folder containing the exported file
+      try {
+        shell.showItemInFolder(filePath);
+      } catch (showError) {
+        console.warn('[Export] Could not show file in folder (export still succeeded):', showError);
+      }
+
+      return { success: true, canceled: false, path: filePath };
+    } catch (error: unknown) {
+      console.error('[Export] Error exporting entries from profile:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      const errorCode = error instanceof Error && 'code' in error ? String(error.code) : undefined;
+      
+      let userMessage = errorMessage;
+      if (errorCode === 'ENOSPC') {
+        userMessage = 'Not enough disk space to export file.';
+      } else if (errorCode === 'EACCES' || errorCode === 'EPERM') {
+        userMessage = 'Permission denied. Check file permissions.';
+      } else if (errorCode === 'ENOENT') {
+        userMessage = 'Directory does not exist.';
+      }
+      
+      return { 
+        success: false, 
+        canceled: false, 
+        error: 'write_failed', 
+        message: userMessage,
+        details: errorMessage 
+      };
+    } finally {
+      // Restore original profile if we switched
+      if (profileSwitched && originalProfileId) {
+        try {
+          console.log(`[Export] Restoring original profile: ${originalProfileId}`);
+          switchProfile(originalProfileId);
+        } catch (restoreError) {
+          console.error('[Export] Failed to restore original profile:', restoreError);
+          // Don't fail the export if restore fails - the export already succeeded
+        }
+      }
+    }
+  });
+
   // Preferences handlers
   ipcMain.handle('get-preference', async (_event, key: keyof Preferences) => {
     return getPreference(key);

@@ -13,6 +13,7 @@ let profileSelectorWindow: BrowserWindow | null = null;
 let importProgressWindow: BrowserWindow | null = null;
 let startupLoadingWindow: BrowserWindow | null = null;
 let archiveExportWindow: BrowserWindow | null = null;
+let exportProfileSelectorWindow: BrowserWindow | null = null;
 
 const isDev = process.env.NODE_ENV === 'development' || !app.isPackaged;
 
@@ -1044,57 +1045,43 @@ function createMenu() {
             {
               label: 'Export as Markdown...',
               click: () => {
-                if (mainWindow && !mainWindow.isDestroyed()) {
-                  mainWindow.webContents.send('menu-export', 'markdown');
-                }
+                createExportProfileSelectorWindow('markdown');
               },
             },
             {
               label: 'Export as Text...',
               click: () => {
-                if (mainWindow && !mainWindow.isDestroyed()) {
-                  mainWindow.webContents.send('menu-export', 'text');
-                }
+                createExportProfileSelectorWindow('text');
               },
             },
             {
               label: 'Export as JSON...',
               click: () => {
-                if (mainWindow && !mainWindow.isDestroyed()) {
-                  mainWindow.webContents.send('menu-export', 'json');
-                }
+                createExportProfileSelectorWindow('json');
               },
             },
             {
               label: 'Export as RTF...',
               click: () => {
-                if (mainWindow && !mainWindow.isDestroyed()) {
-                  mainWindow.webContents.send('menu-export', 'rtf');
-                }
+                createExportProfileSelectorWindow('rtf');
               },
             },
             {
               label: 'Export as PDF...',
               click: () => {
-                if (mainWindow && !mainWindow.isDestroyed()) {
-                  mainWindow.webContents.send('menu-export', 'pdf');
-                }
+                createExportProfileSelectorWindow('pdf');
               },
             },
             {
               label: 'Export as CSV...',
               click: () => {
-                if (mainWindow && !mainWindow.isDestroyed()) {
-                  mainWindow.webContents.send('menu-export', 'csv');
-                }
+                createExportProfileSelectorWindow('csv');
               },
             },
             {
               label: 'Export as Decades...',
               click: () => {
-                if (mainWindow && !mainWindow.isDestroyed()) {
-                  mainWindow.webContents.send('menu-export', 'dec');
-                }
+                createExportProfileSelectorWindow('dec');
               },
             },
             { type: 'separator' },
@@ -1510,6 +1497,66 @@ function createArchiveExportWindow(archiveFormat: 'zip' | '7z') {
 
   archiveExportWindow.on('closed', () => {
     archiveExportWindow = null;
+  });
+}
+
+function createExportProfileSelectorWindow(exportFormat: 'markdown' | 'text' | 'json' | 'rtf' | 'pdf' | 'csv' | 'dec') {
+  // Close existing window if open
+  if (exportProfileSelectorWindow && !exportProfileSelectorWindow.isDestroyed()) {
+    exportProfileSelectorWindow.focus();
+    return;
+  }
+
+  console.log('[Main] Creating export profile selector window for format:', exportFormat);
+
+  // Calculate window position (center of screen)
+  const primaryDisplay = screen.getPrimaryDisplay();
+  const { width: screenWidth, height: screenHeight } = primaryDisplay.workAreaSize;
+  const windowWidth = 600;
+  const windowHeight = 400;
+  const x = Math.floor((screenWidth - windowWidth) / 2);
+  const y = Math.floor((screenHeight - windowHeight) / 2);
+
+  exportProfileSelectorWindow = new BrowserWindow({
+    width: windowWidth,
+    height: windowHeight,
+    x,
+    y,
+    minWidth: 500,
+    minHeight: 300,
+    resizable: true,
+    modal: false,
+    parent: mainWindow || undefined,
+    title: `Export ${exportFormat.toUpperCase()} - CalenRecall`,
+    webPreferences: getOptimizedWebPreferences(path.join(__dirname, 'preload.js')),
+    ...(process.platform === 'win32' && {
+      icon: path.join(__dirname, '../assets/icon.png'),
+    }),
+    show: false,
+  });
+
+  if (isDev) {
+    exportProfileSelectorWindow.loadURL('http://localhost:5173/export-profile-selector.html');
+  } else {
+    exportProfileSelectorWindow.loadFile(path.join(__dirname, '../dist/export-profile-selector.html'));
+  }
+
+  // Store export format in window for the component to access
+  (exportProfileSelectorWindow as any).exportFormat = exportFormat;
+
+  exportProfileSelectorWindow.webContents.once('did-finish-load', () => {
+    if (exportProfileSelectorWindow && !exportProfileSelectorWindow.isDestroyed()) {
+      // Send export format to the window
+      exportProfileSelectorWindow.webContents.executeJavaScript(`
+        window.__exportFormat = '${exportFormat}';
+      `);
+      exportProfileSelectorWindow.show();
+      exportProfileSelectorWindow.focus();
+    }
+  });
+
+  exportProfileSelectorWindow.on('closed', () => {
+    exportProfileSelectorWindow = null;
   });
 }
 

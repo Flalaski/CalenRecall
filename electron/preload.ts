@@ -116,6 +116,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
   exportEntries: (format: ExportFormat, metadata?: ExportMetadata): Promise<{ success: boolean; canceled?: boolean; error?: string; path?: string }> =>
     ipcRenderer.invoke('export-entries', format, metadata),
   
+  exportEntriesFromProfile: (profileId: string, format: ExportFormat, metadata?: ExportMetadata, password?: string): Promise<{ success: boolean; canceled?: boolean; error?: string; path?: string }> =>
+    ipcRenderer.invoke('export-entries-from-profile', profileId, format, metadata, password),
+  
   // Import operations
   importEntries: (format: 'json' | 'markdown'): Promise<{ success: boolean; canceled?: boolean; error?: string; message?: string; imported?: number; skipped?: number; total?: number }> =>
     ipcRenderer.invoke('import-entries', format),
