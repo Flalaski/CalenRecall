@@ -341,6 +341,7 @@ export default function GlobalTimelineMinimap({
   const lastKeyboardViewModeRef = useRef<TimeRange | null>(null); // Track last view mode for keyboard navigation
   const movementFlowSoundRef = useRef<MovementFlowSound | null>(null); // Track movement flow sound for WASD/Arrow keys
   const pressedMovementKeysRef = useRef<Set<string>>(new Set()); // Track which movement keys are currently pressed
+  const wasArrowKeyNavigationRef = useRef<boolean>(false); // Track if last navigation was from arrow keys (not WASD)
   // OPTIMIZATION: Track throttled indicator position for early entry filtering
   // This allows approximate viewport filtering without recalculating on every drag movement
   const throttledIndicatorPositionRef = useRef<number>(50); // Default to center
@@ -3525,6 +3526,7 @@ export default function GlobalTimelineMinimap({
         // Blips will play when selectedDate actually changes (via useEffect below)
         // This ensures audio matches the actual visual movement of the indicator
         isKeyboardNavigationRef.current = true;
+        wasArrowKeyNavigationRef.current = isArrowKey; // Track if this was an arrow key (not WASD)
         currentOnTimePeriodSelect(newDate, currentViewMode);
       } else if (isUp || isDown) {
         // Change time scale (zoom in/out)
@@ -3629,12 +3631,13 @@ export default function GlobalTimelineMinimap({
       ? createDate(lastKeyboardBlipDateRef.current.getFullYear(), lastKeyboardBlipDateRef.current.getMonth(), lastKeyboardBlipDateRef.current.getDate())
       : null;
 
-    // Only play blip if date actually changed
-    if (lastBlipDateDay && currentDateDay.getTime() !== lastBlipDateDay.getTime()) {
+    // Only play blip if date actually changed AND it was WASD (not arrow keys)
+    // Arrow keys have an extra loud blip that we want to remove
+    if (lastBlipDateDay && currentDateDay.getTime() !== lastBlipDateDay.getTime() && !wasArrowKeyNavigationRef.current) {
       // Determine direction by comparing old and new dates
       const blipDirection = currentDateDay.getTime() > lastBlipDateDay.getTime() ? 'next' : 'prev';
       
-      // Play tier-aware micro blip with direction
+      // Play tier-aware micro blip with direction (only for WASD, not arrow keys)
       playMicroBlip(viewMode, blipDirection);
     }
 
@@ -3645,6 +3648,7 @@ export default function GlobalTimelineMinimap({
     // This prevents blips from playing for non-keyboard navigation methods
     const timeoutId = setTimeout(() => {
       isKeyboardNavigationRef.current = false;
+      wasArrowKeyNavigationRef.current = false; // Reset arrow key flag
     }, 100);
     
     return () => clearTimeout(timeoutId);

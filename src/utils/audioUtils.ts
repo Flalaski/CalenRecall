@@ -1501,6 +1501,13 @@ export function createMovementFlowSound(): MovementFlowSound | null {
     let currentDirection: MovementDirection = null;
     let filter2b: BiquadFilterNode | null = null;
     let filter3b: BiquadFilterNode | null = null;
+    let eqNotchFilter: BiquadFilterNode | null = null; // EQ notch filter at 400Hz
+    let stopTimeoutId: ReturnType<typeof setTimeout> | null = null; // Track stop timeout to cancel it
+    let keyPressHistory: number[] = []; // Track timestamps of recent key presses for adaptive behavior
+    let lastKeyPressTime: number = 0; // Timestamp of last key press
+    let lastKeyReleaseTime: number = 0; // Timestamp of last key release
+    let keyHoldDuration: number = 0; // Duration of current key hold
+    let keyHoldStartTime: number = 0; // When current key hold started
     
     // Get direction-based sound parameters for low electrified hum
     const getDirectionParams = (direction: MovementDirection) => {
@@ -1609,11 +1616,162 @@ export function createMovementFlowSound(): MovementFlowSound | null {
       return buffer;
     };
     
+    // Analyze key press pattern to determine adaptive timing
+    const analyzeKeyPressPattern = (): { fadeInTime: number; fadeOutTime: number; volumeMultiplier: number } => {
+      const now = Date.now();
+      const timeSinceLastPress = lastKeyPressTime > 0 ? now - lastKeyPressTime : Infinity;
+      const timeSinceLastRelease = lastKeyReleaseTime > 0 ? now - lastKeyReleaseTime : Infinity;
+      
+      // Keep only recent key presses (within last 500ms)
+      keyPressHistory = keyPressHistory.filter(timestamp => now - timestamp < 500);
+      
+      // Calculate average interval between key presses
+      let avgInterval = Infinity;
+      if (keyPressHistory.length >= 2) {
+        const intervals: number[] = [];
+        for (let i = 1; i < keyPressHistory.length; i++) {
+          intervals.push(keyPressHistory[i] - keyPressHistory[i - 1]);
+        }
+        avgInterval = intervals.reduce((sum, val) => sum + val, 0) / intervals.length;
+      }
+      
+      // Detect rapid short presses (fast tapping)
+      // If average interval is less than 150ms, it's rapid tapping
+      const isRapidTapping = avgInterval < 150 && keyPressHistory.length >= 3;
+      
+      // Detect very short key holds (quick taps)
+      // If key was released quickly (< 100ms) and pressed again quickly, it's quick tapping
+      const isQuickTapping = timeSinceLastRelease > 0 && timeSinceLastRelease < 100 && timeSinceLastPress < 200;
+      
+      // Detect sustained hold (key held for a while)
+      const isSustainedHold = keyHoldDuration > 200;
+      
+      // Adaptive timing based on pattern
+      if (isRapidTapping || isQuickTapping) {
+        // Very fast response for rapid taps - instant feel
+        return {
+          fadeInTime: 0.02,  // 20ms - almost instant
+          fadeOutTime: 0.05, // 50ms - quick cut
+          volumeMultiplier: 1.0 // Full volume for clarity
+        };
+      } else if (isSustainedHold) {
+        // Slower, smoother for sustained holds
+        return {
+          fadeInTime: 0.12,  // 120ms - smooth
+          fadeOutTime: 0.2,  // 200ms - smooth fade
+          volumeMultiplier: 0.9 // Slightly quieter for sustained
+        };
+      } else {
+        // Normal response for regular usage
+        return {
+          fadeInTime: 0.08,  // 80ms - responsive
+          fadeOutTime: 0.15, // 150ms - smooth
+          volumeMultiplier: 1.0 // Full volume
+        };
+      }
+    };
+    
     return {
       start: (direction: MovementDirection = null) => {
-        // If already playing, just update direction
-        if (isPlaying) {
-          // Update direction will be called separately from the keyboard handler
+        // Track key press timing for adaptive behavior
+        const now = Date.now();
+        const timeSinceLastPress = lastKeyPressTime > 0 ? now - lastKeyPressTime : Infinity;
+        
+        // Only add to history if this is a new press (not a continuation of the same key hold)
+        if (timeSinceLastPress > 50 || lastKeyPressTime === 0) {
+          // This is a new key press - add to history
+          keyPressHistory.push(now);
+          // Keep only recent presses (within last 500ms)
+          keyPressHistory = keyPressHistory.filter(timestamp => now - timestamp < 500);
+          
+          // Reset key hold tracking for new press
+          keyHoldStartTime = now;
+        }
+        
+        lastKeyPressTime = now;
+        keyHoldDuration = now - keyHoldStartTime;
+        
+        // Get adaptive timing based on key press pattern
+        const adaptiveTiming = analyzeKeyPressPattern();
+        // Cancel any pending stop timeout - we're starting/resuming the sound
+        if (stopTimeoutId !== null) {
+          clearTimeout(stopTimeoutId);
+          stopTimeoutId = null;
+        }
+        
+        // If already playing, smoothly update direction instead of stopping/restarting
+        // This allows sounds to blend seamlessly when switching keys
+        if (isPlaying && gainNode && filter1 && filter2 && filter2b && lfo1 && lfo2 && lfoGain1 && lfoGain2) {
+          // Skip update if direction hasn't changed
+          if (currentDirection === direction) return;
+          
+          // Cancel any scheduled fade out to keep sound playing
+          const now = audioContext!.currentTime;
+          const currentGain = gainNode.gain.value;
+          
+          // Get the scheduled value at a small time in the future to check if there's a ramp
+          // This helps us avoid interrupting smooth transitions
+          const targetVolume = 0.025;
+          const volumeTolerance = 0.005; // Small tolerance to avoid unnecessary ramps
+          
+          // Cancel scheduled values but preserve current value smoothly
+          gainNode.gain.cancelScheduledValues(now);
+          
+          // Use adaptive target volume based on key press pattern
+          const adaptiveTargetVolume = targetVolume * adaptiveTiming.volumeMultiplier;
+          
+          // Cap volume to prevent spikes - if somehow above target, bring it down smoothly
+          if (currentGain > adaptiveTargetVolume + volumeTolerance) {
+            // Volume is too high - ramp down smoothly to prevent loud pops
+            gainNode.gain.setValueAtTime(currentGain, now);
+            gainNode.gain.linearRampToValueAtTime(adaptiveTargetVolume, now + 0.05);
+          } else if (currentGain < adaptiveTargetVolume - volumeTolerance) {
+            // Volume is significantly below target - ramp up with adaptive timing
+            gainNode.gain.setValueAtTime(currentGain, now);
+            gainNode.gain.linearRampToValueAtTime(adaptiveTargetVolume, now + adaptiveTiming.fadeInTime);
+          } else {
+            // Volume is already near target - just set it to current value to maintain smoothness
+            gainNode.gain.setValueAtTime(currentGain, now);
+          }
+          
+          // Update direction smoothly - this blends the sound instead of cutting
+          currentDirection = direction;
+          const params = getDirectionParams(direction);
+          
+          try {
+            // Update filter frequencies smoothly
+            filter1.frequency.cancelScheduledValues(now);
+            filter1.frequency.setValueAtTime(filter1.frequency.value, now);
+            filter1.frequency.linearRampToValueAtTime(params.filter1Freq, now + 0.1);
+            
+            filter2.frequency.cancelScheduledValues(now);
+            filter2.frequency.setValueAtTime(filter2.frequency.value, now);
+            filter2.frequency.linearRampToValueAtTime(params.filter2Freq, now + 0.1);
+            
+            filter2b.frequency.cancelScheduledValues(now);
+            filter2b.frequency.setValueAtTime(filter2b.frequency.value, now);
+            filter2b.frequency.linearRampToValueAtTime(params.filter2bFreq, now + 0.1);
+            
+            // Update LFO rates smoothly
+            lfo1.frequency.cancelScheduledValues(now);
+            lfo1.frequency.setValueAtTime(lfo1.frequency.value, now);
+            lfo1.frequency.linearRampToValueAtTime(params.lfo1Rate, now + 0.1);
+            
+            lfo2.frequency.cancelScheduledValues(now);
+            lfo2.frequency.setValueAtTime(lfo2.frequency.value, now);
+            lfo2.frequency.linearRampToValueAtTime(params.lfo2Rate, now + 0.1);
+            
+            // Update LFO modulation depths
+            lfoGain1.gain.cancelScheduledValues(now);
+            lfoGain1.gain.setValueAtTime(lfoGain1.gain.value, now);
+            lfoGain1.gain.linearRampToValueAtTime(params.lfo1Depth, now + 0.1);
+            
+            lfoGain2.gain.cancelScheduledValues(now);
+            lfoGain2.gain.setValueAtTime(lfoGain2.gain.value, now);
+            lfoGain2.gain.linearRampToValueAtTime(params.lfo2Depth, now + 0.1);
+          } catch (error) {
+            console.debug('Movement flow sound direction update error:', error);
+          }
           return;
         }
         
@@ -1638,6 +1796,13 @@ export function createMovementFlowSound(): MovementFlowSound | null {
           
           // Create gain node for volume control
           gainNode = audioContext!.createGain();
+          
+          // Create EQ notch filter for precise 400Hz reduction
+          eqNotchFilter = audioContext!.createBiquadFilter();
+          eqNotchFilter.type = 'notch'; // Notch filter for precise frequency reduction
+          eqNotchFilter.frequency.setValueAtTime(400, now); // Center at 400Hz
+          eqNotchFilter.Q.setValueAtTime(0.3, now); // Lower Q (3) for wider notch curve
+          eqNotchFilter.gain.setValueAtTime(-10, now); // Reduce by 10dB at 400Hz
           
           // Create multiple filters for vortex effect
           filter1 = audioContext!.createBiquadFilter();
@@ -1689,11 +1854,12 @@ export function createMovementFlowSound(): MovementFlowSound | null {
           lfo2.connect(lfoGain2);
           lfoGain2.connect(filter2b.frequency);
           
-          // Start very quiet and fade in very quickly - subtle hum
+          // Start very quiet and fade in with adaptive timing based on key press pattern
+          const adaptiveTargetVolume = 0.025 * adaptiveTiming.volumeMultiplier;
           gainNode.gain.setValueAtTime(0, now);
-          gainNode.gain.linearRampToValueAtTime(0.035, now + 0.02); // Lower volume for subtle hum (20ms)
+          gainNode.gain.linearRampToValueAtTime(adaptiveTargetVolume, now + adaptiveTiming.fadeInTime);
           
-          // Connect: noise sources -> filters -> gain -> destination
+          // Connect: noise sources -> filters -> gain -> EQ notch -> destination
           // Path 1: Main vortex path
           bufferSource1.connect(filter1);
           filter1.connect(filter2);
@@ -1705,7 +1871,9 @@ export function createMovementFlowSound(): MovementFlowSound | null {
           filter2b.connect(filter3b);
           filter3b.connect(gainNode);
           
-          gainNode.connect(audioContext!.destination);
+          // Apply EQ notch filter after gain (affects final mixed signal)
+          gainNode.connect(eqNotchFilter);
+          eqNotchFilter.connect(audioContext!.destination);
           
           // Store second path filters for cleanup
           (bufferSource2 as any)._filter2b = filter2b;
@@ -1730,6 +1898,7 @@ export function createMovementFlowSound(): MovementFlowSound | null {
           filter1 = null;
           filter2 = null;
           filter3 = null;
+          eqNotchFilter = null;
           lfo1 = null;
           lfo2 = null;
           lfoGain1 = null;
@@ -1742,13 +1911,28 @@ export function createMovementFlowSound(): MovementFlowSound | null {
         try {
           const stopTime = audioContext!.currentTime;
           
-          // Very quickly fade out and stop
+          // Track key release timing for adaptive behavior
+          const now = Date.now();
+          lastKeyReleaseTime = now;
+          // Don't reset keyHoldStartTime here - we want to track the duration until release
+          // keyHoldStartTime will be reset when a new key press starts
+          
+          // Get adaptive timing based on key press pattern
+          const adaptiveTiming = analyzeKeyPressPattern();
+          
+          // Cancel any pending stop timeout (in case stop() is called multiple times)
+          if (stopTimeoutId !== null) {
+            clearTimeout(stopTimeoutId);
+            stopTimeoutId = null;
+          }
+          
+          // Fade out with adaptive timing based on key press pattern
           gainNode.gain.cancelScheduledValues(stopTime);
           gainNode.gain.setValueAtTime(gainNode.gain.value, stopTime);
-          gainNode.gain.linearRampToValueAtTime(0, stopTime + 0.02); // Very quick fade out (20ms)
+          gainNode.gain.linearRampToValueAtTime(0, stopTime + adaptiveTiming.fadeOutTime);
           
           // Stop all sources after fade out
-          setTimeout(() => {
+          stopTimeoutId = setTimeout(() => {
             try {
               if (bufferSource1) {
                 bufferSource1.stop();
@@ -1783,12 +1967,14 @@ export function createMovementFlowSound(): MovementFlowSound | null {
             filter1 = null;
             filter2 = null;
             filter3 = null;
+            eqNotchFilter = null;
             lfo1 = null;
             lfo2 = null;
             lfoGain1 = null;
             lfoGain2 = null;
             isPlaying = false;
-          }, 30); // Slightly longer than fade out to ensure smooth stop
+            stopTimeoutId = null;
+          }, Math.max(200, adaptiveTiming.fadeOutTime * 1000 + 50)); // Slightly longer than fade out to ensure smooth stop
         } catch (error) {
           console.debug('Movement flow sound stop error:', error);
           isPlaying = false;
@@ -1801,6 +1987,7 @@ export function createMovementFlowSound(): MovementFlowSound | null {
           filter3 = null;
           filter2b = null;
           filter3b = null;
+          eqNotchFilter = null;
           lfo1 = null;
           lfo2 = null;
           lfoGain1 = null;
