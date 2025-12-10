@@ -770,6 +770,12 @@ function App() {
   const pendingDateRef = useRef<Date | null>(null);
   const pendingViewModeRef = useRef<TimeRange | null>(null);
   const rafIdRef = useRef<number | null>(null);
+  
+  // Configurable delay for indicator movement (in milliseconds)
+  // Adjust this value to control how quickly the indicator responds to navigation
+  // Default: 16ms (approximately 1 frame at 60fps)
+  // Lower values = faster response, Higher values = more batching/smoother
+  const INDICATOR_MOVEMENT_DELAY = 16; // ms - you can adjust this value
 
   // Debounced date change handler for smooth navigation
   const handleDateChange = useCallback((date: Date) => {
@@ -816,9 +822,10 @@ function App() {
       rafIdRef.current = null;
     }
     
-    // Use requestAnimationFrame for smooth updates, with a small debounce
+    // Use requestAnimationFrame for smooth updates, with a configurable debounce
     rafIdRef.current = requestAnimationFrame(() => {
-      // Small debounce to batch rapid navigation (1 frame at 60fps)
+      // Configurable debounce to batch rapid navigation
+      // INDICATOR_MOVEMENT_DELAY controls how quickly the indicator responds
       navigationTimeoutRef.current = setTimeout(() => {
         if (pendingDateRef.current && pendingViewModeRef.current) {
           setViewMode(pendingViewModeRef.current);
@@ -830,7 +837,7 @@ function App() {
         }
         navigationTimeoutRef.current = null;
         rafIdRef.current = null;
-      }, 16);
+      }, INDICATOR_MOVEMENT_DELAY);
     });
   }, []);
 

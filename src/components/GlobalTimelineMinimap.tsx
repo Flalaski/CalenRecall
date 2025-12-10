@@ -3090,6 +3090,8 @@ export default function GlobalTimelineMinimap({
     initialMovementRef.current = { horizontal: 0, vertical: 0 };
     setHorizontalLocked(false);
     verticalMovementAccumulatorRef.current = 0;
+    lastScaleChangeAccumulatorRef.current = 0; // Initialize to 0 for first scale change
+    deadZoneRef.current = 0; // Reset dead zone when drag starts
     lastBlipDateRef.current = null; // Reset blip tracking when dragging starts
     
     // Initialize audio context early to ensure it's ready for blips
@@ -3711,7 +3713,15 @@ export default function GlobalTimelineMinimap({
     }
     
     // Check if we're in the dead zone (must move back toward center after scale change)
-    const inDeadZone = Math.abs(verticalMovementAccumulatorRef.current - lastScaleChangeAccumulatorRef.current) < deadZoneSize;
+    // Improved logic: dead zone only applies when moving in the SAME direction as the last change
+    // This allows immediate reversal of direction
+    const movementFromLastChange = verticalMovementAccumulatorRef.current - lastScaleChangeAccumulatorRef.current;
+    const lastChangeDirection = lastScaleChangeAccumulatorRef.current < 0 ? -1 : (lastScaleChangeAccumulatorRef.current > 0 ? 1 : 0);
+    const currentDirection = movementFromLastChange < 0 ? -1 : (movementFromLastChange > 0 ? 1 : 0);
+    
+    // Only consider dead zone if moving in the same direction as the last change
+    const inDeadZone = (lastChangeDirection !== 0 && currentDirection === lastChangeDirection) && 
+                       Math.abs(movementFromLastChange) < deadZoneSize;
     
     // Update drag limits visualization relative to radial dial position
     if (dragStartPositionRef.current) {
@@ -3756,11 +3766,14 @@ export default function GlobalTimelineMinimap({
     // Note: scaleOrder is already defined above for limit detection
     if (!scaleChangeLockRef.current && !inDeadZone && Math.abs(verticalMovementAccumulatorRef.current) > verticalThreshold) {
       
-      // Check if we've moved enough in the new direction (past the dead zone)
-      const movementFromLastChange = verticalMovementAccumulatorRef.current - lastScaleChangeAccumulatorRef.current;
+      // Check if we've moved enough in the new direction (past the dead zone if moving same direction)
+      // OR if we've reversed direction past the threshold (immediate reversal allowed)
       const hasCrossedDeadZone = Math.abs(movementFromLastChange) >= deadZoneSize;
+      const hasReversedDirection = lastChangeDirection !== 0 && currentDirection === -lastChangeDirection && 
+                                   Math.abs(verticalMovementAccumulatorRef.current) > verticalThreshold;
+      const canChangeScale = hasCrossedDeadZone || hasReversedDirection || lastChangeDirection === 0; // Always allow first change
       
-      if (verticalMovementAccumulatorRef.current < 0 && currentIndex < scaleOrder.length - 1 && hasCrossedDeadZone) {
+      if (verticalMovementAccumulatorRef.current < 0 && currentIndex < scaleOrder.length - 1 && canChangeScale) {
         // Moving up - zoom in (more detail)
         scaleChangeLockRef.current = true; // Lock to prevent rapid changes
         const newViewMode = scaleOrder[currentIndex + 1];
@@ -3795,7 +3808,7 @@ export default function GlobalTimelineMinimap({
           scaleChangeLockRef.current = false;
         }, 200); // Lock for 200ms to prevent rapid clicking
         return;
-      } else if (verticalMovementAccumulatorRef.current > 0 && currentIndex > 0 && hasCrossedDeadZone) {
+      } else if (verticalMovementAccumulatorRef.current > 0 && currentIndex > 0 && canChangeScale) {
         // Moving down - zoom out (less detail)
         scaleChangeLockRef.current = true; // Lock to prevent rapid changes
         const newViewMode = scaleOrder[currentIndex - 1];
@@ -3833,8 +3846,12 @@ export default function GlobalTimelineMinimap({
       }
     }
     
-    // Decay accumulator if not enough movement or in dead zone
-    if (Math.abs(verticalMovementAccumulatorRef.current) < verticalThreshold || inDeadZone) {
+    // Decay accumulator if not enough movement or in dead zone (but only when not actively moving)
+    // Don't decay if we're moving and above threshold, or if locked (scale change in progress)
+    const shouldDecay = !scaleChangeLockRef.current && 
+                       (Math.abs(verticalMovementAccumulatorRef.current) < verticalThreshold || 
+                        (inDeadZone && Math.abs(verticalDelta) < 5)); // Only decay if in dead zone AND not actively moving
+    if (shouldDecay) {
       verticalMovementAccumulatorRef.current *= 0.95; // Decay slowly
     }
     
