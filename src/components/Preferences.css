@@ -7,6 +7,7 @@
   overflow-x: hidden;
   width: 100%;
   box-sizing: border-box;
+  max-height: 100vh;
 }
 
 .preferences-loading {
@@ -22,13 +23,14 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 20px 30px;
+  padding: 15px 20px;
   background: white;
   border-bottom: 1px solid #e0e0e0;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
   box-sizing: border-box;
   width: 100%;
   overflow-x: hidden;
+  flex-shrink: 0;
 }
 
 .preferences-header h1 {
@@ -46,13 +48,15 @@
 }
 
 .preferences-button {
-  padding: 8px 20px;
+  padding: 9px 20px;
   border: none;
   border-radius: 4px;
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s;
+  line-height: 1.4;
+  min-height: 36px;
 }
 
 .save-button {
@@ -78,57 +82,317 @@
   background: #da190b;
 }
 
+/* Clean CSS Grid Layout - Responsive Auto-Placement */
 .preferences-content {
   flex: 1;
-  padding: 30px;
-  max-width: 800px;
-  margin: 0 auto;
+  padding: 20px;
+  max-width: 100%;
+  margin: 0;
   width: 100%;
   box-sizing: border-box;
   overflow-x: hidden;
+  overflow-y: auto;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+  align-items: start;
+  background: #e8e8e8;
+  position: relative;
+  grid-auto-flow: row dense;
+  grid-auto-rows: min-content;
 }
 
+/* Rack columns - flex containers */
+.preferences-content::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: linear-gradient(to bottom, transparent 0%, #ccc 10%, #ccc 90%, transparent 100%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.preferences-content::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: linear-gradient(to bottom, transparent 0%, #ccc 10%, #ccc 90%, transparent 100%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Rack column dividers - single column (no dividers) */
+.preferences-content {
+  background-image: none;
+}
+
+/* Medium width: 2 columns */
+@media (min-width: 900px) {
+  .preferences-content {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  /* Rack column divider for 2 columns */
+  .preferences-content:not([data-theme="dark"]) {
+    background-image: 
+      linear-gradient(to right, transparent calc(50% - 8px), #ccc calc(50% - 8px), #ccc calc(50% - 7px), transparent calc(50% - 7px));
+  }
+}
+
+/* Wide width: 3 columns MAXIMUM */
+@media (min-width: 1400px) {
+  .preferences-content {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  
+  /* Rack column dividers for 3 columns */
+  .preferences-content:not([data-theme="dark"]) {
+    background-image: 
+      linear-gradient(to right, transparent calc(33.333% - 8px), #ccc calc(33.333% - 8px), #ccc calc(33.333% - 7px), transparent calc(33.333% - 7px)),
+      linear-gradient(to right, transparent calc(66.666% - 8px), #ccc calc(66.666% - 8px), #ccc calc(66.666% - 7px), transparent calc(66.666% - 7px));
+  }
+}
+
+
+/* Rack Mount Panel Styling */
 .preferences-section {
   background: white;
-  border-radius: 8px;
-  padding: 25px;
-  margin-bottom: 20px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border-radius: 4px;
+  padding: 18px;
+  margin-bottom: 0;
+  box-shadow: 
+    0 2px 4px rgba(0, 0, 0, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8),
+    0 0 0 1px rgba(0, 0, 0, 0.05);
   box-sizing: border-box;
   width: 100%;
   overflow-x: hidden;
+  overflow-y: visible;
+  min-height: fit-content;
+  position: relative;
+  border: 1px solid #d0d0d0;
+  border-top: 2px solid #4CAF50;
+  transition: box-shadow 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  isolation: isolate;
+}
+
+/* Rack mount panel mounting holes effect */
+.preferences-section::before {
+  content: '';
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #bbb;
+  box-shadow: 
+    calc(100% - 20px) 0 0 #bbb,
+    0 0 0 1px rgba(0, 0, 0, 0.1);
+  z-index: 1;
+  pointer-events: none;
+}
+
+.preferences-section:hover {
+  box-shadow: 
+    0 4px 8px rgba(0, 0, 0, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    0 0 0 1px rgba(76, 175, 80, 0.2);
+  border-top-color: #45a049;
+}
+
+/* Full-width sections span all columns */
+.preferences-section.full-width {
+  grid-column: 1 / -1;
+  border-top-width: 3px;
+  margin-bottom: 0;
+}
+
+/* About section goes to the bottom - use data attribute for reliable targeting */
+.preferences-section[data-section="about"] {
+  order: 999;
+}
+
+/* Regular sections - auto-placed by CSS Grid with dense packing */
+.preferences-section:not(.full-width) {
+  margin-bottom: 0;
 }
 
 .preferences-section h2 {
-  margin: 0 0 20px 0;
-  font-size: 18px;
+  margin: 0 0 14px 0;
+  font-size: 17px;
   font-weight: 600;
   color: #333;
   border-bottom: 2px solid #e0e0e0;
-  padding-bottom: 10px;
+  padding-bottom: 8px;
+  width: 100%;
+  box-sizing: border-box;
+  line-height: 1.4;
+  padding-left: 0;
+  padding-right: 0;
+}
+
+/* Ensure HotkeyDiagram inside section doesn't have double margin */
+.preferences-section.full-width .hotkey-diagram-container {
+  margin-bottom: 0;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* Ensure sections don't overlap */
+.preferences-section * {
+  box-sizing: border-box;
+}
+
+/* Ensure content doesn't overlap with mounting holes */
+.preferences-section > *:first-child {
+  padding-left: 0;
+  margin-left: 0;
+}
+
+.preferences-section h2 {
+  padding-left: 0;
+  margin-left: 0;
+}
+
+/* Prevent text overflow - merged with section styling above */
+
+/* Ensure grid items don't overflow */
+.preferences-content > * {
+  min-width: 0;
+  overflow: visible;
+  position: relative;
+  z-index: 1;
+}
+
+/* Prevent sections from overlapping */
+.preferences-section {
+  isolation: isolate;
+}
+
+/* Ensure background image preview doesn't overflow */
+.preference-item div[style*="inline-block"] {
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.preference-item img {
+  max-width: 100% !important;
+  height: auto !important;
+  box-sizing: border-box;
+}
+
+/* Ensure buttons and controls don't overflow */
+.preferences-button {
+  white-space: nowrap;
+  box-sizing: border-box;
+}
+
+/* Fix for export controls */
+.export-toolbar {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.export-toolbar label {
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .preference-item {
-  margin-bottom: 20px;
+  margin-bottom: 14px;
+  min-width: 0;
+  overflow: visible;
+  word-wrap: break-word;
+  flex-shrink: 0;
 }
 
 .preference-item:last-child {
   margin-bottom: 0;
 }
 
+/* Multi-column layout for preference items */
+.preferences-section.two-column-items {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 14px;
+  align-items: start;
+}
+
+.preferences-section.three-column-items {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+  align-items: start;
+}
+
+.preferences-section.four-column-items {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+  align-items: start;
+}
+
+.preferences-section.two-column-items h2,
+.preferences-section.three-column-items h2,
+.preferences-section.four-column-items h2,
+.preferences-section.two-column-items h2.full-width,
+.preferences-section.three-column-items h2.full-width,
+.preferences-section.four-column-items h2.full-width {
+  grid-column: 1 / -1;
+  margin-bottom: 14px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.preferences-section.two-column-items .preference-item,
+.preferences-section.three-column-items .preference-item,
+.preferences-section.four-column-items .preference-item {
+  margin-bottom: 14px;
+  min-width: 0;
+  overflow: visible;
+}
+
+.preferences-section.two-column-items .preference-item:last-child,
+.preferences-section.three-column-items .preference-item:last-child,
+.preferences-section.four-column-items .preference-item:last-child {
+  margin-bottom: 0;
+}
+
+.preferences-section.two-column-items .preference-item.full-width,
+.preferences-section.three-column-items .preference-item.full-width,
+.preferences-section.four-column-items .preference-item.full-width,
+.preferences-section.two-column-items .preference-note.full-width,
+.preferences-section.three-column-items .preference-note.full-width,
+.preferences-section.four-column-items .preference-note.full-width {
+  grid-column: 1 / -1;
+}
+
 .preference-item label {
   display: block;
-  margin-bottom: 8px;
+  margin-bottom: 7px;
   font-weight: 500;
   color: #555;
   font-size: 14px;
+  line-height: 1.5;
 }
 
 .preference-item input[type="text"],
 .preference-item input[type="number"],
 .preference-item select {
   width: 100%;
-  padding: 10px;
+  padding: 9px 10px;
   border: 1px solid #ddd;
   border-radius: 4px;
   font-size: 14px;
@@ -136,6 +400,8 @@
   transition: border-color 0.2s;
   box-sizing: border-box;
   max-width: 100%;
+  min-width: 0;
+  line-height: 1.4;
 }
 
 .preference-item input[type="text"]:focus,
@@ -147,10 +413,11 @@
 }
 
 .preference-item input[type="checkbox"] {
-  margin-right: 8px;
-  width: 18px;
-  height: 18px;
+  margin-right: 10px;
+  width: 19px;
+  height: 19px;
   cursor: pointer;
+  flex-shrink: 0;
 }
 
 .preference-item label:has(input[type="checkbox"]) {
@@ -158,6 +425,8 @@
   align-items: center;
   cursor: pointer;
   margin-bottom: 0;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .preference-item small {
@@ -165,29 +434,39 @@
   margin-top: 5px;
   color: #888;
   font-size: 12px;
+  line-height: 1.5;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
 }
 
 .export-toolbar .export-controls {
   display: flex;
-  gap: 10px;
+  gap: 12px;
   align-items: center;
   flex-wrap: wrap;
+  width: 100%;
+  box-sizing: border-box;
+  margin-top: 8px;
 }
 
 .export-toolbar .export-controls select {
   max-width: 220px;
+  min-width: 150px;
   box-sizing: border-box;
+  flex: 0 1 auto;
 }
 
 .preference-note {
   display: block;
-  margin-top: 15px;
-  padding: 10px;
+  margin-top: 14px;
+  padding: 12px;
   background: #fff3cd;
   border-left: 3px solid #ffc107;
   color: #856404;
-  font-size: 12px;
+  font-size: 13px;
   border-radius: 4px;
+  line-height: 1.5;
+  word-wrap: break-word;
 }
 
 .auto-save-indicator {
@@ -230,6 +509,12 @@
 
 [data-theme="dark"] .preferences-content {
   background: #1e1e1e;
+  background-image: none;
+}
+
+[data-theme="dark"] .preferences-content::before,
+[data-theme="dark"] .preferences-content::after {
+  background: linear-gradient(to bottom, transparent 0%, #404040 10%, #404040 90%, transparent 100%);
 }
 
 [data-theme="dark"] .preferences-section {

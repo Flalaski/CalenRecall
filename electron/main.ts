@@ -1164,10 +1164,10 @@ function createPreferencesWindow() {
   }
 
   preferencesWindow = new BrowserWindow({
-    width: 600,
-    height: Math.floor(700 * 1.33), // 33% taller: ~931px
-    minWidth: 500,
-    minHeight: 500,
+    width: 1440,
+    height: 1000,
+    minWidth: 800,
+    minHeight: 600,
     parent: mainWindow || undefined,
     modal: true,
     resizable: true,

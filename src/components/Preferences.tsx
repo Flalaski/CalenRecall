@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useLayoutEffect } from 'react';
 import { Preferences, ExportFormat } from '../types';
 import { playResetSound, playExportSound } from '../utils/audioUtils';
 import { CALENDAR_INFO } from '../utils/calendars/types';
@@ -31,6 +31,9 @@ export default function PreferencesComponent() {
     imported: undefined as number | undefined,
     skipped: undefined as number | undefined,
   });
+  const [panelPositions, setPanelPositions] = useState<Record<string, { column: number; row: number }>>({});
+  const sectionRefs = useRef<Map<string, HTMLDivElement>>(new Map());
+  const contentRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     // Load all themes (built-in + custom) first
@@ -162,6 +165,24 @@ export default function PreferencesComponent() {
       }
     };
   }, []);
+
+  // Simple cleanup - remove any inline styles that might interfere
+  useLayoutEffect(() => {
+    if (!contentRef.current || loading) return;
+
+    // Clean up any inline positioning styles - let CSS Grid handle everything
+    sectionRefs.current.forEach((element) => {
+      if (element) {
+        element.style.position = '';
+        element.style.top = '';
+        element.style.left = '';
+        element.style.width = '';
+        element.style.gridColumn = '';
+        element.style.gridRow = '';
+        element.style.order = '';
+      }
+    });
+  }, [loading]);
 
   // Sync CalendarContext changes back to Preferences
   useEffect(() => {
@@ -447,11 +468,27 @@ export default function PreferencesComponent() {
         </div>
       </div>
 
-      <div className="preferences-content">
-        <HotkeyDiagram />
+      <div className="preferences-content" ref={contentRef}>
+        {/* Full-width control panel - spans all racks */}
+        <div 
+          className="preferences-section full-width"
+          ref={(el) => {
+            if (el) sectionRefs.current.set('hotkey', el);
+            else sectionRefs.current.delete('hotkey');
+          }}
+        >
+          <HotkeyDiagram />
+        </div>
         
-        <div className="preferences-section">
-          <h2>Appearance</h2>
+        {/* RACK 1 - Left Column: Appearance & UI Settings */}
+        <div 
+          className="preferences-section rack-1 three-column-items"
+          ref={(el) => {
+            if (el) sectionRefs.current.set('appearance', el);
+            else sectionRefs.current.delete('appearance');
+          }}
+        >
+          <h2 className="full-width">Appearance</h2>
           <div className="preference-item">
             <label htmlFor="theme">Theme</label>
             <select
@@ -490,7 +527,7 @@ export default function PreferencesComponent() {
             </select>
           </div>
 
-          <div className="preference-item">
+          <div className="preference-item full-width">
             <label>Background Image</label>
             <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
               {preferences.backgroundImage ? (
@@ -594,7 +631,7 @@ export default function PreferencesComponent() {
             </small>
           </div>
 
-          <div className="preference-item">
+          <div className="preference-item full-width">
             <label>
               <input
                 type="checkbox"
@@ -642,8 +679,15 @@ export default function PreferencesComponent() {
 
         </div>
 
-        <div className="preferences-section">
-          <h2>General</h2>
+        {/* RACK 2 - Middle Column: General Settings */}
+        <div 
+          className="preferences-section rack-2 three-column-items"
+          ref={(el) => {
+            if (el) sectionRefs.current.set('general', el);
+            else sectionRefs.current.delete('general');
+          }}
+        >
+          <h2 className="full-width">General</h2>
           <div className="preference-item">
             <label>
               <input
@@ -651,9 +695,9 @@ export default function PreferencesComponent() {
                 checked={preferences.restoreLastView === true}
                 onChange={(e) => updatePreference('restoreLastView', e.target.checked)}
               />
-              Restore last viewed position on startup
+              Restore last viewed position
             </label>
-            <small>When enabled, the app will automatically restore the date and view mode you were last viewing when you restart the app.</small>
+            <small>Restore date and view mode on startup</small>
           </div>
 
           <div className="preference-item">
@@ -719,9 +763,9 @@ export default function PreferencesComponent() {
                   }
                 }}
               />
-              Auto-load this profile on startup
+              Auto-load this profile
             </label>
-            <small>When enabled, this profile will automatically load when you start the application, bypassing the profile selector.</small>
+            <small>Auto-load on startup</small>
           </div>
 
           <div className="preference-item">
@@ -739,7 +783,7 @@ export default function PreferencesComponent() {
               <option value="day">Day</option>
             </select>
             {preferences.restoreLastView === true && (
-              <small>Disabled when "Restore last viewed position" is enabled.</small>
+              <small>Disabled when restore last view is enabled</small>
             )}
           </div>
 
@@ -758,7 +802,7 @@ export default function PreferencesComponent() {
                   </option>
                 ))}
             </select>
-            <small>Select the calendar system for displaying dates. This syncs with the active profile's calendar setting. You can also change this from the navigation bar.</small>
+            <small>Calendar system for dates</small>
           </div>
 
           <div className="preference-item">
@@ -768,9 +812,9 @@ export default function PreferencesComponent() {
               type="text"
               value={preferences.dateFormat || 'yyyy-MM-dd'}
               onChange={(e) => updatePreference('dateFormat', e.target.value)}
-              placeholder="MMMM d, yyyy"
+              placeholder="yyyy-MM-dd"
             />
-            <small>Examples: yyyy-MM-dd (2024-01-01), MMMM d, yyyy (January 1, 2024), MM/dd/yyyy (01/01/2024)</small>
+            <small>e.g. yyyy-MM-dd, MMMM d, yyyy</small>
           </div>
 
           <div className="preference-item">
@@ -783,7 +827,7 @@ export default function PreferencesComponent() {
               <option value="24h">24-hour (14:30:45)</option>
               <option value="12h">12-hour (02:30:45 PM)</option>
             </select>
-            <small>Choose between 24-hour format or 12-hour format with AM/PM</small>
+            <small>24h or 12h format</small>
           </div>
 
           <div className="preference-item">
@@ -815,11 +859,18 @@ export default function PreferencesComponent() {
               />
               Enable sound effects
             </label>
-            <small>When enabled, the app will play sound effects for various interactions. Disable to turn off all sound effects.</small>
+            <small>Play sound effects for interactions</small>
           </div>
         </div>
 
-        <div className="preferences-section">
+        {/* RACK 1 - Left Column: Editor Settings */}
+        <div 
+          className="preferences-section rack-1"
+          ref={(el) => {
+            if (el) sectionRefs.current.set('editor', el);
+            else sectionRefs.current.delete('editor');
+          }}
+        >
           <h2>Editor</h2>
           <div className="preference-item">
             <label>
@@ -848,7 +899,14 @@ export default function PreferencesComponent() {
           )}
         </div>
 
-        <div className="preferences-section">
+        {/* RACK 3 - Right Column: Export & Data Management */}
+        <div 
+          className="preferences-section rack-3"
+          ref={(el) => {
+            if (el) sectionRefs.current.set('export', el);
+            else sectionRefs.current.delete('export');
+          }}
+        >
           <h2>Export / Storybook</h2>
           <div className="preference-item">
             <label htmlFor="defaultExportFormat">Default Export Format</label>
@@ -901,7 +959,14 @@ export default function PreferencesComponent() {
           </div>
         </div>
 
-        <div className="preferences-section">
+        {/* RACK 3 - Right Column: Import */}
+        <div 
+          className="preferences-section rack-3"
+          ref={(el) => {
+            if (el) sectionRefs.current.set('import', el);
+            else sectionRefs.current.delete('import');
+          }}
+        >
           <h2>Import Entries</h2>
           <div className="preference-item export-toolbar">
             <label>Import entries from</label>
@@ -929,7 +994,14 @@ export default function PreferencesComponent() {
           </div>
         </div>
 
-        <div className="preferences-section">
+        {/* RACK 3 - Right Column: Backup & Restore */}
+        <div 
+          className="preferences-section rack-3"
+          ref={(el) => {
+            if (el) sectionRefs.current.set('backup', el);
+            else sectionRefs.current.delete('backup');
+          }}
+        >
           <h2>Backup & Restore</h2>
           <div className="preference-item export-toolbar">
             <label>Database Backup</label>
@@ -964,7 +1036,14 @@ export default function PreferencesComponent() {
           </div>
         </div>
 
-        <div className="preferences-section">
+        {/* RACK 1 - Left Column: Extra Links */}
+        <div 
+          className="preferences-section rack-1"
+          ref={(el) => {
+            if (el) sectionRefs.current.set('extralinks', el);
+            else sectionRefs.current.delete('extralinks');
+          }}
+        >
           <h2>Extra Links</h2>
           <div className="preference-item">
             <label>
@@ -975,12 +1054,19 @@ export default function PreferencesComponent() {
               />
               Show AstroMonix.xyz toolbar button
             </label>
-            <small>When enabled, a toolbar button will appear in day view header to quickly open the current day on AstroMonix.xyz. Default is unchecked (hidden).</small>
+            <small>Toolbar button in day view header</small>
           </div>
         </div>
 
-        <div className="preferences-section">
-          <h2>Window</h2>
+        {/* RACK 2 - Middle Column: Window Settings */}
+        <div 
+          className="preferences-section rack-2 three-column-items"
+          ref={(el) => {
+            if (el) sectionRefs.current.set('window', el);
+            else sectionRefs.current.delete('window');
+          }}
+        >
+          <h2 className="full-width">Window</h2>
           <div className="preference-item">
             <label htmlFor="windowWidth">Default Window Width</label>
             <input
@@ -991,7 +1077,7 @@ export default function PreferencesComponent() {
               value={preferences.windowWidth || 2400}
               onChange={(e) => updatePreference('windowWidth', parseInt(e.target.value))}
             />
-            <small>Window width in pixels (800-3840)</small>
+            <small>Width in pixels (800-3840)</small>
           </div>
 
           <div className="preference-item">
@@ -1004,7 +1090,7 @@ export default function PreferencesComponent() {
               value={preferences.windowHeight || 800}
               onChange={(e) => updatePreference('windowHeight', parseInt(e.target.value))}
             />
-            <small>Window height in pixels (600-2160)</small>
+            <small>Height in pixels (600-2160)</small>
           </div>
 
           <div className="preference-item">
@@ -1016,12 +1102,20 @@ export default function PreferencesComponent() {
               />
               Load in full screen mode
             </label>
-            <small>When enabled, this profile will automatically load in full screen mode when opened. This preference is saved individually per profile.</small>
+            <small>Auto fullscreen on open</small>
           </div>
-          <small className="preference-note">Note: Window position and size are saved automatically when you move or resize the window.</small>
+          <small className="preference-note full-width">Note: Window position and size are saved automatically when you move or resize the window.</small>
         </div>
 
-        <div className="preferences-section">
+        {/* Full-width info panel - spans all racks - positioned at bottom */}
+        <div 
+          className="preferences-section full-width"
+          data-section="about"
+          ref={(el) => {
+            if (el) sectionRefs.current.set('about', el);
+            else sectionRefs.current.delete('about');
+          }}
+        >
           <h2>About</h2>
           <div className="preference-item about-section">
             <div style={{ display: 'flex', alignItems: 'center', gap: '20px', marginBottom: '16px' }}>
