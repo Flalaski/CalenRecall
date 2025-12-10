@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { JournalEntry, TimeRange, Preferences } from '../types';
 import { formatDate, getCanonicalDate, formatTime } from '../utils/dateUtils';
 import { saveJournalEntry, deleteJournalEntry } from '../services/journalService';
-import { playSaveSound, playCancelSound, playDeleteSound, playAddSound, playRemoveSound } from '../utils/audioUtils';
+import { playSaveSound, playCancelSound, playDeleteSound, playAddSound, playRemoveSound, playTypingSound } from '../utils/audioUtils';
 import './EntryEditModal.css';
 
 interface EntryEditModalProps {
@@ -556,7 +556,10 @@ export default function EntryEditModal({
             className="modal-title-input"
             placeholder="Entry title..."
             value={title}
-            onChange={(e) => setTitle(e.target.value)}
+            onChange={(e) => {
+              setTitle(e.target.value);
+              playTypingSound();
+            }}
             onKeyDown={handleKeyPress}
             autoFocus
           />
@@ -565,7 +568,10 @@ export default function EntryEditModal({
             className="modal-content-input"
             placeholder="Write your journal entry here..."
             value={content}
-            onChange={(e) => setContent(e.target.value)}
+            onChange={(e) => {
+              setContent(e.target.value);
+              playTypingSound();
+            }}
             onKeyDown={handleKeyPress}
           />
 
@@ -576,7 +582,10 @@ export default function EntryEditModal({
                 className="modal-tag-input"
                 placeholder="Add a tag..."
                 value={tagInput}
-                onChange={(e) => setTagInput(e.target.value)}
+                onChange={(e) => {
+                  setTagInput(e.target.value);
+                  playTypingSound();
+                }}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' && e.ctrlKey) {
                     e.preventDefault();

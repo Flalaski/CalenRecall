@@ -3,7 +3,7 @@ import { createRoot } from 'react-dom/client';
 import './profile-selector.css';
 import './themes.css';
 import { initializeTheme, type ThemeName } from './utils/themes';
-import { initializeSoundEffectsCache } from './utils/audioUtils';
+import { initializeSoundEffectsCache, playTypingSound } from './utils/audioUtils';
 
 interface Profile {
   id: string;
@@ -290,7 +290,10 @@ function ArchiveExport() {
                   id="password-input"
                   type="password"
                   value={passwordInput}
-                  onChange={(e) => setPasswordInput(e.target.value)}
+                  onChange={(e) => {
+                    setPasswordInput(e.target.value);
+                    playTypingSound();
+                  }}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter') {
                       handlePasswordSubmit();

@@ -50,6 +50,54 @@
   color: #555;
 }
 
+.unsaved-changes-message {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 10000;
+  pointer-events: none;
+  animation: fadeInMessage 0.3s ease-in-out;
+}
+
+.unsaved-changes-content {
+  background: var(--card-bg, rgba(255, 255, 255, 0.95));
+  border: 2px solid var(--accent-color, #4a90e2);
+  border-radius: 12px;
+  padding: 20px 30px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  backdrop-filter: blur(10px);
+  min-width: 400px;
+  max-width: 600px;
+}
+
+.unsaved-changes-icon {
+  font-size: 24px;
+  flex-shrink: 0;
+}
+
+.unsaved-changes-text {
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--text-color, #333);
+  line-height: 1.5;
+  font-family: var(--font-family, inherit);
+}
+
+@keyframes fadeInMessage {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
 .export-select {
   padding: 4px 8px;
   border-radius: 4px;

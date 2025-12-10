@@ -13,7 +13,8 @@ import {
   playModeSelectionSound,
   playCalendarSelectionSound,
   initializeSoundEffectsCache,
-  updateSoundEffectsCache
+  updateSoundEffectsCache,
+  playTypingSound
 } from './utils/audioUtils';
 import { parseISODate } from './utils/dateUtils';
 import { dateToCalendarDate, formatCalendarDate } from './utils/calendars/calendarConverter';
@@ -764,7 +765,10 @@ function ProfileSelector() {
                     <input
                       type="text"
                       value={editName}
-                      onChange={(e) => setEditName(e.target.value)}
+                      onChange={(e) => {
+                        setEditName(e.target.value);
+                        playTypingSound();
+                      }}
                       onKeyDown={(e) => {
                         if (e.key === 'Enter') {
                           handleSaveEdit();
@@ -1155,7 +1159,10 @@ function ProfileSelector() {
                   ref={newProfileNameInputRef}
                   type="text"
                   value={newProfileName}
-                  onChange={(e) => setNewProfileName(e.target.value)}
+                  onChange={(e) => {
+                    setNewProfileName(e.target.value);
+                    playTypingSound();
+                  }}
                   onClick={(e) => {
                     e.stopPropagation();
                   }}
@@ -1396,7 +1403,10 @@ function ProfileSelector() {
                       <input
                         type="password"
                         value={oldPassword}
-                        onChange={(e) => setOldPassword(e.target.value)}
+                        onChange={(e) => {
+                          setOldPassword(e.target.value);
+                          playTypingSound();
+                        }}
                         placeholder="Current password"
                         className="create-input"
                         style={{ width: '100%' }}
@@ -1407,7 +1417,10 @@ function ProfileSelector() {
                       <input
                         type="password"
                         value={newPassword}
-                        onChange={(e) => setNewPassword(e.target.value)}
+                        onChange={(e) => {
+                          setNewPassword(e.target.value);
+                          playTypingSound();
+                        }}
                         placeholder="New password (optional)"
                         className="create-input"
                         style={{ width: '100%' }}
@@ -1419,7 +1432,10 @@ function ProfileSelector() {
                         <input
                           type="password"
                           value={confirmPassword}
-                          onChange={(e) => setConfirmPassword(e.target.value)}
+                          onChange={(e) => {
+                            setConfirmPassword(e.target.value);
+                            playTypingSound();
+                          }}
                           placeholder="Confirm new password"
                           className="create-input"
                           style={{ width: '100%' }}
@@ -1514,7 +1530,10 @@ function ProfileSelector() {
                       <input
                         type="password"
                         value={newPassword}
-                        onChange={(e) => setNewPassword(e.target.value)}
+                        onChange={(e) => {
+                          setNewPassword(e.target.value);
+                          playTypingSound();
+                        }}
                         placeholder="Enter password"
                         className="create-input"
                         style={{ width: '100%' }}
@@ -1530,7 +1549,10 @@ function ProfileSelector() {
                       <input
                         type="password"
                         value={confirmPassword}
-                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        onChange={(e) => {
+                          setConfirmPassword(e.target.value);
+                          playTypingSound();
+                        }}
                         placeholder="Confirm password"
                         className="create-input"
                         style={{ width: '100%' }}
@@ -1626,14 +1648,15 @@ function ProfileSelector() {
                 </p>
                 <div style={{ marginBottom: '15px' }}>
                   <label style={{ display: 'block', marginBottom: '5px' }}>Recovery Key:</label>
-                  <input
-                    type="text"
-                    value={recoveryKeyInput}
-                    onChange={(e) => {
-                      // Remove spaces for easier pasting
-                      setRecoveryKeyInput(e.target.value.replace(/\s/g, ''));
-                    }}
-                    placeholder="Enter recovery key"
+                    <input
+                      type="text"
+                      value={recoveryKeyInput}
+                      onChange={(e) => {
+                        // Remove spaces for easier pasting
+                        setRecoveryKeyInput(e.target.value.replace(/\s/g, ''));
+                        playTypingSound();
+                      }}
+                      placeholder="Enter recovery key"
                     className="create-input"
                     style={{ width: '100%', fontFamily: 'monospace' }}
                     autoFocus
@@ -1644,22 +1667,28 @@ function ProfileSelector() {
                 </div>
                 <div style={{ marginBottom: '15px' }}>
                   <label style={{ display: 'block', marginBottom: '5px' }}>New Password:</label>
-                  <input
-                    type="password"
-                    value={recoveryNewPassword}
-                    onChange={(e) => setRecoveryNewPassword(e.target.value)}
-                    placeholder="Enter new password"
+                    <input
+                      type="password"
+                      value={recoveryNewPassword}
+                      onChange={(e) => {
+                        setRecoveryNewPassword(e.target.value);
+                        playTypingSound();
+                      }}
+                      placeholder="Enter new password"
                     className="create-input"
                     style={{ width: '100%' }}
                   />
                 </div>
                 <div style={{ marginBottom: '15px' }}>
                   <label style={{ display: 'block', marginBottom: '5px' }}>Confirm New Password:</label>
-                  <input
-                    type="password"
-                    value={recoveryConfirmPassword}
-                    onChange={(e) => setRecoveryConfirmPassword(e.target.value)}
-                    placeholder="Confirm new password"
+                    <input
+                      type="password"
+                      value={recoveryConfirmPassword}
+                      onChange={(e) => {
+                        setRecoveryConfirmPassword(e.target.value);
+                        playTypingSound();
+                      }}
+                      placeholder="Confirm new password"
                     className="create-input"
                     style={{ width: '100%' }}
                     onKeyDown={async (e) => {

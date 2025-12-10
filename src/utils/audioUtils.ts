@@ -444,8 +444,8 @@ export function playEraSwitchSound(era: 'CE' | 'BCE'): void {
   }
 }
 
-// Number typing sound - for typing digits in date fields
-export function playNumberTypingSound(): void {
+// General typing sound - for typing in any text field
+export function playTypingSound(): void {
   if (!areSoundEffectsEnabled()) return;
   const audioContext = getAudioContext();
   if (!audioContext) return;
@@ -457,7 +457,7 @@ export function playNumberTypingSound(): void {
     const oscillator = audioContext.createOscillator();
     const gainNode = audioContext.createGain();
     
-    // Quick, crisp tick for number input - subtle and non-intrusive
+    // Quick, crisp tick for typing - subtle and non-intrusive
     oscillator.type = 'sine';
     oscillator.frequency.setValueAtTime(1000, now);
     oscillator.frequency.linearRampToValueAtTime(1100, now + 0.01);
@@ -474,8 +474,14 @@ export function playNumberTypingSound(): void {
     oscillator.start(now);
     oscillator.stop(now + 0.04);
   } catch (error) {
-    console.debug('Number typing sound error:', error);
+    console.debug('Typing sound error:', error);
   }
+}
+
+// Number typing sound - for typing digits in date fields
+export function playNumberTypingSound(): void {
+  // Use the same sound as general typing
+  playTypingSound();
 }
 
 // Navigation sound - for prev/next/today buttons

@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { JournalEntry, TimeRange, Preferences } from '../types';
 import { formatDate, getCanonicalDate, isToday } from '../utils/dateUtils';
 import { getEntryForDate, saveJournalEntry, deleteJournalEntry } from '../services/journalService';
-import { playSaveSound, playCancelSound, playDeleteSound, playAddSound, playRemoveSound, playTimeInputSound, playTimeFieldFocusSound, playTimeIncrementSound, playTabSound } from '../utils/audioUtils';
+import { playSaveSound, playCancelSound, playDeleteSound, playAddSound, playRemoveSound, playTimeInputSound, playTimeFieldFocusSound, playTimeIncrementSound, playTabSound, playTypingSound } from '../utils/audioUtils';
 import { useCalendar } from '../contexts/CalendarContext';
 import { getTimeRangeLabelInCalendar } from '../utils/calendars/timeRangeConverter';
 import './JournalEditor.css';
@@ -14,6 +14,7 @@ interface JournalEditorProps {
   isNewEntry?: boolean;
   onEntrySaved?: () => void;
   onCancel?: () => void;
+  onUnsavedChangesChange?: (hasUnsavedChanges: boolean) => void;
 }
 
 export default function JournalEditor({
@@ -23,6 +24,7 @@ export default function JournalEditor({
   isNewEntry = false,
   onEntrySaved,
   onCancel,
+  onUnsavedChangesChange,
 }: JournalEditorProps) {
   const { calendar } = useCalendar();
   const [title, setTitle] = useState('');
@@ -532,11 +534,32 @@ export default function JournalEditor({
         setMinute(undefined);
         setSecond(undefined);
         setCurrentEntry(null);
+        // Reset original values for new entry
+        setOriginalTitle('');
+        setOriginalContent('');
+        setOriginalTags([]);
+        setOriginalHour(undefined);
+        setOriginalMinute(undefined);
+        setOriginalSecond(undefined);
+      } else {
+        // Update original values to match saved entry
+        setOriginalTitle(title);
+        setOriginalContent(content);
+        setOriginalTags([...tags]);
+        const currentHour24 = hour !== undefined && hour !== null ? convertTo24Hour(hour, amPm) : undefined;
+        setOriginalHour(currentHour24);
+        setOriginalMinute(minute);
+        setOriginalSecond(second);
       }
       
       // Notify parent
       if (onEntrySaved) {
         onEntrySaved();
+      }
+      
+      // Notify parent that there are no unsaved changes
+      if (onUnsavedChangesChange) {
+        onUnsavedChangesChange(false);
       }
     } catch (error) {
       console.error('═══════════════════════════════════════════════════════════');
@@ -609,8 +632,8 @@ export default function JournalEditor({
     }
   };
 
-  // Handle cancel with confirmation if needed
-  const handleCancel = useCallback(() => {
+  // Check if there are unsaved changes
+  const hasUnsavedChanges = useCallback(() => {
     const titleChanged = title.trim() !== originalTitle.trim();
     const contentChanged = content.trim() !== originalContent.trim();
     const tagsChanged = JSON.stringify(tags.sort()) !== JSON.stringify(originalTags.sort());
@@ -619,9 +642,20 @@ export default function JournalEditor({
     const hourChanged = currentHour24 !== originalHour;
     const minuteChanged = minute !== originalMinute;
     const secondChanged = second !== originalSecond;
-    const hasChanges = titleChanged || contentChanged || tagsChanged || hourChanged || minuteChanged || secondChanged;
-    
-    if (hasChanges) {
+    return titleChanged || contentChanged || tagsChanged || hourChanged || minuteChanged || secondChanged;
+  }, [title, content, tags, hour, minute, second, amPm, originalTitle, originalContent, originalTags, originalHour, originalMinute, originalSecond]);
+
+  // Notify parent when unsaved changes status changes
+  useEffect(() => {
+    if (onUnsavedChangesChange) {
+      const hasChanges = hasUnsavedChanges();
+      onUnsavedChangesChange(hasChanges);
+    }
+  }, [title, content, tags, hour, minute, second, amPm, originalTitle, originalContent, originalTags, originalHour, originalMinute, originalSecond, onUnsavedChangesChange, hasUnsavedChanges]);
+
+  // Handle cancel with confirmation if needed
+  const handleCancel = useCallback(() => {
+    if (hasUnsavedChanges()) {
       setShowConfirmDialog(true);
     } else {
       playCancelSound();
@@ -629,16 +663,20 @@ export default function JournalEditor({
         onCancel();
       }
     }
-  }, [title, content, tags, hour, minute, second, originalTitle, originalContent, originalTags, originalHour, originalMinute, originalSecond, onCancel]);
+  }, [hasUnsavedChanges, onCancel]);
 
   // Confirm discard changes
   const handleConfirmDiscard = useCallback(() => {
     playCancelSound();
     setShowConfirmDialog(false);
+    // Notify parent that there are no unsaved changes
+    if (onUnsavedChangesChange) {
+      onUnsavedChangesChange(false);
+    }
     if (onCancel) {
       onCancel();
     }
-  }, [onCancel]);
+  }, [onCancel, onUnsavedChangesChange]);
 
   // Cancel discard confirmation
   const handleCancelDiscard = useCallback(() => {
@@ -951,6 +989,7 @@ export default function JournalEditor({
           value={title}
           onChange={(e) => {
             setTitle(e.target.value);
+            playTypingSound();
           }}
           onKeyDown={handleKeyPress}
         />
@@ -961,6 +1000,7 @@ export default function JournalEditor({
           value={content}
           onChange={(e) => {
             setContent(e.target.value);
+            playTypingSound();
           }}
           onKeyDown={handleKeyPress}
         />
@@ -972,7 +1012,10 @@ export default function JournalEditor({
               className="tag-input"
               placeholder="Add a tag..."
               value={tagInput}
-              onChange={(e) => setTagInput(e.target.value)}
+              onChange={(e) => {
+                setTagInput(e.target.value);
+                playTypingSound();
+              }}
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && e.ctrlKey) {
                   e.preventDefault();

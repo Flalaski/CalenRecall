@@ -4,7 +4,7 @@ import { searchJournalEntries } from '../services/journalService';
 import { formatDate, parseISODate, formatTime } from '../utils/dateUtils';
 import { useCalendar } from '../contexts/CalendarContext';
 import { getTimeRangeLabelInCalendar } from '../utils/calendars/timeRangeConverter';
-import { playNavigationSound } from '../utils/audioUtils';
+import { playNavigationSound, playTypingSound } from '../utils/audioUtils';
 import './SearchView.css';
 
 interface SearchViewProps {
@@ -255,7 +255,10 @@ export default function SearchView({ onEntrySelect, onClose }: SearchViewProps) 
             className="search-input"
             placeholder="Search entries by title or content..."
             value={query}
-            onChange={(e) => setQuery(e.target.value)}
+            onChange={(e) => {
+              setQuery(e.target.value);
+              playTypingSound();
+            }}
             onKeyDown={(e) => {
               if (e.key === 'Escape' && onClose) {
                 onClose();
@@ -320,14 +323,20 @@ export default function SearchView({ onEntrySelect, onClose }: SearchViewProps) 
               <input
                 type="date"
                 value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
+                onChange={(e) => {
+                  setStartDate(e.target.value);
+                  playTypingSound();
+                }}
                 placeholder="Start date"
               />
               <span>to</span>
               <input
                 type="date"
                 value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
+                onChange={(e) => {
+                  setEndDate(e.target.value);
+                  playTypingSound();
+                }}
                 placeholder="End date"
               />
             </div>

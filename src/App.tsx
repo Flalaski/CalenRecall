@@ -38,6 +38,9 @@ function App() {
   const [pendingExportFormat, setPendingExportFormat] = useState<ExportFormat | null>(null);
   const [entryCount, setEntryCount] = useState(0);
   const [currentProfile, setCurrentProfile] = useState<{ name: string; id: string } | null>(null);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [showUnsavedChangesMessage, setShowUnsavedChangesMessage] = useState(false);
+  const unsavedChangesMessageTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   
   // Track if initial load has completed - after this, default view mode should NEVER be applied
   const initialLoadCompleteRef = useRef(false);
@@ -779,8 +782,28 @@ function App() {
   const lastUpdateTimeRef = useRef<number>(0); // Track time between updates to detect dragging
   const rapidUpdateThreshold = 50; // ms - if updates come faster than this, we're dragging
 
+  // Helper function to show unsaved changes message with inactivity timer
+  const showUnsavedChangesMessageWithTimer = useCallback(() => {
+    setShowUnsavedChangesMessage(true);
+    // Clear any existing timeout
+    if (unsavedChangesMessageTimeoutRef.current) {
+      clearTimeout(unsavedChangesMessageTimeoutRef.current);
+    }
+    // Set new timeout to hide message after 369ms of inactivity
+    unsavedChangesMessageTimeoutRef.current = setTimeout(() => {
+      setShowUnsavedChangesMessage(false);
+      unsavedChangesMessageTimeoutRef.current = null;
+    }, 369);
+  }, []);
+
   // Debounced date change handler for smooth navigation
   const handleDateChange = useCallback((date: Date) => {
+    // Prevent navigation if there are unsaved changes
+    if (hasUnsavedChanges) {
+      showUnsavedChangesMessageWithTimer();
+      return;
+    }
+    
     // Debounced date change for smooth navigation
     pendingDateRef.current = date;
     
@@ -801,9 +824,15 @@ function App() {
         rafIdRef.current = null;
       }, 16);
     });
-  }, []);
+  }, [hasUnsavedChanges, showUnsavedChangesMessageWithTimer]);
 
   const handleTimePeriodSelect = useCallback((date: Date, newViewMode: TimeRange) => {
+    // Prevent navigation if there are unsaved changes
+    if (hasUnsavedChanges) {
+      showUnsavedChangesMessageWithTimer();
+      return;
+    }
+    
     hasUserInteractedRef.current = true; // Mark that user has interacted
     // Clear selected entry when changing date/view in day view
     if (newViewMode === 'day') {
@@ -862,9 +891,15 @@ function App() {
         }, INDICATOR_MOVEMENT_DELAY);
       });
     }
-  }, []);
+  }, [hasUnsavedChanges, showUnsavedChangesMessageWithTimer]);
 
   const handleViewModeChange = (mode: TimeRange) => {
+    // Prevent navigation if there are unsaved changes
+    if (hasUnsavedChanges) {
+      showUnsavedChangesMessageWithTimer();
+      return;
+    }
+    
     hasUserInteractedRef.current = true; // Mark that user has interacted
     // Clear selected entry when switching to day view
     if (mode === 'day') {
@@ -876,6 +911,12 @@ function App() {
   };
 
   const handleEntrySelect = (entry: JournalEntry) => {
+    // Prevent navigation if there are unsaved changes
+    if (hasUnsavedChanges) {
+      showUnsavedChangesMessageWithTimer();
+      return;
+    }
+    
     hasUserInteractedRef.current = true; // Mark that user has interacted
     // Mark that we're selecting an entry to prevent loadCurrentEntry from overwriting it
     isSelectingEntryRef.current = true;
@@ -890,6 +931,12 @@ function App() {
   };
 
   const handleNewEntry = () => {
+    // Prevent creating new entry if there are unsaved changes
+    if (hasUnsavedChanges) {
+      showUnsavedChangesMessageWithTimer();
+      return;
+    }
+    
     setSelectedEntry(null);
     setIsNewEntry(true);
     setIsEditing(true);
@@ -953,6 +1000,11 @@ function App() {
   }, [showSearch]); // Include showSearch in deps
 
   const handleEdit = () => {
+    // Prevent editing if there are unsaved changes
+    if (hasUnsavedChanges) {
+      showUnsavedChangesMessageWithTimer();
+      return;
+    }
     setIsEditing(true);
     setIsNewEntry(false);
   };
@@ -961,6 +1013,13 @@ function App() {
     // Reload the entry after saving
     setIsEditing(false);
     setIsNewEntry(false);
+    setHasUnsavedChanges(false); // Clear unsaved changes flag after saving
+    // Clear timeout and hide message
+    if (unsavedChangesMessageTimeoutRef.current) {
+      clearTimeout(unsavedChangesMessageTimeoutRef.current);
+      unsavedChangesMessageTimeoutRef.current = null;
+    }
+    setShowUnsavedChangesMessage(false); // Hide message if visible
     
     // SUPREME OPTIMIZATION: Reload all entries to keep context in sync
     // This ensures the preloaded entries are always up-to-date
@@ -977,6 +1036,11 @@ function App() {
   };
 
   const handleEditEntry = (entry: JournalEntry) => {
+    // Prevent editing if there are unsaved changes
+    if (hasUnsavedChanges) {
+      showUnsavedChangesMessageWithTimer();
+      return;
+    }
     setEditingEntry(entry);
   };
 
@@ -1052,8 +1116,16 @@ function App() {
               onCancel={() => {
                 setIsEditing(false);
                 setIsNewEntry(false);
+                setHasUnsavedChanges(false);
+                // Clear timeout and hide message
+                if (unsavedChangesMessageTimeoutRef.current) {
+                  clearTimeout(unsavedChangesMessageTimeoutRef.current);
+                  unsavedChangesMessageTimeoutRef.current = null;
+                }
+                setShowUnsavedChangesMessage(false); // Hide message if visible
                 loadCurrentEntry();
               }}
+              onUnsavedChangesChange={setHasUnsavedChanges}
             />
           ) : (
             <EntryViewer
@@ -1094,6 +1166,14 @@ function App() {
           onConfirm={handleExportConfirm}
           entryCount={entryCount}
         />
+      )}
+      {showUnsavedChangesMessage && (
+        <div className="unsaved-changes-message">
+          <div className="unsaved-changes-content">
+            <span className="unsaved-changes-icon">⚠️</span>
+            <span className="unsaved-changes-text">You have unsaved changes. Finish or cancel your entry to continue</span>
+          </div>
+        </div>
       )}
       </div>
     </>

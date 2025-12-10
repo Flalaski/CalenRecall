@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { ExportFormat, ExportMetadata } from '../types';
-import { playSaveSound, playCancelSound } from '../utils/audioUtils';
+import { playSaveSound, playCancelSound, playTypingSound } from '../utils/audioUtils';
 import { getAvailableThemes, loadAllThemes } from '../utils/themes';
 import './ExportMetadataModal.css';
 
@@ -114,12 +114,15 @@ export default function ExportMetadataModal({
 
   const handleInputChange = (field: keyof ExportMetadata, value: any) => {
     setMetadata(prev => ({ ...prev, [field]: value }));
+    playTypingSound();
   };
 
   const handleKeywordsChange = (value: string) => {
     setKeywordsInput(value);
+    playTypingSound();
     const keywords = value.split(',').map(k => k.trim()).filter(k => k.length > 0);
-    handleInputChange('keywords', keywords);
+    // Update metadata without playing sound again (already played above)
+    setMetadata(prev => ({ ...prev, keywords }));
   };
 
   const handleConfirm = async () => {
