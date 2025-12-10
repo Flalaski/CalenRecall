@@ -1851,6 +1851,7 @@ export interface Preferences {
   soundEffectsEnabled?: boolean; // Whether sound effects are enabled
   showAstromonixToolbarButton?: boolean; // Whether to show the AstroMonix toolbar button in day view
   fullScreen?: boolean; // Whether to load the profile in full screen mode
+  hardwareAcceleration?: boolean; // Whether hardware acceleration is enabled (requires app restart to take effect)
 }
 
 const DEFAULT_PREFERENCES: Preferences = {
@@ -1861,7 +1862,7 @@ const DEFAULT_PREFERENCES: Preferences = {
   weekStartsOn: 1, // Monday
   autoSave: true,
   autoSaveInterval: 30,
-  theme: 'light',
+  theme: 'aero',
   fontSize: 'large',
   showMinimap: true,
   minimapPosition: 'top',
@@ -1870,6 +1871,7 @@ const DEFAULT_PREFERENCES: Preferences = {
   backgroundImage: undefined,
   enableProceduralArt: true,
   soundEffectsEnabled: true,
+  hardwareAcceleration: true, // Default to enabled for better performance
 };
 
 export function getPreference<K extends keyof Preferences>(key: K): Preferences[K] {

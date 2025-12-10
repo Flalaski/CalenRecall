@@ -1,6 +1,9 @@
 import { ipcMain, dialog, app, BrowserWindow, shell, clipboard } from 'electron';
 import * as fs from 'fs';
 import * as path from 'path';
+import * as child_process from 'child_process';
+import * as util from 'util';
+import archiver from 'archiver';
 import PDFDocument from 'pdfkit';
 import { validatePath, sanitizeFileName, safePathJoin } from './utils/pathValidation';
 import {
@@ -76,6 +79,7 @@ import {
   flushDatabase,
   getCurrentProfile,
   switchProfile,
+  getDatabase,
 } from './database';
 import {
   getAllProfiles,
@@ -94,6 +98,7 @@ import {
   recoverProfilePassword,
   profileHasPassword,
   profileHasRecoveryKey,
+  getCachedPassword,
   type Profile,
 } from './profile-manager';
 import { EntryVersion } from './types';
@@ -2032,6 +2037,523 @@ export function setupIpcHandlers() {
       }
     } catch (error) {
       console.error('[IPC] Error exporting profile database:', error);
+      return {
+        success: false,
+        error: 'export_failed',
+        message: error instanceof Error ? error.message : 'Unknown error',
+      };
+    }
+  });
+
+  /**
+   * Helper function to check if 7z executable is available
+   */
+  function check7zAvailable(): boolean {
+    try {
+      // Check common 7z.exe locations on Windows
+      const commonPaths = [
+        'C:\\Program Files\\7-Zip\\7z.exe',
+        'C:\\Program Files (x86)\\7-Zip\\7z.exe',
+        path.join(process.env['ProgramFiles'] || '', '7-Zip', '7z.exe'),
+        path.join(process.env['ProgramFiles(x86)'] || '', '7-Zip', '7z.exe'),
+      ];
+
+      for (const sevenZipPath of commonPaths) {
+        if (fs.existsSync(sevenZipPath)) {
+          return true;
+        }
+      }
+
+      // Try to find 7z in PATH
+      try {
+        child_process.execSync('where 7z', { stdio: 'ignore' });
+        return true;
+      } catch {
+        // 7z not in PATH
+      }
+
+      return false;
+    } catch {
+      return false;
+    }
+  }
+
+  /**
+   * Helper function to find 7z executable path
+   */
+  function find7zPath(): string | null {
+    const commonPaths = [
+      'C:\\Program Files\\7-Zip\\7z.exe',
+      'C:\\Program Files (x86)\\7-Zip\\7z.exe',
+      path.join(process.env['ProgramFiles'] || '', '7-Zip', '7z.exe'),
+      path.join(process.env['ProgramFiles(x86)'] || '', '7-Zip', '7z.exe'),
+    ];
+
+    for (const sevenZipPath of commonPaths) {
+      if (fs.existsSync(sevenZipPath)) {
+        return sevenZipPath;
+      }
+    }
+
+    // Try to find in PATH
+    try {
+      const result = child_process.execSync('where 7z', { encoding: 'utf-8' });
+      const paths = result.trim().split('\n');
+      if (paths.length > 0 && paths[0]) {
+        return paths[0].trim();
+      }
+    } catch {
+      // 7z not in PATH
+    }
+
+    return null;
+  }
+
+  /**
+   * Export profile as ZIP or 7Z archive including database and attachments
+   */
+  ipcMain.handle('export-profile-archive', async (_event, profileId: string, archiveFormat: 'zip' | '7z' = 'zip', password?: string) => {
+    try {
+      if (!profileId || typeof profileId !== 'string') {
+        return { success: false, error: 'Invalid profile ID' };
+      }
+
+      if (archiveFormat !== 'zip' && archiveFormat !== '7z') {
+        return { success: false, error: 'Invalid archive format. Must be "zip" or "7z"' };
+      }
+
+      // Check for 7z availability if requested
+      if (archiveFormat === '7z' && !check7zAvailable()) {
+        return { 
+          success: false, 
+          error: '7z_not_available', 
+          message: '7-Zip is not installed or not found. Please install 7-Zip or use ZIP format instead.' 
+        };
+      }
+      
+      const profile = getProfile(profileId);
+      if (!profile) {
+        return { success: false, error: 'Profile not found' };
+      }
+
+      // For password-protected profiles, the archive file itself will be encrypted with the profile password
+      // The profile password becomes the password to open/extract the archive file
+      // NO gatekeeping - export always proceeds, but archive will be encrypted if password is available
+      if (profile.hasPassword) {
+        if (!password) {
+          // Try to get from cache (if profile was unlocked/verified recently)
+          password = getCachedPassword(profileId) || undefined;
+        }
+        // If we have the profile password (cached), use it to encrypt the archive
+        // The archive file will require this same password to open/extract
+        if (password && password.length > 0) {
+          console.log(`[Archive Export] Profile has password - will create encrypted ${archiveFormat} archive with profile password`);
+        } else {
+          // Password not available - return error so frontend can prompt for password
+          // This ensures password-protected profiles always result in encrypted archives
+          return {
+            success: false,
+            error: 'password_required',
+            message: 'Profile password is required to create encrypted archive. Please unlock the profile first or provide the password.'
+          };
+        }
+      } else {
+        console.log(`[Archive Export] Profile has no password - will create unencrypted ${archiveFormat} archive`);
+      }
+
+      const userDataPath = app.getPath('userData');
+      const dbPath = path.join(userDataPath, profile.databasePath);
+      
+      if (!fs.existsSync(dbPath)) {
+        return { success: false, error: 'database_not_found', message: `Database file not found for profile: ${profile.name}` };
+      }
+
+      // Switch to profile's database context to collect entries and attachments
+      const currentProfileBeforeSwitch = getCurrentProfile();
+      const wasDifferentProfile = currentProfileBeforeSwitch?.id !== profileId;
+      
+      try {
+        if (wasDifferentProfile) {
+          // Switch to the target profile's database
+          switchProfile(profileId);
+          
+          // Verify database is initialized and accessible
+          try {
+            getDatabase(); // This will throw if database is not initialized
+          } catch (dbError) {
+            throw new Error(`Failed to initialize database for profile: ${profileId}`);
+          }
+        }
+
+        // Get all entries to collect attachments
+        const entries = getAllEntries(true); // Include archived entries
+        const attachmentsDir = path.join(userDataPath, 'attachments');
+        
+        // Collect all unique attachment file paths
+        const attachmentFiles = new Set<string>();
+        for (const entry of entries) {
+          if (entry.attachments && Array.isArray(entry.attachments)) {
+            for (const attachment of entry.attachments) {
+              if (attachment.filePath && typeof attachment.filePath === 'string') {
+                const attachmentPath = attachment.filePath;
+                // Validate path and ensure it's within attachments directory
+                if (validatePath(attachmentPath, attachmentsDir) && fs.existsSync(attachmentPath)) {
+                  attachmentFiles.add(attachmentPath);
+                }
+              }
+            }
+          }
+        }
+
+        // Prepare archive contents
+        const dbDir = path.dirname(dbPath);
+        const dbFileName = path.basename(dbPath);
+        const dbWalPath = dbPath + '-wal';
+        const dbShmPath = dbPath + '-shm';
+
+        const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+        const sanitizedProfileName = profile.name.replace(/[^a-zA-Z0-9-_]/g, '_');
+        const extension = archiveFormat === '7z' ? '7z' : 'zip';
+        const defaultFileName = `calenrecall-backup-${sanitizedProfileName}-${timestamp}.${extension}`;
+
+        const { canceled, filePath } = await dialog.showSaveDialog({
+          title: `Export Profile Archive - ${profile.name}`,
+          defaultPath: defaultFileName,
+          filters: [
+            { name: archiveFormat === '7z' ? '7-Zip Archive' : 'ZIP Archive', extensions: [extension] },
+            { name: 'All Files', extensions: ['*'] }
+          ],
+        });
+
+        if (canceled || !filePath) {
+          return { success: false, canceled: true };
+        }
+
+        // If password is provided, use 7z for both formats (7z supports password-protected ZIP with AES-256)
+        // Otherwise, use archiver for ZIP (faster, no password) and 7z for 7Z format
+        if (archiveFormat === 'zip' && !password) {
+          // Create ZIP archive using archiver (no password)
+          return new Promise((resolve) => {
+            const output = fs.createWriteStream(filePath);
+            const archive = archiver('zip', {
+              zlib: { level: 9 } // Maximum compression
+            });
+
+            output.on('close', () => {
+              console.log(`[Archive Export] ZIP archive created: ${archive.pointer()} total bytes`);
+              resolve({ success: true, canceled: false, path: filePath });
+            });
+
+            archive.on('error', (err: Error) => {
+              console.error('[Archive Export] Archive error:', err);
+              resolve({
+                success: false,
+                canceled: false,
+                error: 'archive_failed',
+                message: err.message,
+              });
+            });
+
+            archive.pipe(output);
+
+            // Add database file
+            archive.file(dbPath, { name: `database/${dbFileName}` });
+
+            // Add WAL file if exists
+            if (fs.existsSync(dbWalPath)) {
+              archive.file(dbWalPath, { name: `database/${dbFileName}-wal` });
+            }
+
+            // Add SHM file if exists
+            if (fs.existsSync(dbShmPath)) {
+              archive.file(dbShmPath, { name: `database/${dbFileName}-shm` });
+            }
+
+            // Add attachments
+            let attachmentCount = 0;
+            for (const attachmentPath of attachmentFiles) {
+              const attachmentFileName = path.basename(attachmentPath);
+              archive.file(attachmentPath, { name: `attachments/${attachmentFileName}` });
+              attachmentCount++;
+            }
+
+            // Add profile metadata
+            const metadata = {
+              profileId: profile.id,
+              profileName: profile.name,
+              createdAt: profile.createdAt,
+              lastUsed: profile.lastUsed,
+              exportDate: new Date().toISOString(),
+              archiveFormat: 'zip',
+              databaseFiles: [
+                dbFileName,
+                ...(fs.existsSync(dbWalPath) ? [`${dbFileName}-wal`] : []),
+                ...(fs.existsSync(dbShmPath) ? [`${dbFileName}-shm`] : []),
+              ],
+              attachmentCount: attachmentCount,
+            };
+            archive.append(JSON.stringify(metadata, null, 2), { name: 'profile-metadata.json' });
+
+            archive.finalize();
+          });
+        } else {
+          // Use 7z.exe for password-protected archives or 7Z format
+          // 7z supports password-protected ZIP with AES-256 encryption
+          const sevenZipPath = find7zPath();
+          if (!sevenZipPath) {
+            return {
+              success: false,
+              error: '7z_not_found',
+              message: password 
+                ? '7-Zip is required for password-protected archives. Please install 7-Zip.'
+                : '7-Zip executable not found',
+            };
+          }
+
+          // Create temporary directory for archive contents
+          const tempDir = path.join(app.getPath('temp'), `calenrecall-backup-${Date.now()}`);
+          fs.mkdirSync(tempDir, { recursive: true });
+          const tempDbDir = path.join(tempDir, 'database');
+          const tempAttachmentsDir = path.join(tempDir, 'attachments');
+          fs.mkdirSync(tempDbDir, { recursive: true });
+          fs.mkdirSync(tempAttachmentsDir, { recursive: true });
+
+          try {
+            // Copy database files
+            const dbDestPath = path.join(tempDbDir, dbFileName);
+            fs.copyFileSync(dbPath, dbDestPath);
+            console.log(`[Archive Export] Copied database: ${dbPath} -> ${dbDestPath} (${fs.statSync(dbDestPath).size} bytes)`);
+            
+            if (fs.existsSync(dbWalPath)) {
+              const walDestPath = path.join(tempDbDir, `${dbFileName}-wal`);
+              fs.copyFileSync(dbWalPath, walDestPath);
+              console.log(`[Archive Export] Copied WAL: ${dbWalPath} -> ${walDestPath} (${fs.statSync(walDestPath).size} bytes)`);
+            }
+            if (fs.existsSync(dbShmPath)) {
+              const shmDestPath = path.join(tempDbDir, `${dbFileName}-shm`);
+              fs.copyFileSync(dbShmPath, shmDestPath);
+              console.log(`[Archive Export] Copied SHM: ${dbShmPath} -> ${shmDestPath} (${fs.statSync(shmDestPath).size} bytes)`);
+            }
+
+            // Copy attachments
+            let attachmentCount = 0;
+            for (const attachmentPath of attachmentFiles) {
+              const attachmentFileName = path.basename(attachmentPath);
+              const attachmentDestPath = path.join(tempAttachmentsDir, attachmentFileName);
+              fs.copyFileSync(attachmentPath, attachmentDestPath);
+              attachmentCount++;
+              console.log(`[Archive Export] Copied attachment: ${attachmentPath} -> ${attachmentDestPath}`);
+            }
+            console.log(`[Archive Export] Total attachments copied: ${attachmentCount}`);
+
+            // Create metadata file
+            const metadata = {
+              profileId: profile.id,
+              profileName: profile.name,
+              createdAt: profile.createdAt,
+              lastUsed: profile.lastUsed,
+              exportDate: new Date().toISOString(),
+              archiveFormat: archiveFormat,
+              encrypted: !!password,
+              databaseFiles: [
+                dbFileName,
+                ...(fs.existsSync(dbWalPath) ? [`${dbFileName}-wal`] : []),
+                ...(fs.existsSync(dbShmPath) ? [`${dbFileName}-shm`] : []),
+              ],
+              attachmentCount: attachmentCount,
+            };
+            const metadataPath = path.join(tempDir, 'profile-metadata.json');
+            fs.writeFileSync(metadataPath, JSON.stringify(metadata, null, 2), 'utf-8');
+            console.log(`[Archive Export] Created metadata file: ${metadataPath}`);
+            
+            // Verify all files exist before archiving
+            const dbFiles = [
+              path.join(tempDbDir, dbFileName),
+              ...(fs.existsSync(dbWalPath) ? [path.join(tempDbDir, `${dbFileName}-wal`)] : []),
+              ...(fs.existsSync(dbShmPath) ? [path.join(tempDbDir, `${dbFileName}-shm`)] : []),
+            ];
+            const allFiles = [
+              ...dbFiles,
+              metadataPath,
+              ...Array.from(attachmentFiles).map(ap => path.join(tempAttachmentsDir, path.basename(ap)))
+            ];
+            
+            console.log(`[Archive Export] Files to archive (${allFiles.length} total):`);
+            for (const file of allFiles) {
+              if (fs.existsSync(file)) {
+                const stats = fs.statSync(file);
+                console.log(`  - ${file} (${stats.size} bytes)`);
+              } else {
+                console.error(`  - ${file} (MISSING!)`);
+              }
+            }
+
+            // Create archive using 7z with optional password
+            // SECURITY: Never pass password via command line (visible in process lists)
+            // Instead, use a temporary file with restricted permissions
+            const exec = util.promisify(child_process.exec);
+            const archiveType = archiveFormat === '7z' ? '7z' : 'zip';
+            const compressionLevel = '-mx=9'; // Maximum compression
+            
+            let passwordFile: string | null = null;
+            
+            try {
+              let sevenZipCmd: string;
+              
+              if (password) {
+                // Create temporary password file with restricted permissions
+                passwordFile = path.join(app.getPath('temp'), `calenrecall-pwd-${Date.now()}-${Math.random().toString(36).substring(7)}.tmp`);
+                
+                // Write password to file (will be deleted immediately after use)
+                fs.writeFileSync(passwordFile, password, { encoding: 'utf8', mode: 0o600 }); // Read/write for owner only
+                
+                // Use -p@filename to read password from file (more secure than command line)
+                // For ZIP: -mem=AES256 enables AES-256 encryption (required for password protection)
+                // For 7Z: -mhe=on encrypts file names too (stronger security)
+                const mheFlag = archiveFormat === '7z' ? '-mhe=on' : '';
+                // Use absolute path with proper Windows formatting
+                // For 7z on Windows, the -p@ syntax requires the path immediately after @
+                // The path should use Windows backslashes and be unquoted
+                // Format: -p@C:\path\to\file (no quotes, backslashes)
+                let passwordFileAbsolute = path.resolve(passwordFile);
+                // Ensure Windows path format (backslashes, not forward slashes)
+                passwordFileAbsolute = passwordFileAbsolute.replace(/\//g, '\\');
+                // Don't quote the path after @ - 7z expects it unquoted
+                // The @ symbol tells 7z to read password from the file at that path
+                // Use absolute paths for all files instead of -w flag (more reliable on Windows)
+                // The -w flag syntax can be problematic, so we'll use absolute paths with proper escaping
+                const tempDirResolved = path.resolve(tempDir); // Get absolute path
+                const filePathNormalized = path.resolve(filePath).replace(/\//g, '\\'); // Ensure Windows path format, absolute
+                // Archive all contents of tempDir recursively - specify directories explicitly
+                // Build paths using path.join, then resolve and normalize to ensure consistent backslashes
+                const databasePath = path.resolve(tempDirResolved, 'database').replace(/\//g, '\\');
+                const attachmentsPath = path.resolve(tempDirResolved, 'attachments').replace(/\//g, '\\');
+                const metadataPath = path.resolve(tempDirResolved, 'profile-metadata.json').replace(/\//g, '\\');
+                // Build command with explicit paths - 7z will archive everything in these paths
+                // Use backslash consistently for Windows paths
+                sevenZipCmd = `"${sevenZipPath}" a -t${archiveType} ${compressionLevel} -r -p@${passwordFileAbsolute} -mem=AES256 ${mheFlag} "${filePathNormalized}" "${databasePath}\\*" "${attachmentsPath}\\*" "${metadataPath}"`;
+                
+                console.log(`[Archive Export] Creating password-protected ${archiveType} archive with AES-256 encryption`);
+                console.log(`[Archive Export] Password file: ${passwordFileAbsolute} (exists: ${fs.existsSync(passwordFileAbsolute)}, size: ${fs.statSync(passwordFileAbsolute).size} bytes)`);
+                console.log(`[Archive Export] Password file contents (first 3 chars for verification): ${password.substring(0, 3)}...`);
+                console.log(`[Archive Export] 7z command (password part): -p@${passwordFileAbsolute}`);
+                console.log(`[Archive Export] Database path: ${databasePath}`);
+                console.log(`[Archive Export] Attachments path: ${attachmentsPath}`);
+                console.log(`[Archive Export] Metadata path: ${metadataPath}`);
+                console.log(`[Archive Export] Output file: ${filePathNormalized}`);
+                console.log(`[Archive Export] Full 7z command: ${sevenZipCmd}`);
+              } else {
+                // Use absolute paths for all files instead of -w flag (more reliable on Windows)
+                const tempDirResolved = path.resolve(tempDir); // Get absolute path
+                const filePathNormalized = path.resolve(filePath).replace(/\//g, '\\'); // Ensure Windows path format, absolute
+                // Archive all contents of tempDir recursively - specify directories explicitly
+                // Build paths using path.resolve, then normalize to ensure consistent backslashes
+                const databasePath = path.resolve(tempDirResolved, 'database').replace(/\//g, '\\');
+                const attachmentsPath = path.resolve(tempDirResolved, 'attachments').replace(/\//g, '\\');
+                const metadataPath = path.resolve(tempDirResolved, 'profile-metadata.json').replace(/\//g, '\\');
+                // Build command with explicit paths - 7z will archive everything in these paths
+                // Use backslash consistently for Windows paths
+                sevenZipCmd = `"${sevenZipPath}" a -t${archiveType} ${compressionLevel} -r "${filePathNormalized}" "${databasePath}\\*" "${attachmentsPath}\\*" "${metadataPath}"`;
+                console.log(`[Archive Export] Creating unencrypted ${archiveType} archive`);
+                console.log(`[Archive Export] Temp directory: ${tempDirResolved.replace(/\//g, '\\')}`);
+              }
+              
+              console.log(`[Archive Export] Executing 7z command (password protected: ${!!password})`);
+              const execResult = await exec(sevenZipCmd, { windowsHide: true, maxBuffer: 10 * 1024 * 1024 });
+              
+              // Log if there was any output (7z sometimes outputs warnings to stderr even on success)
+              if (execResult.stdout) {
+                console.log('[Archive Export] 7z stdout:', execResult.stdout);
+              }
+              if (execResult.stderr) {
+                console.log('[Archive Export] 7z stderr:', execResult.stderr);
+              }
+              
+              // Verify archive was created
+              if (!fs.existsSync(filePath)) {
+                throw new Error('Archive file was not created');
+              }
+              
+              // If password was used, verify the archive requires password (test by trying to list without password)
+              if (password) {
+                console.log('[Archive Export] Verifying archive encryption...');
+                // Try to list archive contents without password - should fail if encrypted
+                const testCmd = `"${sevenZipPath}" l "${filePath}"`;
+                try {
+                  await exec(testCmd, { windowsHide: true, maxBuffer: 1024 * 1024 });
+                  console.warn('[Archive Export] WARNING: Archive appears to be unencrypted despite password being provided!');
+                } catch (testError: any) {
+                  // Expected to fail if encrypted - check if error indicates password required
+                  const errorOutput = testError.stderr || testError.stdout || testError.message || '';
+                  if (errorOutput.includes('password') || errorOutput.includes('Wrong password') || errorOutput.includes('Cannot open')) {
+                    console.log('[Archive Export] ✓ Archive encryption verified - password protection is active');
+                  } else {
+                    console.warn('[Archive Export] Could not verify encryption status:', errorOutput.substring(0, 200));
+                  }
+                }
+              }
+              
+              // Immediately delete password file after use
+              if (passwordFile && fs.existsSync(passwordFile)) {
+                try {
+                  // Overwrite file content before deletion (security best practice)
+                  if (password) {
+                    fs.writeFileSync(passwordFile, '0'.repeat(password.length), { encoding: 'utf8' });
+                  }
+                  fs.unlinkSync(passwordFile);
+                } catch (cleanupError) {
+                  console.warn('[Archive Export] Failed to securely delete password file:', cleanupError);
+                  // Try regular deletion as fallback
+                  try {
+                    fs.unlinkSync(passwordFile);
+                  } catch {
+                    // If still fails, file will be cleaned up by temp directory cleanup
+                  }
+                }
+                passwordFile = null;
+              }
+            } catch (error) {
+              // Ensure password file is deleted even on error
+              if (passwordFile && fs.existsSync(passwordFile)) {
+                try {
+                  fs.unlinkSync(passwordFile);
+                } catch {
+                  // Ignore cleanup errors on error path
+                }
+              }
+              throw error; // Re-throw to be handled by outer catch
+            }
+
+            // Clean up temporary directory
+            fs.rmSync(tempDir, { recursive: true, force: true });
+
+            return { success: true, canceled: false, path: filePath };
+          } catch (error) {
+            // Clean up temporary directory on error
+            try {
+              fs.rmSync(tempDir, { recursive: true, force: true });
+            } catch {
+              // Ignore cleanup errors
+            }
+
+            const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+            console.error('[Archive Export] 7Z archive creation error:', error);
+            return {
+              success: false,
+              canceled: false,
+              error: 'archive_failed',
+              message: errorMessage,
+            };
+          }
+        }
+      } finally {
+        // Restore previous profile context if we switched
+        if (wasDifferentProfile && currentProfileBeforeSwitch) {
+          switchProfile(currentProfileBeforeSwitch.id);
+        }
+      }
+    } catch (error) {
+      console.error('[IPC] Error exporting profile archive:', error);
       return {
         success: false,
         error: 'export_failed',

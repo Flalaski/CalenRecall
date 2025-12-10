@@ -47,6 +47,7 @@ type ProfileSelectorElectronAPI = {
   getProfileDetails: (profileId: string) => Promise<ProfileDetails | null>;
   createProfile: (name: string) => Promise<Profile>;
   exportProfileDatabase: (profileId: string) => Promise<{ success: boolean; canceled?: boolean; error?: string; message?: string; path?: string }>;
+  exportProfileArchive: (profileId: string, archiveFormat?: 'zip' | '7z', password?: string) => Promise<{ success: boolean; canceled?: boolean; error?: string; message?: string; path?: string }>;
   deleteProfile: (profileId: string) => Promise<{ success: boolean }>;
   renameProfile: (profileId: string, newName: string) => Promise<Profile>;
   switchProfile: (profileId: string) => Promise<{ success: boolean; profileId: string }>;
@@ -109,6 +110,13 @@ function ProfileSelector() {
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState<Profile | null>(null);
   const [deleteExportPassword, setDeleteExportPassword] = useState('');
   const [deleteExportPasswordError, setDeleteExportPasswordError] = useState<string | null>(null);
+  const [exportMenuOpen, setExportMenuOpen] = useState<string | null>(null);
+  const exportButtonRefs = React.useRef<Map<string, HTMLButtonElement>>(new Map());
+  const [showExportPasswordDialog, setShowExportPasswordDialog] = useState(false);
+  const [exportPasswordProfileId, setExportPasswordProfileId] = useState<string | null>(null);
+  const [exportPasswordInput, setExportPasswordInput] = useState('');
+  const [exportPasswordError, setExportPasswordError] = useState<string | null>(null);
+  const [pendingExportAction, setPendingExportAction] = useState<((password: string) => Promise<void>) | null>(null);
   const newProfileNameInputRef = React.useRef<HTMLInputElement>(null);
 
   // Load theme from profile selector's own localStorage (independent from profile preferences)
@@ -236,6 +244,35 @@ function ProfileSelector() {
     };
   }, []);
 
+  // Close export menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (exportMenuOpen) {
+        const target = event.target as HTMLElement;
+        const button = exportButtonRefs.current.get(exportMenuOpen);
+        const menu = document.querySelector('.export-menu');
+        
+        // Close if clicking outside both button and menu
+        if (
+          button && 
+          !button.contains(target) && 
+          menu && 
+          !menu.contains(target)
+        ) {
+          setExportMenuOpen(null);
+        }
+      }
+    };
+
+    if (exportMenuOpen) {
+      // Use capture phase to catch clicks early
+      document.addEventListener('click', handleClickOutside, true);
+      return () => {
+        document.removeEventListener('click', handleClickOutside, true);
+      };
+    }
+  }, [exportMenuOpen]);
+
   const loadProfiles = async () => {
     try {
       setLoading(true);
@@ -346,6 +383,90 @@ function ProfileSelector() {
       }
     } catch (err) {
       setPasswordError(err instanceof Error ? err.message : 'Failed to verify password');
+      console.error('Error verifying password:', err);
+    }
+  };
+
+  // Helper function to handle password-protected database exports (archives don't require password)
+  const handleDatabaseExportWithPassword = async (profileId: string, exportAction: () => Promise<void>) => {
+    const api = getProfileSelectorAPI();
+    
+    // Check if profile has password
+    const hasPasswordResult = await api.profileHasPassword(profileId);
+    
+    if (hasPasswordResult.hasPassword) {
+      // Show password dialog
+      setExportPasswordProfileId(profileId);
+      setExportPasswordInput('');
+      setExportPasswordError(null);
+      setPendingExportAction(() => exportAction);
+      setExportMenuOpen(null); // Close menu
+      setShowExportPasswordDialog(true);
+    } else {
+      // No password, proceed directly
+      await exportAction();
+    }
+  };
+
+  // Helper function for archive exports - NO password prompt, archive will be encrypted with profile password automatically
+  const handleArchiveExport = async (profileId: string, archiveFormat: 'zip' | '7z', exportAction: (password?: string) => Promise<void>) => {
+    // No password gatekeeping - export is always allowed
+    // Backend will automatically use cached profile password to encrypt the archive file
+    // If password not cached and profile has password, backend will return password_required error
+    setExportMenuOpen(null); // Close menu
+    
+    try {
+      // Try export first - backend will use cached password if available
+      await exportAction();
+    } catch (err: any) {
+      // If password is required, prompt for it
+      if (err?.error === 'password_required' || err?.message?.includes('password')) {
+        const profile = profiles.find(p => p.id === profileId);
+        if (profile?.hasPassword) {
+          // Store the export action to retry after password is entered
+          setPendingExportAction(() => exportAction);
+          setExportPasswordProfileId(profileId);
+          setShowExportPasswordDialog(true);
+          setExportPasswordInput('');
+          setExportPasswordError(null);
+          return;
+        }
+      }
+      // Re-throw other errors
+      throw err;
+    }
+  };
+
+  const handleExportPasswordSubmit = async () => {
+    if (!exportPasswordProfileId || !exportPasswordInput) {
+      setExportPasswordError('Please enter a password');
+      return;
+    }
+
+    try {
+      const api = getProfileSelectorAPI();
+      const result = await api.verifyProfilePassword(exportPasswordProfileId, exportPasswordInput);
+      
+      if (result.success) {
+        // Store password and action before clearing state
+        const password = exportPasswordInput;
+        const action = pendingExportAction;
+        
+        setShowExportPasswordDialog(false);
+        setExportPasswordInput('');
+        setExportPasswordError(null);
+        setPendingExportAction(null);
+        
+        // Execute the pending export action with the verified password
+        if (action) {
+          await action(password);
+        }
+      } else {
+        setExportPasswordError(result.error || 'Incorrect password');
+        setExportPasswordInput('');
+      }
+    } catch (err) {
+      setExportPasswordError(err instanceof Error ? err.message : 'Failed to verify password');
       console.error('Error verifying password:', err);
     }
   };
@@ -837,7 +958,7 @@ function ProfileSelector() {
                           className="btn-primary"
                           title={currentProfile?.id === profile.id ? 'Open main window' : 'Load this profile'}
                         >
-                          {currentProfile?.id === profile.id ? 'Open' : 'Load'}
+                          {currentProfile?.id === profile.id ? '🚀 Open' : '📂 Load'}
                         </button>
                         <button
                           onClick={(e) => {
@@ -847,8 +968,134 @@ function ProfileSelector() {
                           className="btn-secondary"
                           title="Rename profile"
                         >
-                          ✏️
+                          ✏️ Edit
                         </button>
+                        <div style={{ position: 'relative' }}>
+                          <button
+                            ref={(el) => {
+                              if (el) {
+                                exportButtonRefs.current.set(profile.id, el);
+                              } else {
+                                exportButtonRefs.current.delete(profile.id);
+                              }
+                            }}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              // Toggle menu
+                              if (exportMenuOpen === profile.id) {
+                                setExportMenuOpen(null);
+                              } else {
+                                setExportMenuOpen(profile.id);
+                              }
+                            }}
+                            className="btn-secondary"
+                            title="Export profile (database, ZIP, or 7Z archive)"
+                          >
+                            📦 Export
+                          </button>
+                          {exportMenuOpen === profile.id && (
+                            <div
+                              className="export-menu"
+                              style={{
+                                position: 'absolute',
+                                right: '100%',
+                                top: '50%',
+                                transform: 'translateY(-50%)',
+                                marginRight: '8px',
+                                zIndex: 1000,
+                                pointerEvents: 'auto',
+                              }}
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              {!profile.hasPassword && (
+                                <button
+                                  onClick={async (e) => {
+                                    e.stopPropagation();
+                                    await handleDatabaseExportWithPassword(profile.id, async () => {
+                                      playSaveSound();
+                                      try {
+                                        const api = getProfileSelectorAPI();
+                                        const result = await api.exportProfileDatabase(profile.id);
+                                        if (result.success && result.path) {
+                                          alert(`Database exported successfully to:\n${result.path}`);
+                                        } else if (!result.canceled) {
+                                          alert(result.error || result.message || 'Failed to export database');
+                                        }
+                                      } catch (err) {
+                                        console.error('Error exporting database:', err);
+                                        alert('Failed to export database');
+                                      }
+                                    });
+                                  }}
+                                  className="export-menu-item"
+                                  title="Export database file only"
+                                >
+                                  💾 Database File
+                                </button>
+                              )}
+                              <button
+                                onClick={async (e) => {
+                                  e.stopPropagation();
+                                  await handleArchiveExport(profile.id, 'zip', async (password?: string) => {
+                                    playSaveSound();
+                                    const api = getProfileSelectorAPI();
+                                    const result = await api.exportProfileArchive(profile.id, 'zip', password);
+                                    if (result.success && result.path) {
+                                      const message = profile.hasPassword 
+                                        ? `Archive exported successfully to:\n${result.path}\n\nThe archive is encrypted with your profile password.`
+                                        : `Archive exported successfully to:\n${result.path}`;
+                                      alert(message);
+                                    } else if (!result.canceled) {
+                                      if (result.error === 'password_required') {
+                                        // This will be caught by handleArchiveExport and trigger password prompt
+                                        throw { error: 'password_required', message: result.message };
+                                      }
+                                      alert(result.error === '7z_not_available' 
+                                        ? '7-Zip is not installed. Please install 7-Zip for password-protected archives.'
+                                        : result.message || 'Failed to export profile archive');
+                                    }
+                                  });
+                                }}
+                                className="export-menu-item"
+                                title={profile.hasPassword 
+                                  ? "Export as ZIP archive (will be encrypted with your profile password)"
+                                  : "Export as ZIP archive (includes database and attachments)"}
+                              >
+                                📦 ZIP Archive
+                              </button>
+                              <button
+                                onClick={async (e) => {
+                                  e.stopPropagation();
+                                  await handleArchiveExport(profile.id, '7z', async (password?: string) => {
+                                    playSaveSound();
+                                    const api = getProfileSelectorAPI();
+                                    const result = await api.exportProfileArchive(profile.id, '7z', password);
+                                    if (result.success && result.path) {
+                                      const message = profile.hasPassword 
+                                        ? `Archive exported successfully to:\n${result.path}\n\nThe archive is encrypted with your profile password.`
+                                        : `Archive exported successfully to:\n${result.path}`;
+                                      alert(message);
+                                    } else if (!result.canceled) {
+                                      if (result.error === 'password_required') {
+                                        // This will be caught by handleArchiveExport and trigger password prompt
+                                        throw { error: 'password_required', message: result.message };
+                                      }
+                                      alert(result.error === '7z_not_available' 
+                                        ? '7-Zip is not installed. Please install 7-Zip or use ZIP format instead.'
+                                        : result.message || 'Failed to export profile archive');
+                                    }
+                                  });
+                                }}
+                                className="export-menu-item"
+                                title={profile.hasPassword
+                                  ? "Export as 7Z archive (will be encrypted with your profile password, requires 7-Zip)"
+                                  : "Export as 7Z archive (requires 7-Zip, includes database and attachments)"}
+                              >
+                                📦 7Z Archive
+                              </button>
+                            </div>
+                          )}
+                        </div>
                         {!profile.isDefault && (
                           <button
                             onClick={(e) => {
@@ -858,7 +1105,7 @@ function ProfileSelector() {
                             className="btn-danger"
                             title="Delete profile"
                           >
-                            🗑️
+                            🗑️ Delete
                           </button>
                         )}
                         <button
@@ -872,7 +1119,7 @@ function ProfileSelector() {
                           className="btn-secondary"
                           title="Manage password"
                         >
-                          🔒
+                          🔒 Password
                         </button>
                       </>
                     )}
@@ -973,12 +1220,27 @@ function ProfileSelector() {
                 type="password"
                 value={passwordInput}
                 onChange={(e) => {
+                  e.stopPropagation();
                   setPasswordInput(e.target.value);
                   setPasswordError(null);
                 }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                }}
+                onMouseDown={(e) => {
+                  e.stopPropagation();
+                }}
+                onFocus={(e) => {
+                  e.stopPropagation();
+                }}
                 onKeyDown={(e) => {
-                  if (e.key === 'Enter') handlePasswordSubmit();
+                  e.stopPropagation();
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    handlePasswordSubmit();
+                  }
                   if (e.key === 'Escape') {
+                    e.preventDefault();
                     playCancelSound();
                     setShowPasswordDialog(false);
                     setPasswordInput('');
@@ -988,6 +1250,7 @@ function ProfileSelector() {
                 placeholder="Password"
                 autoFocus
                 className="create-input"
+                style={{ pointerEvents: 'auto', zIndex: 1002 }}
               />
               {passwordError && (
                 <div className="error-message" style={{ marginTop: '10px', marginBottom: '10px' }}>
@@ -1037,6 +1300,68 @@ function ProfileSelector() {
                     setShowPasswordDialog(false);
                     setPasswordInput('');
                     setPasswordError(null);
+                  }}
+                  className="btn-secondary"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {showExportPasswordDialog && exportPasswordProfileId && (
+          <div className="modal-overlay" onClick={() => {
+            playCancelSound();
+            setShowExportPasswordDialog(false);
+            setExportPasswordInput('');
+            setExportPasswordError(null);
+            setPendingExportAction(null);
+          }}>
+            <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+              <h2>Enter Profile Password</h2>
+              <p>The exported archive will be encrypted with your profile password. Please enter your profile password to create the encrypted archive file.</p>
+              <input
+                type="password"
+                value={exportPasswordInput}
+                onChange={(e) => {
+                  setExportPasswordInput(e.target.value);
+                  setExportPasswordError(null);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') handleExportPasswordSubmit();
+                  if (e.key === 'Escape') {
+                    playCancelSound();
+                    setShowExportPasswordDialog(false);
+                    setExportPasswordInput('');
+                    setExportPasswordError(null);
+                    setPendingExportAction(null);
+                  }
+                }}
+                placeholder="Password"
+                autoFocus
+                className="create-input"
+              />
+              {exportPasswordError && (
+                <div className="error-message" style={{ marginTop: '10px', marginBottom: '10px' }}>
+                  {exportPasswordError}
+                </div>
+              )}
+              <div className="modal-actions">
+                <button
+                  onClick={handleExportPasswordSubmit}
+                  className="btn-primary"
+                  disabled={!exportPasswordInput.trim()}
+                >
+                  Verify & Export
+                </button>
+                <button
+                  onClick={() => {
+                    playCancelSound();
+                    setShowExportPasswordDialog(false);
+                    setExportPasswordInput('');
+                    setExportPasswordError(null);
+                    setPendingExportAction(null);
                   }}
                   className="btn-secondary"
                 >

@@ -1267,6 +1267,57 @@ export function recoverProfilePassword(profileId: string, recoveryKey: string, n
 /**
  * Verify a password for a profile
  */
+// In-memory password cache for verified passwords (temporary, cleared on app exit)
+// Used to avoid re-prompting for password when exporting archives
+const passwordCache = new Map<string, { password: string; timestamp: number }>();
+const PASSWORD_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
+/**
+ * Clear expired passwords from cache
+ */
+function clearExpiredPasswords(): void {
+  const now = Date.now();
+  for (const [profileId, data] of passwordCache.entries()) {
+    if (now - data.timestamp > PASSWORD_CACHE_TTL) {
+      passwordCache.delete(profileId);
+    }
+  }
+}
+
+/**
+ * Cache a verified password temporarily (in memory only)
+ */
+export function cacheProfilePassword(profileId: string, password: string): void {
+  clearExpiredPasswords();
+  passwordCache.set(profileId, { password, timestamp: Date.now() });
+}
+
+/**
+ * Get cached password if available and not expired
+ */
+export function getCachedPassword(profileId: string): string | null {
+  clearExpiredPasswords();
+  const cached = passwordCache.get(profileId);
+  if (cached) {
+    return cached.password;
+  }
+  return null;
+}
+
+/**
+ * Clear cached password for a profile
+ */
+export function clearCachedPassword(profileId: string): void {
+  passwordCache.delete(profileId);
+}
+
+/**
+ * Clear all cached passwords
+ */
+export function clearAllCachedPasswords(): void {
+  passwordCache.clear();
+}
+
 export function verifyProfilePassword(profileId: string, password: string): boolean {
   const profile = getProfile(profileId);
   if (!profile) {
@@ -1288,7 +1339,14 @@ export function verifyProfilePassword(profileId: string, password: string): bool
     : profileData.passwordHash;
 
   // Verify password
-  return verifyPassword(password, passwordHash);
+  const isValid = verifyPassword(password, passwordHash);
+  
+  // If password is valid, cache it for future use (e.g., exports)
+  if (isValid) {
+    cacheProfilePassword(profileId, password);
+  }
+  
+  return isValid;
 }
 
 /**

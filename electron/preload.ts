@@ -30,6 +30,7 @@ export interface Preferences {
   soundEffectsEnabled?: boolean; // Whether sound effects are enabled
   showAstromonixToolbarButton?: boolean; // Whether to show the AstroMonix toolbar button in day view
   fullScreen?: boolean; // Whether to load the profile in full screen mode
+  hardwareAcceleration?: boolean; // Whether hardware acceleration is enabled (requires app restart to take effect)
 }
 
 contextBridge.exposeInMainWorld('electronAPI', {
@@ -238,6 +239,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
   exportProfileDatabase: (profileId: string): Promise<{ success: boolean; canceled?: boolean; error?: string; message?: string; path?: string }> =>
     ipcRenderer.invoke('export-profile-database', profileId),
+
+  exportProfileArchive: (profileId: string, archiveFormat?: 'zip' | '7z'): Promise<{ success: boolean; canceled?: boolean; error?: string; message?: string; path?: string }> =>
+    ipcRenderer.invoke('export-profile-archive', profileId, archiveFormat || 'zip'),
 
   deleteProfile: (profileId: string): Promise<{ success: boolean }> =>
     ipcRenderer.invoke('delete-profile', profileId),

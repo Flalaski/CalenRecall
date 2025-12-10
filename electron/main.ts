@@ -1,9 +1,10 @@
-import { app, BrowserWindow, ipcMain, Menu, shell, screen } from 'electron';
+import { app, BrowserWindow, ipcMain, Menu, shell, screen, dialog } from 'electron';
 import * as path from 'path';
 import * as fs from 'fs';
+import Database from 'better-sqlite3';
 import { initDatabase, getAllPreferences, setPreference, closeDatabase, switchProfile, getCurrentProfile, Preferences } from './database';
 import { setupIpcHandlers, setMainWindow, setProfileSelectorWindow, setPreferencesWindow, setMenuUpdateCallback, setImportProgressWindow, setCreateImportProgressWindowCallback } from './ipc-handlers';
-import { getAutoLoadProfileId, setAutoLoadProfileId } from './profile-manager';
+import { getAutoLoadProfileId, setAutoLoadProfileId, getCurrentProfileId, getProfile } from './profile-manager';
 
 let mainWindow: BrowserWindow | null = null;
 let preferencesWindow: BrowserWindow | null = null;
@@ -28,11 +29,132 @@ if (isDev) {
   }
 }
 
-// Hardware acceleration is enabled by default in Electron
-// We ensure it's not disabled for better performance
-// Note: Hardware acceleration cannot be explicitly enabled via API,
-// but it's enabled by default unless explicitly disabled
-console.log('[Main] Hardware acceleration is enabled by default in Electron');
+/**
+ * Get optimized webPreferences for GPU-accelerated rendering
+ * These settings maximize hardware acceleration efficiency:
+ * - enableWebGPU: Enables WebGPU API for modern GPU compute (Electron 28+)
+ * - experimentalFeatures: Enables experimental Chrome features that may improve performance
+ * - backgroundThrottling: Disabled to prevent throttling during animations
+ * - offscreen: false (default) - on-screen rendering for better performance
+ * - Additional optimizations for smooth animations and transforms
+ */
+function getOptimizedWebPreferences(preloadPath?: string): Electron.WebPreferences {
+  const basePreferences: Electron.WebPreferences = {
+    nodeIntegration: false,
+    contextIsolation: true,
+    backgroundThrottling: false, // Prevent throttling during animations/transforms
+    // GPU acceleration optimizations
+    // Hardware acceleration is enabled by default when app.disableHardwareAcceleration() is not called
+    // WebGL is enabled by default in Electron
+    // offscreen: false is the default (on-screen rendering for better performance)
+    // Note: enableWebGPU requires Electron 28+ and may not be available in all versions
+    // We check for availability before setting experimental features
+  };
+
+  // Add preload if provided
+  if (preloadPath) {
+    basePreferences.preload = preloadPath;
+  }
+
+  // Enable WebGPU if available (Electron 28+)
+  // WebGPU provides better GPU utilization than WebGL for modern applications
+  try {
+    // Check if we're on a version that supports enableWebGPU
+    const electronVersion = process.versions.electron;
+    const majorVersion = parseInt(electronVersion.split('.')[0], 10);
+    if (majorVersion >= 28) {
+      // enableWebGPU is available in Electron 28+
+      (basePreferences as any).enableWebGPU = true;
+      console.log('[Main] WebGPU enabled for better GPU utilization');
+    }
+  } catch (error) {
+    // Silently fail if version check fails
+    console.log('[Main] Could not enable WebGPU (may not be available in this Electron version)');
+  }
+
+  return basePreferences;
+}
+
+/**
+ * Read hardware acceleration preference from database before app.whenReady()
+ * This is necessary because hardware acceleration must be set before the app is ready.
+ * Returns true (enabled) by default if the preference cannot be read.
+ */
+function readHardwareAccelerationPreference(): boolean {
+  try {
+    const userDataPath = app.getPath('userData');
+    const profilesPath = path.join(userDataPath, 'profiles.json');
+    
+    // Check if profiles.json exists
+    if (!fs.existsSync(profilesPath)) {
+      console.log('[Main] Profiles file not found, defaulting hardware acceleration to enabled');
+      return true;
+    }
+    
+    // Read profiles.json to get current profile
+    const profilesData = JSON.parse(fs.readFileSync(profilesPath, 'utf-8'));
+    const currentProfileId = profilesData.currentProfileId || profilesData.profiles?.[0]?.id;
+    
+    if (!currentProfileId) {
+      console.log('[Main] No current profile found, defaulting hardware acceleration to enabled');
+      return true;
+    }
+    
+    // Find the profile
+    const profile = profilesData.profiles?.find((p: any) => p.id === currentProfileId);
+    if (!profile || !profile.databasePath) {
+      console.log('[Main] Profile database path not found, defaulting hardware acceleration to enabled');
+      return true;
+    }
+    
+    // Resolve database path (may be relative to userData)
+    const databasePath = path.isAbsolute(profile.databasePath) 
+      ? profile.databasePath 
+      : path.join(userDataPath, profile.databasePath);
+    
+    if (!fs.existsSync(databasePath)) {
+      console.log('[Main] Database file not found, defaulting hardware acceleration to enabled');
+      return true;
+    }
+    
+    // Open database and read preference
+    const db = new Database(databasePath, { readonly: true });
+    try {
+      const stmt = db.prepare('SELECT value FROM preferences WHERE key = ?');
+      const row = stmt.get('hardwareAcceleration') as { value: string } | undefined;
+      
+      if (row) {
+        const value = JSON.parse(row.value);
+        console.log(`[Main] Read hardware acceleration preference: ${value}`);
+        return value === true;
+      } else {
+        console.log('[Main] Hardware acceleration preference not found in database, defaulting to enabled');
+        return true;
+      }
+    } finally {
+      db.close();
+    }
+  } catch (error) {
+    console.warn('[Main] Error reading hardware acceleration preference, defaulting to enabled:', error);
+    return true;
+  }
+}
+
+// Read hardware acceleration preference and apply it
+// This must be done BEFORE app.whenReady()
+const hardwareAccelerationEnabled = readHardwareAccelerationPreference();
+
+if (!hardwareAccelerationEnabled) {
+  // Disable hardware acceleration to fix flickering issues on AMD GPUs
+  // Known issue: Electron apps can experience visual flickering/glitches when
+  // maximizing or entering fullscreen on systems with AMD GPUs due to hardware
+  // acceleration conflicts. Disabling it resolves the issue at the cost of
+  // slightly reduced rendering performance (usually negligible for this app).
+  app.disableHardwareAcceleration();
+  console.log('[Main] Hardware acceleration disabled (per user preference or default)');
+} else {
+  console.log('[Main] Hardware acceleration enabled (per user preference)');
+}
 
 interface ThemeInfo {
   name: string;
@@ -376,8 +498,8 @@ function createStartupLoadingWindow() {
   // Calculate window position (center of screen)
   const primaryDisplay = screen.getPrimaryDisplay();
   const { width: screenWidth, height: screenHeight } = primaryDisplay.workAreaSize;
-  const windowWidth = 400;
-  const windowHeight = 400;
+  const windowWidth = 216;
+  const windowHeight = 369;
   const x = Math.floor((screenWidth - windowWidth) / 2);
   const y = Math.floor((screenHeight - windowHeight) / 2);
   
@@ -395,14 +517,7 @@ function createStartupLoadingWindow() {
     alwaysOnTop: true,
     skipTaskbar: true, // Don't show in taskbar
     title: 'CalenRecall - Starting...',
-    webPreferences: {
-      nodeIntegration: false,
-      contextIsolation: true,
-      backgroundThrottling: false, // Prevent throttling during startup
-      // GPU acceleration optimizations
-      // WebGL is enabled by default in Electron
-      // offscreen: false is the default (on-screen rendering)
-    },
+    webPreferences: getOptimizedWebPreferences(),
     ...(process.platform === 'win32' && {
       icon: path.join(__dirname, '../assets/icon.png'),
     }),
@@ -520,23 +635,21 @@ function createProfileSelectorWindow() {
 
   console.log('[Main] Creating profile selector window...');
 
+  // Golden ratio: width / height = 1.618
+  // Width is twice the original (900 * 2 = 1800)
+  // Height = width / 1.618 = 1800 / 1.618 ≈ 1112
+  const defaultWidth = 1800;
+  const defaultHeight = Math.round(defaultWidth / 1.618); // 1112
+  
   profileSelectorWindow = new BrowserWindow({
-    width: 900,
-    height: 1000,
+    width: defaultWidth,
+    height: defaultHeight,
     minWidth: 600,
     minHeight: 500,
     resizable: true,
     alwaysOnTop: true, // Show on top when first loads
     title: 'CalenRecall - Select Profile',
-    webPreferences: {
-      preload: path.join(__dirname, 'preload.js'),
-      nodeIntegration: false,
-      contextIsolation: true,
-      // GPU acceleration optimizations
-      // WebGL is enabled by default in Electron
-      // offscreen: false is the default (on-screen rendering)
-      backgroundThrottling: false,
-    },
+    webPreferences: getOptimizedWebPreferences(path.join(__dirname, 'preload.js')),
     ...(process.platform === 'win32' && {
       icon: path.join(__dirname, '../assets/icon.png'),
     }),
@@ -570,14 +683,17 @@ function createProfileSelectorWindow() {
               const html = document.documentElement;
               
               if (!container) {
-                return { width: 900, height: 1000 };
+                // Golden ratio: width / height = 1.618
+                const defaultWidth = 1800;
+                const defaultHeight = Math.round(defaultWidth / 1.618); // 1112
+                return { width: defaultWidth, height: defaultHeight };
               }
               
               // Get the actual content dimensions
-              // Content max-width is 800px, container padding is 40px each side = 880px minimum
-              // Add extra for window chrome and comfort
-              const contentWidth = container.offsetWidth || container.scrollWidth || 800;
-              const optimalWidth = Math.max(880, Math.ceil(contentWidth + 40));
+              // Default width is 1800px (twice the original 900px)
+              const defaultWidth = 1800;
+              const contentWidth = container.offsetWidth || container.scrollWidth || defaultWidth;
+              const optimalWidth = Math.max(defaultWidth, Math.ceil(contentWidth + 40));
               
               // Get content height - use scrollHeight to include all content
               const contentHeight = Math.max(
@@ -589,13 +705,17 @@ function createProfileSelectorWindow() {
                 html.offsetHeight || 0
               );
               
-              // Calculate optimal height: content + padding + window chrome
-              // Ensure minimum height for readability
+              // Calculate optimal height using golden ratio: height = width / 1.618
+              const goldenRatio = 1.618;
+              const goldenRatioHeight = Math.round(optimalWidth / goldenRatio);
+              
+              // Ensure minimum height for readability, but prefer golden ratio
               const screenHeight = window.screen.availHeight;
               const maxViewportHeight = Math.floor(screenHeight * 0.85);
               
+              // Use golden ratio height, but ensure it fits content and screen
               const optimalHeight = Math.min(
-                Math.max(500, Math.ceil(contentHeight + 100)), // Content height + padding
+                Math.max(goldenRatioHeight, Math.ceil(contentHeight + 100)), // Golden ratio or content + padding, whichever is larger
                 maxViewportHeight // But cap at screen size
               );
               
@@ -606,8 +726,12 @@ function createProfileSelectorWindow() {
             })();
           `).then((size: { width: number; height: number }) => {
             if (profileSelectorWindow && size) {
-              const width = size.width || 900;
-              const height = size.height || 700;
+              // Use golden ratio if size is provided, otherwise use defaults
+              const defaultWidth = 1800;
+              const defaultHeight = Math.round(defaultWidth / 1.618); // 1112
+              const width = size.width || defaultWidth;
+              // Maintain golden ratio: height = width / 1.618
+              const height = size.height || Math.round(width / 1.618);
               
               profileSelectorWindow.setSize(width, height, false);
               
@@ -637,8 +761,9 @@ function createProfileSelectorWindow() {
               const primaryDisplay = screen.getPrimaryDisplay();
               const { width: screenWidth, height: screenHeight } = primaryDisplay.workAreaSize;
               
-              const width = 900;
-              const height = 1000;
+              // Golden ratio: width / height = 1.618
+              const width = 1800;
+              const height = Math.round(width / 1.618); // 1112
               const x = Math.floor((screenWidth - width) / 2);
               const y = Math.floor(screenHeight * 0.15);
               
@@ -677,22 +802,22 @@ function createWindow() {
   // Note: Database must be initialized before calling getAllPreferences
   const prefs = getAllPreferences();
   
+  // Golden ratio: width / height = 1.618
+  // Keep the width from preferences or use default, then calculate height
+  const defaultWidth = 2400;
+  const width = prefs.windowWidth || defaultWidth;
+  // If there's a saved height preference, use it; otherwise calculate golden ratio height
+  const goldenRatioHeight = Math.round(width / 1.618);
+  const height = prefs.windowHeight || goldenRatioHeight;
+  
   mainWindow = new BrowserWindow({
-    width: prefs.windowWidth || 2400,
-    height: prefs.windowHeight || 800,
+    width: width,
+    height: height,
     x: prefs.windowX,
     y: prefs.windowY,
     minWidth: 800,
     minHeight: 600,
-    webPreferences: {
-      preload: path.join(__dirname, 'preload.js'),
-      nodeIntegration: false,
-      contextIsolation: true,
-      // GPU acceleration optimizations
-      // WebGL is enabled by default in Electron
-      // offscreen: false is the default (on-screen rendering) // Keep on-screen rendering for better performance
-      backgroundThrottling: false, // Prevent throttling when window is in background
-    },
+    webPreferences: getOptimizedWebPreferences(path.join(__dirname, 'preload.js')),
     ...(process.platform === 'win32' && {
       icon: path.join(__dirname, '../assets/icon.png'),
     }),
@@ -715,13 +840,7 @@ function createWindow() {
         height: browserHeight,
         minWidth: 400,
         minHeight: 300,
-        webPreferences: {
-          nodeIntegration: false,
-          contextIsolation: true,
-          // GPU acceleration optimizations
-          // WebGL is enabled by default in Electron
-          // offscreen: false is the default (on-screen rendering)
-        },
+        webPreferences: getOptimizedWebPreferences(),
         ...(process.platform === 'win32' && {
           icon: path.join(__dirname, '../assets/icon.png'),
         }),
@@ -1065,6 +1184,42 @@ function createMenu() {
         { role: 'zoomOut', label: 'Zoom Out' },
         { type: 'separator' },
         { role: 'togglefullscreen', label: 'Toggle Full Screen' },
+        { type: 'separator' },
+        {
+          label: 'Hardware Acceleration',
+          type: 'checkbox',
+          checked: getAllPreferences().hardwareAcceleration === true,
+          click: () => {
+            const currentPrefs = getAllPreferences();
+            const newValue = !(currentPrefs.hardwareAcceleration === true);
+            setPreference('hardwareAcceleration', newValue);
+            console.log(`[Main] Hardware acceleration preference set to: ${newValue}`);
+            
+            // Show dialog to inform user that restart is required
+            const dialogOptions = {
+              type: 'info' as const,
+              title: 'Restart Required',
+              message: 'Hardware acceleration setting changed',
+              detail: `Hardware acceleration has been ${newValue ? 'enabled' : 'disabled'}. The application will restart now for the change to take effect.`,
+              buttons: ['OK'],
+            };
+            
+            if (mainWindow && !mainWindow.isDestroyed()) {
+              dialog.showMessageBox(mainWindow, dialogOptions).then(() => {
+                // Restart the application
+                app.relaunch();
+                app.exit(0);
+              });
+            } else {
+              // If no main window, show dialog without parent
+              dialog.showMessageBox(dialogOptions).then(() => {
+                // Restart the application
+                app.relaunch();
+                app.exit(0);
+              });
+            }
+          },
+        },
       ],
     },
     {
@@ -1172,15 +1327,7 @@ function createPreferencesWindow() {
     modal: true,
     resizable: true,
     title: 'Preferences - CalenRecall',
-    webPreferences: {
-      preload: path.join(__dirname, 'preload.js'),
-      nodeIntegration: false,
-      contextIsolation: true,
-      // GPU acceleration optimizations
-      // WebGL is enabled by default in Electron
-      // offscreen: false is the default (on-screen rendering)
-      backgroundThrottling: false,
-    },
+    webPreferences: getOptimizedWebPreferences(path.join(__dirname, 'preload.js')),
     ...(process.platform === 'win32' && {
       icon: path.join(__dirname, '../assets/icon.png'),
     }),
@@ -1200,13 +1347,7 @@ function createPreferencesWindow() {
         height: browserHeight,
         minWidth: 400,
         minHeight: 300,
-        webPreferences: {
-          nodeIntegration: false,
-          contextIsolation: true,
-          // GPU acceleration optimizations
-          // WebGL is enabled by default in Electron
-          // offscreen: false is the default (on-screen rendering)
-        },
+        webPreferences: getOptimizedWebPreferences(),
         ...(process.platform === 'win32' && {
           icon: path.join(__dirname, '../assets/icon.png'),
         }),
@@ -1268,15 +1409,7 @@ function createImportProgressWindow() {
     alwaysOnTop: true,
     skipTaskbar: false,
     title: 'Import Progress - CalenRecall',
-    webPreferences: {
-      preload: path.join(__dirname, 'preload.js'),
-      nodeIntegration: false,
-      contextIsolation: true,
-      // GPU acceleration optimizations
-      // WebGL is enabled by default in Electron
-      // offscreen: false is the default (on-screen rendering)
-      backgroundThrottling: false,
-    },
+    webPreferences: getOptimizedWebPreferences(path.join(__dirname, 'preload.js')),
     ...(process.platform === 'win32' && {
       icon: path.join(__dirname, '../assets/icon.png'),
     }),
@@ -1326,15 +1459,7 @@ function createAboutWindow() {
     resizable: true,
     title: 'About CalenRecall',
     show: false, // Hide initially until we size it
-    webPreferences: {
-      preload: path.join(__dirname, 'preload.js'),
-      nodeIntegration: false,
-      contextIsolation: true,
-      // GPU acceleration optimizations
-      // WebGL is enabled by default in Electron
-      // offscreen: false is the default (on-screen rendering)
-      backgroundThrottling: false,
-    },
+    webPreferences: getOptimizedWebPreferences(path.join(__dirname, 'preload.js')),
     ...(process.platform === 'win32' && {
       icon: path.join(__dirname, '../assets/icon.png'),
     }),
@@ -1354,13 +1479,7 @@ function createAboutWindow() {
         height: browserHeight,
         minWidth: 400,
         minHeight: 300,
-        webPreferences: {
-          nodeIntegration: false,
-          contextIsolation: true,
-          // GPU acceleration optimizations
-          // WebGL is enabled by default in Electron
-          // offscreen: false is the default (on-screen rendering)
-        },
+        webPreferences: getOptimizedWebPreferences(),
         ...(process.platform === 'win32' && {
           icon: path.join(__dirname, '../assets/icon.png'),
         }),
