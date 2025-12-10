@@ -80,6 +80,7 @@ import {
   getCurrentProfile,
   switchProfile,
   getDatabase,
+  closeDatabase,
 } from './database';
 import {
   getAllProfiles,
@@ -2572,6 +2573,14 @@ export function setupIpcHandlers() {
       const currentProfile = getCurrentProfile();
       const wasCurrentProfile = currentProfile?.id === profileId;
       
+      // If deleting the currently active profile, unload it first
+      // This closes the database connection so the files can be deleted
+      if (wasCurrentProfile) {
+        console.log(`[IPC] Unloading active profile before deletion: ${profileId}`);
+        closeDatabase();
+      }
+      
+      // Now delete the profile (database connection is closed if it was active)
       deleteProfile(profileId);
       
       // If we deleted the current profile, switch to default

@@ -803,12 +803,13 @@ function createWindow() {
   const prefs = getAllPreferences();
   
   // Golden ratio: width / height = 1.618
-  // Keep the width from preferences or use default, then calculate height
+  // Only apply golden ratio on first load (when no preferences are saved)
   const defaultWidth = 2400;
+  const defaultHeight = Math.round(defaultWidth / 1.618); // ~1483px
+  
+  // Use saved preferences if they exist, otherwise use golden ratio defaults
   const width = prefs.windowWidth || defaultWidth;
-  // If there's a saved height preference, use it; otherwise calculate golden ratio height
-  const goldenRatioHeight = Math.round(width / 1.618);
-  const height = prefs.windowHeight || goldenRatioHeight;
+  const height = prefs.windowHeight || defaultHeight;
   
   mainWindow = new BrowserWindow({
     width: width,

@@ -987,6 +987,19 @@ body {
   display: flex;
   gap: 12px;
   justify-content: flex-end;
+  align-items: center;
+  width: 100%;
+  margin-top: 24px;
+  flex-wrap: wrap;
+}
+
+/* Modal buttons should not be full width - they should be auto-sized */
+.modal-actions .btn-primary,
+.modal-actions .btn-secondary,
+.modal-actions .btn-danger {
+  width: auto;
+  min-width: 100px;
+  flex-shrink: 0;
 }
 
 .edit-profile-form {
