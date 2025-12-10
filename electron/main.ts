@@ -301,6 +301,7 @@ const THEME_METADATA: Record<string, { displayName: string }> = {
   'temple-of-light': { displayName: 'Temple of Light' },
   'temple-of-darkness': { displayName: 'Temple of Darkness' },
   'kallisti': { displayName: 'Kallisti' },
+  'stellar-echo': { displayName: 'Stellar Echo' },
   'tabletop': { displayName: 'Tabletop' },
   'football': { displayName: 'Football' },
 };
