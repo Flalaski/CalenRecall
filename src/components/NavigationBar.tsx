@@ -1037,10 +1037,18 @@ export default function NavigationBar({
       }
       
       // Safety checks - minimum dimensions
-      if (availableWidth <= 50) {
-        availableWidth = 50;
+      // Ensure we always have some space, even if very small
+      if (availableWidth <= 0) {
+        // If width is negative or zero, use a fallback calculation
+        // Try to get space from the nav-controls container itself
+        const navControlsRect = navControls.getBoundingClientRect();
+        availableWidth = Math.max(100, navControlsRect.width * 0.2); // At least 20% of nav-controls width or 100px
+      } else if (availableWidth < 50) {
+        availableWidth = 50; // Minimum 50px
       }
-      if (availableHeight <= 30) {
+      if (availableHeight <= 0) {
+        availableHeight = 40; // Minimum height for two-line layout
+      } else if (availableHeight < 30) {
         availableHeight = 30;
       }
       
@@ -1143,10 +1151,11 @@ export default function NavigationBar({
         
         document.body.appendChild(tempContainer);
         
-        // Binary search for optimal font size for this layout
-        let minSize = 0.5;
-        let maxSize = 3.5;
-        let optimalSize = 0;
+      // Binary search for optimal font size for this layout
+      // Ensure minimum font size so text is always visible
+      let minSize = 0.4; // Minimum 0.4rem to ensure visibility
+      let maxSize = 3.5;
+      let optimalSize = minSize; // Start with minimum to ensure visibility
         
         const iterations = 20;
         for (let i = 0; i < iterations; i++) {
@@ -1178,12 +1187,15 @@ export default function NavigationBar({
         }
       }
       
+      // Ensure we always have a valid font size (minimum 0.4rem for visibility)
+      const finalFontSize = Math.max(0.4, bestFontSize);
+      
       // Update font size and layout
-      if (Math.abs(currentFontSizeRef.current - bestFontSize) > 0.05 || 
+      if (Math.abs(currentFontSizeRef.current - finalFontSize) > 0.05 || 
           dateLabelLayout !== bestLayoutType ||
           JSON.stringify(dateLabelLines) !== JSON.stringify(bestLayout.lines)) {
-        currentFontSizeRef.current = bestFontSize;
-        setDateLabelFontSize(bestFontSize);
+        currentFontSizeRef.current = finalFontSize;
+        setDateLabelFontSize(finalFontSize);
         setDateLabelLayout(bestLayoutType);
         setDateLabelLines(bestLayout.lines);
       }

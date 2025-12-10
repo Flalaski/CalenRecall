@@ -25,12 +25,19 @@
   align-items: center;
   padding: 1rem 1.5rem;
   border-bottom: 1px solid #e0e0e0;
+  width: 100%;
+  max-width: 100%; /* Prevent overflow */
+  box-sizing: border-box;
+  gap: 0.5rem; /* Add gap to prevent overlap */
+  min-width: 0; /* Allow flex items to shrink */
 }
 
 .journal-list-header-actions {
   display: flex;
   align-items: center;
   gap: 0.75rem;
+  flex-shrink: 0; /* Don't shrink action buttons */
+  min-width: 0; /* Allow shrinking if needed */
 }
 
 .journal-list-header h3 {
@@ -48,6 +55,13 @@
     0 0 1px rgba(0, 0, 0, 0.1);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  flex: 1;
+  min-width: 0; /* Allow flex item to shrink */
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+  word-break: break-word; /* Break long words */
+  overflow: hidden; /* Hide overflow */
+  text-overflow: ellipsis; /* Show ellipsis for overflow */
 }
 
 .new-entry-button {
@@ -105,8 +119,12 @@
 .journal-list-content {
   flex: 1;
   overflow-y: auto;
+  overflow-x: hidden; /* Prevent horizontal scrolling */
   padding: 0.5rem;
   background: transparent;
+  width: 100%;
+  max-width: 100%; /* Ensure it doesn't exceed parent width */
+  box-sizing: border-box;
 }
 
 .journal-list-controls {
@@ -218,6 +236,11 @@
   border-radius: 4px;
   cursor: pointer;
   transition: background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+  width: 100%;
+  max-width: 100%; /* Prevent overflow */
+  box-sizing: border-box;
+  overflow-x: hidden; /* Prevent horizontal scrolling */
+  overflow-y: hidden; /* Prevent vertical scrolling in item */
 }
 
 .journal-entry-item:hover {
@@ -235,6 +258,10 @@
   justify-content: space-between;
   align-items: flex-start;
   margin-bottom: 0.5rem;
+  width: 100%;
+  min-width: 0; /* Allow flex items to shrink */
+  box-sizing: border-box;
+  gap: 0.5rem; /* Add gap to prevent overlap */
 }
 
 .entry-item-title {
@@ -242,6 +269,13 @@
   font-size: 1rem;
   color: #000;
   flex: 1;
+  min-width: 0; /* Allow flex item to shrink below content size */
+  max-width: 100%; /* Prevent overflow */
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+  word-break: break-word; /* Break long words */
+  overflow: hidden; /* Hide overflow */
+  text-overflow: ellipsis; /* Show ellipsis for overflow */
   font-family: 'Bebas Neue', 'Impact', 'Arial Black', 'Franklin Gothic Heavy', 'Arial Narrow', sans-serif;
   letter-spacing: 0.05em;
   text-transform: uppercase;
@@ -259,6 +293,8 @@
   align-items: flex-end;
   gap: 0.25rem;
   margin-left: 1rem;
+  flex-shrink: 0; /* Don't shrink meta info */
+  min-width: 0; /* Allow shrinking if needed */
 }
 
 .entry-time-range {
@@ -267,11 +303,19 @@
   background: rgba(224, 224, 224, 0.5);
   padding: 0.15rem 0.5rem;
   border-radius: 12px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100px; /* Limit width to prevent overflow */
 }
 
 .entry-date {
   font-size: 0.8rem;
   color: rgba(153, 153, 153, 0.7);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 150px; /* Limit width to prevent overflow */
 }
 
 .entry-item-preview {
@@ -279,6 +323,12 @@
   color: #222;
   line-height: 1.4;
   margin-bottom: 0.5rem;
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+  word-break: break-word; /* Break long words */
+  width: 100%;
+  max-width: 100%; /* Prevent overflow */
+  box-sizing: border-box;
 }
 
 .entry-item-tags {
@@ -286,6 +336,9 @@
   flex-wrap: wrap;
   gap: 0.25rem;
   margin-top: 0.5rem;
+  width: 100%;
+  max-width: 100%; /* Prevent overflow */
+  box-sizing: border-box;
 }
 
 .entry-tag {
@@ -380,6 +433,10 @@
 .entry-item-content {
   flex: 1;
   min-width: 0;
+  width: 100%;
+  max-width: 100%; /* Prevent overflow */
+  box-sizing: border-box;
+  overflow-x: hidden; /* Prevent horizontal scrolling */
 }
 
 .journal-entry-item.bulk-selected {

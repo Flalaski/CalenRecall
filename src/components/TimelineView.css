@@ -20,6 +20,24 @@
   flex: 1;
   gap: 1rem;
   overflow: hidden;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* Responsive: stack vertically on narrow windows */
+@media (max-width: 1000px) {
+  .month-view-content {
+    flex-direction: column;
+  }
+  
+  .month-week-entries-section {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    border-left: none !important;
+    border-top: 2px solid transparent;
+    max-height: 300px;
+  }
 }
 
 .month-calendar-section {
@@ -28,17 +46,21 @@
   flex-direction: column;
   min-width: 0;
   overflow: hidden;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .month-week-entries-section {
   width: 400px;
-  min-width: 350px;
+  min-width: 250px; /* Reduced from 350px for better responsiveness */
   max-width: 500px;
   display: flex;
   flex-direction: column;
   background: transparent;
   border-left: 2px solid transparent;
   overflow-y: auto;
+  overflow-x: hidden; /* Prevent horizontal scrolling */
+  box-sizing: border-box;
 }
 
 .week-entries-header {
@@ -348,7 +370,7 @@
 
 .weekday-header {
   display: grid;
-  grid-template-columns: repeat(7, 1fr);
+  grid-template-columns: repeat(7, minmax(0, 1fr));
   background: #f5f5f5;
   border-bottom: 2px solid #e0e0e0;
   padding: 0.5rem;
@@ -364,6 +386,10 @@
     3px 3px 4px rgba(0, 0, 0, 0.08);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow-x: hidden; /* Prevent horizontal scrolling */
 }
 
 .weekday-cell {
@@ -402,6 +428,10 @@
   padding: 2px;
   background: #e8e8e8;
   overflow-y: auto;
+  overflow-x: hidden; /* Prevent horizontal scrolling */
+  width: 100%;
+  max-width: 100%; /* Ensure it doesn't exceed parent width */
+  box-sizing: border-box;
 }
 
 .month-grid {
@@ -410,8 +440,36 @@
 }
 
 .week-grid {
-  grid-template-columns: repeat(7, 1fr);
+  grid-template-columns: repeat(7, minmax(0, 1fr));
   grid-template-rows: 1fr;
+}
+
+/* Responsive: reduce columns on narrow windows for week view */
+@media (max-width: 1200px) {
+  .week-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+  .weekday-header {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 800px) {
+  .week-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .weekday-header {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 500px) {
+  .week-grid {
+    grid-template-columns: 1fr;
+  }
+  .weekday-header {
+    grid-template-columns: 1fr;
+  }
 }
 
 .timeline-cell {
@@ -419,7 +477,11 @@
   border: 1px solid #e0e0e0;
   position: relative;
   overflow: hidden;
-  overflow-x: hidden;
+  overflow-x: hidden; /* Prevent horizontal scrolling */
+  overflow-y: hidden; /* Prevent vertical scrolling in cell */
+  width: 100%;
+  max-width: 100%; /* Ensure it doesn't exceed parent width */
+  box-sizing: border-box;
   transition: background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
@@ -542,8 +604,9 @@
   padding: 0.25rem;
   max-height: calc(100% - 30px);
   overflow-y: auto;
-  overflow-x: hidden;
+  overflow-x: hidden; /* Prevent horizontal scrolling */
   width: 100%;
+  max-width: 100%; /* Ensure it doesn't exceed parent width */
   box-sizing: border-box;
 }
 
@@ -554,7 +617,10 @@
   padding: 0.5rem;
   height: 100%;
   overflow-y: auto;
-  overflow-x: hidden;
+  overflow-x: hidden; /* Prevent horizontal scrolling */
+  width: 100%;
+  max-width: 100%; /* Ensure it doesn't exceed parent width */
+  box-sizing: border-box;
 }
 
 .entry-badge {
@@ -570,15 +636,41 @@
   border-left: 3px solid;
   width: 100%;
   min-width: 0; /* Allow flex items to shrink below their content size */
+  max-width: 100%; /* Prevent overflow */
   box-sizing: border-box;
   overflow-wrap: break-word;
   word-wrap: break-word;
+  word-break: break-word; /* Break long words if needed */
+  overflow: hidden; /* Hide any overflow */
+  text-overflow: ellipsis; /* Show ellipsis for overflow text */
 }
 
 .entry-badge:hover {
   will-change: transform;
   transform: translate3d(2px, 0, 0);
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+/* Ensure badge content wraps and doesn't overflow */
+.entry-badge .badge-title,
+.entry-badge .badge-time,
+.entry-badge .badge-tag-count {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+  flex-shrink: 1;
+}
+
+.entry-badge .badge-title {
+  flex: 1;
+  min-width: 0;
+}
+
+.entry-badge .badge-time,
+.entry-badge .badge-tag-count {
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 .entry-decade {
@@ -662,7 +754,12 @@
   border-left: 4px solid;
   overflow-wrap: break-word;
   word-wrap: break-word;
-  overflow-x: hidden;
+  word-break: break-word; /* Break long words */
+  overflow-x: hidden; /* Prevent horizontal scrolling */
+  overflow-y: hidden; /* Prevent vertical scrolling in card */
+  width: 100%;
+  max-width: 100%; /* Ensure it doesn't exceed parent width */
+  box-sizing: border-box;
 }
 
 .entry-card:hover {
@@ -714,6 +811,9 @@
   align-items: center;
   gap: 0.5rem;
   margin-bottom: 0.25rem;
+  width: 100%;
+  min-width: 0; /* Allow flex items to shrink */
+  box-sizing: border-box;
 }
 
 .card-title {
@@ -722,8 +822,12 @@
   color: #333;
   overflow-wrap: break-word;
   word-wrap: break-word;
-  word-break: break-word;
+  word-break: break-word; /* Break long words */
   flex: 1;
+  min-width: 0; /* Allow flex item to shrink below content size */
+  max-width: 100%; /* Prevent overflow */
+  overflow: hidden; /* Hide overflow */
+  text-overflow: ellipsis; /* Show ellipsis for overflow */
   font-family: 'Bebas Neue', 'Impact', 'Arial Black', 'Franklin Gothic Heavy', 'Arial Narrow', sans-serif;
   letter-spacing: 0.05em;
   text-transform: uppercase;
@@ -742,7 +846,11 @@
   margin-bottom: 0.25rem;
   overflow-wrap: break-word;
   word-wrap: break-word;
-  word-break: break-word;
+  word-break: break-word; /* Break long words */
+  width: 100%;
+  max-width: 100%; /* Prevent overflow */
+  overflow: hidden; /* Hide overflow */
+  box-sizing: border-box;
 }
 
 .card-tags {
@@ -750,6 +858,9 @@
   gap: 0.25rem;
   flex-wrap: wrap;
   margin-top: 0.25rem;
+  width: 100%;
+  max-width: 100%; /* Prevent overflow */
+  box-sizing: border-box;
 }
 
 .card-tag {
@@ -766,6 +877,10 @@
   padding: 1rem;
   height: 100%;
   overflow-y: auto;
+  overflow-x: hidden; /* Prevent horizontal scrolling */
+  width: 100%;
+  max-width: 100%; /* Ensure it doesn't exceed parent width */
+  box-sizing: border-box;
 }
 
 .day-header {
@@ -775,6 +890,11 @@
   margin-bottom: 1rem;
   padding-bottom: 0.5rem;
   border-bottom: 2px solid #e0e0e0;
+  width: 100%;
+  max-width: 100%; /* Prevent overflow */
+  box-sizing: border-box;
+  gap: 0.5rem; /* Add gap to prevent overlap */
+  min-width: 0; /* Allow flex items to shrink */
 }
 
 .day-header h2 {
@@ -790,38 +910,50 @@
     0 0 1px rgba(0, 0, 0, 0.1);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  flex: 1;
+  min-width: 0; /* Allow flex item to shrink */
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+  word-break: break-word; /* Break long words */
+  overflow: hidden; /* Hide overflow */
+  text-overflow: ellipsis; /* Show ellipsis for overflow */
 }
 
 .day-header-actions {
   display: flex;
   gap: 0.5rem;
+  flex-shrink: 0; /* Don't shrink action buttons */
+  min-width: 0; /* Allow shrinking if needed */
 }
 
 .day-entries-list {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  grid-template-columns: 1fr; /* Default to single column for balanced layout */
   gap: 1rem;
   max-width: 100%;
+  width: 100%;
+  box-sizing: border-box;
+  overflow-x: hidden; /* Prevent horizontal scrolling */
 }
 
-/* On larger screens, use 3 columns */
-@media (min-width: 1000px) {
+/* On larger screens, use 2 columns for better space utilization */
+@media (min-width: 1200px) {
   .day-entries-list {
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
-/* On medium screens, use 2 columns */
-@media (min-width: 600px) and (max-width: 999px) {
+/* On very large screens, use 3 columns */
+@media (min-width: 1600px) {
   .day-entries-list {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
 
-/* On smaller screens, single column with auto-fit */
-@media (max-width: 599px) {
+/* On very small screens, reduce gap */
+@media (max-width: 400px) {
   .day-entries-list {
-    grid-template-columns: 1fr;
+    gap: 0.75rem; /* Reduce gap on very small screens */
   }
 }
 
@@ -829,10 +961,30 @@
   background: transparent;
   border: 1px solid #e0e0e0;
   border-radius: 6px;
-  padding: 1rem;
+  padding: 0.25rem 0.75rem; /* Minimal padding: 0.25rem top/bottom, 0.75rem left/right */
   cursor: pointer;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
   border-left: 5px solid;
+  width: 100%;
+  max-width: 100%; /* Prevent overflow */
+  min-width: 0; /* Allow grid item to shrink below content size */
+  box-sizing: border-box;
+  overflow-x: hidden; /* Prevent horizontal scrolling */
+  overflow-y: hidden; /* Prevent vertical scrolling in card */
+}
+
+/* On narrow windows, reduce padding even more */
+@media (max-width: 800px) {
+  .entry-card-full {
+    padding: 0.2rem 0.6rem; /* Even tighter padding on narrow windows */
+  }
+}
+
+/* On very narrow windows, minimal padding */
+@media (max-width: 500px) {
+  .entry-card-full {
+    padding: 0.15rem 0.5rem; /* Minimal padding on very narrow windows */
+  }
 }
 
 .entry-card-full:hover {
@@ -887,7 +1039,36 @@
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: 0.75rem;
+  margin-bottom: 0.35rem; /* Reduced for tighter spacing */
+  margin-top: 0; /* Remove any top margin */
+  padding-top: 0; /* Remove any top padding */
+  width: 100%;
+  min-width: 0; /* Allow flex items to shrink */
+  box-sizing: border-box;
+  gap: 0.5rem; /* Add gap to prevent overlap */
+}
+
+/* On narrow windows, stack header vertically */
+@media (max-width: 800px) {
+  .card-header {
+    flex-direction: column; /* Stack title above meta on narrow windows */
+    align-items: flex-start; /* Align items to the left */
+    margin-bottom: 0.25rem; /* Even tighter on narrow windows */
+    gap: 0.4rem; /* Smaller gap on narrow windows */
+  }
+  
+  .card-title-full {
+    font-size: 1rem; /* Slightly smaller on narrow windows */
+    line-height: 1.1; /* Keep tight line height */
+    width: 100%; /* Full width on narrow windows */
+    margin-bottom: 0.2rem; /* Add small margin below title */
+  }
+  
+  .card-meta {
+    width: 100%; /* Full width on narrow windows */
+    justify-content: flex-start; /* Align meta items to the left */
+    flex-wrap: wrap; /* Allow wrapping if needed */
+  }
 }
 
 .card-title-full {
@@ -895,6 +1076,18 @@
   font-size: 1.1rem;
   color: #333;
   flex: 1;
+  min-width: 0; /* Allow flex item to shrink below content size */
+  max-width: 100%; /* Prevent overflow */
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+  word-break: normal; /* Use normal word breaking */
+  overflow: hidden; /* Hide overflow */
+  text-overflow: ellipsis; /* Show ellipsis for overflow */
+  margin: 0; /* Remove any margins */
+  padding: 0; /* Remove any padding */
+  line-height: 1.1; /* Very tight line height to minimize space */
+  text-align: left; /* Ensure left alignment */
+  white-space: normal; /* Ensure normal wrapping */
   font-family: 'Bebas Neue', 'Impact', 'Arial Black', 'Franklin Gothic Heavy', 'Arial Narrow', sans-serif;
   letter-spacing: 0.05em;
   text-transform: uppercase;
@@ -907,10 +1100,15 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
+
 .card-meta {
   display: flex;
-  gap: 0.5rem;
+  gap: 0.4rem; /* Reduced gap for tighter spacing */
   align-items: center;
+  flex-shrink: 0; /* Don't shrink meta info */
+  min-width: 0; /* Allow shrinking if needed */
+  margin: 0; /* Remove any margins */
+  padding: 0; /* Remove any padding */
 }
 
 .card-edit-button {
@@ -982,6 +1180,10 @@
   font-weight: 500;
   white-space: nowrap;
   margin-left: auto;
+  flex-shrink: 0; /* Don't shrink time */
+  overflow: hidden; /* Hide overflow */
+  text-overflow: ellipsis; /* Show ellipsis if needed */
+  max-width: 100px; /* Limit width to prevent overflow */
   margin-right: 0.5rem;
 }
 
@@ -994,15 +1196,40 @@
 
 .card-content-full {
   font-size: 0.95rem;
-  line-height: 1.6;
+  line-height: 1.35; /* Tighter line height for better space usage */
   color: #555;
-  margin-bottom: 0.75rem;
+  margin-bottom: 0.35rem; /* Reduced for tighter spacing */
+  margin-top: 0; /* Remove any top margin */
+  padding: 0; /* Remove any padding */
+  padding-top: 0; /* Explicitly remove top padding */
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+  word-break: normal; /* Use normal word breaking instead of aggressive breaking */
+  text-align: left; /* Ensure left alignment */
+  width: 100%;
+  max-width: 100%; /* Prevent overflow */
+  box-sizing: border-box;
+  white-space: normal; /* Ensure normal wrapping */
+}
+
+/* On narrow windows, reduce content spacing */
+@media (max-width: 800px) {
+  .card-content-full {
+    font-size: 0.9rem; /* Slightly smaller on narrow windows */
+    line-height: 1.3; /* Tighter line height */
+    margin-bottom: 0.3rem; /* Even tighter spacing */
+  }
 }
 
 .card-tags-full {
   display: flex;
   gap: 0.5rem;
   flex-wrap: wrap;
+  width: 100%;
+  max-width: 100%; /* Prevent overflow */
+  box-sizing: border-box;
+  margin-top: 0; /* Remove any top margin */
+  margin-bottom: 0; /* Remove any bottom margin */
 }
 
 .card-tag-full {
@@ -1166,7 +1393,7 @@
   display: flex;
   align-items: center;
   gap: 2px;
-  overflow-x: auto;
+  overflow-x: auto; /* Minimap timeline may need horizontal scrolling */
   padding: 0.25rem 0;
 }
 
@@ -1369,5 +1596,14 @@
 .entry-card-content-wrapper {
   flex: 1;
   min-width: 0;
+  width: 100%;
+  max-width: 100%; /* Prevent overflow */
+  box-sizing: border-box;
+  overflow-x: hidden; /* Prevent horizontal scrolling */
+  margin: 0; /* Remove any margins */
+  padding: 0; /* Remove any padding */
+  text-align: left; /* Ensure left alignment */
+  display: flex;
+  flex-direction: column;
 }
 
