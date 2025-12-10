@@ -44,6 +44,8 @@ A self-contained calendar journal application for Windows that helps you recall 
   - Custom entry colors
 - **Export & Import**: 
   - Export entries in multiple formats: Markdown, Text, JSON, RTF, PDF, DEC, CSV
+  - Profile-based export selection for all formats
+  - Password-protected profile export support
   - Comprehensive export metadata (author, organization, copyright, etc.)
   - Import entries from JSON or Markdown files
   - Import progress tracking
@@ -57,6 +59,8 @@ A self-contained calendar journal application for Windows that helps you recall 
   - Sound effects toggle
   - Window size and position (automatically saved)
   - Restore last viewed position
+- **Multi-Profile Support**: Create multiple isolated profiles for different purposes (personal, work, health, etc.)
+- **Profile Password Protection**: Secure your profiles with passwords and recovery keys
 - **Local Storage**: All data is stored locally using SQLite - your privacy is protected
 - **Visual Indicators**: See which dates have entries at a glance with color-coded badges
 - **Self-Contained**: Distribute as a single Windows installer or portable executable
@@ -452,9 +456,11 @@ Access preferences by clicking the gear icon (⚙️) in the navigation bar. You
 
 **Export entries:**
 1. Use the menu: File → Export → [Format]
-2. Choose from: Markdown, Text, JSON, RTF, PDF, DEC, CSV
-3. Fill in export metadata (optional but recommended)
-4. Select save location
+2. Select the profile to export from (defaults to current profile)
+3. If the profile is password-protected, enter the password
+4. Choose from: Markdown, Text, JSON, RTF, PDF, DEC, CSV
+5. Fill in export metadata (set in Preferences or during export)
+6. Select save location
 
 **Import entries:**
 1. Use the menu: File → Import → [Format]
