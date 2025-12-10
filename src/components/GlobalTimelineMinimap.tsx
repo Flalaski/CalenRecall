@@ -331,8 +331,10 @@ export default function GlobalTimelineMinimap({
   const lastScaleChangeAccumulatorRef = useRef<number>(0); // Track accumulator value at last scale change
   const deadZoneRef = useRef<number>(0); // Dead zone threshold after scale change
   const lastBlipDateRef = useRef<Date | null>(null); // Track last date that triggered a micro blip
+  const lastKeyboardBlipDateRef = useRef<Date | null>(null); // Track last date for keyboard navigation blips
   const currentDragTargetDateRef = useRef<Date | null>(null); // Track the target date we're moving toward
   const sliderNoiseRef = useRef<SliderNoise | null>(null); // Track continuous slider noise for vertical drag feedback
+  const isKeyboardNavigationRef = useRef<boolean>(false); // Track if navigation was triggered by keyboard
   // OPTIMIZATION: Track throttled indicator position for early entry filtering
   // This allows approximate viewport filtering without recalculating on every drag movement
   const throttledIndicatorPositionRef = useRef<number>(50); // Default to center
@@ -3446,9 +3448,10 @@ export default function GlobalTimelineMinimap({
             return;
         }
 
-        // Play tier-aware micro blip for date change with direction
-        const blipDirection = direction === -1 ? 'prev' : 'next';
-        playMicroBlip(currentViewMode, blipDirection);
+        // Mark that this navigation was triggered by keyboard
+        // Blips will play when selectedDate actually changes (via useEffect below)
+        // This ensures audio matches the actual visual movement of the indicator
+        isKeyboardNavigationRef.current = true;
         currentOnTimePeriodSelect(newDate, currentViewMode);
       } else if (isUp || isDown) {
         // Change time scale (zoom in/out)
@@ -3488,6 +3491,43 @@ export default function GlobalTimelineMinimap({
       window.removeEventListener('keydown', handleKeyDown);
     };
   }, []); // Empty deps - we use refs to access current values
+
+  // Play blips when selectedDate actually changes (for keyboard navigation)
+  // This ensures audio matches the actual visual movement of the indicator,
+  // not the key repeat rate
+  useEffect(() => {
+    // Only play blips for keyboard navigation (not drag or other navigation methods)
+    if (!isKeyboardNavigationRef.current) {
+      lastKeyboardBlipDateRef.current = selectedDate;
+      return;
+    }
+
+    // Compare dates at day level (ignore time component)
+    const currentDateDay = createDate(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate());
+    const lastBlipDateDay = lastKeyboardBlipDateRef.current
+      ? createDate(lastKeyboardBlipDateRef.current.getFullYear(), lastKeyboardBlipDateRef.current.getMonth(), lastKeyboardBlipDateRef.current.getDate())
+      : null;
+
+    // Only play blip if date actually changed
+    if (lastBlipDateDay && currentDateDay.getTime() !== lastBlipDateDay.getTime()) {
+      // Determine direction by comparing old and new dates
+      const blipDirection = currentDateDay.getTime() > lastBlipDateDay.getTime() ? 'next' : 'prev';
+      
+      // Play tier-aware micro blip with direction
+      playMicroBlip(viewMode, blipDirection);
+    }
+
+    // Update last blip date
+    lastKeyboardBlipDateRef.current = selectedDate;
+    
+    // Reset keyboard navigation flag after a short delay
+    // This prevents blips from playing for non-keyboard navigation methods
+    const timeoutId = setTimeout(() => {
+      isKeyboardNavigationRef.current = false;
+    }, 100);
+    
+    return () => clearTimeout(timeoutId);
+  }, [selectedDate, viewMode]);
 
   // Handle wheel scroll with non-passive event listener to allow preventDefault()
   useEffect(() => {
