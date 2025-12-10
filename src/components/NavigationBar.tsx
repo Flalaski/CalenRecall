@@ -31,6 +31,14 @@ export default function NavigationBar({
   const { calendar, setCalendar, dateToCalendar } = useCalendar();
   const [isDefinitionExpanded, setIsDefinitionExpanded] = useState(false);
   
+  // Dynamic font scaling for date label
+  const dateLabelRef = useRef<HTMLHeadingElement>(null);
+  const navControlsRef = useRef<HTMLDivElement>(null);
+  const [dateLabelFontSize, setDateLabelFontSize] = useState<number>(3.5); // Default 3.5rem
+  const [dateLabelLayout, setDateLabelLayout] = useState<'single' | 'two-line'>('single');
+  const [dateLabelLines, setDateLabelLines] = useState<[string, string?]>(['', undefined]);
+  const currentFontSizeRef = useRef<number>(3.5); // Track current font size for comparison
+  
   // Get date entry configuration for current calendar
   const dateEntryConfig = useMemo(() => getDateEntryConfig(calendar), [calendar]);
   
@@ -974,6 +982,245 @@ export default function NavigationBar({
     // Let Tab key work normally - don't intercept it
   };
 
+  // Dynamic font scaling for date label to prevent truncation
+  useEffect(() => {
+    const updateFontSize = () => {
+      const dateLabel = dateLabelRef.current;
+      const navControls = navControlsRef.current;
+      
+      if (!dateLabel || !navControls) return;
+      
+      // Get the full text content
+      const fullText = getDateLabel();
+      if (!fullText.trim()) return;
+      
+      // Get available width and height by measuring actual layout positions
+      const navButtons = Array.from(navControls.querySelectorAll('.nav-button')) as HTMLElement[];
+      const dateInputContainer = navControls.querySelector('.date-input-container') as HTMLElement;
+      
+      let availableWidth = 0;
+      let availableHeight = 0;
+      
+      if (navButtons.length > 0 && dateInputContainer) {
+        // Get the right edge of the last nav button
+        const lastButton = navButtons[navButtons.length - 1];
+        const lastButtonRect = lastButton.getBoundingClientRect();
+        const lastButtonRight = lastButtonRect.right;
+        
+        // Get the left edge of the date input container
+        const inputContainerRect = dateInputContainer.getBoundingClientRect();
+        const inputContainerLeft = inputContainerRect.left;
+        
+        // Available width is the space between them, minus the date label's margin-left
+        availableWidth = inputContainerLeft - lastButtonRight;
+        
+        // Subtract the date label's margin-left (1rem)
+        const rootFontSize = parseFloat(getComputedStyle(document.documentElement).fontSize);
+        availableWidth -= rootFontSize; // 1rem
+        
+        // Small safety margin to prevent edge cases
+        availableWidth -= 10;
+        
+        // Available height: use the navigation bar row height
+        const navRow = navControls.closest('.navigation-bar-top-row') as HTMLElement;
+        if (navRow) {
+          const navRowRect = navRow.getBoundingClientRect();
+          availableHeight = navRowRect.height - 20; // Subtract padding
+        } else {
+          availableHeight = 80; // Fallback height
+        }
+      } else {
+        // Fallback: use a percentage of nav-controls width
+        const navControlsRect = navControls.getBoundingClientRect();
+        availableWidth = navControlsRect.width * 0.35; // Estimate 35% available
+        availableHeight = 80;
+      }
+      
+      // Safety checks - minimum dimensions
+      if (availableWidth <= 50) {
+        availableWidth = 50;
+      }
+      if (availableHeight <= 30) {
+        availableHeight = 30;
+      }
+      
+      // Parse the date label to find natural split points
+      // Common patterns: "WEDNESDAY, THIRTEENTH MOON 8, 2025 CE"
+      // Split options:
+      // 1. Single line (no split)
+      // 2. Split before year/era: "WEDNESDAY, THIRTEENTH MOON 8" / "2025 CE"
+      // 3. Split after day name: "WEDNESDAY" / "THIRTEENTH MOON 8, 2025 CE"
+      // 4. Split before era: "WEDNESDAY, THIRTEENTH MOON 8, 2025" / "CE"
+      
+      const splitOptions: Array<{ lines: [string, string?]; description: string }> = [
+        { lines: [fullText, undefined], description: 'single' },
+      ];
+      
+      // Try to find natural split points
+      // Look for patterns like ", YYYY" or ", YYYY ERA" or "ERA" at the end
+      const yearEraMatch = fullText.match(/(.*?)(\d{4}(\s+(?:CE|BCE|AH|AM|ERA))?)$/);
+      if (yearEraMatch) {
+        const beforeYear = yearEraMatch[1].trim();
+        const yearEra = yearEraMatch[2].trim();
+        if (beforeYear && yearEra) {
+          splitOptions.push({ lines: [beforeYear, yearEra], description: 'before-year' });
+        }
+      }
+      
+      // Look for comma-separated parts (e.g., "WEDNESDAY, THIRTEENTH MOON 8, 2025 CE")
+      const commaParts = fullText.split(',').map(s => s.trim()).filter(s => s);
+      if (commaParts.length >= 2) {
+        // Split after first part (day name)
+        const firstPart = commaParts[0];
+        const rest = commaParts.slice(1).join(', ');
+        if (firstPart && rest) {
+          splitOptions.push({ lines: [firstPart, rest], description: 'after-day-name' });
+        }
+        
+        // If we have 3+ parts, try splitting before the last part (year/era)
+        if (commaParts.length >= 3) {
+          const beforeLast = commaParts.slice(0, -1).join(', ');
+          const lastPart = commaParts[commaParts.length - 1];
+          if (beforeLast && lastPart) {
+            splitOptions.push({ lines: [beforeLast, lastPart], description: 'before-last-part' });
+          }
+        }
+      }
+      
+      // Try splitting on "ERA" or "CE"/"BCE" at the end
+      const eraMatch = fullText.match(/(.*?)\s+((?:CE|BCE|AH|AM|ERA))$/);
+      if (eraMatch) {
+        const beforeEra = eraMatch[1].trim();
+        const era = eraMatch[2].trim();
+        if (beforeEra && era) {
+          splitOptions.push({ lines: [beforeEra, era], description: 'before-era' });
+        }
+      }
+      
+      // Test each layout option and find the one with the largest font size
+      let bestLayout = splitOptions[0];
+      let bestFontSize = 0;
+      let bestLayoutType: 'single' | 'two-line' = 'single';
+      
+      // Create a temporary container to measure layouts
+      const tempContainer = document.createElement('div');
+      tempContainer.style.visibility = 'hidden';
+      tempContainer.style.position = 'absolute';
+      tempContainer.style.top = '-9999px';
+      tempContainer.style.left = '-9999px';
+      tempContainer.style.display = 'flex';
+      tempContainer.style.flexDirection = 'column';
+      tempContainer.style.alignItems = 'flex-start';
+      tempContainer.style.justifyContent = 'center';
+      
+      const labelStyles = getComputedStyle(dateLabel);
+      
+      for (const option of splitOptions) {
+        const isTwoLine = option.lines[1] !== undefined;
+        
+        // Create temp elements for measurement
+        const line1 = document.createElement('span');
+        line1.style.fontFamily = labelStyles.fontFamily;
+        line1.style.fontWeight = labelStyles.fontWeight;
+        line1.style.letterSpacing = labelStyles.letterSpacing;
+        line1.style.textTransform = labelStyles.textTransform;
+        line1.style.whiteSpace = 'nowrap';
+        line1.textContent = option.lines[0];
+        
+        tempContainer.innerHTML = '';
+        tempContainer.appendChild(line1);
+        
+        if (isTwoLine) {
+          const line2 = document.createElement('span');
+          line2.style.fontFamily = labelStyles.fontFamily;
+          line2.style.fontWeight = labelStyles.fontWeight;
+          line2.style.letterSpacing = labelStyles.letterSpacing;
+          line2.style.textTransform = labelStyles.textTransform;
+          line2.style.whiteSpace = 'nowrap';
+          line2.textContent = option.lines[1]!;
+          tempContainer.appendChild(line2);
+        }
+        
+        document.body.appendChild(tempContainer);
+        
+        // Binary search for optimal font size for this layout
+        let minSize = 0.5;
+        let maxSize = 3.5;
+        let optimalSize = 0;
+        
+        const iterations = 20;
+        for (let i = 0; i < iterations; i++) {
+          const testSize = (minSize + maxSize) / 2;
+          line1.style.fontSize = `${testSize}rem`;
+          if (isTwoLine) {
+            (tempContainer.children[1] as HTMLElement).style.fontSize = `${testSize}rem`;
+          }
+          
+          const containerRect = tempContainer.getBoundingClientRect();
+          const fitsWidth = containerRect.width <= availableWidth;
+          const fitsHeight = containerRect.height <= availableHeight;
+          
+          if (fitsWidth && fitsHeight) {
+            optimalSize = testSize;
+            minSize = testSize;
+          } else {
+            maxSize = testSize;
+          }
+        }
+        
+        document.body.removeChild(tempContainer);
+        
+        // Update best layout if this one is better
+        if (optimalSize > bestFontSize) {
+          bestFontSize = optimalSize;
+          bestLayout = option;
+          bestLayoutType = isTwoLine ? 'two-line' : 'single';
+        }
+      }
+      
+      // Update font size and layout
+      if (Math.abs(currentFontSizeRef.current - bestFontSize) > 0.05 || 
+          dateLabelLayout !== bestLayoutType ||
+          JSON.stringify(dateLabelLines) !== JSON.stringify(bestLayout.lines)) {
+        currentFontSizeRef.current = bestFontSize;
+        setDateLabelFontSize(bestFontSize);
+        setDateLabelLayout(bestLayoutType);
+        setDateLabelLines(bestLayout.lines);
+      }
+    };
+    
+    // Initial update with a small delay to ensure DOM is ready
+    const timeoutId = setTimeout(() => {
+      updateFontSize();
+    }, 0);
+    
+    // Watch for resize events
+    const resizeObserver = new ResizeObserver(() => {
+      // Use requestAnimationFrame to batch updates
+      requestAnimationFrame(() => {
+        updateFontSize();
+      });
+    });
+    
+    if (navControlsRef.current) {
+      resizeObserver.observe(navControlsRef.current);
+    }
+    
+    // Also watch the date label itself in case text changes
+    if (dateLabelRef.current) {
+      resizeObserver.observe(dateLabelRef.current);
+    }
+    
+    // Watch for window resize
+    window.addEventListener('resize', updateFontSize);
+    
+    return () => {
+      clearTimeout(timeoutId);
+      resizeObserver.disconnect();
+      window.removeEventListener('resize', updateFontSize);
+    };
+  }, [selectedDate, viewMode, calendar]); // Re-run when date/viewMode/calendar changes (not dateLabelFontSize to avoid loop)
+
   // Handle keyboard shortcut for Today button (T key)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -1057,7 +1304,7 @@ export default function NavigationBar({
   return (
     <div className="navigation-bar">
       <div className="navigation-bar-top-row">
-        <div className="nav-controls">
+        <div className="nav-controls" ref={navControlsRef}>
           <img 
             src="./icon.png" 
             alt="CalenRecall" 
@@ -1081,7 +1328,20 @@ export default function NavigationBar({
           >
             →
           </button>
-          <h2 className={`date-label date-label-${viewMode}`}>{renderDateLabel()}</h2>
+          <h2 
+            ref={dateLabelRef}
+            className={`date-label date-label-${viewMode} ${dateLabelLayout === 'two-line' ? 'date-label-two-line' : ''}`}
+            style={{ fontSize: `${dateLabelFontSize}rem` }}
+          >
+            {dateLabelLayout === 'two-line' && dateLabelLines[1] ? (
+              <>
+                <span className="date-label-line-1">{dateLabelLines[0]}</span>
+                <span className="date-label-line-2">{dateLabelLines[1]}</span>
+              </>
+            ) : (
+              renderDateLabel()
+            )}
+          </h2>
           <div className="date-input-container" key={`date-input-${calendar}`}>
             <div className="date-input-wrapper">
               <div className="date-input-fields" role="group" aria-label="Go to date">
