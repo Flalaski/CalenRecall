@@ -4516,19 +4516,55 @@ export default function GlobalTimelineMinimap({
           }}
         >
           <div className="radial-dial-center"></div>
-          <div className="radial-dial-direction radial-dial-left" title={getRadialDialLabels().left}>
+          <div 
+            className="radial-dial-direction radial-dial-left" 
+            title={getRadialDialLabels().left}
+            style={dragLimits && dragLimits.thresholdBottom ? {
+              width: `${Math.abs(dragLimits.thresholdBottom)}px`,
+              maxWidth: `${Math.abs(dragLimits.thresholdBottom)}px`,
+            } : undefined}
+          >
             <div className="radial-arrow">←</div>
             <div className="radial-label">{getRadialDialLabels().left}</div>
           </div>
-          <div className="radial-dial-direction radial-dial-right" title={getRadialDialLabels().right}>
+          <div 
+            className="radial-dial-direction radial-dial-right" 
+            title={getRadialDialLabels().right}
+            style={dragLimits && dragLimits.thresholdBottom ? {
+              width: `${Math.abs(dragLimits.thresholdBottom)}px`,
+              maxWidth: `${Math.abs(dragLimits.thresholdBottom)}px`,
+            } : undefined}
+          >
             <div className="radial-arrow">→</div>
             <div className="radial-label">{getRadialDialLabels().right}</div>
           </div>
-          <div className="radial-dial-direction radial-dial-up" title={getRadialDialLabels().up}>
+          <div 
+            className="radial-dial-direction radial-dial-up" 
+            title={getRadialDialLabels().up}
+            style={{
+              /* Zoom in label: Fixed 100px distance above drag start position (dial center) */
+              top: '50%',
+              transform: 'translate(-50%, -100px)',
+              height: '100px',
+              minHeight: '100px',
+              maxHeight: '100px',
+            }}
+          >
             <div className="radial-arrow">↑</div>
             <div className="radial-label">{getRadialDialLabels().up}</div>
           </div>
-          <div className="radial-dial-direction radial-dial-down" title={getRadialDialLabels().down}>
+          <div 
+            className="radial-dial-direction radial-dial-down" 
+            title={getRadialDialLabels().down}
+            style={{
+              /* Zoom out label: Container extends from center down 100px - label at bottom is exactly 100px below drag start position */
+              top: '50%',
+              transform: 'translate(-50%, 0)',
+              height: '100px',
+              minHeight: '100px',
+              maxHeight: '100px',
+            }}
+          >
             <div className="radial-arrow">↓</div>
             <div className="radial-label">{getRadialDialLabels().down}</div>
           </div>

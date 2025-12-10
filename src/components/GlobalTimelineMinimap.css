@@ -20,7 +20,7 @@
   will-change: transform, opacity;
   /* Ensure radial dial doesn't overflow viewport */
   box-sizing: border-box;
-  overflow: hidden;
+  overflow: visible;
 }
 
 @keyframes radialDialAppear {
@@ -56,39 +56,119 @@
   justify-content: center;
   gap: 8px;
   opacity: 0.7;
-  transition: opacity 0.2s ease;
+  transition: opacity 0.2s ease, height 0.2s ease, width 0.2s ease;
+  /* Subtle background to show drag limit boundaries */
+  background: rgba(74, 144, 226, 0.03);
+  border: 1px dashed rgba(74, 144, 226, 0.15);
+  box-sizing: border-box;
+  overflow: visible;
 }
 
 .radial-dial-direction:hover {
   opacity: 1;
+  background: rgba(74, 144, 226, 0.05);
+  border-color: rgba(74, 144, 226, 0.25);
 }
 
 .radial-dial-left {
-  left: 0;
+  left: 50%;
   top: 50%;
-  transform: translateY(-50%);
+  transform: translate(-100%, -50%);
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  padding-left: 8px;
+  padding-right: 8px;
+  min-width: 100px;
+  /* Extend from center toward left threshold boundary */
+  width: 100px;
+}
+
+.radial-dial-left .radial-arrow {
+  order: 2;
+}
+
+.radial-dial-left .radial-label {
+  order: 1;
 }
 
 .radial-dial-right {
-  right: 0;
+  left: 50%;
   top: 50%;
-  transform: translateY(-50%);
-  /* Ensure label doesn't overflow viewport - constrain to parent */
-  max-width: 100%;
-  overflow: hidden;
+  transform: translate(0, -50%);
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  padding-left: 8px;
+  padding-right: 8px;
+  min-width: 100px;
+  /* Extend from center toward right threshold boundary */
+  width: 100px;
+  /* Allow labels to extend beyond container */
+  overflow: visible;
   box-sizing: border-box;
 }
 
+.radial-dial-right .radial-arrow {
+  order: 1;
+}
+
+.radial-dial-right .radial-label {
+  order: 2;
+}
+
 .radial-dial-up {
-  top: 0;
   left: 50%;
-  transform: translateX(-50%);
+  top: 50%;
+  transform: translate(-50%, -100px);
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  /* Fixed 100px distance from drag start position (dial center) */
+  height: 100px;
+  min-height: 100px;
+  max-height: 100px;
+}
+
+.radial-dial-up .radial-arrow {
+  order: 2;
+  /* Arrow positioned near bottom (center of dial) */
+  margin-top: auto;
+}
+
+.radial-dial-up .radial-label {
+  order: 1;
+  /* Label positioned exactly 100px above drag start position (dial center) */
+  margin-top: 0;
 }
 
 .radial-dial-down {
-  bottom: 0;
   left: 50%;
-  transform: translateX(-50%);
+  top: 50%;
+  transform: translate(-50%, 0);
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: center;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  /* Container extends from center (50%) down 100px - label at bottom is exactly 100px below center */
+  height: 100px;
+  min-height: 100px;
+  max-height: 100px;
+}
+
+.radial-dial-down .radial-arrow {
+  order: 1;
+  /* Arrow positioned near top (center of dial) */
+  margin-bottom: auto;
+}
+
+.radial-dial-down .radial-label {
+  order: 2;
+  /* Label positioned exactly 100px below drag start position (dial center) */
+  margin-bottom: 0;
 }
 
 .radial-arrow {
@@ -110,11 +190,12 @@
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
   border: 1px solid rgba(74, 144, 226, 0.3);
   text-align: center;
-  max-width: 120px;
-  /* Ensure label doesn't overflow viewport */
-  overflow: hidden;
-  text-overflow: ellipsis;
+  /* Allow full text to display - no max-width constraint */
+  min-width: fit-content;
   box-sizing: border-box;
+  /* Ensure label doesn't get cut off */
+  overflow: visible;
+  flex-shrink: 0;
 }
 
 .mechanical-click-feedback {
@@ -183,20 +264,23 @@
 
 .mechanical-scale-label {
   text-align: center;
-  font-size: 1rem;
-  font-weight: 400;
-  color: #4a90e2;
+  font-size: 2.16rem;
+  font-weight: 369;
+  color: #0099cc;
   text-transform: uppercase;
-  letter-spacing: 0.15em;
-  /* Optimized: Simplified text-shadow for better performance */
+  letter-spacing: 0.22em;
+  /* Enhanced text-shadow for better clarity and readability */
   text-shadow: 
-    1.5px 1.5px 0px rgba(0, 0, 0, 0.2),
-    3px 3px 3px rgba(0, 0, 0, 0.1);
-  background: rgba(255, 255, 255, 0.9);
-  padding: 4px 12px;
-  border-radius: 4px;
-  border: 2px solid #4a90e2;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    1px 1px 0px rgba(0, 0, 0, 0.4),
+    0 0 8px rgba(255, 255, 255, 0.8),
+    2px 2px 3px rgba(0, 0, 0, 0.3);
+  background: rgba(255, 255, 255, 0.98);
+  padding: 6px 16px;
+  border-radius: 2px;
+  border: 1px solid #6e6e6e;
+  box-shadow: 
+    0 4px 12px rgba(0, 0, 0, 0.3),
+    0 0 0 1px rgba(255, 255, 255, 0.5) inset;
   font-family: 'Bebas Neue', 'Impact', 'Arial Black', 'Franklin Gothic Heavy', 'Arial Narrow', sans-serif;
   /* Optimized: Use nearest neighbor rendering */
   -webkit-font-smoothing: none;
@@ -210,6 +294,10 @@
   0% {
     opacity: 0;
     transform: translate3d(-50%, -50%, 0) scale(0.5);
+  }
+  10% {
+    opacity: 1;
+    transform: translate3d(-50%, -50%, 0) scale(1.05);
   }
   50% {
     opacity: 1;
@@ -226,6 +314,10 @@
     opacity: 0;
     transform: translate3d(-50%, calc(-50% + 20px), 0) scale(0.5);
   }
+  10% {
+    opacity: 1;
+    transform: translate3d(-50%, calc(-50% - 5px), 0) scale(1.05);
+  }
   50% {
     opacity: 1;
     transform: translate3d(-50%, calc(-50% - 5px), 0) scale(1.1);
@@ -240,6 +332,10 @@
   0% {
     opacity: 0;
     transform: translate3d(-50%, calc(-50% - 20px), 0) scale(0.5);
+  }
+  10% {
+    opacity: 1;
+    transform: translate3d(-50%, calc(-50% + 5px), 0) scale(1.05);
   }
   50% {
     opacity: 1;
