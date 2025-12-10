@@ -41,6 +41,9 @@ export default function NavigationBar({
   const isUpdatingRef = useRef<boolean>(false); // Prevent overlapping updates
   const updateTimeoutRef = useRef<NodeJS.Timeout | null>(null); // Debounce timer
   const lastUpdateTimeRef = useRef<number>(0); // Track last update time for throttling
+  const lastDimensionsRef = useRef<{ width: number; height: number } | null>(null); // Track last known dimensions
+  const cooldownUntilRef = useRef<number>(0); // Cooldown period after updates to prevent loops
+  const lastCalculatedTextRef = useRef<string>(''); // Track last calculated text to avoid recalculating same text
   
   // Get date entry configuration for current calendar
   const dateEntryConfig = useMemo(() => getDateEntryConfig(calendar), [calendar]);
@@ -991,16 +994,21 @@ export default function NavigationBar({
       // Prevent overlapping updates
       if (isUpdatingRef.current) return;
       
-      // Throttle updates to prevent rapid-fire changes
+      // Check cooldown period - don't update if we just updated recently
       const now = Date.now();
+      if (now < cooldownUntilRef.current) {
+        return; // Still in cooldown, skip
+      }
+      
+      // Throttle updates to prevent rapid-fire changes
       const timeSinceLastUpdate = now - lastUpdateTimeRef.current;
-      if (timeSinceLastUpdate < 100) { // Minimum 100ms between updates
+      if (timeSinceLastUpdate < 200) { // Increased to 200ms minimum between updates
         if (updateTimeoutRef.current) {
           clearTimeout(updateTimeoutRef.current);
         }
         updateTimeoutRef.current = setTimeout(() => {
           updateFontSize();
-        }, 100 - timeSinceLastUpdate);
+        }, 200 - timeSinceLastUpdate);
         return;
       }
       
@@ -1009,11 +1017,37 @@ export default function NavigationBar({
       
       if (!dateLabel || !navControls) return;
       
-      isUpdatingRef.current = true;
-      
-      // Get the full text content
+      // Get the full text content first to check if it changed
       const fullText = getDateLabel();
-      if (!fullText.trim()) return;
+      if (!fullText.trim()) {
+        return;
+      }
+      
+      // If text hasn't changed and we have dimensions, check if dimensions changed
+      const textChanged = fullText !== lastCalculatedTextRef.current;
+      
+      // Get current dimensions to check if anything actually changed
+      const navControlsRect = navControls.getBoundingClientRect();
+      const currentDimensions = {
+        width: Math.round(navControlsRect.width), // Round to avoid floating point issues
+        height: Math.round(navControlsRect.height)
+      };
+      
+      // If text hasn't changed and dimensions haven't changed significantly, skip recalculation
+      if (!textChanged && lastDimensionsRef.current) {
+        const widthDiff = Math.abs(lastDimensionsRef.current.width - currentDimensions.width);
+        const heightDiff = Math.abs(lastDimensionsRef.current.height - currentDimensions.height);
+        
+        // Only recalculate if dimensions changed by more than 5px (increased threshold)
+        if (widthDiff < 5 && heightDiff < 5) {
+          return; // Nothing significant changed, skip
+        }
+      }
+      
+      // Update tracked dimensions and text
+      lastDimensionsRef.current = currentDimensions;
+      lastCalculatedTextRef.current = fullText;
+      isUpdatingRef.current = true;
       
       // Get available width and height by measuring actual layout positions
       const navButtons = Array.from(navControls.querySelectorAll('.nav-button')) as HTMLElement[];
@@ -1052,7 +1086,6 @@ export default function NavigationBar({
         }
       } else {
         // Fallback: use a percentage of nav-controls width
-        const navControlsRect = navControls.getBoundingClientRect();
         availableWidth = navControlsRect.width * 0.35; // Estimate 35% available
         availableHeight = 80;
       }
@@ -1216,23 +1249,27 @@ export default function NavigationBar({
       const layoutChanged = dateLabelLayout !== bestLayoutType;
       const linesChanged = JSON.stringify(dateLabelLines) !== JSON.stringify(bestLayout.lines);
       
-      // Use a larger threshold (0.1rem instead of 0.05rem) to prevent unnecessary updates
-      if (fontSizeDiff > 0.1 || layoutChanged || linesChanged) {
+      // Use a larger threshold (0.15rem instead of 0.1rem) to prevent unnecessary updates
+      if (fontSizeDiff > 0.15 || layoutChanged || linesChanged) {
         currentFontSizeRef.current = finalFontSize;
         lastUpdateTimeRef.current = Date.now();
+        
+        // Set cooldown period - don't allow updates for 500ms after this one
+        cooldownUntilRef.current = Date.now() + 500;
         
         // Batch state updates to minimize re-renders
         setDateLabelFontSize(finalFontSize);
         setDateLabelLayout(bestLayoutType);
         setDateLabelLines(bestLayout.lines);
         
-        // Allow next update after a short delay to let layout settle
+        // Allow next update after a longer delay to let layout fully settle
         setTimeout(() => {
           isUpdatingRef.current = false;
-        }, 100);
+        }, 300); // Increased delay
       } else {
-        // No change needed, allow next update immediately
+        // No change needed, allow next update but with shorter cooldown
         isUpdatingRef.current = false;
+        cooldownUntilRef.current = Date.now() + 200; // Shorter cooldown for no-change case
       }
     };
     
@@ -1241,32 +1278,39 @@ export default function NavigationBar({
       updateFontSize();
     }, 0);
     
-    // Watch for resize events with debouncing
+    // Watch for resize events with stronger debouncing
+    // Only observe the navControls container, not the date label itself
+    // (The date label will trigger updates when date/viewMode/calendar changes via useEffect dependency)
     const handleResize = () => {
+      // Don't process if we're in cooldown or updating
+      const now = Date.now();
+      if (isUpdatingRef.current || now < cooldownUntilRef.current) {
+        return;
+      }
+      
       // Clear any pending update
       if (updateTimeoutRef.current) {
         clearTimeout(updateTimeoutRef.current);
       }
       
-      // Debounce resize updates
+      // Stronger debounce for resize events (300ms)
       updateTimeoutRef.current = setTimeout(() => {
-        if (!isUpdatingRef.current) {
+        // Double-check we're not in cooldown or updating
+        const checkNow = Date.now();
+        if (!isUpdatingRef.current && checkNow >= cooldownUntilRef.current) {
           requestAnimationFrame(() => {
             updateFontSize();
           });
         }
-      }, 150); // 150ms debounce
+      }, 300); // Increased debounce to 300ms
     };
     
     const resizeObserver = new ResizeObserver(handleResize);
     
+    // Only observe the navControls container, not the date label
+    // This prevents the date label's own size changes from triggering recalculations
     if (navControlsRef.current) {
       resizeObserver.observe(navControlsRef.current);
-    }
-    
-    // Also watch the date label itself in case text changes
-    if (dateLabelRef.current) {
-      resizeObserver.observe(dateLabelRef.current);
     }
     
     // Watch for window resize with debouncing
@@ -1280,6 +1324,9 @@ export default function NavigationBar({
       resizeObserver.disconnect();
       window.removeEventListener('resize', handleResize);
       isUpdatingRef.current = false; // Reset on cleanup
+      lastDimensionsRef.current = null; // Reset dimensions tracking
+      cooldownUntilRef.current = 0; // Reset cooldown
+      lastCalculatedTextRef.current = ''; // Reset text tracking
     };
   }, [selectedDate, viewMode, calendar]); // Re-run when date/viewMode/calendar changes (not dateLabelFontSize to avoid loop)
 
