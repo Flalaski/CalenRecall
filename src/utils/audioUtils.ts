@@ -575,10 +575,10 @@ export function playTierNavigationSound(
     oscillator.frequency.linearRampToValueAtTime(baseFreq + (direction === 'next' ? 30 : -30), now + duration);
     
     // Volume envelope with resonance for shift
-    const peakVolume = 0.25 * shiftResonance;
+    const peakVolume = 0.025 * shiftResonance;
     gainNode.gain.setValueAtTime(0, now);
     gainNode.gain.linearRampToValueAtTime(peakVolume, now + 0.005);
-    gainNode.gain.exponentialRampToValueAtTime(peakVolume * 0.4, now + duration * 0.7);
+    gainNode.gain.exponentialRampToValueAtTime(peakVolume * 0.07, now + duration * 0.7);
     gainNode.gain.linearRampToValueAtTime(0, now + duration);
     
     oscillator.connect(gainNode);
