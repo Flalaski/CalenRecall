@@ -717,10 +717,10 @@ export default function TimelineView({
                           </button>
                         )}
                       </div>
-                      <div className="card-preview">{entry.content.substring(0, 50)}...</div>
+                      <div className="card-preview">{entry.content}</div>
                       {entry.tags && entry.tags.length > 0 && (
                         <div className="card-tags">
-                          {entry.tags.slice(0, 2).map((tag, tIdx) => (
+                          {entry.tags.map((tag, tIdx) => (
                             <span key={tIdx} className="card-tag">{tag}</span>
                           ))}
                         </div>

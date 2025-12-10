@@ -441,7 +441,8 @@
 
 .week-grid {
   grid-template-columns: repeat(7, minmax(0, 1fr));
-  grid-template-rows: 1fr;
+  grid-auto-rows: min-content; /* Allow rows to expand based on content */
+  align-items: start; /* Align items to the top of each grid cell */
 }
 
 /* Responsive: reduce columns on narrow windows for week view */
@@ -476,18 +477,20 @@
   background: transparent;
   border: 1px solid #e0e0e0;
   position: relative;
-  overflow: hidden;
   overflow-x: hidden; /* Prevent horizontal scrolling */
-  overflow-y: hidden; /* Prevent vertical scrolling in cell */
+  overflow-y: visible; /* Allow content to expand vertically */
   width: 100%;
   max-width: 100%; /* Ensure it doesn't exceed parent width */
   box-sizing: border-box;
   transition: background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+  min-height: fit-content; /* Allow cell to expand to fit content */
 }
 
 .timeline-cell.day-cell {
   border-left: 4px solid var(--zodiac-gradient, #e0e0e0);
   position: relative;
+  height: auto; /* Allow cell to expand based on content */
+  min-height: auto; /* Remove minimum height constraint */
 }
 
 .timeline-cell.day-cell::before {
@@ -615,8 +618,8 @@
   flex-direction: column;
   gap: 4px;
   padding: 0.5rem;
-  height: 100%;
-  overflow-y: auto;
+  min-height: fit-content; /* Allow container to expand to fit content */
+  overflow-y: visible; /* Don't scroll within cell, let parent scroll */
   overflow-x: hidden; /* Prevent horizontal scrolling */
   width: 100%;
   max-width: 100%; /* Ensure it doesn't exceed parent width */
@@ -748,18 +751,19 @@
   background: transparent;
   border: 1px solid #e0e0e0;
   border-radius: 4px;
-  padding: 0.5rem;
+  padding: 0.4rem 0.75rem; /* Reduced top/bottom padding for better space usage */
   cursor: pointer;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
   border-left: 4px solid;
   overflow-wrap: break-word;
   word-wrap: break-word;
-  word-break: break-word; /* Break long words */
+  word-break: normal; /* Use normal word breaking for better readability */
   overflow-x: hidden; /* Prevent horizontal scrolling */
-  overflow-y: hidden; /* Prevent vertical scrolling in card */
+  overflow-y: visible; /* Allow vertical expansion to show full content */
   width: 100%;
   max-width: 100%; /* Ensure it doesn't exceed parent width */
   box-sizing: border-box;
+  min-height: auto; /* Allow cards to expand based on content */
 }
 
 .entry-card:hover {
@@ -816,18 +820,29 @@
   box-sizing: border-box;
 }
 
+/* On narrow windows, stack title row vertically */
+@media (max-width: 800px) {
+  .card-title-row {
+    flex-direction: column; /* Stack title above time/edit on narrow windows */
+    align-items: flex-start; /* Align items to the left */
+    gap: 0.3rem; /* Smaller gap on narrow windows */
+  }
+}
+
 .card-title {
   font-weight: 400;
   font-size: 0.85rem;
   color: #333;
   overflow-wrap: break-word;
   word-wrap: break-word;
-  word-break: break-word; /* Break long words */
+  word-break: normal; /* Use normal word breaking for better readability */
   flex: 1;
   min-width: 0; /* Allow flex item to shrink below content size */
   max-width: 100%; /* Prevent overflow */
-  overflow: hidden; /* Hide overflow */
-  text-overflow: ellipsis; /* Show ellipsis for overflow */
+  overflow: visible; /* Allow title to expand vertically */
+  text-overflow: clip; /* Don't truncate, allow wrapping */
+  white-space: normal; /* Allow text to wrap */
+  line-height: 1.2; /* Tighter line height */
   font-family: 'Bebas Neue', 'Impact', 'Arial Black', 'Franklin Gothic Heavy', 'Arial Narrow', sans-serif;
   letter-spacing: 0.05em;
   text-transform: uppercase;
@@ -837,6 +852,15 @@
     3px 3px 4px rgba(0, 0, 0, 0.08);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  text-align: left; /* Ensure left alignment */
+}
+
+/* On narrow windows, make title full width */
+@media (max-width: 800px) {
+  .card-title {
+    width: 100%; /* Full width on narrow windows */
+    margin-bottom: 0.2rem; /* Add small margin below title */
+  }
 }
 
 .card-preview {
@@ -844,13 +868,16 @@
   color: #666;
   line-height: 1.3;
   margin-bottom: 0.25rem;
+  margin-top: 0; /* Remove any top margin */
   overflow-wrap: break-word;
   word-wrap: break-word;
-  word-break: break-word; /* Break long words */
+  word-break: normal; /* Use normal word breaking for better readability */
   width: 100%;
   max-width: 100%; /* Prevent overflow */
-  overflow: hidden; /* Hide overflow */
+  overflow: visible; /* Allow preview to expand */
   box-sizing: border-box;
+  text-align: left; /* Ensure left alignment */
+  white-space: normal; /* Allow text to wrap */
 }
 
 .card-tags {
@@ -1185,6 +1212,16 @@
   text-overflow: ellipsis; /* Show ellipsis if needed */
   max-width: 100px; /* Limit width to prevent overflow */
   margin-right: 0.5rem;
+}
+
+/* On narrow windows, adjust time positioning when stacked */
+@media (max-width: 800px) {
+  .card-time-small {
+    margin-left: 0; /* Remove auto margin when stacked */
+    margin-right: 0; /* Remove right margin when stacked */
+    margin-top: 0; /* Remove any top margin */
+    margin-bottom: 0; /* Remove any bottom margin */
+  }
 }
 
 .badge-time {
