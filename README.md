@@ -49,7 +49,7 @@ A self-contained calendar journal application for Windows that helps you recall 
   - Import progress tracking
 - **Preferences System**: Comprehensive settings including:
   - Default view mode, date format, week start day
-  - Theme selection (light/dark/auto + 30+ custom themes)
+  - Theme selection (light/dark/auto + 34 custom themes)
   - Font size customization
   - Timeline minimap visibility and size
   - Calendar system selection
@@ -92,7 +92,7 @@ Each calendar system includes:
 
 ### Themes
 
-CalenRecall includes **30+ built-in themes** to customize your journaling experience:
+CalenRecall includes **37 built-in themes** to customize your journaling experience:
 
 **Standard Themes:**
 - Light / Dark / Auto (system preference)
@@ -128,10 +128,15 @@ CalenRecall includes **30+ built-in themes** to customize your journaling experi
 
 **Gaming/Sci-Fi Themes:**
 - ON SCREEN (LCARS-inspired)
-- Elite (Elite: Dangerous HUD)
+- Elite (Dangerous)
 - Journeyman (The Journeyman Project inspired)
 - Temple of Light / Temple of Darkness (sacred aesthetic)
-- Kallisti (Eris-inspired)
+- Kallisti (Eris-ish)
+- Galactic Basic (war stars)
+- Stellar Echo (cosmo beans)
+- Out There (trust no one)
+- The Real World (has you)
+- Football (sports)
 
 **Special Themes:**
 - Tabletop (board game aesthetic)

@@ -143,6 +143,10 @@ const BUILT_IN_THEME_METADATA: Record<string, Omit<ThemeInfo, 'name'>> = {
   'tabletop': {
     displayName: 'Tabletop',
     description: 'Classic board game aesthetic with wood grain textures, felt surfaces, and game piece styling - the minimap looks like a game board with grid lines and markers'
+  },
+  'stellar-echo': {
+    displayName: 'Stellar Echo',
+    description: 'Cosmic space theme with stellar echoes and celestial aesthetics'
   }
 };
 
