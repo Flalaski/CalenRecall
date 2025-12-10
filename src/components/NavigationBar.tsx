@@ -38,6 +38,9 @@ export default function NavigationBar({
   const [dateLabelLayout, setDateLabelLayout] = useState<'single' | 'two-line'>('single');
   const [dateLabelLines, setDateLabelLines] = useState<[string, string?]>(['', undefined]);
   const currentFontSizeRef = useRef<number>(3.5); // Track current font size for comparison
+  const isUpdatingRef = useRef<boolean>(false); // Prevent overlapping updates
+  const updateTimeoutRef = useRef<NodeJS.Timeout | null>(null); // Debounce timer
+  const lastUpdateTimeRef = useRef<number>(0); // Track last update time for throttling
   
   // Get date entry configuration for current calendar
   const dateEntryConfig = useMemo(() => getDateEntryConfig(calendar), [calendar]);
@@ -985,10 +988,28 @@ export default function NavigationBar({
   // Dynamic font scaling for date label to prevent truncation
   useEffect(() => {
     const updateFontSize = () => {
+      // Prevent overlapping updates
+      if (isUpdatingRef.current) return;
+      
+      // Throttle updates to prevent rapid-fire changes
+      const now = Date.now();
+      const timeSinceLastUpdate = now - lastUpdateTimeRef.current;
+      if (timeSinceLastUpdate < 100) { // Minimum 100ms between updates
+        if (updateTimeoutRef.current) {
+          clearTimeout(updateTimeoutRef.current);
+        }
+        updateTimeoutRef.current = setTimeout(() => {
+          updateFontSize();
+        }, 100 - timeSinceLastUpdate);
+        return;
+      }
+      
       const dateLabel = dateLabelRef.current;
       const navControls = navControlsRef.current;
       
       if (!dateLabel || !navControls) return;
+      
+      isUpdatingRef.current = true;
       
       // Get the full text content
       const fullText = getDateLabel();
@@ -1190,14 +1211,28 @@ export default function NavigationBar({
       // Ensure we always have a valid font size (minimum 0.4rem for visibility)
       const finalFontSize = Math.max(0.4, bestFontSize);
       
-      // Update font size and layout
-      if (Math.abs(currentFontSizeRef.current - finalFontSize) > 0.05 || 
-          dateLabelLayout !== bestLayoutType ||
-          JSON.stringify(dateLabelLines) !== JSON.stringify(bestLayout.lines)) {
+      // Only update if there's a meaningful change (larger threshold to prevent micro-adjustments)
+      const fontSizeDiff = Math.abs(currentFontSizeRef.current - finalFontSize);
+      const layoutChanged = dateLabelLayout !== bestLayoutType;
+      const linesChanged = JSON.stringify(dateLabelLines) !== JSON.stringify(bestLayout.lines);
+      
+      // Use a larger threshold (0.1rem instead of 0.05rem) to prevent unnecessary updates
+      if (fontSizeDiff > 0.1 || layoutChanged || linesChanged) {
         currentFontSizeRef.current = finalFontSize;
+        lastUpdateTimeRef.current = Date.now();
+        
+        // Batch state updates to minimize re-renders
         setDateLabelFontSize(finalFontSize);
         setDateLabelLayout(bestLayoutType);
         setDateLabelLines(bestLayout.lines);
+        
+        // Allow next update after a short delay to let layout settle
+        setTimeout(() => {
+          isUpdatingRef.current = false;
+        }, 100);
+      } else {
+        // No change needed, allow next update immediately
+        isUpdatingRef.current = false;
       }
     };
     
@@ -1206,13 +1241,24 @@ export default function NavigationBar({
       updateFontSize();
     }, 0);
     
-    // Watch for resize events
-    const resizeObserver = new ResizeObserver(() => {
-      // Use requestAnimationFrame to batch updates
-      requestAnimationFrame(() => {
-        updateFontSize();
-      });
-    });
+    // Watch for resize events with debouncing
+    const handleResize = () => {
+      // Clear any pending update
+      if (updateTimeoutRef.current) {
+        clearTimeout(updateTimeoutRef.current);
+      }
+      
+      // Debounce resize updates
+      updateTimeoutRef.current = setTimeout(() => {
+        if (!isUpdatingRef.current) {
+          requestAnimationFrame(() => {
+            updateFontSize();
+          });
+        }
+      }, 150); // 150ms debounce
+    };
+    
+    const resizeObserver = new ResizeObserver(handleResize);
     
     if (navControlsRef.current) {
       resizeObserver.observe(navControlsRef.current);
@@ -1223,13 +1269,17 @@ export default function NavigationBar({
       resizeObserver.observe(dateLabelRef.current);
     }
     
-    // Watch for window resize
-    window.addEventListener('resize', updateFontSize);
+    // Watch for window resize with debouncing
+    window.addEventListener('resize', handleResize);
     
     return () => {
       clearTimeout(timeoutId);
+      if (updateTimeoutRef.current) {
+        clearTimeout(updateTimeoutRef.current);
+      }
       resizeObserver.disconnect();
-      window.removeEventListener('resize', updateFontSize);
+      window.removeEventListener('resize', handleResize);
+      isUpdatingRef.current = false; // Reset on cleanup
     };
   }, [selectedDate, viewMode, calendar]); // Re-run when date/viewMode/calendar changes (not dateLabelFontSize to avoid loop)
 
