@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import { TimeRange, JournalEntry } from '../types';
 import { getWeekStart, getWeekEnd, getMonthStart, getMonthEnd, getYearEnd, getDecadeEnd, getZodiacColor, getZodiacColorForDecade, getCanonicalDate, parseISODate, createDate, getYearStart, isToday } from '../utils/dateUtils';
 import { addDays, addWeeks, addMonths, addYears, getYear, getMonth, getDate } from 'date-fns';
-import { playMechanicalClick, playMicroBlip, getAudioContext, createSliderNoise, SliderNoise } from '../utils/audioUtils';
+import { playMechanicalClick, playMicroBlip, getAudioContext, createSliderNoise, SliderNoise, createMovementFlowSound, MovementFlowSound } from '../utils/audioUtils';
 import { calculateEntryColor } from '../utils/entryColorUtils';
 import { useCalendar } from '../contexts/CalendarContext';
 import { useEntries } from '../contexts/EntriesContext';
@@ -11,6 +11,8 @@ import { filterEntriesByDateRange } from '../utils/entryFilterUtils';
 import { getCalendarTierNames } from '../utils/calendarTierNames';
 import { getCalendarEpoch } from '../utils/calendars/epochUtils';
 import { jdnToDate } from '../utils/calendars/julianDayUtils';
+import { dragBehaviorTracker } from '../utils/dragBehavior/dragBehaviorTracker';
+import { getAdaptiveThresholds } from '../utils/dragBehavior/adaptiveThresholds';
 import './GlobalTimelineMinimap.css';
 
 interface GlobalTimelineMinimapProps {
@@ -335,6 +337,10 @@ export default function GlobalTimelineMinimap({
   const currentDragTargetDateRef = useRef<Date | null>(null); // Track the target date we're moving toward
   const sliderNoiseRef = useRef<SliderNoise | null>(null); // Track continuous slider noise for vertical drag feedback
   const isKeyboardNavigationRef = useRef<boolean>(false); // Track if navigation was triggered by keyboard
+  const isKeyboardViewModeChangeRef = useRef<boolean>(false); // Track if view mode change was triggered by keyboard
+  const lastKeyboardViewModeRef = useRef<TimeRange | null>(null); // Track last view mode for keyboard navigation
+  const movementFlowSoundRef = useRef<MovementFlowSound | null>(null); // Track movement flow sound for WASD/Arrow keys
+  const pressedMovementKeysRef = useRef<Set<string>>(new Set()); // Track which movement keys are currently pressed
   // OPTIMIZATION: Track throttled indicator position for early entry filtering
   // This allows approximate viewport filtering without recalculating on every drag movement
   const throttledIndicatorPositionRef = useRef<number>(50); // Default to center
@@ -353,6 +359,8 @@ export default function GlobalTimelineMinimap({
   // HIGH-PERFORMANCE: Store latest mouse event for RAF-based frame updates
   const latestMouseEventRef = useRef<MouseEvent | null>(null);
   const rafIdRef = useRef<number | null>(null);
+  const isFirstDragFrameRef = useRef<boolean>(true); // Track first frame to prevent jump on drag start
+  const initialMousePositionRef = useRef<{ x: number; y: number } | null>(null); // Track actual mouse click position
 
   // Invalidate bounding rect cache on window resize
   useEffect(() => {
@@ -3084,6 +3092,12 @@ export default function GlobalTimelineMinimap({
       timelinePosition: currentTimelinePosition, // Store timeline position (0-100)
     };
     
+    // Store actual mouse click position to detect real movement (prevents jump on first click)
+    initialMousePositionRef.current = {
+      x: e.clientX,
+      y: e.clientY,
+    };
+    
     // Initialize target date to current selected date
     currentDragTargetDateRef.current = selectedDate;
     lastVerticalPositionRef.current = e.clientY;
@@ -3093,6 +3107,9 @@ export default function GlobalTimelineMinimap({
     lastScaleChangeAccumulatorRef.current = 0; // Initialize to 0 for first scale change
     deadZoneRef.current = 0; // Reset dead zone when drag starts
     lastBlipDateRef.current = null; // Reset blip tracking when dragging starts
+    
+    // Start tracking drag session for adaptive behavior
+    dragBehaviorTracker.startSession();
     
     // Initialize audio context early to ensure it's ready for blips
     // This also helps with browser autoplay policies
@@ -3127,6 +3144,7 @@ export default function GlobalTimelineMinimap({
     
     // Update ref immediately for synchronous access in event handlers
     isDraggingRef.current = true;
+    isFirstDragFrameRef.current = true; // Mark first frame to prevent jump
     setIsDragging(true);
     e.preventDefault();
   };
@@ -3390,6 +3408,18 @@ export default function GlobalTimelineMinimap({
     return getCanonicalDate(currentDate, targetViewMode, weekStartsOn);
   };
 
+  // Initialize movement flow sound
+  useEffect(() => {
+    movementFlowSoundRef.current = createMovementFlowSound();
+    return () => {
+      // Clean up sound on unmount
+      if (movementFlowSoundRef.current) {
+        movementFlowSoundRef.current.stop();
+        movementFlowSoundRef.current = null;
+      }
+    };
+  }, []);
+
   // Handle keyboard arrow key navigation
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -3414,16 +3444,57 @@ export default function GlobalTimelineMinimap({
       // Prevent default scrolling behavior
       e.preventDefault();
 
-      const currentViewMode = viewModeRef.current;
-      const currentSelectedDate = selectedDateRef.current;
-      const currentOnTimePeriodSelect = onTimePeriodSelectRef.current;
-
-      // Map WASD to arrow key equivalents
+      // Track pressed movement keys and start/update flow sound
       const normalizedKey = e.key.toLowerCase();
+      const keyId = e.key; // Use original key to distinguish ArrowLeft from 'a'
+      
+      // Map WASD to arrow key equivalents
       const isLeft = e.key === 'ArrowLeft' || normalizedKey === 'a';
       const isRight = e.key === 'ArrowRight' || normalizedKey === 'd';
       const isUp = e.key === 'ArrowUp' || normalizedKey === 'w';
       const isDown = e.key === 'ArrowDown' || normalizedKey === 's';
+      
+      // Determine primary direction (prioritize horizontal over vertical)
+      let primaryDirection: 'left' | 'right' | 'up' | 'down' | null = null;
+      if (isLeft) primaryDirection = 'left';
+      else if (isRight) primaryDirection = 'right';
+      else if (isUp) primaryDirection = 'up';
+      else if (isDown) primaryDirection = 'down';
+      
+      if (!pressedMovementKeysRef.current.has(keyId)) {
+        pressedMovementKeysRef.current.add(keyId);
+        
+        // Start or update flow sound with direction
+        if (movementFlowSoundRef.current) {
+          if (pressedMovementKeysRef.current.size === 1) {
+            // First key pressed - start sound with direction
+            movementFlowSoundRef.current.start(primaryDirection);
+          } else {
+            // Additional key pressed - update direction
+            // Recalculate primary direction from all pressed keys
+            let newPrimaryDirection: 'left' | 'right' | 'up' | 'down' | null = null;
+            for (const key of pressedMovementKeysRef.current) {
+              const keyLower = key.toLowerCase();
+              if (key === 'ArrowLeft' || keyLower === 'a') {
+                newPrimaryDirection = 'left';
+                break; // Horizontal takes priority
+              } else if (key === 'ArrowRight' || keyLower === 'd') {
+                newPrimaryDirection = 'right';
+                break; // Horizontal takes priority
+              } else if (key === 'ArrowUp' || keyLower === 'w') {
+                if (!newPrimaryDirection) newPrimaryDirection = 'up';
+              } else if (key === 'ArrowDown' || keyLower === 's') {
+                if (!newPrimaryDirection) newPrimaryDirection = 'down';
+              }
+            }
+            movementFlowSoundRef.current.updateDirection(newPrimaryDirection);
+          }
+        }
+      }
+
+      const currentViewMode = viewModeRef.current;
+      const currentSelectedDate = selectedDateRef.current;
+      const currentOnTimePeriodSelect = onTimePeriodSelectRef.current;
 
       if (isLeft || isRight) {
         // Navigate time horizontally (earlier/later)
@@ -3463,9 +3534,10 @@ export default function GlobalTimelineMinimap({
         if (isUp && currentIndex < scaleOrder.length - 1) {
           // Zoom in (more detail) - apply subtle magnetization
           const newViewMode = scaleOrder[currentIndex + 1];
-          playMechanicalClick('up');
-          setMechanicalClick({ scale: newViewMode, direction: 'up' });
-          setTimeout(() => setMechanicalClick(null), 300);
+          
+          // Mark that this view mode change was triggered by keyboard
+          // Sound will play when viewMode actually changes (via useEffect below)
+          isKeyboardViewModeChangeRef.current = true;
           
           // Apply magnetization to find the best date to focus on
           const magnetizedDate = findMagnetizedDate(
@@ -3480,17 +3552,64 @@ export default function GlobalTimelineMinimap({
         } else if (isDown && currentIndex > 0) {
           // Zoom out (less detail)
           const newViewMode = scaleOrder[currentIndex - 1];
-          playMechanicalClick('down');
-          setMechanicalClick({ scale: newViewMode, direction: 'down' });
-          setTimeout(() => setMechanicalClick(null), 300);
+          
+          // Mark that this view mode change was triggered by keyboard
+          // Sound will play when viewMode actually changes (via useEffect below)
+          isKeyboardViewModeChangeRef.current = true;
+          
           currentOnTimePeriodSelect(currentSelectedDate, newViewMode);
         }
       }
     };
 
+    const handleKeyUp = (e: KeyboardEvent) => {
+      // Only handle arrow keys and WASD keys
+      const isArrowKey = ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(e.key);
+      const isWASDKey = ['a', 'A', 'd', 'D', 'w', 'W', 's', 'S'].includes(e.key);
+      if (!isArrowKey && !isWASDKey) {
+        return;
+      }
+
+      // Remove key from pressed set
+      const keyId = e.key;
+      pressedMovementKeysRef.current.delete(keyId);
+      
+      if (pressedMovementKeysRef.current.size === 0) {
+        // Stop flow sound if no movement keys are pressed
+        if (movementFlowSoundRef.current) {
+          movementFlowSoundRef.current.stop();
+        }
+      } else if (movementFlowSoundRef.current) {
+        // Update direction based on remaining pressed keys
+        let newPrimaryDirection: 'left' | 'right' | 'up' | 'down' | null = null;
+        for (const key of pressedMovementKeysRef.current) {
+          const keyLower = key.toLowerCase();
+          if (key === 'ArrowLeft' || keyLower === 'a') {
+            newPrimaryDirection = 'left';
+            break; // Horizontal takes priority
+          } else if (key === 'ArrowRight' || keyLower === 'd') {
+            newPrimaryDirection = 'right';
+            break; // Horizontal takes priority
+          } else if (key === 'ArrowUp' || keyLower === 'w') {
+            if (!newPrimaryDirection) newPrimaryDirection = 'up';
+          } else if (key === 'ArrowDown' || keyLower === 's') {
+            if (!newPrimaryDirection) newPrimaryDirection = 'down';
+          }
+        }
+        movementFlowSoundRef.current.updateDirection(newPrimaryDirection);
+      }
+    };
+
     window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('keyup', handleKeyUp);
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('keyup', handleKeyUp);
+      // Stop sound if component unmounts with keys still pressed
+      if (movementFlowSoundRef.current) {
+        movementFlowSoundRef.current.stop();
+      }
+      pressedMovementKeysRef.current.clear();
     };
   }, []); // Empty deps - we use refs to access current values
 
@@ -3530,6 +3649,46 @@ export default function GlobalTimelineMinimap({
     
     return () => clearTimeout(timeoutId);
   }, [selectedDate, viewMode]);
+
+  // Play mechanical click sound when viewMode actually changes (for keyboard navigation)
+  // This ensures audio matches the actual view mode change, not just the key press
+  useEffect(() => {
+    // Only play sound for keyboard navigation view mode changes
+    if (!isKeyboardViewModeChangeRef.current) {
+      lastKeyboardViewModeRef.current = viewMode;
+      return;
+    }
+
+    // Only play sound if view mode actually changed
+    if (lastKeyboardViewModeRef.current && lastKeyboardViewModeRef.current !== viewMode) {
+      // Determine direction by comparing old and new view modes
+      const scaleOrder: TimeRange[] = ['decade', 'year', 'month', 'week', 'day'];
+      const oldIndex = scaleOrder.indexOf(lastKeyboardViewModeRef.current);
+      const newIndex = scaleOrder.indexOf(viewMode);
+      
+      if (oldIndex !== -1 && newIndex !== -1) {
+        const direction = newIndex > oldIndex ? 'up' : 'down';
+        
+        // Play mechanical click sound
+        playMechanicalClick(direction);
+        
+        // Trigger visual feedback
+        setMechanicalClick({ scale: viewMode, direction });
+        setTimeout(() => setMechanicalClick(null), 300);
+      }
+    }
+
+    // Update last view mode
+    lastKeyboardViewModeRef.current = viewMode;
+    
+    // Reset keyboard view mode change flag after a short delay
+    // This prevents sounds from playing for non-keyboard navigation methods
+    const timeoutId = setTimeout(() => {
+      isKeyboardViewModeChangeRef.current = false;
+    }, 100);
+    
+    return () => clearTimeout(timeoutId);
+  }, [viewMode]);
 
   // Handle wheel scroll with non-passive event listener to allow preventDefault()
   useEffect(() => {
@@ -3616,11 +3775,34 @@ export default function GlobalTimelineMinimap({
     const currentSelectedDate = selectedDateRef.current;
     const currentOnTimePeriodSelect = onTimePeriodSelectRef.current;
     
+    // Get user behavior profile for adaptive systems (calculate once, reuse throughout)
+    const behaviorProfile = dragBehaviorTracker.getProfile();
+    
     if (!containerRef.current || !currentTimelineData.startDate || !currentTimelineData.endDate || !dragStartPositionRef.current) {
       return;
     }
 
     const now = Date.now();
+    
+    // Prevent jump on drag start - only process movement after mouse has actually moved
+    // This ensures stable drag start without sudden jumps to unrecognizable positions
+    if (isFirstDragFrameRef.current || !initialMousePositionRef.current) {
+      // Check if mouse has moved from initial click position (threshold: 3px)
+      const mouseMovement = Math.sqrt(
+        Math.pow(e.clientX - initialMousePositionRef.current!.x, 2) +
+        Math.pow(e.clientY - initialMousePositionRef.current!.y, 2)
+      );
+      
+      if (mouseMovement < 3) {
+        // Mouse hasn't moved enough yet - skip this frame to prevent jump
+        lastUpdateTimeRef.current = now;
+        return;
+      }
+      
+      // Mouse has moved - clear first frame flag and continue
+      isFirstDragFrameRef.current = false;
+    }
+    
     // Use cached bounding rect to avoid forced reflows - only update if not cached
     let rect = cachedBoundingRectRef.current;
     if (!rect && containerRef.current) {
@@ -3641,11 +3823,19 @@ export default function GlobalTimelineMinimap({
       initialMovementRef.current.vertical = totalVerticalDelta;
     }
     
-    // Horizontal dead zone: suppress horizontal movement when primarily moving vertically
-    // This makes it easier to zoom without accidentally moving the blips left/right
-    const horizontalDeadZone = 30; // pixels - ignore horizontal movement if within this
-    const verticalToHorizontalRatio = 2.5; // If vertical movement is X times horizontal, lock horizontal
-    const horizontalUnlockThreshold = 40; // pixels - unlock when horizontal exceeds this
+    // Get adaptive thresholds based on user behavior (call once, reuse throughout)
+    const adaptiveThresholds = getAdaptiveThresholds();
+    const verticalThreshold = adaptiveThresholds.verticalThreshold;
+    const deadZoneSize = adaptiveThresholds.deadZoneSize;
+    const horizontalDeadZone = adaptiveThresholds.horizontalDeadZone;
+    const horizontalUnlockThreshold = adaptiveThresholds.horizontalUnlockThreshold;
+    
+    // Calculate incremental vertical movement (scale change)
+    const verticalDelta = e.clientY - lastVerticalPositionRef.current;
+    
+    // Track vertical movement for behavior learning
+    const verticalSpeed = Math.abs(verticalDelta);
+    dragBehaviorTracker.recordVerticalMovement(verticalDelta, verticalSpeed);
     
     // Calculate if movement is primarily vertical
     const absVertical = Math.abs(totalVerticalDelta);
@@ -3655,6 +3845,7 @@ export default function GlobalTimelineMinimap({
     // Lock horizontal only if:
     // 1. Horizontal movement is minimal (< dead zone) AND vertical movement is substantial (> 20px), OR
     // 2. Vertical movement is significantly more than horizontal (ratio-based) AND horizontal is still small
+    const verticalToHorizontalRatio = 2.5; // If vertical movement is X times horizontal, lock horizontal
     const shouldLockHorizontal = 
       (absHorizontal < horizontalDeadZone && absVertical > 20) || 
       (absVertical > 20 && absHorizontal < horizontalUnlockThreshold && absVertical > absHorizontal * verticalToHorizontalRatio);
@@ -3675,11 +3866,6 @@ export default function GlobalTimelineMinimap({
       setHorizontalLocked(false);
       horizontalLockedRef.current = false;
     }
-    
-    // Calculate incremental vertical movement (scale change)
-    const verticalDelta = e.clientY - lastVerticalPositionRef.current;
-    const verticalThreshold = 800; // Increased threshold for more deliberate movement
-    const deadZoneSize = 300; // Dead zone pixels after scale change
     
     // Accumulate vertical movement for mechanical feel
     verticalMovementAccumulatorRef.current += verticalDelta;
@@ -3732,10 +3918,11 @@ export default function GlobalTimelineMinimap({
       const deadZoneTop = -(deadZoneCenter + deadZoneSize); // Negative = above dial
       const deadZoneBottom = -(deadZoneCenter - deadZoneSize); // Negative = above dial
       
-      // Vertical threshold lines (800px from start)
+      // Vertical threshold lines (adaptive based on user behavior)
       // These represent the actual pixel distances, but we'll show them scaled for visibility
-      const thresholdTop = -800; // Above dial
-      const thresholdBottom = 800; // Below dial
+      // Use thresholds already calculated above
+      const thresholdTop = -verticalThreshold; // Above dial
+      const thresholdBottom = verticalThreshold; // Below dial
       
       // Calculate current vertical movement from start
       const currentVerticalMovement = verticalMovementAccumulatorRef.current;
@@ -3778,6 +3965,9 @@ export default function GlobalTimelineMinimap({
         scaleChangeLockRef.current = true; // Lock to prevent rapid changes
         const newViewMode = scaleOrder[currentIndex + 1];
         
+        // Track tier change for behavior learning
+        dragBehaviorTracker.recordTierChange();
+        
         // Play mechanical click sound
         playMechanicalClick('up');
         
@@ -3802,6 +3992,20 @@ export default function GlobalTimelineMinimap({
         lastScaleChangeAccumulatorRef.current = verticalMovementAccumulatorRef.current;
         deadZoneRef.current = deadZoneSize;
         
+        // Track dead zone crossing time for behavior learning
+        const deadZoneStartTime = Date.now();
+        const checkDeadZoneCrossing = () => {
+          if (!isDraggingRef.current) return; // Stop if drag ended
+          const movement = verticalMovementAccumulatorRef.current - lastScaleChangeAccumulatorRef.current;
+          if (Math.abs(movement) >= deadZoneSize) {
+            const crossingTime = Date.now() - deadZoneStartTime;
+            dragBehaviorTracker.recordDeadZoneCrossing(crossingTime);
+          } else {
+            setTimeout(checkDeadZoneCrossing, 100);
+          }
+        };
+        setTimeout(checkDeadZoneCrossing, 100);
+        
         // Reset accumulator position but keep the value for dead zone calculation
         lastVerticalPositionRef.current = e.clientY;
         setTimeout(() => {
@@ -3812,6 +4016,9 @@ export default function GlobalTimelineMinimap({
         // Moving down - zoom out (less detail)
         scaleChangeLockRef.current = true; // Lock to prevent rapid changes
         const newViewMode = scaleOrder[currentIndex - 1];
+        
+        // Track tier change for behavior learning
+        dragBehaviorTracker.recordTierChange();
         
         // Play mechanical click sound
         playMechanicalClick('down');
@@ -3836,6 +4043,21 @@ export default function GlobalTimelineMinimap({
         // Store accumulator value at scale change and set dead zone
         lastScaleChangeAccumulatorRef.current = verticalMovementAccumulatorRef.current;
         deadZoneRef.current = deadZoneSize;
+        
+        // Track dead zone crossing time for behavior learning
+        const deadZoneStartTime = Date.now();
+        // Will be recorded when crossing is detected
+        const checkDeadZoneCrossing = () => {
+          const movement = verticalMovementAccumulatorRef.current - lastScaleChangeAccumulatorRef.current;
+          if (Math.abs(movement) >= deadZoneSize) {
+            const crossingTime = Date.now() - deadZoneStartTime;
+            dragBehaviorTracker.recordDeadZoneCrossing(crossingTime);
+          } else {
+            // Check again after a delay
+            setTimeout(checkDeadZoneCrossing, 100);
+          }
+        };
+        setTimeout(checkDeadZoneCrossing, 100);
         
         // Reset accumulator position but keep the value for dead zone calculation
         lastVerticalPositionRef.current = e.clientY;
@@ -3874,77 +4096,27 @@ export default function GlobalTimelineMinimap({
     // dragStartPositionRef.current.x is the center indicator's screen X position when drag started
     const horizontalDelta = e.clientX - dragStartPositionRef.current.x;
     
+    // Track horizontal movement for behavior learning
+    const horizontalSpeed = Math.abs(horizontalDelta) / ((now - lastUpdateTimeRef.current) || 16); // pixels per ms
+    dragBehaviorTracker.recordHorizontalMovement(horizontalDelta, horizontalSpeed * 16); // Convert to pixels per frame
+    
     // Convert pixel delta to timeline percentage (0-1)
     const deltaPercentage = horizontalDelta / rect.width;
     
     // Get the starting timeline position (center indicator position when drag started)
     const startTimelinePosition = dragStartPositionRef.current.timelinePosition / 100; // Convert to 0-1
     
-    // Calculate current selected date position (may have changed during drag)
-    const currentTimeOffset = currentSelectedDate.getTime() - currentTimelineData.startDate.getTime();
-    const currentTimelinePosition = (currentTimeOffset / totalTime);
+    // Calculate current selected date position (for reference, not used in calculation)
+    // const currentTimeOffset = currentSelectedDate.getTime() - currentTimelineData.startDate.getTime();
+    // const currentTimelinePosition = (currentTimeOffset / totalTime);
     
-    // Calculate target position by applying delta relative to center indicator's current position
-    // This ensures consistent haptic interaction regardless of where user started drag
-    const rawTargetPosition = currentTimelinePosition + deltaPercentage;
+    // Calculate target position from START position (not current position)
+    // This ensures stable, predictable movement that matches mouse position
+    const rawTargetPosition = startTimelinePosition + deltaPercentage;
     
-    // Calculate distance from center when drag started (for dampening adjustment)
-    const distanceFromCenter = Math.abs(startTimelinePosition - 0.5);
-    
-    // Apply distance-based dampening: the further from center, the more dampening
-    // Scale from 0.15 (at edges) to 0.30 (at center) for responsive feel while maintaining mechanical lever feel
-    // Increased from 0.02-0.05 to make horizontal movement more responsive
-    const baseDampening = 0.30 - (distanceFromCenter * 0.30); // Range: 0.30 at center, 0.15 at edges
-    
-    // Additional dampening for large distances to prevent fast jumps
-    const distanceMagnitude = Math.abs(deltaPercentage);
-    const distanceMultiplier = distanceMagnitude > 0.3 ? 0.7 : 1.0; // Reduced from 0.6 to 0.7 for better responsiveness
-    
-    const combinedDampening = baseDampening * distanceMultiplier;
-    
-    // Apply fret-like resistance: deeper valleys between time points require more drag
-    // Get all time points (frets) for the current view mode
-    const currentAllScaleMarkings = allScaleMarkingsRef.current;
-    const allMarks = currentAllScaleMarkings[currentViewMode];
-    const allTimePoints = [...allMarks.major, ...allMarks.minor]
-      .map(mark => mark.position / 100) // Convert to 0-1 range
-      .sort((a, b) => a - b); // Sort for easier valley calculation
-    
-    // Calculate target position with gradual movement and fret resistance
-    let targetMousePosition = rawTargetPosition;
-    
-    if (allTimePoints.length > 0) {
-      // Find the two nearest time points (frets) to determine which valley we're in
-      let leftFret = 0;
-      let rightFret = 1;
-      
-      for (let i = 0; i < allTimePoints.length; i++) {
-        if (allTimePoints[i] <= rawTargetPosition) {
-          leftFret = allTimePoints[i];
-        }
-        if (allTimePoints[i] >= rawTargetPosition && rightFret === 1) {
-          rightFret = allTimePoints[i];
-          break;
-        }
-      }
-      
-      // Calculate position within the valley (between two frets)
-      const valleyWidth = rightFret - leftFret;
-      if (valleyWidth > 0) {
-        const positionInValley = (rawTargetPosition - leftFret) / valleyWidth; // 0 to 1
-        
-        // Apply resistance curve: valleys require more drag - moderate curve for balanced mechanical feel
-        // Reduced from 5.0 to 2.5 for more responsive movement while maintaining tactile feedback
-        const resistanceCurve = Math.pow(positionInValley, 2.5);
-        
-        // Map the resisted position back to timeline coordinates
-        targetMousePosition = leftFret + (resistanceCurve * valleyWidth);
-      }
-    }
-    
-    // Gradually move from current position toward target position
-    // Use current selected date position as the reference, not the start position
-    const targetPosition = currentTimelinePosition + (targetMousePosition - currentTimelinePosition) * combinedDampening;
+    // SIMPLIFIED: Use raw target position directly - no complex dampening or resistance
+    // This ensures visual indicator moves smoothly and responsively with mouse
+    const targetPosition = rawTargetPosition;
     
     // Clamp the target position
     const clampedTargetPosition = Math.max(0, Math.min(1, targetPosition));
@@ -3966,7 +4138,7 @@ export default function GlobalTimelineMinimap({
       clampedDate = finalDate;
     }
     
-    // Play micro blip for every date change during dragging
+    // Play micro blip for every date change during dragging with adaptive frequency
     // Compare dates at day level (ignore time component) - check BEFORE throttling
     // This ensures blips play immediately even if the update callback is throttled
     const lastBlipDate = lastBlipDateRef.current;
@@ -4042,6 +4214,9 @@ export default function GlobalTimelineMinimap({
     }
     
     const handleMouseUpGlobal = () => {
+      // End drag session tracking
+      dragBehaviorTracker.endSession();
+      
       // Update ref immediately for synchronous access
       isDraggingRef.current = false;
       setIsDragging(false);
@@ -4060,6 +4235,8 @@ export default function GlobalTimelineMinimap({
       deadZoneRef.current = 0;
       lastBlipDateRef.current = null; // Reset blip tracking when dragging ends
       currentDragTargetDateRef.current = null; // Reset drag target tracking
+      isFirstDragFrameRef.current = true; // Reset first frame flag
+      initialMousePositionRef.current = null; // Reset initial mouse position
       
       // Stop RAF loop
       if (rafIdRef.current !== null) {

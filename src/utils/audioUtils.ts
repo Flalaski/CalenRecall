@@ -1458,3 +1458,399 @@ export function createSliderNoise(): SliderNoise | null {
   }
 }
 
+// Movement flow sound interface for continuous electrified flow loop
+export type MovementDirection = 'left' | 'right' | 'up' | 'down' | null;
+
+export interface MovementFlowSound {
+  start: (direction: MovementDirection) => void;
+  stop: () => void;
+  updateDirection: (direction: MovementDirection) => void;
+}
+
+// Generate quiet subtle inverted matter phasing vortex sound for movement keys (WASD & Arrows)
+// Quickly fades in on key press and quickly stops on key release
+export function createMovementFlowSound(): MovementFlowSound | null {
+  if (!areSoundEffectsEnabled()) return null;
+  const audioContext = getAudioContext();
+  if (!audioContext) return null;
+  
+  // Check if context is in a valid state
+  if (audioContext.state === 'closed') {
+    return null;
+  }
+  
+  try {
+    let bufferSource1: AudioBufferSourceNode | null = null;
+    let bufferSource2: AudioBufferSourceNode | null = null;
+    let gainNode: GainNode | null = null;
+    let filter1: BiquadFilterNode | null = null;
+    let filter2: BiquadFilterNode | null = null;
+    let filter3: BiquadFilterNode | null = null;
+    let lfo1: OscillatorNode | null = null;
+    let lfo2: OscillatorNode | null = null;
+    let lfoGain1: GainNode | null = null;
+    let lfoGain2: GainNode | null = null;
+    let isPlaying = false;
+    let noiseBuffer: AudioBuffer | null = null;
+    let currentDirection: MovementDirection = null;
+    let filter2b: BiquadFilterNode | null = null;
+    let filter3b: BiquadFilterNode | null = null;
+    
+    // Get direction-based sound parameters for low electrified hum
+    const getDirectionParams = (direction: MovementDirection) => {
+      switch (direction) {
+        case 'left':
+          // Backward in time: lower frequencies, slower rotation
+          return {
+            filter1Freq: 180,  // Much lower for hum
+            filter2Freq: 280,  // Lower bandpass
+            filter2bFreq: 240, // Lower second path
+            lfo1Rate: 0.15,    // Slower rotation
+            lfo2Rate: 0.2,     // Slower second LFO
+            lfo1Depth: 40,     // Subtle modulation
+            lfo2Depth: 50,     // Subtle modulation
+            phaseOffset: 0.003, // Minimal phase offset
+          };
+        case 'right':
+          // Forward in time: slightly higher frequencies, faster rotation
+          return {
+            filter1Freq: 220,  // Low but slightly higher
+            filter2Freq: 320,  // Slightly higher bandpass
+            filter2bFreq: 280, // Slightly higher second path
+            lfo1Rate: 0.2,     // Slightly faster
+            lfo2Rate: 0.25,    // Slightly faster
+            lfo1Depth: 50,     // Subtle modulation
+            lfo2Depth: 60,     // Subtle modulation
+            phaseOffset: 0.002, // Minimal phase offset
+          };
+        case 'up':
+          // Zoom in: slightly brighter hum
+          return {
+            filter1Freq: 250,  // Slightly brighter
+            filter2Freq: 350,  // Slightly brighter
+            filter2bFreq: 300, // Slightly brighter
+            lfo1Rate: 0.22,    // Slightly faster
+            lfo2Rate: 0.28,    // Slightly faster
+            lfo1Depth: 55,     // Subtle modulation
+            lfo2Depth: 65,     // Subtle modulation
+            phaseOffset: 0.0025, // Minimal phase offset
+          };
+        case 'down':
+          // Zoom out: darker, lower hum
+          return {
+            filter1Freq: 150,  // Lower for darker
+            filter2Freq: 240,  // Lower bandpass
+            filter2bFreq: 200, // Lower second path
+            lfo1Rate: 0.12,    // Slower rotation
+            lfo2Rate: 0.18,    // Slower second LFO
+            lfo1Depth: 35,     // Subtle modulation
+            lfo2Depth: 45,     // Subtle modulation
+            phaseOffset: 0.0035, // Minimal phase offset
+          };
+        default:
+          // Default/neutral - low electrified hum
+          return {
+            filter1Freq: 200,  // Low base frequency
+            filter2Freq: 300,  // Low bandpass
+            filter2bFreq: 260, // Low second path
+            lfo1Rate: 0.18,    // Slow rotation
+            lfo2Rate: 0.22,    // Slow second LFO
+            lfo1Depth: 45,     // Subtle modulation
+            lfo2Depth: 55,     // Subtle modulation
+            phaseOffset: 0.003, // Minimal phase offset
+          };
+      }
+    };
+    
+    // Create noise buffer for inverted matter phasing effect
+    const createNoiseBuffer = (): AudioBuffer => {
+      const bufferSize = audioContext!.sampleRate * 2; // 2 second buffer for seamless loop
+      const buffer = audioContext!.createBuffer(1, bufferSize, audioContext!.sampleRate);
+      const data = buffer.getChannelData(0);
+      
+      // Generate pink noise (softer, more natural than white noise)
+      let b0 = 0, b1 = 0, b2 = 0, b3 = 0, b4 = 0, b5 = 0, b6 = 0;
+      
+      for (let i = 0; i < bufferSize; i++) {
+        const white = Math.random() * 2 - 1;
+        
+        // Apply pink noise filter (Paul Kellet's method)
+        b0 = 0.99886 * b0 + white * 0.0555179;
+        b1 = 0.99332 * b1 + white * 0.0750759;
+        b2 = 0.96900 * b2 + white * 0.1538520;
+        b3 = 0.86650 * b3 + white * 0.3104856;
+        b4 = 0.55000 * b4 + white * 0.5329522;
+        b5 = -0.7616 * b5 - white * 0.0168980;
+        
+        const pink = b0 + b1 + b2 + b3 + b4 + b5 + b6 + white * 0.5362;
+        b6 = white * 0.115926;
+        
+        data[i] = pink * 0.12; // Lower amplitude for more subtle hum
+      }
+      
+      // Crossfade for seamless loop
+      const fadeLength = Math.floor(audioContext!.sampleRate * 0.1); // 100ms fade
+      for (let i = 0; i < fadeLength; i++) {
+        const fadeOut = i / fadeLength;
+        const fadeIn = 1 - fadeOut;
+        const endIndex = bufferSize - fadeLength + i;
+        const startIndex = i;
+        const blended = data[endIndex] * fadeOut + data[startIndex] * fadeIn;
+        data[endIndex] = blended;
+        data[startIndex] = blended;
+      }
+      
+      return buffer;
+    };
+    
+    return {
+      start: (direction: MovementDirection = null) => {
+        // If already playing, just update direction
+        if (isPlaying) {
+          // Update direction will be called separately from the keyboard handler
+          return;
+        }
+        
+        currentDirection = direction;
+        const params = getDirectionParams(direction);
+        
+        try {
+          const now = audioContext!.currentTime;
+          
+          // Create noise buffer if not already created
+          if (!noiseBuffer) {
+            noiseBuffer = createNoiseBuffer();
+          }
+          
+          // Create two noise sources for phasing effect (inverted matter)
+          bufferSource1 = audioContext!.createBufferSource();
+          bufferSource2 = audioContext!.createBufferSource();
+          bufferSource1.buffer = noiseBuffer;
+          bufferSource2.buffer = noiseBuffer;
+          bufferSource1.loop = true;
+          bufferSource2.loop = true;
+          
+          // Create gain node for volume control
+          gainNode = audioContext!.createGain();
+          
+          // Create multiple filters for vortex effect
+          filter1 = audioContext!.createBiquadFilter();
+          filter2 = audioContext!.createBiquadFilter();
+          filter3 = audioContext!.createBiquadFilter();
+          
+          // Filter 1: Low-pass for low electrified hum - direction-aware
+          filter1.type = 'lowpass';
+          filter1.frequency.setValueAtTime(params.filter1Freq, now);
+          filter1.Q.setValueAtTime(1.2, now); // Lower Q for less resonance, more hum-like
+          
+          // Filter 2: Subtle band-pass for electrical character - direction-aware
+          filter2.type = 'bandpass';
+          filter2.frequency.setValueAtTime(params.filter2Freq, now);
+          filter2.Q.setValueAtTime(0.8, now); // Lower Q for less airy, more subtle
+          
+          // Filter 3: High-pass to remove very low rumble, keep it clean
+          filter3.type = 'highpass';
+          filter3.frequency.setValueAtTime(80, now); // Lower cutoff to preserve low hum
+          filter3.Q.setValueAtTime(0.5, now); // Lower Q for gentle rolloff
+          
+          // Create second path filters for subtle phasing - direction-aware
+          filter2b = audioContext!.createBiquadFilter();
+          filter3b = audioContext!.createBiquadFilter();
+          filter2b.type = 'bandpass';
+          filter2b.frequency.setValueAtTime(params.filter2bFreq, now);
+          filter2b.Q.setValueAtTime(0.8, now); // Lower Q for subtlety
+          filter3b.type = 'highpass';
+          filter3b.frequency.setValueAtTime(80, now); // Lower cutoff
+          filter3b.Q.setValueAtTime(0.5, now); // Lower Q
+          
+          // Create LFOs for rotating vortex effect - direction-aware
+          lfo1 = audioContext!.createOscillator();
+          lfo2 = audioContext!.createOscillator();
+          lfoGain1 = audioContext!.createGain();
+          lfoGain2 = audioContext!.createGain();
+          
+          // LFO 1: Rotates filter1 frequency (vortex rotation) - direction-aware
+          lfo1.type = 'sine';
+          lfo1.frequency.setValueAtTime(params.lfo1Rate, now);
+          lfoGain1.gain.setValueAtTime(params.lfo1Depth, now);
+          lfo1.connect(lfoGain1);
+          lfoGain1.connect(filter1.frequency);
+          
+          // LFO 2: Rotates filter2b frequency (phase offset for inverted matter) - direction-aware
+          lfo2.type = 'sine';
+          lfo2.frequency.setValueAtTime(params.lfo2Rate, now);
+          lfoGain2.gain.setValueAtTime(params.lfo2Depth, now);
+          lfo2.connect(lfoGain2);
+          lfoGain2.connect(filter2b.frequency);
+          
+          // Start very quiet and fade in very quickly - subtle hum
+          gainNode.gain.setValueAtTime(0, now);
+          gainNode.gain.linearRampToValueAtTime(0.035, now + 0.02); // Lower volume for subtle hum (20ms)
+          
+          // Connect: noise sources -> filters -> gain -> destination
+          // Path 1: Main vortex path
+          bufferSource1.connect(filter1);
+          filter1.connect(filter2);
+          filter2.connect(filter3);
+          filter3.connect(gainNode);
+          
+          // Path 2: Phased path (inverted matter) - different filter chain
+          bufferSource2.connect(filter2b);
+          filter2b.connect(filter3b);
+          filter3b.connect(gainNode);
+          
+          gainNode.connect(audioContext!.destination);
+          
+          // Store second path filters for cleanup
+          (bufferSource2 as any)._filter2b = filter2b;
+          (bufferSource2 as any)._filter3b = filter3b;
+          (bufferSource2 as any)._lfoGain2 = lfoGain2;
+          
+          // Start LFOs and noise sources
+          lfo1.start(now);
+          lfo2.start(now);
+          bufferSource1.start(now);
+          // Start second source with minimal phase offset for subtle phasing
+          bufferSource2.start(now + params.phaseOffset);
+          
+          isPlaying = true;
+        } catch (error) {
+          console.debug('Movement flow sound start error:', error);
+          isPlaying = false;
+          // Clean up on error
+          bufferSource1 = null;
+          bufferSource2 = null;
+          gainNode = null;
+          filter1 = null;
+          filter2 = null;
+          filter3 = null;
+          lfo1 = null;
+          lfo2 = null;
+          lfoGain1 = null;
+          lfoGain2 = null;
+        }
+      },
+      stop: () => {
+        if (!isPlaying || !gainNode) return;
+        
+        try {
+          const stopTime = audioContext!.currentTime;
+          
+          // Very quickly fade out and stop
+          gainNode.gain.cancelScheduledValues(stopTime);
+          gainNode.gain.setValueAtTime(gainNode.gain.value, stopTime);
+          gainNode.gain.linearRampToValueAtTime(0, stopTime + 0.02); // Very quick fade out (20ms)
+          
+          // Stop all sources after fade out
+          setTimeout(() => {
+            try {
+              if (bufferSource1) {
+                bufferSource1.stop();
+              }
+              if (bufferSource2) {
+                bufferSource2.stop();
+                // Clean up second path filters
+                const filter2b = (bufferSource2 as any)._filter2b;
+                const filter3b = (bufferSource2 as any)._filter3b;
+                if (filter2b) filter2b.disconnect();
+                if (filter3b) filter3b.disconnect();
+              }
+              if (lfo1) {
+                lfo1.stop();
+              }
+              if (lfo2) {
+                lfo2.stop();
+              }
+              if (lfoGain1) {
+                lfoGain1.disconnect();
+              }
+              if (lfoGain2) {
+                lfoGain2.disconnect();
+              }
+            } catch (error) {
+              // Nodes may already be stopped
+              console.debug('Movement flow sound stop error:', error);
+            }
+            bufferSource1 = null;
+            bufferSource2 = null;
+            gainNode = null;
+            filter1 = null;
+            filter2 = null;
+            filter3 = null;
+            lfo1 = null;
+            lfo2 = null;
+            lfoGain1 = null;
+            lfoGain2 = null;
+            isPlaying = false;
+          }, 30); // Slightly longer than fade out to ensure smooth stop
+        } catch (error) {
+          console.debug('Movement flow sound stop error:', error);
+          isPlaying = false;
+          // Clean up on error
+          bufferSource1 = null;
+          bufferSource2 = null;
+          gainNode = null;
+          filter1 = null;
+          filter2 = null;
+          filter3 = null;
+          filter2b = null;
+          filter3b = null;
+          lfo1 = null;
+          lfo2 = null;
+          lfoGain1 = null;
+          lfoGain2 = null;
+          currentDirection = null;
+        }
+      },
+      updateDirection: (direction: MovementDirection) => {
+        if (!isPlaying || !filter1 || !filter2 || !filter2b || !lfo1 || !lfo2 || !lfoGain1 || !lfoGain2) return;
+        
+        // Skip update if direction hasn't changed
+        if (currentDirection === direction) return;
+        
+        currentDirection = direction;
+        const params = getDirectionParams(direction);
+        const now = audioContext!.currentTime;
+        
+        try {
+          // Update filter frequencies smoothly
+          filter1.frequency.cancelScheduledValues(now);
+          filter1.frequency.setValueAtTime(filter1.frequency.value, now);
+          filter1.frequency.linearRampToValueAtTime(params.filter1Freq, now + 0.1);
+          
+          filter2.frequency.cancelScheduledValues(now);
+          filter2.frequency.setValueAtTime(filter2.frequency.value, now);
+          filter2.frequency.linearRampToValueAtTime(params.filter2Freq, now + 0.1);
+          
+          filter2b.frequency.cancelScheduledValues(now);
+          filter2b.frequency.setValueAtTime(filter2b.frequency.value, now);
+          filter2b.frequency.linearRampToValueAtTime(params.filter2bFreq, now + 0.1);
+          
+          // Update LFO rates smoothly
+          lfo1.frequency.cancelScheduledValues(now);
+          lfo1.frequency.setValueAtTime(lfo1.frequency.value, now);
+          lfo1.frequency.linearRampToValueAtTime(params.lfo1Rate, now + 0.1);
+          
+          lfo2.frequency.cancelScheduledValues(now);
+          lfo2.frequency.setValueAtTime(lfo2.frequency.value, now);
+          lfo2.frequency.linearRampToValueAtTime(params.lfo2Rate, now + 0.1);
+          
+          // Update LFO modulation depths
+          lfoGain1.gain.cancelScheduledValues(now);
+          lfoGain1.gain.setValueAtTime(lfoGain1.gain.value, now);
+          lfoGain1.gain.linearRampToValueAtTime(params.lfo1Depth, now + 0.1);
+          
+          lfoGain2.gain.cancelScheduledValues(now);
+          lfoGain2.gain.setValueAtTime(lfoGain2.gain.value, now);
+          lfoGain2.gain.linearRampToValueAtTime(params.lfo2Depth, now + 0.1);
+        } catch (error) {
+          console.debug('Movement flow sound updateDirection error:', error);
+        }
+      }
+    };
+  } catch (error) {
+    console.debug('Movement flow sound creation error:', error);
+    return null;
+  }
+}
+
