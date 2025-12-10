@@ -12,6 +12,7 @@ let aboutWindow: BrowserWindow | null = null;
 let profileSelectorWindow: BrowserWindow | null = null;
 let importProgressWindow: BrowserWindow | null = null;
 let startupLoadingWindow: BrowserWindow | null = null;
+let archiveExportWindow: BrowserWindow | null = null;
 
 const isDev = process.env.NODE_ENV === 'development' || !app.isPackaged;
 
@@ -1095,6 +1096,19 @@ function createMenu() {
                 }
               },
             },
+            { type: 'separator' },
+            {
+              label: 'Export as ZIP Archive...',
+              click: () => {
+                createArchiveExportWindow('zip');
+              },
+            },
+            {
+              label: 'Export as 7Z Archive...',
+              click: () => {
+                createArchiveExportWindow('7z');
+              },
+            },
           ],
         },
         { type: 'separator' },
@@ -1439,6 +1453,65 @@ function createImportProgressWindow() {
   return importProgressWindow;
 }
 
+function createArchiveExportWindow(archiveFormat: 'zip' | '7z') {
+  if (archiveExportWindow && !archiveExportWindow.isDestroyed()) {
+    archiveExportWindow.focus();
+    return;
+  }
+
+  console.log('[Main] Creating archive export window...');
+
+  // Calculate window position (center of screen)
+  const primaryDisplay = screen.getPrimaryDisplay();
+  const { width: screenWidth, height: screenHeight } = primaryDisplay.workAreaSize;
+  const windowWidth = 600;
+  const windowHeight = 500;
+  const x = Math.floor((screenWidth - windowWidth) / 2);
+  const y = Math.floor((screenHeight - windowHeight) / 2);
+
+  archiveExportWindow = new BrowserWindow({
+    width: windowWidth,
+    height: windowHeight,
+    x,
+    y,
+    minWidth: 500,
+    minHeight: 400,
+    resizable: true,
+    modal: false,
+    parent: mainWindow || undefined,
+    title: `Export Archive as ${archiveFormat.toUpperCase()} - CalenRecall`,
+    webPreferences: getOptimizedWebPreferences(path.join(__dirname, 'preload.js')),
+    ...(process.platform === 'win32' && {
+      icon: path.join(__dirname, '../assets/icon.png'),
+    }),
+    show: false,
+  });
+
+  if (isDev) {
+    archiveExportWindow.loadURL('http://localhost:5173/archive-export.html');
+  } else {
+    archiveExportWindow.loadFile(path.join(__dirname, '../dist/archive-export.html'));
+  }
+
+  // Store archive format in window for the component to access
+  (archiveExportWindow as any).archiveFormat = archiveFormat;
+
+  archiveExportWindow.webContents.once('did-finish-load', () => {
+    if (archiveExportWindow && !archiveExportWindow.isDestroyed()) {
+      // Send archive format to the window
+      archiveExportWindow.webContents.executeJavaScript(`
+        window.__archiveFormat = '${archiveFormat}';
+      `);
+      archiveExportWindow.show();
+      archiveExportWindow.focus();
+    }
+  });
+
+  archiveExportWindow.on('closed', () => {
+    archiveExportWindow = null;
+  });
+}
+
 function createAboutWindow() {
   if (aboutWindow) {
     aboutWindow.focus();
@@ -1660,7 +1733,14 @@ app.whenReady().then(() => {
       preferencesWindow.close();
     }
   });
-  
+
+  // Handle closing archive export window
+  ipcMain.handle('close-archive-export-window', () => {
+    if (archiveExportWindow && !archiveExportWindow.isDestroyed()) {
+      archiveExportWindow.close();
+    }
+  });
+
   // Handle menu update requests (called when preferences change or themes are added)
   ipcMain.handle('update-application-menu', () => {
     console.log('[Main] Menu update requested via IPC');

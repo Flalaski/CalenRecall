@@ -169,6 +169,13 @@ class TaskScheduler {
    */
   private processFrame(): void {
     const startTime = performance.now();
+    // Create start mark for performance measurement
+    let startMarkName: string | null = null;
+    if (this.performanceObserver && typeof performance.mark !== 'undefined') {
+      startMarkName = `task-scheduler-frame-start-${Date.now()}`;
+      performance.mark(startMarkName);
+    }
+    
     let frameCount = 0;
     let tasksProcessed = 0;
 
@@ -230,6 +237,22 @@ class TaskScheduler {
 
     const frameTime = performance.now() - startTime;
 
+    // Performance measurement - create end mark and measure
+    if (this.performanceObserver && typeof performance.mark !== 'undefined' && startMarkName) {
+      const endMarkName = `task-scheduler-frame-end-${Date.now()}`;
+      performance.mark(endMarkName);
+      try {
+        performance.measure(
+          'task-scheduler-frame',
+          startMarkName,
+          endMarkName
+        );
+      } catch (error) {
+        // Silently handle measurement errors (e.g., if marks were cleared)
+        console.debug('Performance measure failed:', error);
+      }
+    }
+
     // Continue processing if there are more tasks
     if (this.criticalQueue.length > 0 || this.taskQueue.length > 0) {
       // Use requestIdleCallback if available, otherwise requestAnimationFrame
@@ -246,17 +269,6 @@ class TaskScheduler {
     } else {
       this.isProcessing = false;
       this.frameId = null;
-    }
-
-    // Performance measurement
-    if (this.performanceObserver && typeof performance.mark !== 'undefined') {
-      const markName = `task-scheduler-frame-${Date.now()}`;
-      performance.mark(markName);
-      performance.measure(
-        'task-scheduler-frame',
-        markName,
-        `task-scheduler-frame-${Date.now()}`
-      );
     }
   }
 

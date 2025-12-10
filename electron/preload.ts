@@ -240,8 +240,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   exportProfileDatabase: (profileId: string): Promise<{ success: boolean; canceled?: boolean; error?: string; message?: string; path?: string }> =>
     ipcRenderer.invoke('export-profile-database', profileId),
 
-  exportProfileArchive: (profileId: string, archiveFormat?: 'zip' | '7z'): Promise<{ success: boolean; canceled?: boolean; error?: string; message?: string; path?: string }> =>
-    ipcRenderer.invoke('export-profile-archive', profileId, archiveFormat || 'zip'),
+  exportProfileArchive: (profileId: string, archiveFormat?: 'zip' | '7z', password?: string): Promise<{ success: boolean; canceled?: boolean; error?: string; message?: string; path?: string }> =>
+    ipcRenderer.invoke('export-profile-archive', profileId, archiveFormat || 'zip', password),
 
   deleteProfile: (profileId: string): Promise<{ success: boolean }> =>
     ipcRenderer.invoke('delete-profile', profileId),
@@ -314,6 +314,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
   saveRecoveryKeyToFile: (recoveryKey: string, profileName: string): Promise<{ success: boolean; canceled?: boolean; path?: string }> =>
     ipcRenderer.invoke('save-recovery-key-to-file', recoveryKey, profileName),
+
+  closeWindow: (): Promise<void> =>
+    ipcRenderer.invoke('close-archive-export-window'),
 
   // Password event listeners
   onProfilePasswordSet: (callback: (data: { profileId: string; recoveryKey?: string | null }) => void) => {

@@ -121,30 +121,148 @@ export default function TimelineView({
     return getAllEntriesForMonthOptimized(entryLookup, year, month, weekStartsOn);
   }, [entryLookup, weekStartsOn]);
 
+  // OPTIMIZATION: Get all entries that apply to a specific date
+  // This includes day, week, month, year, and decade entries
+  // OPTIMIZATION: Early return optimizations to avoid unnecessary work when no entries exist
+  const getAllEntriesForDate = useCallback((date: Date): JournalEntry[] => {
+    const results: JournalEntry[] = [];
+    const dateStr = formatDate(date);
+    const year = date.getFullYear();
+    const month = date.getMonth();
+    const monthKey = `${year}-${String(month + 1).padStart(2, '0')}`;
+    const decadeStart = Math.floor(year / 10) * 10;
+    
+    // Calculate week key once (needed for both check and lookup)
+    const weekStart = getWeekStart(date, weekStartsOn);
+    const weekKey = formatDate(weekStart);
+    
+    // OPTIMIZATION: Quick check - if no entries exist for this date at any tier, return early
+    const hasDayEntries = entryLookup.hasEntryDates.has(dateStr);
+    const hasWeekEntries = entryLookup.hasWeekEntryWeeks.size > 0 && entryLookup.hasWeekEntryWeeks.has(weekKey);
+    const hasMonthEntries = entryLookup.hasMonthEntryMonths.has(monthKey);
+    const hasYearEntries = entryLookup.hasYearEntryYears.has(year);
+    const hasDecadeEntries = entryLookup.hasDecadeEntryDecades.has(decadeStart);
+    
+    // If no entries exist at any tier, return empty array immediately
+    if (!hasDayEntries && !hasWeekEntries && !hasMonthEntries && !hasYearEntries && !hasDecadeEntries) {
+      return results;
+    }
+    
+    // Add day entries
+    if (hasDayEntries) {
+      const dayEntries = entryLookup.byDateString.get(dateStr);
+      if (dayEntries) {
+        results.push(...dayEntries);
+      }
+    }
+    
+    // Add week entries
+    if (hasWeekEntries) {
+      const weekEntries = entryLookup.byWeekStart.get(weekKey);
+      if (weekEntries) {
+        results.push(...weekEntries);
+      }
+    }
+    
+    // Add month entries
+    if (hasMonthEntries) {
+      const monthEntries = entryLookup.byMonth.get(monthKey);
+      if (monthEntries) {
+        results.push(...monthEntries);
+      }
+    }
+    
+    // Add year entries
+    if (hasYearEntries) {
+      const yearEntries = entryLookup.byYear.get(year);
+      if (yearEntries) {
+        results.push(...yearEntries);
+      }
+    }
+    
+    // Add decade entries
+    if (hasDecadeEntries) {
+      const decadeEntries = entryLookup.byDecade.get(decadeStart);
+      if (decadeEntries) {
+        results.push(...decadeEntries);
+      }
+    }
+    
+    return results;
+  }, [entryLookup, weekStartsOn]);
+
+  // OPTIMIZATION: Prioritize entries from the currently selected time tier
+  // This ensures entries matching the viewMode appear first when displaying limited entries
+  const prioritizeEntriesByTier = useCallback((entries: JournalEntry[], priorityTier: TimeRange): JournalEntry[] => {
+    if (entries.length === 0) return entries;
+    
+    // Separate entries by tier
+    const priorityEntries: JournalEntry[] = [];
+    const otherEntries: JournalEntry[] = [];
+    
+    for (const entry of entries) {
+      if (entry.timeRange === priorityTier) {
+        priorityEntries.push(entry);
+      } else {
+        otherEntries.push(entry);
+      }
+    }
+    
+    // Return priority entries first, then others
+    return [...priorityEntries, ...otherEntries];
+  }, []);
+
   // Create pixel map for a year (12 months x ~30 days = 360 pixels, but we'll use 12x30 grid)
   // OPTIMIZED: Limit processing to first N entries to avoid performance issues with thousands of entries
-  const createYearPixelMap = useCallback((yearEntries: JournalEntry[]): string[] => {
+  // OPTIMIZATION: Prioritizes entries from the current time tier (year entries in year view)
+  const createYearPixelMap = useCallback((yearEntries: JournalEntry[], priorityTier: TimeRange = 'year'): string[] => {
     // Create a 12x30 grid (12 months, 30 days each)
     // Each pixel represents one entry, colored using crystal colors
     const pixels: string[] = [];
     const totalPixels = 12 * 30; // 360 pixels
     
+    // OPTIMIZATION: Prioritize entries from current tier first
+    const prioritizedEntries = prioritizeEntriesByTier(yearEntries, priorityTier);
+    
     // OPTIMIZATION: For performance, limit to first 360 entries instead of sorting all
     // If there are many entries, we'll sample them rather than processing all
-    const maxEntriesToProcess = Math.min(yearEntries.length, totalPixels * 2); // Process up to 2x pixels worth
+    const maxEntriesToProcess = Math.min(prioritizedEntries.length, totalPixels * 2); // Process up to 2x pixels worth
     
     // Only sort if we have a reasonable number of entries
+    // IMPORTANT: Sort within each tier group to preserve prioritization
     let entriesToUse: JournalEntry[];
-    if (yearEntries.length <= maxEntriesToProcess) {
-      // Sort entries by date
-      entriesToUse = [...yearEntries].sort((a, b) => {
+    if (prioritizedEntries.length <= maxEntriesToProcess) {
+      // Sort entries by date while preserving tier priority
+      // Split into priority and other groups, sort each, then combine
+      const priorityTierEntries: JournalEntry[] = [];
+      const otherTierEntries: JournalEntry[] = [];
+      
+      for (const entry of prioritizedEntries) {
+        if (entry.timeRange === priorityTier) {
+          priorityTierEntries.push(entry);
+        } else {
+          otherTierEntries.push(entry);
+        }
+      }
+      
+      // Sort each group by date
+      priorityTierEntries.sort((a, b) => {
         const dateA = parseISODate(a.date);
         const dateB = parseISODate(b.date);
         return dateA.getTime() - dateB.getTime();
       });
+      
+      otherTierEntries.sort((a, b) => {
+        const dateA = parseISODate(a.date);
+        const dateB = parseISODate(b.date);
+        return dateA.getTime() - dateB.getTime();
+      });
+      
+      // Combine with priority entries first
+      entriesToUse = [...priorityTierEntries, ...otherTierEntries];
     } else {
-      // For very large sets, just take first N entries (already likely sorted by date from lookup)
-      entriesToUse = yearEntries.slice(0, maxEntriesToProcess);
+      // For very large sets, take first N entries (prioritized entries come first)
+      entriesToUse = prioritizedEntries.slice(0, maxEntriesToProcess);
     }
     
     // Create pixel array - one entry per pixel, using crystal colors
@@ -159,31 +277,58 @@ export default function TimelineView({
     }
     
     return pixels;
-  }, []);
+  }, [prioritizeEntriesByTier]);
 
   // Create pixel map for a month (7 days x 5 weeks = 35 pixels)
   // OPTIMIZED: Limit processing to avoid performance issues with many entries
-  const createMonthPixelMap = useCallback((monthEntries: JournalEntry[]): string[] => {
+  // OPTIMIZATION: Prioritizes entries from the current time tier (month entries in month view, year entries in year view)
+  const createMonthPixelMap = useCallback((monthEntries: JournalEntry[], priorityTier: TimeRange = 'month'): string[] => {
     // Create a 7x5 grid (7 days per week, 5 weeks max)
     // Each pixel represents one entry, colored by time range
     const pixels: string[] = [];
     const totalPixels = 7 * 5; // 35 pixels
     
+    // OPTIMIZATION: Prioritize entries from current tier first
+    const prioritizedEntries = prioritizeEntriesByTier(monthEntries, priorityTier);
+    
     // OPTIMIZATION: For performance, limit processing
-    const maxEntriesToProcess = Math.min(monthEntries.length, totalPixels * 2); // Process up to 2x pixels worth
+    const maxEntriesToProcess = Math.min(prioritizedEntries.length, totalPixels * 2); // Process up to 2x pixels worth
     
     // Only sort if we have a reasonable number of entries
+    // IMPORTANT: Sort within each tier group to preserve prioritization
     let entriesToUse: JournalEntry[];
-    if (monthEntries.length <= maxEntriesToProcess) {
-      // Sort entries by date
-      entriesToUse = [...monthEntries].sort((a, b) => {
+    if (prioritizedEntries.length <= maxEntriesToProcess) {
+      // Sort entries by date while preserving tier priority
+      // Split into priority and other groups, sort each, then combine
+      const priorityTierEntries: JournalEntry[] = [];
+      const otherTierEntries: JournalEntry[] = [];
+      
+      for (const entry of prioritizedEntries) {
+        if (entry.timeRange === priorityTier) {
+          priorityTierEntries.push(entry);
+        } else {
+          otherTierEntries.push(entry);
+        }
+      }
+      
+      // Sort each group by date
+      priorityTierEntries.sort((a, b) => {
         const dateA = parseISODate(a.date);
         const dateB = parseISODate(b.date);
         return dateA.getTime() - dateB.getTime();
       });
+      
+      otherTierEntries.sort((a, b) => {
+        const dateA = parseISODate(a.date);
+        const dateB = parseISODate(b.date);
+        return dateA.getTime() - dateB.getTime();
+      });
+      
+      // Combine with priority entries first
+      entriesToUse = [...priorityTierEntries, ...otherTierEntries];
     } else {
-      // For very large sets, just take first N entries
-      entriesToUse = monthEntries.slice(0, maxEntriesToProcess);
+      // For very large sets, take first N entries (prioritized entries come first)
+      entriesToUse = prioritizedEntries.slice(0, maxEntriesToProcess);
     }
     
     // Create pixel array - one entry per pixel, using crystal colors
@@ -198,7 +343,7 @@ export default function TimelineView({
     }
     
     return pixels;
-  }, []);
+  }, [prioritizeEntriesByTier]);
 
   const renderMonthView = () => {
     const days = getDaysInMonth(selectedDate);
@@ -214,19 +359,23 @@ export default function TimelineView({
     const monthEntriesWithIds = monthEntries.filter(entry => entry.id !== undefined);
     
     // OPTIMIZATION: Get week entries using lookup
+    // Only iterate through week entries if there are any week entries in the database
     const monthStart = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1);
     const monthEnd = new Date(selectedDate.getFullYear(), selectedDate.getMonth() + 1, 0);
     const weekEntriesByWeek = new Map<string, JournalEntry[]>();
     
-    // Get all week entries that overlap with this month
-    for (const [weekKey, weekEntries] of entryLookup.byWeekStart.entries()) {
-      const weekStart = parseISODate(weekKey);
-      const weekEnd = new Date(weekStart);
-      weekEnd.setDate(weekEnd.getDate() + 6);
-      
-      // Only include weeks that overlap with the current month
-      if (weekStart <= monthEnd && weekEnd >= monthStart) {
-        weekEntriesByWeek.set(weekKey, weekEntries);
+    // OPTIMIZATION: Early return if no week entries exist
+    if (entryLookup.hasWeekEntryWeeks.size > 0) {
+      // Get all week entries that overlap with this month
+      for (const [weekKey, weekEntries] of entryLookup.byWeekStart.entries()) {
+        const weekStart = parseISODate(weekKey);
+        const weekEnd = new Date(weekStart);
+        weekEnd.setDate(weekEnd.getDate() + 6);
+        
+        // Only include weeks that overlap with the current month
+        if (weekStart <= monthEnd && weekEnd >= monthStart) {
+          weekEntriesByWeek.set(weekKey, weekEntries);
+        }
       }
     }
     
@@ -268,12 +417,20 @@ export default function TimelineView({
                 <div key={`empty-${idx}`} className="timeline-cell empty-cell"></div>
               ))}
               {days.map((day, idx) => {
-                const dayEntries = getEntriesForDate(day);
+                // OPTIMIZATION: Get all entries for this day (day, week, month, year, decade)
+                // and prioritize month entries since we're in month view
+                // getAllEntriesForDate has early returns when no entries exist, so this is efficient
+                const allDayEntries = getAllEntriesForDate(day);
+                // prioritizeEntriesByTier returns early if entries.length === 0
+                const prioritizedEntries = allDayEntries.length > 0 
+                  ? prioritizeEntriesByTier(allDayEntries, 'month')
+                  : [];
                 const gradientColor = getZodiacGradientColor(day);
+                const hasEntries = prioritizedEntries.length > 0;
                 return (
                   <div
                     key={idx}
-                    className={`timeline-cell day-cell ${isToday(day) ? 'today' : ''} ${isSelected(day) ? 'selected' : ''} ${dayEntries.length > 0 ? 'has-entries' : ''}`}
+                    className={`timeline-cell day-cell ${isToday(day) ? 'today' : ''} ${isSelected(day) ? 'selected' : ''} ${hasEntries ? 'has-entries' : ''}`}
                     onClick={() => {
                       playCalendarSelectionSound();
                       onTimePeriodSelect(day, 'day');
@@ -281,8 +438,9 @@ export default function TimelineView({
                     style={{ '--zodiac-gradient': gradientColor } as React.CSSProperties}
                   >
                     <div className="cell-date">{day.getDate()}</div>
+                    {hasEntries && (
                     <div className="cell-entries">
-                      {dayEntries.slice(0, 3).map((entry, eIdx) => {
+                      {prioritizedEntries.slice(0, 3).map((entry, eIdx) => {
                         const entryColor = entry.id !== undefined && entryColors?.get(entry.id) || calculateEntryColor(entry);
                         return (
                           <div
@@ -308,10 +466,11 @@ export default function TimelineView({
                           </div>
                         );
                       })}
-                      {dayEntries.length > 3 && (
-                        <div className="entry-badge more-entries">+{dayEntries.length - 3}</div>
+                      {prioritizedEntries.length > 3 && (
+                        <div className="entry-badge more-entries">+{prioritizedEntries.length - 3}</div>
                       )}
                     </div>
+                    )}
                   </div>
                 );
               })}
@@ -820,18 +979,20 @@ export default function TimelineView({
     }
     
     return months.map((month) => {
-      const monthEntries = getEntriesForDate(month, 'year');
+      // OPTIMIZATION: Get all entries for this month (month, year, decade)
+      // and prioritize year entries since we're in year view
       const allMonthEntries = getAllEntriesForMonth(month.getFullYear(), month.getMonth());
-      const pixelMap = createMonthPixelMap(allMonthEntries);
+      const prioritizedMonthEntries = prioritizeEntriesByTier(allMonthEntries, 'year');
+      const pixelMap = createMonthPixelMap(allMonthEntries, 'year');
       
       return {
         month,
-        monthEntries,
+        monthEntries: prioritizedMonthEntries,
         allMonthEntries,
         pixelMap,
       };
     });
-  }, [selectedYear, entryLookup, getEntriesForDate, getAllEntriesForMonth, createMonthPixelMap]);
+  }, [selectedYear, entryLookup, getAllEntriesForMonth, createMonthPixelMap, prioritizeEntriesByTier]);
 
   const renderYearView = () => {
     return (
@@ -908,20 +1069,22 @@ export default function TimelineView({
     }
     
     return years.map((year) => {
-      const yearEntries = getEntriesForDate(year, 'decade');
+      // OPTIMIZATION: Get all entries for this year (year, decade)
+      // and prioritize decade entries since we're in decade view
       const allYearEntries = getAllEntriesForYear(year.getFullYear());
-      const pixelMap = createYearPixelMap(allYearEntries);
+      const prioritizedYearEntries = prioritizeEntriesByTier(allYearEntries, 'decade');
+      const pixelMap = createYearPixelMap(allYearEntries, 'decade');
       const yearGradientColor = getZodiacGradientColorForYear(year.getFullYear());
       
       return {
         year,
-        yearEntries,
+        yearEntries: prioritizedYearEntries,
         allYearEntries,
         pixelMap,
         yearGradientColor,
       };
     });
-  }, [selectedYearForDecade, entryLookup, getEntriesForDate, getAllEntriesForYear, createYearPixelMap]);
+  }, [selectedYearForDecade, entryLookup, getAllEntriesForYear, createYearPixelMap, prioritizeEntriesByTier]);
 
   const renderDecadeView = () => {
     return (

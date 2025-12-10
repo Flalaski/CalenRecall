@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect, useRef } from 'react';
+import { useMemo, useState, useEffect, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { TimeRange, JournalEntry } from '../types';
 import { getWeekStart, getWeekEnd, getMonthStart, getMonthEnd, getYearEnd, getDecadeEnd, getZodiacColor, getZodiacColorForDecade, getCanonicalDate, parseISODate, createDate, getYearStart, isToday } from '../utils/dateUtils';
@@ -11,7 +11,6 @@ import { filterEntriesByDateRange } from '../utils/entryFilterUtils';
 import { getCalendarTierNames } from '../utils/calendarTierNames';
 import { getCalendarEpoch } from '../utils/calendars/epochUtils';
 import { jdnToDate } from '../utils/calendars/julianDayUtils';
-import { useTaskScheduler, useThrottledCallback } from '../hooks/usePerformanceOptimized';
 import './GlobalTimelineMinimap.css';
 
 interface GlobalTimelineMinimapProps {
@@ -349,9 +348,9 @@ export default function GlobalTimelineMinimap({
     currentMovement?: number;
   } | null>(null);
   
-
-  // HIGH-PERFORMANCE: Performance optimization hooks
-  const { schedule } = useTaskScheduler();
+  // HIGH-PERFORMANCE: Store latest mouse event for RAF-based frame updates
+  const latestMouseEventRef = useRef<MouseEvent | null>(null);
+  const rafIdRef = useRef<number | null>(null);
 
   // Invalidate bounding rect cache on window resize
   useEffect(() => {
@@ -3122,6 +3121,8 @@ export default function GlobalTimelineMinimap({
     lastDragLimitsRef.current = initialDragLimits;
     setDragLimits(initialDragLimits);
     
+    // Update ref immediately for synchronous access in event handlers
+    isDraggingRef.current = true;
     setIsDragging(true);
     e.preventDefault();
   };
@@ -3135,6 +3136,7 @@ export default function GlobalTimelineMinimap({
   const onTimePeriodSelectRef = useRef(onTimePeriodSelect);
   const horizontalLockedRef = useRef(horizontalLocked);
   const allScaleMarkingsRef = useRef(allScaleMarkings);
+  const isDraggingRef = useRef(isDragging);
 
   // Update refs when values change
   // Ref to access current entries in keyboard handler
@@ -3148,7 +3150,8 @@ export default function GlobalTimelineMinimap({
     horizontalLockedRef.current = horizontalLocked;
     allScaleMarkingsRef.current = allScaleMarkings;
     entriesRef.current = entries;
-  }, [timelineData, viewMode, selectedDate, onTimePeriodSelect, horizontalLocked, allScaleMarkings, entries]);
+    isDraggingRef.current = isDragging;
+  }, [timelineData, viewMode, selectedDate, onTimePeriodSelect, horizontalLocked, allScaleMarkings, entries, isDragging]);
 
   /**
    * Find the best date to focus on when zooming in, with subtle magnetization
@@ -3559,10 +3562,10 @@ export default function GlobalTimelineMinimap({
     };
   }, []); // Empty deps - we use refs to access current values
 
-  // RESPONSIVE: Create throttled mouse move handler for smooth visual feedback at native refresh rate
-  // This ensures visual updates happen every frame, matching audio feedback
-  const handleMouseMoveThrottled = useThrottledCallback((e: MouseEvent) => {
-    if (!isDragging || !dragStartPositionRef.current) {
+  // Process mouse move event - called on every frame via RAF for maximum frame rate
+  // This function contains all the drag logic and is called by the RAF loop
+  const handleMouseMoveFrame = useCallback((e: MouseEvent) => {
+    if (!isDraggingRef.current || !dragStartPositionRef.current) {
       return;
     }
     
@@ -3599,24 +3602,34 @@ export default function GlobalTimelineMinimap({
     // Horizontal dead zone: suppress horizontal movement when primarily moving vertically
     // This makes it easier to zoom without accidentally moving the blips left/right
     const horizontalDeadZone = 30; // pixels - ignore horizontal movement if within this
-    const verticalToHorizontalRatio = 2.0; // If vertical movement is X times horizontal, lock horizontal
+    const verticalToHorizontalRatio = 2.5; // If vertical movement is X times horizontal, lock horizontal
+    const horizontalUnlockThreshold = 40; // pixels - unlock when horizontal exceeds this
     
     // Calculate if movement is primarily vertical
     const absVertical = Math.abs(totalVerticalDelta);
     const absHorizontal = Math.abs(totalHorizontalDelta);
     
-    // Lock horizontal if:
-    // 1. Horizontal movement is within dead zone AND vertical movement is significant, OR
-    // 2. Vertical movement is significantly more than horizontal (ratio-based)
+    // Priority: If horizontal movement is significant, always allow it
+    // Lock horizontal only if:
+    // 1. Horizontal movement is minimal (< dead zone) AND vertical movement is substantial (> 20px), OR
+    // 2. Vertical movement is significantly more than horizontal (ratio-based) AND horizontal is still small
     const shouldLockHorizontal = 
-      (absVertical > 10 && absHorizontal < horizontalDeadZone) || 
-      (absVertical > 15 && absVertical > absHorizontal * verticalToHorizontalRatio);
+      (absHorizontal < horizontalDeadZone && absVertical > 20) || 
+      (absVertical > 20 && absHorizontal < horizontalUnlockThreshold && absVertical > absHorizontal * verticalToHorizontalRatio);
+    
+    // Unlock if:
+    // 1. Lock conditions are no longer met AND horizontal movement exceeds unlock threshold, OR
+    // 2. Horizontal movement significantly exceeds vertical (user clearly wants to navigate horizontally)
+    const shouldUnlockHorizontal = horizontalLockedRef.current && (
+      (!shouldLockHorizontal && absHorizontal > horizontalUnlockThreshold) ||
+      (absHorizontal > absVertical * 1.5 && absHorizontal > 20)
+    );
     
     if (shouldLockHorizontal && !horizontalLockedRef.current) {
       setHorizontalLocked(true);
       horizontalLockedRef.current = true;
-    } else if (!shouldLockHorizontal && horizontalLockedRef.current && absHorizontal > horizontalDeadZone) {
-      // Unlock if user explicitly moves horizontally beyond dead zone
+    } else if (shouldUnlockHorizontal) {
+      // Unlock when user explicitly moves horizontally
       setHorizontalLocked(false);
       horizontalLockedRef.current = false;
     }
@@ -3822,12 +3835,13 @@ export default function GlobalTimelineMinimap({
     const distanceFromCenter = Math.abs(startTimelinePosition - 0.5);
     
     // Apply distance-based dampening: the further from center, the more dampening
-    // Scale from 0.02 (at edges) to 0.05 (at center) for molasses-like mechanical lever feel
-    const baseDampening = 0.05 - (distanceFromCenter * 0.06); // Range: 0.05 at center, 0.02 at edges
+    // Scale from 0.15 (at edges) to 0.30 (at center) for responsive feel while maintaining mechanical lever feel
+    // Increased from 0.02-0.05 to make horizontal movement more responsive
+    const baseDampening = 0.30 - (distanceFromCenter * 0.30); // Range: 0.30 at center, 0.15 at edges
     
     // Additional dampening for large distances to prevent fast jumps
     const distanceMagnitude = Math.abs(deltaPercentage);
-    const distanceMultiplier = distanceMagnitude > 0.3 ? 0.6 : 1.0; // Extra dampening for large movements
+    const distanceMultiplier = distanceMagnitude > 0.3 ? 0.7 : 1.0; // Reduced from 0.6 to 0.7 for better responsiveness
     
     const combinedDampening = baseDampening * distanceMultiplier;
     
@@ -3862,8 +3876,9 @@ export default function GlobalTimelineMinimap({
       if (valleyWidth > 0) {
         const positionInValley = (rawTargetPosition - leftFret) / valleyWidth; // 0 to 1
         
-        // Apply resistance curve: valleys require more drag - stronger curve for molasses-like mechanical lever feel
-        const resistanceCurve = Math.pow(positionInValley, 5.0);
+        // Apply resistance curve: valleys require more drag - moderate curve for balanced mechanical feel
+        // Reduced from 5.0 to 2.5 for more responsive movement while maintaining tactile feedback
+        const resistanceCurve = Math.pow(positionInValley, 2.5);
         
         // Map the resisted position back to timeline coordinates
         targetMousePosition = leftFret + (resistanceCurve * valleyWidth);
@@ -3926,15 +3941,42 @@ export default function GlobalTimelineMinimap({
       lastBlipDateRef.current = new Date(clampedDateDay);
     }
     
-    // RESPONSIVE: Use display refresh rate for smooth, immediate visual feedback
-    // Update immediately - let the throttled callback handle frame rate limiting
-    // This ensures visual movement matches audio feedback
-    schedule(() => {
-      currentOnTimePeriodSelect(clampedDate, currentViewMode);
-    }, 'critical'); // Critical priority for immediate visual feedback
+    // HIGH-PERFORMANCE: Call directly for maximum frame rate
+    // RAF loop ensures we update on every frame for smooth high refresh rate experience
+    currentOnTimePeriodSelect(clampedDate, currentViewMode);
     
     lastUpdateTimeRef.current = now;
-  }, undefined); // undefined = use native refresh rate (unlocked)
+  }, []); // Empty deps - all values accessed via refs
+
+  // HIGH-PERFORMANCE: Store latest mouse event for continuous RAF updates
+  // This ensures we always use the most recent mouse position on every frame
+  const handleMouseMove = useCallback((e: MouseEvent) => {
+    if (!isDraggingRef.current || !dragStartPositionRef.current) {
+      return;
+    }
+    // Store latest mouse event - RAF loop will process it
+    latestMouseEventRef.current = e;
+    
+    // Start RAF loop if not already running
+    if (rafIdRef.current === null) {
+      const processFrame = () => {
+        if (!isDraggingRef.current || !latestMouseEventRef.current) {
+          rafIdRef.current = null;
+          return;
+        }
+        
+        // Process with latest mouse event
+        const event = latestMouseEventRef.current;
+        latestMouseEventRef.current = null; // Clear after processing
+        
+        handleMouseMoveFrame(event);
+        
+        // Continue RAF loop during drag
+        rafIdRef.current = requestAnimationFrame(processFrame);
+      };
+      rafIdRef.current = requestAnimationFrame(processFrame);
+    }
+  }, [handleMouseMoveFrame]);
 
   // Set up global mouse event listeners for dragging
   useEffect(() => {
@@ -3943,6 +3985,8 @@ export default function GlobalTimelineMinimap({
     }
     
     const handleMouseUpGlobal = () => {
+      // Update ref immediately for synchronous access
+      isDraggingRef.current = false;
       setIsDragging(false);
       setHorizontalLocked(false);
       setRadialDial(null);
@@ -3960,6 +4004,13 @@ export default function GlobalTimelineMinimap({
       lastBlipDateRef.current = null; // Reset blip tracking when dragging ends
       currentDragTargetDateRef.current = null; // Reset drag target tracking
       
+      // Stop RAF loop
+      if (rafIdRef.current !== null) {
+        cancelAnimationFrame(rafIdRef.current);
+        rafIdRef.current = null;
+      }
+      latestMouseEventRef.current = null;
+      
       // Stop slider noise when dragging ends
       if (sliderNoiseRef.current) {
         sliderNoiseRef.current.stop();
@@ -3972,19 +4023,26 @@ export default function GlobalTimelineMinimap({
       // Timeline range remains locked - it only updates when viewMode changes
     };
 
-    // RESPONSIVE: Use throttled handler for smooth, immediate visual feedback
-    window.addEventListener('mousemove', handleMouseMoveThrottled, { passive: true });
+    // HIGH-PERFORMANCE: Use direct handler with RAF loop for maximum frame rate
+    window.addEventListener('mousemove', handleMouseMove, { passive: true });
     window.addEventListener('mouseup', handleMouseUpGlobal);
     document.body.style.cursor = 'grabbing';
     document.body.style.userSelect = 'none';
     
     return () => {
-      window.removeEventListener('mousemove', handleMouseMoveThrottled);
+      window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('mouseup', handleMouseUpGlobal);
       document.body.style.cursor = '';
       document.body.style.userSelect = '';
+      
+      // Clean up RAF loop if still running
+      if (rafIdRef.current !== null) {
+        cancelAnimationFrame(rafIdRef.current);
+        rafIdRef.current = null;
+      }
+      latestMouseEventRef.current = null;
     };
-  }, [isDragging, handleMouseMoveThrottled]); // Include throttled handler in deps
+  }, [isDragging, handleMouseMove]); // Include handler in deps
 
   // Get context-aware labels for radial dial
   const getRadialDialLabels = () => {

@@ -20,6 +20,7 @@ export default defineConfig({
         'profile-selector': path.resolve(__dirname, 'profile-selector.html'),
         'import-progress': path.resolve(__dirname, 'import-progress.html'),
         'startup-loading': path.resolve(__dirname, 'startup-loading.html'),
+        'archive-export': path.resolve(__dirname, 'archive-export.html'),
       },
     },
   },
