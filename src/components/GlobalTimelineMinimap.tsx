@@ -4147,7 +4147,9 @@ export default function GlobalTimelineMinimap({
     
     // Detect ALL date changes, even if we skip some updates due to throttling
     // If the date changed, play blip immediately (don't wait for throttle)
-    if (!lastBlipDateDay || clampedDateDay.getTime() !== lastBlipDateDay.getTime()) {
+    const dateChanged = !lastBlipDateDay || clampedDateDay.getTime() !== lastBlipDateDay.getTime();
+    
+    if (dateChanged) {
       // Date has changed - play tier-aware micro blip immediately
       // Try to resume audio context if suspended, but don't wait - play blip anyway
       const audioContext = getAudioContext();
@@ -4168,11 +4170,15 @@ export default function GlobalTimelineMinimap({
       
       // Store normalized date (day level only) for accurate comparison
       lastBlipDateRef.current = new Date(clampedDateDay);
+      
+      // PERFECT SYNC: Update visual immediately in the same frame as audio blip
+      // This ensures every blip has a corresponding visual frame for perfect synchronization
+      currentOnTimePeriodSelect(clampedDate, currentViewMode);
+    } else {
+      // Date hasn't changed, but still update visual smoothly for frame-by-frame movement
+      // This ensures smooth animation even when date hasn't changed yet
+      currentOnTimePeriodSelect(clampedDate, currentViewMode);
     }
-    
-    // HIGH-PERFORMANCE: Call directly for maximum frame rate
-    // RAF loop ensures we update on every frame for smooth high refresh rate experience
-    currentOnTimePeriodSelect(clampedDate, currentViewMode);
     
     lastUpdateTimeRef.current = now;
   }, []); // Empty deps - all values accessed via refs

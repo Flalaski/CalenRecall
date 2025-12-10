@@ -776,6 +776,8 @@ function App() {
   // Default: 16ms (approximately 1 frame at 60fps)
   // Lower values = faster response, Higher values = more batching/smoother
   const INDICATOR_MOVEMENT_DELAY = 16; // ms - you can adjust this value
+  const lastUpdateTimeRef = useRef<number>(0); // Track time between updates to detect dragging
+  const rapidUpdateThreshold = 50; // ms - if updates come faster than this, we're dragging
 
   // Debounced date change handler for smooth navigation
   const handleDateChange = useCallback((date: Date) => {
@@ -812,6 +814,12 @@ function App() {
     pendingDateRef.current = date;
     pendingViewModeRef.current = newViewMode;
     
+    // Detect if this is a rapid update (drag operation)
+    const now = Date.now();
+    const timeSinceLastUpdate = now - lastUpdateTimeRef.current;
+    const isRapidUpdate = timeSinceLastUpdate < rapidUpdateThreshold;
+    lastUpdateTimeRef.current = now;
+    
     // Clear any existing timeout/RAF
     if (navigationTimeoutRef.current) {
       clearTimeout(navigationTimeoutRef.current);
@@ -822,11 +830,11 @@ function App() {
       rafIdRef.current = null;
     }
     
-    // Use requestAnimationFrame for smooth updates, with a configurable debounce
-    rafIdRef.current = requestAnimationFrame(() => {
-      // Configurable debounce to batch rapid navigation
-      // INDICATOR_MOVEMENT_DELAY controls how quickly the indicator responds
-      navigationTimeoutRef.current = setTimeout(() => {
+    // For rapid updates (dragging), update immediately for perfect frame sync with audio blips
+    // For normal updates, use debounce for batching
+    if (isRapidUpdate) {
+      // Immediate update via RAF for smooth frame-aligned rendering
+      rafIdRef.current = requestAnimationFrame(() => {
         if (pendingDateRef.current && pendingViewModeRef.current) {
           setViewMode(pendingViewModeRef.current);
           setSelectedDate(pendingDateRef.current);
@@ -835,10 +843,25 @@ function App() {
           pendingDateRef.current = null;
           pendingViewModeRef.current = null;
         }
-        navigationTimeoutRef.current = null;
         rafIdRef.current = null;
-      }, INDICATOR_MOVEMENT_DELAY);
-    });
+      });
+    } else {
+      // Normal update with debounce for batching
+      rafIdRef.current = requestAnimationFrame(() => {
+        navigationTimeoutRef.current = setTimeout(() => {
+          if (pendingDateRef.current && pendingViewModeRef.current) {
+            setViewMode(pendingViewModeRef.current);
+            setSelectedDate(pendingDateRef.current);
+            setIsEditing(false);
+            setIsNewEntry(false);
+            pendingDateRef.current = null;
+            pendingViewModeRef.current = null;
+          }
+          navigationTimeoutRef.current = null;
+          rafIdRef.current = null;
+        }, INDICATOR_MOVEMENT_DELAY);
+      });
+    }
   }, []);
 
   const handleViewModeChange = (mode: TimeRange) => {
