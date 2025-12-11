@@ -11,12 +11,13 @@ import LoadingScreen from './components/LoadingScreen';
 import BackgroundArt from './components/BackgroundArt';
 import { TimeRange, JournalEntry, Preferences, ExportFormat, ExportMetadata } from './types';
 import { getEntryForDate } from './services/journalService';
-import { playNewEntrySound, initializeSoundEffectsCache, updateSoundEffectsCache } from './utils/audioUtils';
-import { formatDateToISO, parseISODate } from './utils/dateUtils';
+import { playNewEntrySound, initializeSoundEffectsCache, updateSoundEffectsCache, playNavigationJourneySound, playModeSelectionSound } from './utils/audioUtils';
+import { formatDateToISO, parseISODate, createDate } from './utils/dateUtils';
 import { applyTheme, initializeTheme, applyFontSize } from './utils/themes';
 import { useEntries } from './contexts/EntriesContext';
 import { useCalendar } from './contexts/CalendarContext';
 import { initializeWindowStateTracker } from './utils/windowStateTracker';
+import { differenceInDays, differenceInYears, differenceInMonths, addDays, addWeeks, addMonths, addYears } from 'date-fns';
 import './App.css';
 
 function App() {
@@ -917,6 +918,316 @@ function App() {
     setIsNewEntry(false);
   };
 
+  // Ref to track if entry navigation is in progress
+  const isEntryNavigatingRef = useRef(false);
+  const entryNavigationTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  
+  // Navigate to entry with animated steps, similar to navigation bar
+  const navigateToEntryWithSteps = useCallback((entry: JournalEntry) => {
+    // Prevent multiple simultaneous navigations
+    if (isEntryNavigatingRef.current) {
+      return;
+    }
+    
+    isEntryNavigatingRef.current = true;
+    
+    const targetDate = parseISODate(entry.date);
+    const targetViewMode = entry.timeRange;
+    const startDate = new Date(selectedDate);
+    const timeDiff = Math.abs(differenceInDays(startDate, targetDate));
+    const isFuture = targetDate > startDate;
+    
+    // For very large jumps (more than 1000 years), jump to within 1000 years first
+    const MAX_ANIMATED_DAYS = 365000; // ~1000 years
+    let actualStartDate = new Date(startDate);
+    
+    if (timeDiff > MAX_ANIMATED_DAYS) {
+      const yearsDiff = differenceInYears(targetDate, startDate);
+      const yearsToJump = isFuture 
+        ? yearsDiff - 1000
+        : yearsDiff + 1000;
+      
+      actualStartDate = addYears(startDate, yearsToJump);
+      actualStartDate = createDate(actualStartDate.getFullYear(), 0, 1);
+      
+      // Jump immediately to the jump point
+      setSelectedDate(actualStartDate);
+    }
+    
+    interface NavigationStep {
+      date: Date;
+      viewMode: TimeRange;
+    }
+    
+    interface Checkpoint {
+      date: Date;
+      viewMode: TimeRange;
+      distance: number;
+    }
+    
+    // Create checkpoints at regular intervals
+    const createCheckpoints = (start: Date, target: Date, isFuture: boolean): Checkpoint[] => {
+      const checkpoints: Checkpoint[] = [];
+      const totalDays = Math.abs(differenceInDays(start, target));
+      
+      let checkpointInterval: number;
+      let viewModeForCheckpoints: TimeRange;
+      
+      if (totalDays > 365000) {
+        checkpointInterval = 182500;
+        viewModeForCheckpoints = 'decade';
+      } else if (totalDays > 36500) {
+        checkpointInterval = 18250;
+        viewModeForCheckpoints = 'decade';
+      } else if (totalDays > 3650) {
+        checkpointInterval = 1825;
+        viewModeForCheckpoints = 'year';
+      } else if (totalDays > 365) {
+        checkpointInterval = 90;
+        viewModeForCheckpoints = 'month';
+      } else if (totalDays > 30) {
+        checkpointInterval = 14;
+        viewModeForCheckpoints = 'week';
+      } else {
+        checkpointInterval = 7;
+        viewModeForCheckpoints = 'day';
+      }
+      
+      let currentCheckpointDate = new Date(start);
+      let distance = 0;
+      
+      while (distance < totalDays) {
+        checkpoints.push({
+          date: new Date(currentCheckpointDate),
+          viewMode: viewModeForCheckpoints,
+          distance: distance
+        });
+        
+        if (isFuture) {
+          currentCheckpointDate = addDays(currentCheckpointDate, checkpointInterval);
+        } else {
+          currentCheckpointDate = addDays(currentCheckpointDate, -checkpointInterval);
+        }
+        distance += checkpointInterval;
+      }
+      
+      // Always add final target as last checkpoint
+      checkpoints.push({
+        date: new Date(target),
+        viewMode: targetViewMode,
+        distance: totalDays
+      });
+      
+      return checkpoints;
+    };
+    
+    const checkpoints = createCheckpoints(actualStartDate, targetDate, isFuture);
+    let checkpointIndex = 0;
+    let currentViewMode = viewMode;
+    let animatedCurrentDate = new Date(actualStartDate);
+    const totalJourneyDays = Math.abs(differenceInDays(actualStartDate, targetDate));
+    
+    let timeoutId: NodeJS.Timeout | null = null;
+    
+    const easeOutCubic = (t: number): number => {
+      return 1 - Math.pow(1 - t, 3);
+    };
+    
+    const bellCurveMultiplier = (progress: number): number => {
+      const sigma = 0.25;
+      const center = 0.5;
+      const exponent = -Math.pow((progress - center) / sigma, 2) / 2;
+      const bellValue = Math.exp(exponent);
+      return 0.1 + (bellValue * 0.9);
+    };
+    
+    const calculateStepsToCheckpoint = (
+      from: Date,
+      to: Date,
+      targetViewMode: TimeRange,
+      overallProgress: number
+    ): NavigationStep[] => {
+      const steps: NavigationStep[] = [];
+      let current = new Date(from);
+      const daysToCheckpoint = Math.abs(differenceInDays(current, to));
+      const bellMultiplier = bellCurveMultiplier(overallProgress);
+      
+      if (daysToCheckpoint > 365) {
+        const yearsToCheckpoint = Math.abs(differenceInYears(to, current));
+        const baseStepSize = Math.max(1, Math.floor(yearsToCheckpoint / 22));
+        const dynamicStepSize = Math.max(1, Math.floor(baseStepSize * (1 + bellMultiplier * 9)));
+        
+        while (Math.abs(differenceInYears(current, to)) > dynamicStepSize) {
+          if (isFuture) {
+            current = addYears(current, dynamicStepSize);
+          } else {
+            current = addYears(current, -dynamicStepSize);
+          }
+          steps.push({ date: new Date(current), viewMode: 'year' });
+        }
+      } else if (daysToCheckpoint > 30) {
+        const monthsToCheckpoint = Math.abs(differenceInMonths(to, current));
+        const baseStepSize = Math.max(1, Math.floor(monthsToCheckpoint / 22));
+        const dynamicStepSize = Math.max(1, Math.floor(baseStepSize * (1 + bellMultiplier * 7)));
+        
+        while (Math.abs(differenceInMonths(current, to)) > dynamicStepSize) {
+          if (isFuture) {
+            current = addMonths(current, dynamicStepSize);
+          } else {
+            current = addMonths(current, -dynamicStepSize);
+          }
+          steps.push({ date: new Date(current), viewMode: 'month' });
+        }
+      } else if (daysToCheckpoint > 7) {
+        const weeksToCheckpoint = Math.floor(daysToCheckpoint / 7);
+        const baseStepSize = Math.max(1, Math.floor(weeksToCheckpoint / 22));
+        const dynamicStepSize = Math.max(1, Math.floor(baseStepSize * (1 + bellMultiplier * 4)));
+        
+        let weeksStepped = 0;
+        while (weeksStepped < weeksToCheckpoint) {
+          const stepSize = Math.min(dynamicStepSize, weeksToCheckpoint - weeksStepped);
+          if (isFuture) {
+            current = addWeeks(current, stepSize);
+          } else {
+            current = addWeeks(current, -stepSize);
+          }
+          steps.push({ date: new Date(current), viewMode: 'week' });
+          weeksStepped += stepSize;
+        }
+      } else {
+        const baseStepSize = 1;
+        const dynamicStepSize = Math.max(1, Math.floor(baseStepSize * (1 + bellMultiplier * 2)));
+        
+        let daysStepped = 0;
+        while (daysStepped < daysToCheckpoint) {
+          const stepSize = Math.min(dynamicStepSize, daysToCheckpoint - daysStepped);
+          if (isFuture) {
+            current = addDays(current, stepSize);
+          } else {
+            current = addDays(current, -stepSize);
+          }
+          steps.push({ date: new Date(current), viewMode: 'day' });
+          daysStepped += stepSize;
+        }
+      }
+      
+      // Add final checkpoint step
+      steps.push({ date: new Date(to), viewMode: targetViewMode });
+      
+      return steps;
+    };
+    
+    let currentSegmentSteps: NavigationStep[] = [];
+    let segmentStepIndex = 0;
+    
+    const executeStep = () => {
+      try {
+        // If we've completed all checkpoints, finish and select entry
+        if (checkpointIndex >= checkpoints.length) {
+          // Final step - ensure we're at target with correct view mode
+          if (currentViewMode !== targetViewMode) {
+            playModeSelectionSound();
+            setViewMode(targetViewMode);
+          }
+          setSelectedDate(targetDate);
+          
+          // Select the entry after navigation completes
+          setTimeout(() => {
+            setSelectedEntry(entry);
+            setIsNewEntry(false);
+            setIsEditing(false);
+            isEntryNavigatingRef.current = false;
+          }, 50);
+          return;
+        }
+        
+        // If we've completed current segment, calculate next segment
+        if (segmentStepIndex >= currentSegmentSteps.length) {
+          const nextCheckpoint = checkpoints[checkpointIndex];
+          
+          if (!nextCheckpoint) {
+            setSelectedDate(targetDate);
+            checkpointIndex = checkpoints.length;
+            timeoutId = setTimeout(executeStep, 0);
+            return;
+          }
+          
+          const daysTraveled = Math.abs(differenceInDays(actualStartDate, animatedCurrentDate));
+          const overallProgress = Math.min(1, daysTraveled / totalJourneyDays);
+          
+          currentSegmentSteps = calculateStepsToCheckpoint(
+            animatedCurrentDate,
+            nextCheckpoint.date,
+            nextCheckpoint.viewMode,
+            overallProgress
+          );
+          segmentStepIndex = 0;
+          checkpointIndex++;
+        }
+        
+        // Execute current step
+        const step = currentSegmentSteps[segmentStepIndex];
+        segmentStepIndex++;
+        animatedCurrentDate = new Date(step.date);
+        
+        const totalProgress = checkpointIndex / checkpoints.length;
+        
+        // Play sound
+        playNavigationJourneySound(step.viewMode);
+        
+        // Update view mode if it changed
+        if (step.viewMode !== currentViewMode) {
+          if (step.viewMode === 'day') {
+            playModeSelectionSound();
+          }
+          setViewMode(step.viewMode);
+          currentViewMode = step.viewMode;
+        }
+        
+        // Update date
+        setSelectedDate(step.date);
+        
+        // Calculate dynamic delay
+        const baseDelays: Record<TimeRange, number> = {
+          decade: 12,
+          year: 10,
+          month: 6,
+          week: 4,
+          day: 2
+        };
+        
+        const baseDelay = baseDelays[step.viewMode] || 6;
+        const momentumFactor = 1 + (1 - easeOutCubic(totalProgress)) * 1.5;
+        const delay = Math.max(1, baseDelay / momentumFactor);
+        
+        // Continue animation
+        timeoutId = setTimeout(executeStep, delay);
+      } catch (error) {
+        console.error('Error during entry navigation:', error);
+        isEntryNavigatingRef.current = false;
+        if (timeoutId) {
+          clearTimeout(timeoutId);
+          timeoutId = null;
+        }
+      }
+    };
+    
+    // Initialize first segment
+    if (checkpoints.length > 0) {
+      const firstCheckpoint = checkpoints[0];
+      currentSegmentSteps = calculateStepsToCheckpoint(
+        actualStartDate,
+        firstCheckpoint.date,
+        firstCheckpoint.viewMode,
+        0
+      );
+      checkpointIndex = 1;
+    }
+    
+    // Start animation
+    executeStep();
+  }, [selectedDate, viewMode]);
+  
   const handleEntrySelect = (entry: JournalEntry) => {
     // Prevent navigation if there are unsaved changes
     if (hasUnsavedChanges) {
@@ -924,17 +1235,17 @@ function App() {
       return;
     }
     
-    hasUserInteractedRef.current = true; // Mark that user has interacted
-    // Mark that we're selecting an entry to prevent loadCurrentEntry from overwriting it
+    hasUserInteractedRef.current = true;
     isSelectingEntryRef.current = true;
-    // Navigate to the entry's date and time range, then select the entry
-    // Parse date string to avoid timezone issues (YYYY-MM-DD or -YYYY-MM-DD format)
-    const entryDate = parseISODate(entry.date);
-    setSelectedDate(entryDate);
-    setViewMode(entry.timeRange);
-    setSelectedEntry(entry);
-    setIsNewEntry(false);
-    setIsEditing(false);
+    
+    // Clear any existing navigation
+    if (entryNavigationTimeoutRef.current) {
+      clearTimeout(entryNavigationTimeoutRef.current);
+      entryNavigationTimeoutRef.current = null;
+    }
+    
+    // Navigate with animated steps
+    navigateToEntryWithSteps(entry);
   };
 
   const handleNewEntry = () => {

@@ -5867,12 +5867,13 @@ export default function GlobalTimelineMinimap({
                 // Play unique procedurally generated crystal click sound
                 playCrystalClickSound(entry);
                 
-                // Navigate to the entry
+                // Navigate to the entry using the same optimized approach as navigation bar
+                // onEntrySelect now uses batching/debouncing like handleTimePeriodSelect
                 if (onEntrySelect) {
-                  // Use entry selection which handles navigation internally
+                  // Use entry selection which handles navigation internally with batching
                   onEntrySelect(entry);
                 } else {
-                  // Only navigate if we're not already at this date/viewMode
+                  // Fallback: Only navigate if we're not already at this date/viewMode
                   if (!isSameDate || !isSameViewMode) {
                     onTimePeriodSelect(entryDate, entry.timeRange);
                   }
