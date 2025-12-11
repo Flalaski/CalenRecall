@@ -487,6 +487,7 @@ export default function GlobalTimelineMinimap({
   // This prevents automatic recentering during dragging or navigation
   const timelineRangeRef = useRef<{ startDate: Date; endDate: Date; viewMode: TimeRange } | null>(null);
   const isInitialLoadRef = useRef(true);
+  const lastRecenterPositionRef = useRef<number | null>(null);
   
   // Calculate timeline range - only recalculate when viewMode changes or on initial load
   const calculateTimelineRange = (date: Date, mode: TimeRange) => {
@@ -850,6 +851,33 @@ export default function GlobalTimelineMinimap({
       setTimelineRangeKey(prev => prev + 1);
     }
   }, [currentIndicatorMetrics.position]);
+
+  // Recenter view when indicator reaches 33% from edges (at 33% or 67% position)
+  useEffect(() => {
+    const position = currentIndicatorMetrics.position;
+    const EDGE_THRESHOLD = 11; // Trigger recentering at 33% from each edge
+    
+    // Check if position is at or beyond the edge thresholds (33% from left, 67% from right)
+    const isInEdgeZone = position <= EDGE_THRESHOLD || position >= (100 - EDGE_THRESHOLD);
+    
+    // Only trigger recenter if we're in the edge zone and haven't already recentered for this position
+    // This prevents infinite loops and repeated recalculations
+    if (isInEdgeZone && lastRecenterPositionRef.current !== position) {
+      // Trigger timeline range recalculation to recenter the view
+      // This will cause the timeline range to be recalculated with selectedDate as the center
+      const range = calculateTimelineRange(selectedDate, viewMode);
+      timelineRangeRef.current = {
+        ...range,
+        viewMode,
+      };
+      lastRecenterPositionRef.current = position;
+      // Increment key to trigger entry reloading when range changes
+      setTimelineRangeKey(prev => prev + 1);
+    } else if (!isInEdgeZone) {
+      // Reset the ref when we're no longer in the edge zone, so we can recenter again if needed
+      lastRecenterPositionRef.current = null;
+    }
+  }, [currentIndicatorMetrics.position, selectedDate, viewMode, weekStartsOn]);
 
   // Get color for current view mode
   const getViewModeColor = (mode: TimeRange): string => {
