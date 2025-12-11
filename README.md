@@ -4,7 +4,7 @@
 
 # CalenRecall
 
-A self-contained calendar journal application for Windows that helps you recall memories across decades, years, months, weeks, and days. All your journaling history is stored locally on your device.
+A self-contained calendar journal application for Windows and macOS that helps you recall memories across decades, years, months, weeks, and days. All your journaling history is stored locally on your device.
 
 ## Features
 
@@ -163,8 +163,10 @@ CalenRecall includes **37 built-in themes** to customize your journaling experie
 
 - **Node.js** (v18 or higher)
 - **npm** or **yarn**
-- **Python** (for building native modules like better-sqlite3 on Windows)
-- **Visual Studio Build Tools** (for Windows native module compilation)
+- **Python** (for building native modules like better-sqlite3)
+- **Build Tools**:
+  - **Windows**: Visual Studio Build Tools (for native module compilation)
+  - **macOS**: Xcode Command Line Tools (usually pre-installed)
 
 ### Setup
 
@@ -173,9 +175,9 @@ CalenRecall includes **37 built-in themes** to customize your journaling experie
 npm install
 ```
 
-**Note**: On Windows, you may need to install build tools for native modules:
-- Install [Windows Build Tools](https://github.com/felixrieseberg/windows-build-tools) or
-- Install [Visual Studio Build Tools](https://visualstudio.microsoft.com/downloads/#build-tools-for-visual-studio-2022)
+**Note**: You may need to install build tools for native modules:
+- **Windows**: Install [Windows Build Tools](https://github.com/felixrieseberg/windows-build-tools) or [Visual Studio Build Tools](https://visualstudio.microsoft.com/downloads/#build-tools-for-visual-studio-2022)
+- **macOS**: Install Xcode Command Line Tools: `xcode-select --install`
 
 2. **Run in development mode:**
 ```bash
@@ -238,7 +240,56 @@ Simply double-click the batch file or run it from the command line. The batch fi
 3. Create the distribution files
 4. Open the `release` folder when complete
 
-All builds are created in the `release` directory, and the folder will automatically open in Windows Explorer when the build completes. The applications are self-contained and don't require any additional dependencies.
+**Create a macOS distribution:**
+
+**Option 1: DMG Installer - Recommended for distribution**
+```bash
+npm run dist:mac:dmg
+```
+This creates a DMG file that users can mount and drag the app to Applications.
+
+**Option 2: ZIP Archive**
+```bash
+npm run dist:mac:zip
+```
+This creates a ZIP file containing the .app bundle.
+
+**Option 3: Both DMG and ZIP**
+```bash
+npm run dist:mac
+```
+
+**Option 4: Universal Binary (Intel + Apple Silicon)**
+```bash
+npm run dist:mac:universal
+```
+This creates a universal binary that runs on both Intel and Apple Silicon Macs.
+
+**Using Shell Scripts (macOS):**
+
+For convenience, you can also use the provided shell scripts:
+
+- `build-release.sh` - Builds DMG installer only
+- `build-installer.sh` - Builds DMG installer only
+- `build-all.sh` - Builds both DMG and ZIP
+
+Simply run the script from the terminal:
+```bash
+chmod +x build-release.sh build-installer.sh build-all.sh
+./build-all.sh
+```
+
+The shell scripts will:
+1. Check and install dependencies if needed
+2. Build the application
+3. Create the distribution files
+4. Open the `release` folder when complete
+
+**macOS Build Notes:**
+
+For information about macOS-specific build fixes and troubleshooting, see [MACOS_BUILD_FIXES.md](MACOS_BUILD_FIXES.md).
+
+All builds are created in the `release` directory, and the folder will automatically open when the build completes. The applications are self-contained and don't require any additional dependencies.
 
 ### Version Management
 
@@ -614,10 +665,22 @@ For a comprehensive list of use cases, see [USE_CASES_ANALYSIS.md](USE_CASES_ANA
 
 If you encounter issues building native modules (like `better-sqlite3`):
 
+**Windows:**
 1. **Ensure Python is installed** and accessible in your PATH
 2. **Install Visual Studio Build Tools** with C++ workload:
    - Download from [Visual Studio Build Tools](https://visualstudio.microsoft.com/downloads/#build-tools-for-visual-studio-2022)
    - Install "Desktop development with C++" workload
+3. **Rebuild native modules:**
+   ```bash
+   npm run rebuild
+   ```
+
+**macOS:**
+1. **Ensure Xcode Command Line Tools are installed:**
+   ```bash
+   xcode-select --install
+   ```
+2. **If you encounter permission or path issues**, see [MACOS_BUILD_FIXES.md](MACOS_BUILD_FIXES.md) for detailed troubleshooting
 3. **Rebuild native modules:**
    ```bash
    npm run rebuild
