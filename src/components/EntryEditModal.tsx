@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { JournalEntry, TimeRange, Preferences } from '../types';
 import { formatDate, getCanonicalDate, formatTime } from '../utils/dateUtils';
 import { saveJournalEntry, deleteJournalEntry } from '../services/journalService';
@@ -30,6 +30,10 @@ export default function EntryEditModal({
   const [amPm, setAmPm] = useState<'AM' | 'PM'>('AM');
   const [saving, setSaving] = useState(false);
   const [preferences, setPreferences] = useState<Preferences>({});
+  
+  // Track mouse down position to prevent closing during text selection
+  const mouseDownTargetRef = useRef<EventTarget | null>(null);
+  const modalContentRef = useRef<HTMLDivElement | null>(null);
 
   const getDisplayHour = (hour24: number | undefined | null): number | undefined => {
     if (hour24 === undefined || hour24 === null) return undefined;
@@ -122,6 +126,44 @@ export default function EntryEditModal({
     window.addEventListener('keydown', handleEscape);
     return () => window.removeEventListener('keydown', handleEscape);
   }, [isOpen, onClose]);
+
+  // Reset mouse down tracking when modal closes
+  useEffect(() => {
+    if (!isOpen) {
+      mouseDownTargetRef.current = null;
+    }
+  }, [isOpen]);
+
+  // Handle overlay click - only close if it was an intentional click (not text selection)
+  const handleOverlayMouseDown = (e: React.MouseEvent) => {
+    // Track that mousedown happened on the overlay (only if it's the overlay itself, not a child)
+    if (e.target === e.currentTarget) {
+      mouseDownTargetRef.current = e.currentTarget;
+    }
+  };
+
+  const handleOverlayClick = (e: React.MouseEvent) => {
+    // Only close if:
+    // 1. The click target is the overlay itself (not a child)
+    // 2. There's no text selection (user wasn't selecting text)
+    // 3. The mousedown also happened on the overlay (not a drag from inside the modal)
+    const hasSelection = window.getSelection()?.toString().length > 0;
+    const clickedOverlay = e.target === e.currentTarget;
+    const mousedownOnOverlay = mouseDownTargetRef.current === e.currentTarget;
+    
+    // Don't close if user was selecting text or if mousedown happened inside modal
+    if (clickedOverlay && mousedownOnOverlay && !hasSelection) {
+      onClose();
+    }
+  };
+
+  const handleModalContentMouseDown = (e: React.MouseEvent) => {
+    // Track that mousedown happened inside the modal content
+    // This prevents closing if user drags from inside to outside
+    mouseDownTargetRef.current = e.target;
+    // Stop propagation to prevent overlay from handling it
+    e.stopPropagation();
+  };
 
   const handleSave = async () => {
     // VERBOSE LOGGING - Always show when save is triggered
@@ -435,8 +477,17 @@ export default function EntryEditModal({
   if (!isOpen) return null;
 
   return (
-    <div className="entry-edit-modal-overlay" onClick={onClose}>
-      <div className="entry-edit-modal" onClick={(e) => e.stopPropagation()}>
+    <div 
+      className="entry-edit-modal-overlay" 
+      onMouseDown={handleOverlayMouseDown}
+      onClick={handleOverlayClick}
+    >
+      <div 
+        className="entry-edit-modal" 
+        ref={modalContentRef}
+        onMouseDown={handleModalContentMouseDown}
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="modal-header">
           <div className="modal-header-top">
             <h3>Edit Entry</h3>
