@@ -967,7 +967,7 @@ export function playNavigationJourneySound(tier: 'decade' | 'year' | 'month' | '
   }
 }
 
-// Mode selection sound - for view mode buttons
+// Mode selection sound - for view mode buttons (generic, kept for backward compatibility)
 export function playModeSelectionSound(): void {
   if (!areSoundEffectsEnabled()) return;
   const audioContext = getAudioContext();
@@ -998,6 +998,142 @@ export function playModeSelectionSound(): void {
     oscillator.stop(now + 0.15);
   } catch (error) {
     console.debug('Mode selection sound error:', error);
+  }
+}
+
+// Tier-specific mode selection sound - unique sound for each time tier
+// Creates distinct selection sounds that reflect the temporal scale of each tier
+export function playTierSelectionSound(tier: 'decade' | 'year' | 'month' | 'week' | 'day'): void {
+  if (!areSoundEffectsEnabled()) return;
+  const audioContext = getAudioContext();
+  if (!audioContext) return;
+  
+  if (audioContext.state === 'closed') return;
+  
+  try {
+    const now = audioContext.currentTime;
+    
+    // Each tier has a distinct selection sound profile
+    // Larger time periods = deeper, more resonant selection sounds
+    // Smaller time periods = brighter, more precise selection sounds
+    switch (tier) {
+      case 'decade': {
+        // Deep, resonant selection - vast temporal scale activation
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+        
+        oscillator.type = 'sine';
+        oscillator.frequency.setValueAtTime(150, now);
+        oscillator.frequency.linearRampToValueAtTime(220, now + 0.08);
+        oscillator.frequency.linearRampToValueAtTime(180, now + 0.16);
+        
+        gainNode.gain.setValueAtTime(0, now);
+        gainNode.gain.linearRampToValueAtTime(0.35, now + 0.01);
+        gainNode.gain.exponentialRampToValueAtTime(0.12, now + 0.12);
+        gainNode.gain.linearRampToValueAtTime(0, now + 0.2);
+        
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+        
+        oscillator.start(now);
+        oscillator.stop(now + 0.2);
+        break;
+      }
+      
+      case 'year': {
+        // Medium-low selection with resonance - substantial scale activation
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+        
+        oscillator.type = 'sine';
+        oscillator.frequency.setValueAtTime(250, now);
+        oscillator.frequency.linearRampToValueAtTime(330, now + 0.07);
+        oscillator.frequency.linearRampToValueAtTime(280, now + 0.14);
+        
+        gainNode.gain.setValueAtTime(0, now);
+        gainNode.gain.linearRampToValueAtTime(0.33, now + 0.008);
+        gainNode.gain.exponentialRampToValueAtTime(0.1, now + 0.11);
+        gainNode.gain.linearRampToValueAtTime(0, now + 0.18);
+        
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+        
+        oscillator.start(now);
+        oscillator.stop(now + 0.18);
+        break;
+      }
+      
+      case 'month': {
+        // Mid-range selection sound - moderate scale activation
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+        
+        oscillator.type = 'sine';
+        oscillator.frequency.setValueAtTime(400, now);
+        oscillator.frequency.linearRampToValueAtTime(520, now + 0.06);
+        oscillator.frequency.linearRampToValueAtTime(450, now + 0.12);
+        
+        gainNode.gain.setValueAtTime(0, now);
+        gainNode.gain.linearRampToValueAtTime(0.32, now + 0.006);
+        gainNode.gain.exponentialRampToValueAtTime(0.09, now + 0.09);
+        gainNode.gain.linearRampToValueAtTime(0, now + 0.15);
+        
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+        
+        oscillator.start(now);
+        oscillator.stop(now + 0.15);
+        break;
+      }
+      
+      case 'week': {
+        // Bright, quick selection - shorter scale activation
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+        
+        oscillator.type = 'sine';
+        oscillator.frequency.setValueAtTime(550, now);
+        oscillator.frequency.linearRampToValueAtTime(680, now + 0.05);
+        oscillator.frequency.linearRampToValueAtTime(600, now + 0.1);
+        
+        gainNode.gain.setValueAtTime(0, now);
+        gainNode.gain.linearRampToValueAtTime(0.3, now + 0.004);
+        gainNode.gain.exponentialRampToValueAtTime(0.08, now + 0.08);
+        gainNode.gain.linearRampToValueAtTime(0, now + 0.12);
+        
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+        
+        oscillator.start(now);
+        oscillator.stop(now + 0.12);
+        break;
+      }
+      
+      case 'day': {
+        // Crisp, precise selection - fine scale activation
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+        
+        oscillator.type = 'sine';
+        oscillator.frequency.setValueAtTime(700, now);
+        oscillator.frequency.linearRampToValueAtTime(850, now + 0.04);
+        oscillator.frequency.linearRampToValueAtTime(750, now + 0.08);
+        
+        gainNode.gain.setValueAtTime(0, now);
+        gainNode.gain.linearRampToValueAtTime(0.28, now + 0.003);
+        gainNode.gain.exponentialRampToValueAtTime(0.07, now + 0.06);
+        gainNode.gain.linearRampToValueAtTime(0, now + 0.1);
+        
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+        
+        oscillator.start(now);
+        oscillator.stop(now + 0.1);
+        break;
+      }
+    }
+  } catch (error) {
+    console.debug('Tier selection sound error:', error);
   }
 }
 

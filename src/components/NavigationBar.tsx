@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState, useMemo, useCallback } from 'react';
 import { TimeRange } from '../types';
 import { format, addMonths, addYears, addWeeks, addDays, differenceInDays, differenceInMonths, differenceInYears } from 'date-fns';
-import { playNavigationSound, playModeSelectionSound, playSettingsSound, playTabSound, playDateSubmitSound, playNavigationJourneySound, playTierNavigationSound, playEraSwitchSound, playNumberTypingSound } from '../utils/audioUtils';
+import { playNavigationSound, playModeSelectionSound, playSettingsSound, playTabSound, playDateSubmitSound, playNavigationJourneySound, playTierNavigationSound, playEraSwitchSound, playNumberTypingSound, playTierSelectionSound } from '../utils/audioUtils';
 import { useCalendar } from '../contexts/CalendarContext';
 import { CalendarSystem, CALENDAR_INFO } from '../utils/calendars/types';
 import { getTimeRangeLabelInCalendar } from '../utils/calendars/timeRangeConverter';
@@ -10,6 +10,7 @@ import { createDate } from '../utils/dateUtils';
 import { getDateEntryConfig } from '../utils/calendars/dateEntryConfig';
 import { calendarDateToDate } from '../utils/calendars/calendarConverter';
 import { isWindowTransitioning } from '../utils/windowStateTracker';
+import { getTierName } from '../utils/calendarTierNames';
 import './NavigationBar.css';
 
 interface NavigationBarProps {
@@ -788,7 +789,7 @@ export default function NavigationBar({
         if (checkpointIndex >= checkpoints.length) {
           // Final step - ensure we're at target with day view
           if (currentViewMode !== 'day') {
-            playModeSelectionSound();
+            playTierSelectionSound('day');
             onViewModeChange('day');
           }
           onDateChange(targetDate);
@@ -848,9 +849,7 @@ export default function NavigationBar({
         
         // Update view mode if it changed
         if (step.viewMode !== currentViewMode) {
-          if (step.viewMode === 'day') {
-            playModeSelectionSound();
-          }
+          playTierSelectionSound(step.viewMode);
           onViewModeChange(step.viewMode);
           currentViewMode = step.viewMode;
         }
@@ -1584,47 +1583,47 @@ export default function NavigationBar({
             <button
               className={`view-mode-button ${viewMode === 'decade' ? 'active' : ''}`}
               onClick={() => {
-                playModeSelectionSound();
+                playTierSelectionSound('decade');
                 onViewModeChange('decade');
               }}
             >
-              Decade
+              {getTierName(calendar, 'decade')}
             </button>
             <button
               className={`view-mode-button ${viewMode === 'year' ? 'active' : ''}`}
               onClick={() => {
-                playModeSelectionSound();
+                playTierSelectionSound('year');
                 onViewModeChange('year');
               }}
             >
-              Year
+              {getTierName(calendar, 'year')}
             </button>
             <button
               className={`view-mode-button ${viewMode === 'month' ? 'active' : ''}`}
               onClick={() => {
-                playModeSelectionSound();
+                playTierSelectionSound('month');
                 onViewModeChange('month');
               }}
             >
-              Month
+              {getTierName(calendar, 'month')}
             </button>
             <button
               className={`view-mode-button ${viewMode === 'week' ? 'active' : ''}`}
               onClick={() => {
-                playModeSelectionSound();
+                playTierSelectionSound('week');
                 onViewModeChange('week');
               }}
             >
-              Week
+              {getTierName(calendar, 'week')}
             </button>
             <button
               className={`view-mode-button ${viewMode === 'day' ? 'active' : ''}`}
               onClick={() => {
-                playModeSelectionSound();
+                playTierSelectionSound('day');
                 onViewModeChange('day');
               }}
             >
-              Day
+              {getTierName(calendar, 'day')}
             </button>
             {onOpenSearch && (
               <button
