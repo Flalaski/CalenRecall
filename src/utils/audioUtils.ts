@@ -1407,6 +1407,219 @@ export function playEntrySelectionSound(): void {
   }
 }
 
+// Numerological reduction helper (same as in GlobalTimelineMinimap)
+function numerologicalReduce(num: number): number {
+  while (num > 9) {
+    num = num.toString().split('').reduce((sum, digit) => sum + parseInt(digit, 10), 0);
+  }
+  return num;
+}
+
+// Procedurally generate unique crystal click sound based on entry properties
+// Uses the same numerological calculations as crystal generation for consistency
+export function playCrystalClickSound(entry: { 
+  date: string; 
+  timeRange: 'decade' | 'year' | 'month' | 'week' | 'day';
+  title?: string;
+  content?: string;
+  id?: number | string;
+}): void {
+  if (!areSoundEffectsEnabled()) return;
+  const audioContext = getAudioContext();
+  if (!audioContext) return;
+  
+  if (audioContext.state === 'closed') return;
+  
+  try {
+    const now = audioContext.currentTime;
+    
+    // Calculate numerological values (same logic as calculateCrystalSides)
+    const titleNumbers = (entry.title || '').match(/\d+/g) || [];
+    const contentNumbers = (entry.content || '').match(/\d+/g) || [];
+    
+    let numberSum = 0;
+    titleNumbers.forEach(numStr => {
+      numberSum += parseInt(numStr, 10);
+    });
+    contentNumbers.forEach(numStr => {
+      numberSum += parseInt(numStr, 10);
+    });
+    
+    // Calculate numerological value from text
+    let textValue = 0;
+    const allText = (entry.title || '') + (entry.content || '');
+    for (let i = 0; i < allText.length; i++) {
+      const charCode = allText.charCodeAt(i);
+      textValue += charCode * (i % 5 + 1);
+    }
+    
+    // Extract numbers from date
+    const dateParts = entry.date.split('-');
+    const yearValue = parseInt(dateParts[0] || '0', 10);
+    const monthValue = parseInt(dateParts[1] || '0', 10);
+    const dayValue = parseInt(dateParts[2] || '0', 10);
+    
+    // Calculate numerological values
+    const yearNumerological = numerologicalReduce(Math.abs(yearValue));
+    const monthNumerological = numerologicalReduce(monthValue);
+    const dayNumerological = numerologicalReduce(dayValue);
+    const numberSumNumerological = numberSum > 0 ? numerologicalReduce(numberSum) : 0;
+    const textValueNumerological = numerologicalReduce(Math.abs(textValue));
+    
+    // TimeRange numerological mapping
+    const timeRangeNumerological = entry.timeRange === 'decade' ? 1 :
+                                  entry.timeRange === 'year' ? 2 :
+                                  entry.timeRange === 'month' ? 3 :
+                                  entry.timeRange === 'week' ? 4 : 5;
+    
+    // ID numerological (if exists)
+    const idNumerological = entry.id ? numerologicalReduce(typeof entry.id === 'number' ? entry.id : parseInt(String(entry.id), 10) || 0) : 0;
+    
+    // Combine all numerological values
+    const combinedNumerological = yearNumerological + 
+                                 monthNumerological + 
+                                 dayNumerological + 
+                                 numberSumNumerological + 
+                                 textValueNumerological + 
+                                 timeRangeNumerological + 
+                                 idNumerological;
+    
+    // Final numerological reduction
+    const finalNumerological = numerologicalReduce(combinedNumerological);
+    
+    // Calculate crystal sides (3-12)
+    const sides = finalNumerological === 0 ? 3 : 3 + finalNumerological;
+    
+    // Base frequency varies by time range (larger ranges = lower frequencies)
+    const timeRangeBaseFreqs: Record<typeof entry.timeRange, number> = {
+      decade: 200,
+      year: 300,
+      month: 450,
+      week: 600,
+      day: 750,
+    };
+    
+    // Base frequency from time range
+    let baseFreq = timeRangeBaseFreqs[entry.timeRange];
+    
+    // Modify frequency based on sides (more sides = higher pitch, like a crystal chime)
+    // Each side adds a small frequency increment
+    const sidesModifier = (sides - 3) * 25; // 0-225 Hz range
+    baseFreq += sidesModifier;
+    
+    // Add subtle variation based on individual numerological components
+    // This creates unique timbre for each crystal
+    const yearMod = (yearNumerological % 5) * 8;
+    const monthMod = (monthNumerological % 5) * 6;
+    const dayMod = (dayNumerological % 5) * 4;
+    const textMod = (textValueNumerological % 5) * 10;
+    const idMod = (idNumerological % 5) * 5;
+    
+    const uniqueModifier = yearMod + monthMod + dayMod + textMod + idMod;
+    baseFreq += uniqueModifier;
+    
+    // Clamp frequency to reasonable range (150-1200 Hz)
+    baseFreq = Math.max(150, Math.min(1200, baseFreq));
+    
+    // Create main oscillator with crystal-like timbre
+    const oscillator = audioContext.createOscillator();
+    const gainNode = audioContext.createGain();
+    
+    // Use triangle wave for crystal-like chime (more harmonic content than sine)
+    oscillator.type = 'triangle';
+    
+    // Frequency envelope: quick rise, then gentle fall (like a crystal being struck)
+    const peakFreq = baseFreq * 1.15; // Slight overshoot for impact
+    oscillator.frequency.setValueAtTime(baseFreq, now);
+    oscillator.frequency.linearRampToValueAtTime(peakFreq, now + 0.01);
+    oscillator.frequency.exponentialRampToValueAtTime(baseFreq * 0.95, now + 0.08);
+    oscillator.frequency.linearRampToValueAtTime(baseFreq * 0.9, now + 0.15);
+    
+    // Volume envelope: sharp attack, gentle decay (crystal resonance)
+    const peakVolume = 0.28 + (sides / 12) * 0.1; // Larger crystals slightly louder
+    gainNode.gain.setValueAtTime(0, now);
+    gainNode.gain.linearRampToValueAtTime(peakVolume, now + 0.002); // Sharp attack
+    gainNode.gain.exponentialRampToValueAtTime(peakVolume * 0.3, now + 0.06); // Initial decay
+    gainNode.gain.exponentialRampToValueAtTime(peakVolume * 0.08, now + 0.12); // Resonance tail
+    gainNode.gain.linearRampToValueAtTime(0, now + 0.2); // Fade out
+    
+    oscillator.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+    
+    oscillator.start(now);
+    oscillator.stop(now + 0.2);
+    
+    // Add harmonic layer for larger crystals (sides >= 6)
+    if (sides >= 6) {
+      setTimeout(() => {
+        if (!audioContext || audioContext.state === 'closed') return;
+        
+        try {
+          const now2 = audioContext.currentTime;
+          const oscillator2 = audioContext.createOscillator();
+          const gainNode2 = audioContext.createGain();
+          
+          // Harmonic at 2x frequency (octave up) for larger crystals
+          const harmonicFreq = baseFreq * 2;
+          oscillator2.type = 'sine'; // Pure sine for harmonic
+          oscillator2.frequency.setValueAtTime(harmonicFreq, now2);
+          oscillator2.frequency.exponentialRampToValueAtTime(harmonicFreq * 0.85, now2 + 0.1);
+          
+          // Quieter harmonic layer
+          const harmonicVolume = peakVolume * 0.25 * (sides / 12); // Stronger for larger crystals
+          gainNode2.gain.setValueAtTime(0, now2);
+          gainNode2.gain.linearRampToValueAtTime(harmonicVolume, now2 + 0.001);
+          gainNode2.gain.exponentialRampToValueAtTime(harmonicVolume * 0.2, now2 + 0.05);
+          gainNode2.gain.linearRampToValueAtTime(0, now2 + 0.12);
+          
+          oscillator2.connect(gainNode2);
+          gainNode2.connect(audioContext.destination);
+          
+          oscillator2.start(now2);
+          oscillator2.stop(now2 + 0.12);
+        } catch (error) {
+          console.debug('Crystal click harmonic sound error:', error);
+        }
+      }, 5);
+    }
+    
+    // Add subharmonic for decade/year entries (deeper resonance)
+    if (entry.timeRange === 'decade' || entry.timeRange === 'year') {
+      setTimeout(() => {
+        if (!audioContext || audioContext.state === 'closed') return;
+        
+        try {
+          const now3 = audioContext.currentTime;
+          const oscillator3 = audioContext.createOscillator();
+          const gainNode3 = audioContext.createGain();
+          
+          // Subharmonic at 0.5x frequency (octave down) for depth
+          const subFreq = baseFreq * 0.5;
+          oscillator3.type = 'sine';
+          oscillator3.frequency.setValueAtTime(subFreq, now3);
+          oscillator3.frequency.exponentialRampToValueAtTime(subFreq * 0.9, now3 + 0.15);
+          
+          // Very quiet subharmonic for depth
+          gainNode3.gain.setValueAtTime(0, now3);
+          gainNode3.gain.linearRampToValueAtTime(peakVolume * 0.15, now3 + 0.003);
+          gainNode3.gain.exponentialRampToValueAtTime(peakVolume * 0.05, now3 + 0.1);
+          gainNode3.gain.linearRampToValueAtTime(0, now3 + 0.18);
+          
+          oscillator3.connect(gainNode3);
+          gainNode3.connect(audioContext.destination);
+          
+          oscillator3.start(now3);
+          oscillator3.stop(now3 + 0.18);
+        } catch (error) {
+          console.debug('Crystal click subharmonic sound error:', error);
+        }
+      }, 8);
+    }
+  } catch (error) {
+    console.debug('Crystal click sound error:', error);
+  }
+}
+
 // Slider noise interface for continuous mixing board-like sound
 export interface SliderNoise {
   stop: () => void;

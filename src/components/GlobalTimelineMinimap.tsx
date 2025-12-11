@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import { TimeRange, JournalEntry } from '../types';
 import { getWeekStart, getWeekEnd, getMonthStart, getMonthEnd, getYearEnd, getDecadeEnd, getZodiacColor, getZodiacColorForDecade, getCanonicalDate, parseISODate, createDate, getYearStart, isToday } from '../utils/dateUtils';
 import { addDays, addWeeks, addMonths, addYears, getYear, getMonth, getDate } from 'date-fns';
-import { playMechanicalClick, playMicroBlip, getAudioContext, createSliderNoise, SliderNoise, createMovementFlowSound, MovementFlowSound } from '../utils/audioUtils';
+import { playMechanicalClick, playMicroBlip, getAudioContext, createSliderNoise, SliderNoise, createMovementFlowSound, MovementFlowSound, playCrystalClickSound } from '../utils/audioUtils';
 import { calculateEntryColor } from '../utils/entryColorUtils';
 import { useCalendar } from '../contexts/CalendarContext';
 import { useEntries } from '../contexts/EntriesContext';
@@ -330,6 +330,7 @@ export default function GlobalTimelineMinimap({
   const scaleChangeLockRef = useRef<boolean>(false);
   const verticalMovementAccumulatorRef = useRef<number>(0);
   const initialMovementRef = useRef<{ horizontal: number; vertical: number } | null>(null);
+  const lastCrystalClickRef = useRef<{ entryId: number | string; timestamp: number } | null>(null);
   const lastScaleChangeAccumulatorRef = useRef<number>(0); // Track accumulator value at last scale change
   const deadZoneRef = useRef<number>(0); // Dead zone threshold after scale change
   const lastBlipDateRef = useRef<Date | null>(null); // Track last date that triggered a micro blip
@@ -5810,11 +5811,62 @@ export default function GlobalTimelineMinimap({
           {visibleEntryPositions.map(({ entry, position, color, clusterIndex, clusterSize, clusterHexX, clusterCrystalSize, verticalOffset, polygonClipPath, sides }, idx) => {
             const handleClick = (e: React.MouseEvent) => {
               e.stopPropagation();
-              const entryDate = parseISODate(entry.date);
-              if (onEntrySelect) {
-                onEntrySelect(entry);
-              } else {
-                onTimePeriodSelect(entryDate, entry.timeRange);
+              
+              // Prevent rapid duplicate clicks on the same entry
+              const now = Date.now();
+              const lastClick = lastCrystalClickRef.current;
+              const entryId = entry.id ?? entry.date; // Use date as fallback if id is missing
+              if (lastClick && lastClick.entryId === entryId && (now - lastClick.timestamp) < 300) {
+                return; // Ignore rapid duplicate clicks
+              }
+              
+              try {
+                // Validate entry has required data
+                if (!entry || !entry.date || !entry.timeRange) {
+                  console.warn('[GlobalTimelineMinimap] Invalid entry data:', entry);
+                  return;
+                }
+                
+                // Parse and validate the date
+                let entryDate: Date;
+                try {
+                  entryDate = parseISODate(entry.date);
+                } catch (parseError) {
+                  console.error('[GlobalTimelineMinimap] Error parsing entry date:', entry.date, parseError);
+                  return;
+                }
+                
+                // Validate the date is valid
+                if (!entryDate || isNaN(entryDate.getTime()) || !isFinite(entryDate.getTime())) {
+                  console.error('[GlobalTimelineMinimap] Invalid date parsed from entry:', entry.date, entryDate);
+                  return;
+                }
+                
+                // Check if we're already at this date and view mode to prevent unnecessary navigation
+                // Only check when using onTimePeriodSelect (not onEntrySelect, which should always work)
+                const isSameDate = selectedDate && 
+                  entryDate.getTime() === selectedDate.getTime();
+                const isSameViewMode = entry.timeRange === viewMode;
+                
+                // Update last click tracking
+                lastCrystalClickRef.current = { entryId, timestamp: now };
+                
+                // Play unique procedurally generated crystal click sound
+                playCrystalClickSound(entry);
+                
+                // Navigate to the entry
+                if (onEntrySelect) {
+                  // Use entry selection which handles navigation internally
+                  onEntrySelect(entry);
+                } else {
+                  // Only navigate if we're not already at this date/viewMode
+                  if (!isSameDate || !isSameViewMode) {
+                    onTimePeriodSelect(entryDate, entry.timeRange);
+                  }
+                }
+              } catch (error) {
+                console.error('[GlobalTimelineMinimap] Error handling crystal click:', error, entry);
+                // Don't re-throw - just log and prevent the freeze
               }
             };
             
