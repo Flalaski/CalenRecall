@@ -13,6 +13,7 @@ import { getCalendarEpoch } from '../utils/calendars/epochUtils';
 import { jdnToDate } from '../utils/calendars/julianDayUtils';
 import { dragBehaviorTracker } from '../utils/dragBehavior/dragBehaviorTracker';
 import { getAdaptiveThresholds } from '../utils/dragBehavior/adaptiveThresholds';
+import { isWindowTransitioning } from '../utils/windowStateTracker';
 import './GlobalTimelineMinimap.css';
 
 interface GlobalTimelineMinimapProps {
@@ -365,9 +366,21 @@ export default function GlobalTimelineMinimap({
   const initialMousePositionRef = useRef<{ x: number; y: number } | null>(null); // Track actual mouse click position
 
   // Invalidate bounding rect cache on window resize
+  // Skip during window transitions to prevent flickering
   useEffect(() => {
     const handleResize = () => {
-      cachedBoundingRectRef.current = null;
+      // Skip resize handling during window transitions (maximize/fullscreen) to prevent flickering
+      if (isWindowTransitioning()) {
+        return;
+      }
+      
+      // Debounce the cache invalidation to avoid excessive updates during resize
+      if (cachedBoundingRectRef.current) {
+        // Use requestAnimationFrame to batch updates
+        requestAnimationFrame(() => {
+          cachedBoundingRectRef.current = null;
+        });
+      }
     };
     
     window.addEventListener('resize', handleResize, { passive: true });

@@ -9,6 +9,7 @@ import { CALENDAR_DESCRIPTIONS } from '../utils/calendars/calendarDescriptions';
 import { createDate } from '../utils/dateUtils';
 import { getDateEntryConfig } from '../utils/calendars/dateEntryConfig';
 import { calendarDateToDate } from '../utils/calendars/calendarConverter';
+import { isWindowTransitioning } from '../utils/windowStateTracker';
 import './NavigationBar.css';
 
 interface NavigationBarProps {
@@ -1282,6 +1283,11 @@ export default function NavigationBar({
     // Only observe the navControls container, not the date label itself
     // (The date label will trigger updates when date/viewMode/calendar changes via useEffect dependency)
     const handleResize = () => {
+      // Skip resize handling during window transitions (maximize/fullscreen) to prevent flickering
+      if (isWindowTransitioning()) {
+        return;
+      }
+      
       // Don't process if we're in cooldown or updating
       const now = Date.now();
       if (isUpdatingRef.current || now < cooldownUntilRef.current) {
@@ -1293,16 +1299,20 @@ export default function NavigationBar({
         clearTimeout(updateTimeoutRef.current);
       }
       
-      // Stronger debounce for resize events (300ms)
+      // Stronger debounce for resize events (300ms, or 1000ms during transitions)
+      const debounceDelay = isWindowTransitioning() ? 1000 : 300;
       updateTimeoutRef.current = setTimeout(() => {
-        // Double-check we're not in cooldown or updating
+        // Double-check we're not transitioning, in cooldown, or updating
+        if (isWindowTransitioning()) {
+          return;
+        }
         const checkNow = Date.now();
         if (!isUpdatingRef.current && checkNow >= cooldownUntilRef.current) {
           requestAnimationFrame(() => {
             updateFontSize();
           });
         }
-      }, 300); // Increased debounce to 300ms
+      }, debounceDelay);
     };
     
     const resizeObserver = new ResizeObserver(handleResize);
