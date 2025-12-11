@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo, useCallback } from 'react';
+import { useEffect, useState, useMemo, useCallback, useRef } from 'react';
 import { useEntries } from '../contexts/EntriesContext';
 import { JournalEntry } from '../types';
 import { calculateEntryColor } from '../utils/entryColorUtils';
@@ -35,6 +35,10 @@ const LOADING_SCREEN_CONSTANTS = {
   SINGULARITY_CENTER: { x: 250, y: 200 }, // Center singularity point representing present moment
   TEMPORAL_DISTANCE_SCALE: 0.8888888888888888, // How much temporal distance affects spatial position (0-1 blend factor)
   MAX_TEMPORAL_DISTANCE_DAYS: 365 * 100, // 100 years - maximum temporal distance for scaling
+  CANVAS_RENDER_THRESHOLD: 500, // Use canvas rendering for 500+ entries
+  VIEWPORT_CULLING_MARGIN: 100, // Extra margin for viewport culling (pixels)
+  LOD_DISTANCE_THRESHOLD: 200, // Distance threshold for LOD (pixels from center)
+  BATCH_SIZE: 500, // Number of crystals to render per frame (large batches for immediate visibility)
 } as const;
 
 // Generate 3D positioned branch segments for true 3D structure
@@ -593,6 +597,183 @@ function mapEntriesToBranches3D(
   return entryOrnaments;
 }
 
+// Canvas-based crystal renderer for optimized performance with thousands of entries
+interface CrystalCanvasRendererProps {
+  entries: Array<{ entry: JournalEntry; x: number; y: number; z: number; segmentIndex: number }>;
+  crystalSizeScale: number;
+  progress?: number; // Loading progress (0-100) to control opacity
+}
+
+function CrystalCanvasRenderer({ 
+  entries, 
+  crystalSizeScale,
+  progress
+}: CrystalCanvasRendererProps) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const animationFrameRef = useRef<number>();
+  const renderIndexRef = useRef(0);
+  const [isInitialRender, setIsInitialRender] = useState(true);
+  const scaleRef = useRef<number>(1); // Store device pixel ratio scale
+
+  // Render ALL entries, but efficiently with batching and LOD
+  const allCrystals = useMemo(() => entries, [entries]);
+
+
+  // Setup canvas and start rendering
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    // Set canvas size to match container
+    const container = canvas.parentElement;
+    if (container) {
+      const rect = container.getBoundingClientRect();
+      // Use device pixel ratio for crisp rendering on high-DPI displays
+      const dpr = window.devicePixelRatio || 1;
+      scaleRef.current = dpr;
+      canvas.width = rect.width * dpr;
+      canvas.height = rect.height * dpr;
+      canvas.style.width = `${rect.width}px`;
+      canvas.style.height = `${rect.height}px`;
+    } else {
+      // Fallback: use fixed dimensions if container not found
+      canvas.width = 800;
+      canvas.height = 600;
+      scaleRef.current = 1;
+    }
+
+    // Reset render state when entries change
+    renderIndexRef.current = 0;
+    setIsInitialRender(true);
+
+    // Render function that doesn't depend on renderCrystals callback
+    const doRender = () => {
+      // Ensure we have entries to render
+      if (allCrystals.length === 0) return;
+      const canvas = canvasRef.current;
+      if (!canvas) return;
+
+      const ctx = canvas.getContext('2d', { alpha: true });
+      if (!ctx) return;
+
+      // Scale context to match device pixel ratio (for crisp rendering)
+      const dpr = scaleRef.current;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+      // Always clear canvas before rendering (we render all crystals each frame)
+      // Clear using the scaled dimensions
+      ctx.clearRect(0, 0, canvas.width / dpr, canvas.height / dpr);
+
+      const sphereSize = LOADING_SCREEN_CONSTANTS.ORNAMENT_SIZE * crystalSizeScale;
+      const centerX = LOADING_SCREEN_CONSTANTS.SINGULARITY_CENTER.x;
+      const centerY = LOADING_SCREEN_CONSTANTS.SINGULARITY_CENTER.y;
+
+      // Render ALL crystals immediately - LOD handles performance for distant ones
+      // Progressive batching was causing crystals to not appear before loading finished
+      const crystalsToRender = allCrystals;
+
+      crystalsToRender.forEach(({ entry, x, y, z }) => {
+        const distFromCenter = Math.sqrt(
+          Math.pow(x - centerX, 2) + Math.pow(y - centerY, 2)
+        );
+        const isDistant = distFromCenter > LOADING_SCREEN_CONSTANTS.LOD_DISTANCE_THRESHOLD;
+        const size = isDistant ? sphereSize * 0.6 : sphereSize;
+        const entryColor = calculateEntryColor(entry);
+        
+        // Base opacity from Z-depth
+        const zOpacity = Math.max(0.3, 1 - Math.abs(z) / 200);
+        
+        // Clamp opacity to loading progress (0-100 maps to 0-1)
+        const progressOpacity = progress !== undefined 
+          ? Math.max(0, Math.min(1, progress / 100))
+          : 1;
+        
+        // Combine Z-depth opacity with progress opacity
+        const finalOpacity = zOpacity * progressOpacity;
+        
+        let colorStr = entryColor;
+        if (!entryColor.startsWith('#') && !entryColor.startsWith('rgb') && !entryColor.startsWith('hsl')) {
+          colorStr = '#4a90e2';
+        }
+
+        ctx.save();
+        ctx.globalAlpha = finalOpacity;
+
+        if (isDistant) {
+          ctx.fillStyle = colorStr;
+          ctx.shadowBlur = size * 0.5;
+          ctx.shadowColor = colorStr;
+          ctx.beginPath();
+          ctx.arc(x, y, size / 2, 0, Math.PI * 2);
+          ctx.fill();
+        } else {
+          const gradient = ctx.createRadialGradient(
+            x - size * 0.2, y - size * 0.2, 0,
+            x, y, size / 2
+          );
+          gradient.addColorStop(0, `rgba(255, 255, 255, 0.6)`);
+          gradient.addColorStop(0.5, colorStr);
+          gradient.addColorStop(1, colorStr);
+
+          ctx.shadowBlur = size * 0.8;
+          ctx.shadowColor = colorStr;
+          ctx.beginPath();
+          ctx.arc(x, y, size / 2, 0, Math.PI * 2);
+          ctx.fill();
+
+          ctx.shadowBlur = 0;
+          ctx.fillStyle = gradient;
+          ctx.beginPath();
+          ctx.arc(x, y, size / 2, 0, Math.PI * 2);
+          ctx.fill();
+
+          const highlightGradient = ctx.createRadialGradient(
+            x - size * 0.15, y - size * 0.15, 0,
+            x - size * 0.15, y - size * 0.15, size * 0.2
+          );
+          highlightGradient.addColorStop(0, 'rgba(255, 255, 255, 0.8)');
+          highlightGradient.addColorStop(1, 'transparent');
+          ctx.fillStyle = highlightGradient;
+          ctx.fill();
+        }
+
+        ctx.restore();
+      });
+
+      // Mark initial render as complete - all crystals are now rendered
+      if (isInitialRender) {
+        setIsInitialRender(false);
+      }
+    };
+
+    // Start progressive rendering immediately (don't wait for next frame)
+    // Render first batch synchronously for immediate visibility
+    doRender();
+
+    return () => {
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+      }
+    };
+  }, [allCrystals, crystalSizeScale, progress]);
+
+  return (
+    <canvas
+      ref={canvasRef}
+      className="crystal-canvas"
+      style={{
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        width: '100%',
+        height: '100%',
+        pointerEvents: 'none',
+        zIndex: 1,
+      }}
+    />
+  );
+}
+
 // Generate MS-DOS style starfield
 function generateStars(count: number): Array<{ x: number; y: number; brightness: number; size: number }> {
   const stars: Array<{ x: number; y: number; brightness: number; size: number }> = [];
@@ -879,6 +1060,12 @@ export default function LoadingScreen({ progress, message = 'Loading your journa
       const logNormalized = Math.min(1, Math.log10(entryCount / 2000) / Math.log10(10000 / 2000)); // 0 to 1 as entries go from 2000 to 10000
       return Math.max(0.05, 0.15 - logNormalized * 0.1);
     }
+  }, [totalEntryCount, entries.length]);
+
+  // Determine if we should use canvas rendering (for large entry counts)
+  const useCanvasRendering = useMemo(() => {
+    const entryCount = totalEntryCount !== undefined ? totalEntryCount : entries.length;
+    return entryCount >= LOADING_SCREEN_CONSTANTS.CANVAS_RENDER_THRESHOLD;
   }, [totalEntryCount, entries.length]);
 
   useEffect(() => {
@@ -1405,53 +1592,61 @@ export default function LoadingScreen({ progress, message = 'Loading your journa
               );
             })}
             
-            {/* Entry ornaments - 3D spherical forms */}
-            {visibleEntries.map(({ entry, x, y, z }, idx) => {
-              const entryColor = calculateEntryColor(entry);
-              const delay = Math.min(idx * 0.01, LOADING_SCREEN_CONSTANTS.MAX_ANIMATION_DELAY);
-              
-              // Calculate sphere size with scaling based on entry count
-              const sphereSize = LOADING_SCREEN_CONSTANTS.ORNAMENT_SIZE * crystalSizeScale;
-              
-              return (
-                <div
-                  key={`ornament-${entry.id || entry.date}-${idx}`}
-                  className="entry-ornament-3d-sphere"
-                  style={{
-                    left: `${x}px`,
-                    top: `${y}px`,
-                    transform: `translateZ(${z}px)`,
-                    width: `${sphereSize}px`,
-                    height: `${sphereSize}px`,
-                    animation: `ornamentAppear 0.6s ease-out ${delay}s both`,
-                  }}
-                >
-                  {/* Sphere outer shell with 3D lighting */}
-                  <div 
-                    className="sphere-shell"
+            {/* Entry ornaments - use canvas for large counts, DOM for small counts */}
+            {useCanvasRendering ? (
+              <CrystalCanvasRenderer
+                entries={visibleEntries}
+                crystalSizeScale={crystalSizeScale}
+                progress={progress}
+              />
+            ) : (
+              visibleEntries.map(({ entry, x, y, z }, idx) => {
+                const entryColor = calculateEntryColor(entry);
+                const delay = Math.min(idx * 0.01, LOADING_SCREEN_CONSTANTS.MAX_ANIMATION_DELAY);
+                
+                // Calculate sphere size with scaling based on entry count
+                const sphereSize = LOADING_SCREEN_CONSTANTS.ORNAMENT_SIZE * crystalSizeScale;
+                
+                return (
+                  <div
+                    key={`ornament-${entry.id || entry.date}-${idx}`}
+                    className="entry-ornament-3d-sphere"
                     style={{
-                      width: '100%',
-                      height: '100%',
-                      background: `radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.6), ${entryColor} 50%, ${entryColor} 100%)`,
-                      boxShadow: `inset -${2 * crystalSizeScale}px -${2 * crystalSizeScale}px ${4 * crystalSizeScale}px rgba(0, 0, 0, 0.3), inset ${2 * crystalSizeScale}px ${2 * crystalSizeScale}px ${4 * crystalSizeScale}px rgba(255, 255, 255, 0.2), 0 0 ${8 * crystalSizeScale}px ${entryColor}`,
+                      left: `${x}px`,
+                      top: `${y}px`,
+                      transform: `translateZ(${z}px)`,
+                      width: `${sphereSize}px`,
+                      height: `${sphereSize}px`,
+                      animation: `ornamentAppear 0.6s ease-out ${delay}s both`,
                     }}
-                  />
-                  {/* Sphere highlight for 3D depth */}
-                  <div 
-                    className="sphere-highlight"
-                    style={{
-                      width: '40%',
-                      height: '40%',
-                      background: 'radial-gradient(circle, rgba(255, 255, 255, 0.8), transparent)',
-                      borderRadius: '50%',
-                      position: 'absolute',
-                      top: '20%',
-                      left: '25%',
-                    }}
-                  />
-                </div>
-              );
-            })}
+                  >
+                    {/* Sphere outer shell with 3D lighting */}
+                    <div 
+                      className="sphere-shell"
+                      style={{
+                        width: '100%',
+                        height: '100%',
+                        background: `radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.6), ${entryColor} 50%, ${entryColor} 100%)`,
+                        boxShadow: `inset -${2 * crystalSizeScale}px -${2 * crystalSizeScale}px ${4 * crystalSizeScale}px rgba(0, 0, 0, 0.3), inset ${2 * crystalSizeScale}px ${2 * crystalSizeScale}px ${4 * crystalSizeScale}px rgba(255, 255, 255, 0.2), 0 0 ${8 * crystalSizeScale}px ${entryColor}`,
+                      }}
+                    />
+                    {/* Sphere highlight for 3D depth */}
+                    <div 
+                      className="sphere-highlight"
+                      style={{
+                        width: '40%',
+                        height: '40%',
+                        background: 'radial-gradient(circle, rgba(255, 255, 255, 0.8), transparent)',
+                        borderRadius: '50%',
+                        position: 'absolute',
+                        top: '20%',
+                        left: '25%',
+                      }}
+                    />
+                  </div>
+                );
+              })
+            )}
             
           </div>
           </div>

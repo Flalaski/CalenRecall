@@ -101,10 +101,12 @@ function App() {
                 setLoadingProgress(100);
                 setLoadingMessage('Ready!');
                 
-                // Minimal delay for visual feedback
+                // Give animations time to finish and let users appreciate the visualization
+                // This allows the infinity symbol rotation, crystal animations, and final state to be visible
+                // MAX_ANIMATION_DELAY (1s) + ornamentAppear duration (0.6s) + buffer for appreciation = 3s
                 setTimeout(() => {
                   setIsLoading(false);
-                }, 300);
+                }, 3000); // 3 seconds to see the concluding visualization and have a moment with it
               }, { timeout: 100 });
             }, { timeout: 100 });
           } else {
@@ -117,7 +119,7 @@ function App() {
                 setLoadingMessage('Ready!');
                 setTimeout(() => {
                   setIsLoading(false);
-                }, 300);
+                }, 3000); // 3 seconds to see the concluding visualization and have a moment with it
               }, 200);
             }, 200);
           }
