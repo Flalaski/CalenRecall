@@ -1976,8 +1976,9 @@ export function setupIpcHandlers() {
   });
 
   /**
-   * Get all custom theme CSS files from AppData/themes directory.
+   * Get all custom theme CSS files from user data directory (themes subfolder).
    * Returns an array of theme objects with name and CSS content.
+   * Platform paths: Windows (AppData), macOS (Application Support), Linux (~/.config)
    */
   ipcMain.handle('get-custom-themes', async () => {
     try {

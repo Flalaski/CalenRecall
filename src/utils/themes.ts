@@ -239,11 +239,11 @@ function discoverThemes(): ThemeInfo[] {
 const BUILT_IN_THEMES: ThemeInfo[] = discoverThemes();
 
 // Dynamically loaded themes (built-in + custom)
-// This will be populated at runtime with custom themes from AppData
+// This will be populated at runtime with custom themes from user data directory
 let AVAILABLE_THEMES_CACHE: ThemeInfo[] = BUILT_IN_THEMES;
 
 /**
- * Load custom themes from AppData and merge with built-in themes
+ * Load custom themes from user data directory and merge with built-in themes
  * This must be called after custom themes are loaded via customThemeLoader
  */
 export async function loadAllThemes(): Promise<ThemeInfo[]> {

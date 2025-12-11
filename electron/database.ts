@@ -339,6 +339,13 @@ function migrateDatabase(database: Database.Database) {
  * ```
  */
 export function initDatabase(profileId?: string) {
+  console.log('[Database Init] Starting database initialization...');
+  console.log('[Database Init] Profile ID:', profileId || 'default');
+  console.log('[Database Init] Process platform:', process.platform);
+  console.log('[Database Init] Electron version:', process.versions.electron);
+  console.log('[Database Init] Node version:', process.version);
+  console.log('[Database Init] User data path:', app.getPath('userData'));
+  
   // Migrate existing users to profiles system if needed
   if (checkNeedsMigration()) {
     console.log('[Database Init] Migrating to profiles system...');
@@ -347,10 +354,39 @@ export function initDatabase(profileId?: string) {
   
   // Determine which profile to use
   const targetProfileId = profileId || getCurrentProfileId();
-  const profile = getProfile(targetProfileId);
+  let profile = getProfile(targetProfileId);
   
+  // If profile doesn't exist, try to get all profiles (this will create a default if none exist)
   if (!profile) {
-    throw new Error(`Profile not found: ${targetProfileId}`);
+    console.log(`[Database Init] Profile not found: ${targetProfileId}, checking for existing profiles...`);
+    const allProfiles = getAllProfiles();
+    profile = allProfiles.find(p => p.id === targetProfileId) || null;
+    
+    // If still no profile, and we have profiles but not the requested one, that's an error
+    if (!profile) {
+      throw new Error(`Profile not found: ${targetProfileId}. Available profiles: ${allProfiles.map(p => p.id).join(', ')}`);
+    }
+    
+    // If this is a new installation (no profiles.json on disk), we need to save the default profile
+    const profilesPath = path.join(app.getPath('userData'), 'profiles.json');
+    if (!fs.existsSync(profilesPath)) {
+      console.log(`[Database Init] New installation detected. Saving default profile to disk...`);
+      // Use createProfile to properly save the profile (it handles saving to disk)
+      // But first check if we already have the default profile in memory
+      if (profile.id === 'default') {
+        // Save the profiles metadata
+        const userDataPath = app.getPath('userData');
+        if (!fs.existsSync(userDataPath)) {
+          fs.mkdirSync(userDataPath, { recursive: true });
+        }
+        const profilesData = {
+          profiles: [profile],
+          currentProfileId: 'default',
+        };
+        fs.writeFileSync(profilesPath, JSON.stringify(profilesData, null, 2), 'utf-8');
+        console.log(`[Database Init] ✅ Default profile saved to profiles.json`);
+      }
+    }
   }
   
   // If already connected to this profile, return existing connection
@@ -383,14 +419,18 @@ export function initDatabase(profileId?: string) {
   const dbDir = path.dirname(dbPath);
   if (!fs.existsSync(dbDir)) {
     fs.mkdirSync(dbDir, { recursive: true });
+    console.log(`[Database Init] Created database directory: ${dbDir}`);
   }
   
   console.log(`[Database Init] Initializing database for profile: ${profile.id} (${profile.name})`);
   console.log(`[Database Init] Database path: ${dbPath}`);
   
-  // Verify database file exists
-  if (!fs.existsSync(dbPath)) {
-    console.error(`[Database Init] ❌ Database file does not exist: ${dbPath}`);
+  // Check if database file exists
+  const dbExists = fs.existsSync(dbPath);
+  
+  // Verify database file exists (for existing installations)
+  if (!dbExists) {
+    console.log(`[Database Init] Database file does not exist: ${dbPath}`);
     
     // CRITICAL: Check if original database still exists (migration might have failed)
     if (hasOriginalDatabase()) {
@@ -413,28 +453,69 @@ export function initDatabase(profileId?: string) {
         throw new Error(`Database file not found and recovery failed. Original database may still exist at: ${originalDbPath}`);
       }
     } else {
-      throw new Error(`Database file not found: ${dbPath}. Original database also not found.`);
+      // This is a new installation - better-sqlite3 will create the database file
+      console.log(`[Database Init] New installation detected - database will be created automatically`);
     }
   }
   
-  // Check database file size and modification time
-  try {
-    const stats = fs.statSync(dbPath);
-    console.log(`[Database Init] Database file size: ${stats.size} bytes`);
-    console.log(`[Database Init] Database file modified: ${stats.mtime.toISOString()}`);
-    
-    // Warn if database is suspiciously small (likely empty)
-    if (stats.size < 1000) {
-      console.warn(`[Database Init] ⚠️ Database file is very small (${stats.size} bytes) - may be empty or corrupted`);
+  // Check database file size and modification time (only if it exists)
+  if (fs.existsSync(dbPath)) {
+    try {
+      const stats = fs.statSync(dbPath);
+      console.log(`[Database Init] Database file size: ${stats.size} bytes`);
+      console.log(`[Database Init] Database file modified: ${stats.mtime.toISOString()}`);
+      
+      // Warn if database is suspiciously small (likely empty)
+      if (stats.size < 1000) {
+        console.warn(`[Database Init] ⚠️ Database file is very small (${stats.size} bytes) - may be empty or corrupted`);
+      }
+    } catch (statsError) {
+      console.warn('[Database Init] Could not get database file stats:', statsError);
     }
-  } catch (statsError) {
-    console.warn('[Database Init] Could not get database file stats:', statsError);
+  } else {
+    console.log(`[Database Init] Database file will be created by better-sqlite3`);
   }
   
   // Open database - better-sqlite3 will create an empty database if file doesn't exist
-  // So we MUST check file exists first (which we did above)
-  db = new Database(dbPath);
-  currentProfile = profile;
+  try {
+    console.log('[Database Init] Attempting to open database at:', dbPath);
+    console.log('[Database Init] Database file exists:', fs.existsSync(dbPath));
+    
+    // Test if better-sqlite3 module loads correctly
+    if (!Database) {
+      throw new Error('better-sqlite3 module failed to load. Native module may not be properly built for this platform.');
+    }
+    
+    db = new Database(dbPath);
+    console.log('[Database Init] ✅ Database opened successfully');
+    currentProfile = profile;
+  } catch (dbError) {
+    console.error('[Database Init] ❌ Failed to open database:', dbError);
+    console.error('[Database Init] Error type:', dbError instanceof Error ? dbError.constructor.name : typeof dbError);
+    console.error('[Database Init] Error message:', dbError instanceof Error ? dbError.message : String(dbError));
+    console.error('[Database Init] Error stack:', dbError instanceof Error ? dbError.stack : 'No stack');
+    
+    // Provide helpful error message for common issues
+    if (dbError instanceof Error) {
+      if (dbError.message.includes('Cannot find module') || dbError.message.includes('native module')) {
+        throw new Error(
+          `Native database module (better-sqlite3) failed to load.\n` +
+          `This usually means the module was not properly built for macOS.\n` +
+          `Please rebuild the native modules: npm run rebuild\n` +
+          `Original error: ${dbError.message}`
+        );
+      }
+      if (dbError.message.includes('permission') || dbError.message.includes('EACCES')) {
+        throw new Error(
+          `Permission denied accessing database at: ${dbPath}\n` +
+          `Please check file permissions.\n` +
+          `Original error: ${dbError.message}`
+        );
+      }
+    }
+    
+    throw dbError;
+  }
   
   // Verify database has entries - CRITICAL CHECK
   try {
@@ -793,6 +874,10 @@ function createTables(database: Database.Database) {
     CREATE INDEX IF NOT EXISTS idx_time_range ON journal_entries(time_range);
     CREATE INDEX IF NOT EXISTS idx_created_at ON journal_entries(created_at);
     CREATE INDEX IF NOT EXISTS idx_date_time_range ON journal_entries(date, time_range);
+    -- Composite index for getAllEntries ORDER BY optimization
+    CREATE INDEX IF NOT EXISTS idx_date_time_range_created ON journal_entries(date, time_range, created_at);
+    -- Index for archived filtering
+    CREATE INDEX IF NOT EXISTS idx_archived ON journal_entries(archived);
     
     CREATE TABLE IF NOT EXISTS preferences (
       key TEXT PRIMARY KEY,

@@ -3,10 +3,10 @@ import ReactDOM from 'react-dom/client';
 import PreferencesComponent from './components/Preferences';
 import { CalendarProvider } from './contexts/CalendarContext';
 import './utils/themeLoader'; // Load all theme CSS files automatically
-import { loadCustomThemes } from './utils/customThemeLoader'; // Load custom themes from AppData
+import { loadCustomThemes } from './utils/customThemeLoader'; // Load custom themes from user data directory
 import './index.css';
 
-// Load custom themes from AppData/themes directory
+// Load custom themes from user data directory (themes subfolder)
 loadCustomThemes().catch(error => {
   console.error('Error loading custom themes:', error);
 });

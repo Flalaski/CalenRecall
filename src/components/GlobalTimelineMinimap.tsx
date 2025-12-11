@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect, useRef, useCallback } from 'react';
+import { useMemo, useState, useEffect, useRef, useCallback, memo } from 'react';
 import { createPortal } from 'react-dom';
 import { TimeRange, JournalEntry } from '../types';
 import { getWeekStart, getWeekEnd, getMonthStart, getMonthEnd, getYearEnd, getDecadeEnd, getZodiacColor, getZodiacColorForDecade, getCanonicalDate, parseISODate, createDate, getYearStart, isToday } from '../utils/dateUtils';
@@ -266,7 +266,7 @@ function getThemeEntryIndicatorColor(theme: string = 'light'): string {
   return color;
 }
 
-export default function GlobalTimelineMinimap({
+function GlobalTimelineMinimap({
   selectedDate,
   viewMode,
   onTimePeriodSelect,
@@ -5987,4 +5987,17 @@ export default function GlobalTimelineMinimap({
     </div>
   );
 }
+
+// Memoize component to prevent unnecessary re-renders
+// GlobalTimelineMinimap is very expensive to render, so memoization is critical
+export default memo(GlobalTimelineMinimap, (prevProps, nextProps) => {
+  return (
+    prevProps.selectedDate.getTime() === nextProps.selectedDate.getTime() &&
+    prevProps.viewMode === nextProps.viewMode &&
+    prevProps.minimapSize === nextProps.minimapSize &&
+    prevProps.weekStartsOn === nextProps.weekStartsOn &&
+    prevProps.onTimePeriodSelect === nextProps.onTimePeriodSelect &&
+    prevProps.onEntrySelect === nextProps.onEntrySelect
+  );
+});
 

@@ -55,7 +55,46 @@ function getOptimizedWebPreferences(preloadPath?: string): Electron.WebPreferenc
 
   // Add preload if provided
   if (preloadPath) {
-    basePreferences.preload = preloadPath;
+    // Resolve preload path properly for both dev and production
+    let resolvedPreloadPath = preloadPath;
+    
+    // If relative path is provided, resolve it relative to __dirname (dist-electron in production)
+    if (!path.isAbsolute(preloadPath)) {
+      resolvedPreloadPath = path.join(__dirname, preloadPath);
+    }
+    
+    // Verify preload file exists
+    if (!fs.existsSync(resolvedPreloadPath)) {
+      console.error(`[Main] ❌ Preload file not found: ${resolvedPreloadPath}`);
+      console.error(`[Main] __dirname: ${__dirname}`);
+      console.error(`[Main] Original path: ${preloadPath}`);
+      // Try alternative paths
+      const alternatives = [
+        path.join(__dirname, 'preload.js'),
+        path.join(process.resourcesPath || __dirname, 'dist-electron/preload.js'),
+        path.join(app.getAppPath(), 'dist-electron/preload.js'),
+      ];
+      
+      for (const altPath of alternatives) {
+        if (fs.existsSync(altPath)) {
+          resolvedPreloadPath = altPath;
+          console.log(`[Main] ✅ Found preload at alternative path: ${resolvedPreloadPath}`);
+          break;
+        }
+      }
+      
+      if (!fs.existsSync(resolvedPreloadPath)) {
+        console.error('[Main] ❌ Could not find preload file in any location!');
+        // Don't set preload if file doesn't exist - will cause error
+      }
+    }
+    
+    if (fs.existsSync(resolvedPreloadPath)) {
+      basePreferences.preload = resolvedPreloadPath;
+      console.log(`[Main] ✅ Using preload: ${resolvedPreloadPath}`);
+    } else {
+      console.error('[Main] ⚠️ Warning: Preload file not found, IPC will not work!');
+    }
   }
 
   // Enable WebGPU if available (Electron 28+)
@@ -164,8 +203,9 @@ interface ThemeInfo {
 }
 
 /**
- * Initialize the custom themes folder in AppData
+ * Initialize the custom themes folder in the user data directory
  * Creates the folder if it doesn't exist and copies template files
+ * Platform paths: Windows (AppData), macOS (Application Support), Linux (~/.config)
  */
 function initializeCustomThemesFolder() {
   try {
@@ -438,7 +478,7 @@ function discoverThemes(): ThemeInfo[] {
     }
   }
   
-  // Also check custom themes folder in AppData
+  // Also check custom themes folder in user data directory
   try {
     const userDataPath = app.getPath('userData');
     const customThemesDir = path.join(userDataPath, 'themes');
@@ -650,7 +690,10 @@ function createProfileSelectorWindow() {
     minWidth: 600,
     minHeight: 500,
     resizable: true,
-    alwaysOnTop: true, // Show on top when first loads
+    // On macOS, alwaysOnTop can cause issues - only use on Windows
+    ...(process.platform === 'win32' && {
+      alwaysOnTop: true, // Show on top when first loads (Windows only)
+    }),
     title: 'CalenRecall - Select Profile',
     webPreferences: getOptimizedWebPreferences(path.join(__dirname, 'preload.js')),
     ...(process.platform === 'win32' && {
@@ -750,8 +793,10 @@ function createProfileSelectorWindow() {
               profileSelectorWindow.setPosition(x, y, false);
               profileSelectorWindow.show();
               profileSelectorWindow.focus(); // Bring to front
-              // Disable always-on-top after initial display so window can be moved behind others
-              profileSelectorWindow.setAlwaysOnTop(false);
+              // Disable always-on-top after initial display (Windows only)
+              if (process.platform === 'win32') {
+                profileSelectorWindow.setAlwaysOnTop(false);
+              }
               console.log('[Main] Profile selector window shown and positioned');
               
               // Close startup loading window now that profile selector is ready
@@ -774,8 +819,10 @@ function createProfileSelectorWindow() {
               profileSelectorWindow.setPosition(x, y, false);
               profileSelectorWindow.show();
               profileSelectorWindow.focus(); // Bring to front
-              // Disable always-on-top after initial display so window can be moved behind others
-              profileSelectorWindow.setAlwaysOnTop(false);
+              // Disable always-on-top after initial display (Windows only)
+              if (process.platform === 'win32') {
+                profileSelectorWindow.setAlwaysOnTop(false);
+              }
               
               // Close startup loading window now that profile selector is ready
               closeStartupLoadingWindow();
@@ -1289,13 +1336,13 @@ function createMenu() {
         },
         { type: 'separator' },
         {
-          label: 'Open AppData Folder',
+          label: process.platform === 'win32' ? 'Open AppData Folder' : process.platform === 'darwin' ? 'Open Application Support Folder' : 'Open Config Folder',
           click: async () => {
             const userDataPath = app.getPath('userData');
             try {
               await shell.openPath(userDataPath);
             } catch (error) {
-              console.error('Failed to open AppData folder:', error);
+              console.error(`Failed to open ${process.platform === 'win32' ? 'AppData' : process.platform === 'darwin' ? 'Application Support' : 'config'} folder:`, error);
             }
           },
         },
@@ -1326,9 +1373,13 @@ function createPreferencesWindow() {
     height: 1000,
     minWidth: 800,
     minHeight: 600,
-    parent: mainWindow || undefined,
-    modal: true,
+    // On macOS, don't use parent/modal - causes issues with window showing
+    ...(process.platform === 'win32' && {
+      parent: mainWindow || undefined,
+      modal: true,
+    }),
     resizable: true,
+    show: false, // Don't show until ready
     title: 'Preferences - CalenRecall',
     webPreferences: getOptimizedWebPreferences(path.join(__dirname, 'preload.js')),
     ...(process.platform === 'win32' && {
@@ -1368,6 +1419,15 @@ function createPreferencesWindow() {
   } else {
     preferencesWindow.loadFile(path.join(__dirname, '../dist/preferences.html'));
   }
+
+  // Show window when ready
+  preferencesWindow.webContents.once('did-finish-load', () => {
+    if (preferencesWindow && !preferencesWindow.isDestroyed()) {
+      preferencesWindow.show();
+      preferencesWindow.focus();
+      console.log('[Main] Preferences window shown');
+    }
+  });
 
   // Register the preferences window with IPC handlers so it can receive preference updates
   setPreferencesWindow(preferencesWindow);
@@ -1727,17 +1787,45 @@ app.whenReady().then(() => {
   // Show startup loading window IMMEDIATELY - before any other initialization
   // This ensures the user sees the loading screen right away
   // Create synchronously so it appears immediately
-  createStartupLoadingWindow();
-  console.log('[Main] Startup loading window created');
+  try {
+    createStartupLoadingWindow();
+    console.log('[Main] Startup loading window created');
+  } catch (error) {
+    console.error('[Main] ❌ Failed to create startup loading window:', error);
+    // Continue anyway - app might still work
+  }
   
   // Now do initialization in the background (window is already visible)
   // Initialize database (this will handle migration to profiles if needed)
   // The initDatabase function will automatically migrate existing users
   // Note: We initialize with no profile ID first, which will use the current/default profile
-  initDatabase();
+  try {
+    console.log('[Main] Initializing database...');
+    initDatabase();
+    console.log('[Main] ✅ Database initialized successfully');
+  } catch (error) {
+    console.error('[Main] ❌ Failed to initialize database:', error);
+    console.error('[Main] Error details:', error instanceof Error ? error.stack : String(error));
+    // Show error dialog to user
+    if (startupLoadingWindow && !startupLoadingWindow.isDestroyed()) {
+      startupLoadingWindow.close();
+    }
+    dialog.showErrorBox(
+      'Database Initialization Failed',
+      `CalenRecall could not initialize the database.\n\nError: ${error instanceof Error ? error.message : String(error)}\n\nPlease check the console for more details.`
+    );
+    app.quit();
+    return;
+  }
   
   // Initialize custom themes folder (creates folder and copies template if needed)
-  initializeCustomThemesFolder();
+  try {
+    initializeCustomThemesFolder();
+    console.log('[Main] ✅ Custom themes folder initialized');
+  } catch (error) {
+    console.error('[Main] ⚠️ Warning: Failed to initialize custom themes folder:', error);
+    // Continue - this is not critical
+  }
   
   // Setup IPC handlers - MUST be called before creating any windows
   console.log('[Main] About to setup IPC handlers...');
@@ -1921,14 +2009,41 @@ process.on('SIGINT', () => {
 
 // Handle uncaught exceptions and unhandled rejections
 process.on('uncaughtException', (error) => {
-  console.error('Uncaught exception:', error);
+  console.error('========================================');
+  console.error('❌ UNCAUGHT EXCEPTION - Application will exit');
+  console.error('========================================');
+  console.error('Error:', error);
+  console.error('Stack:', error instanceof Error ? error.stack : 'No stack trace available');
+  console.error('========================================');
+  
+  // Try to show error dialog before quitting
+  try {
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      dialog.showErrorBox(
+        'Application Error',
+        `CalenRecall encountered an unexpected error and will close.\n\nError: ${error instanceof Error ? error.message : String(error)}\n\nCheck the console for details.`
+      );
+    }
+  } catch (dialogError) {
+    console.error('Failed to show error dialog:', dialogError);
+  }
+  
   cleanup();
   process.exit(1);
 });
 
 process.on('unhandledRejection', (reason, promise) => {
-  console.error('Unhandled rejection at:', promise, 'reason:', reason);
-  cleanup();
-  process.exit(1);
+  console.error('========================================');
+  console.error('❌ UNHANDLED REJECTION - Application may be unstable');
+  console.error('========================================');
+  console.error('Promise:', promise);
+  console.error('Reason:', reason);
+  if (reason instanceof Error) {
+    console.error('Stack:', reason.stack);
+  }
+  console.error('========================================');
+  
+  // Don't exit on unhandled rejection, but log it
+  // This allows the app to continue running in some cases
 });
 

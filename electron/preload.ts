@@ -193,7 +193,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   refreshMainWindowTheme: (): Promise<{ success: boolean; error?: string }> =>
     ipcRenderer.invoke('refresh-main-window-theme'),
 
-  // Get custom themes from AppData/themes directory
+  // Get custom themes from user data directory (themes subfolder)
   getCustomThemes: (): Promise<{ success: boolean; error?: string; message?: string; themes?: Array<{ name: string; css: string }> }> =>
     ipcRenderer.invoke('get-custom-themes'),
 

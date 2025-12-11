@@ -377,7 +377,9 @@ CalenRecall/
 ## Data Storage
 
 All journal entries and preferences are stored in a SQLite database located in the application's user data directory:
-- **Windows**: `%APPDATA%\calenrecall\calenrecall.db`
+- **Windows**: `%APPDATA%\calenrecall\calenrecall.db` (typically `C:\Users\<username>\AppData\Roaming\calenrecall\`)
+- **macOS**: `~/Library/Application Support/calenrecall/calenrecall.db`
+- **Linux**: `~/.config/calenrecall/calenrecall.db`
 
 The database includes:
 - **journal_entries**: All your journal entries with support for:
@@ -624,14 +626,19 @@ If you encounter issues building native modules (like `better-sqlite3`):
 ### Database Location
 
 If you need to backup or restore your data, the database is located at:
-- **Windows**: `%APPDATA%\calenrecall\calenrecall.db`
+- **Windows**: `%APPDATA%\calenrecall\calenrecall.db` (typically `C:\Users\<username>\AppData\Roaming\calenrecall\`)
+- **macOS**: `~/Library/Application Support/calenrecall/calenrecall.db`
+- **Linux**: `~/.config/calenrecall/calenrecall.db`
 
 Simply copy this file to backup your entire journal history. To restore, replace the file with your backup.
 
 ### Theme Issues
 
 If a custom theme isn't appearing:
-1. Check that the theme file is in `%APPDATA%\calenrecall\themes\`
+1. Check that the theme file is in the appropriate themes directory:
+   - **Windows**: `%APPDATA%\calenrecall\themes\`
+   - **macOS**: `~/Library/Application Support/calenrecall/themes/`
+   - **Linux**: `~/.config/calenrecall/themes/`
 2. Ensure the filename ends in `.css`
 3. Verify the theme uses the correct `[data-theme="your-theme-name"]` selector
 4. Restart CalenRecall after adding a new theme

@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback, memo } from 'react';
 import { JournalEntry, TimeRange, Preferences } from '../types';
 import { formatDate, getDaysInMonth, getDaysInWeek, isToday, getWeekStart, getZodiacColor, getZodiacGradientColor, getZodiacGradientColorForYear, parseISODate, getWeekdayLabels, formatTime } from '../utils/dateUtils';
 import { isSameDay, isSameMonth, isSameYear } from 'date-fns';
@@ -21,7 +21,7 @@ interface TimelineViewProps {
   weekStartsOn?: 0 | 1 | 2 | 3 | 4 | 5 | 6;
 }
 
-export default function TimelineView({
+function TimelineView({
   selectedDate,
   viewMode,
   onTimePeriodSelect,
@@ -1170,4 +1170,18 @@ export default function TimelineView({
       return renderMonthView();
   }
 }
+
+// Memoize component to prevent unnecessary re-renders
+// Only re-render when props actually change
+export default memo(TimelineView, (prevProps, nextProps) => {
+  // Custom comparison function for better performance
+  return (
+    prevProps.selectedDate.getTime() === nextProps.selectedDate.getTime() &&
+    prevProps.viewMode === nextProps.viewMode &&
+    prevProps.weekStartsOn === nextProps.weekStartsOn &&
+    prevProps.onTimePeriodSelect === nextProps.onTimePeriodSelect &&
+    prevProps.onEntrySelect === nextProps.onEntrySelect &&
+    prevProps.onEditEntry === nextProps.onEditEntry
+  );
+});
 

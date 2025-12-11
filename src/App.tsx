@@ -1,12 +1,13 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, lazy, Suspense } from 'react';
 import TimelineView from './components/TimelineView';
 import JournalEditor from './components/JournalEditor';
 import EntryViewer from './components/EntryViewer';
 import NavigationBar from './components/NavigationBar';
-import GlobalTimelineMinimap from './components/GlobalTimelineMinimap';
+// Lazy load heavy components for better initial load performance
+const GlobalTimelineMinimap = lazy(() => import('./components/GlobalTimelineMinimap'));
+const SearchView = lazy(() => import('./components/SearchView'));
 import EntryEditModal from './components/EntryEditModal';
 import ExportMetadataModal from './components/ExportMetadataModal';
-import SearchView from './components/SearchView';
 import LoadingScreen from './components/LoadingScreen';
 import BackgroundArt from './components/BackgroundArt';
 import { TimeRange, JournalEntry, Preferences, ExportFormat, ExportMetadata } from './types';
@@ -83,40 +84,43 @@ function App() {
           // Progressive visual updates are handled by LoadingScreen using progress percentage and totalEntryCount
           // This prevents expensive entryLookup and entryColors rebuilds during loading
           
-          // Simulate progressive loading for visual feedback (without actually setting partial entries)
-          const totalEntries = allEntries.length;
-          const batchCount = 50;
-          const batchSize = Math.max(1, Math.floor(totalEntries / batchCount));
-          
-          for (let i = 0; i < totalEntries; i += batchSize) {
-            // Update progress for visual feedback only
-            const progress = 10 + (i / totalEntries) * 70; // 10% to 80%
-            setLoadingProgress(progress);
-            
-            // Small delay between batches to see progression
-            await new Promise(resolve => setTimeout(resolve, 50));
-          }
-          
-          // Set all entries ONCE after loading completes - this triggers lookup/color build only once
+          // OPTIMIZATION: Set entries immediately without artificial delays
+          // Use requestIdleCallback for non-critical UI updates during loading
           setEntries(allEntries);
-          setLoadingProgress(85);
+          setLoadingProgress(90);
           setLoadingMessage('Indexing entries...');
           
-          // Delay to show indexing (lookup structure is being built here)
-          await new Promise(resolve => setTimeout(resolve, 500));
-          
-          setLoadingProgress(95);
-          setLoadingMessage('Finalizing timeline...');
-          
-          // Delay to show finalizing
-          await new Promise(resolve => setTimeout(resolve, 500));
-          
-          setLoadingProgress(100);
-          setLoadingMessage('Ready!');
-          
-          // Extended delay to admire the decorated infinity tree
-          await new Promise(resolve => setTimeout(resolve, 2000));
-          setIsLoading(false);
+          // Use requestIdleCallback to allow browser to schedule indexing work
+          // This prevents blocking the main thread
+          if ('requestIdleCallback' in window) {
+            requestIdleCallback(() => {
+              setLoadingProgress(95);
+              setLoadingMessage('Finalizing timeline...');
+              
+              requestIdleCallback(() => {
+                setLoadingProgress(100);
+                setLoadingMessage('Ready!');
+                
+                // Minimal delay for visual feedback
+                setTimeout(() => {
+                  setIsLoading(false);
+                }, 300);
+              }, { timeout: 100 });
+            }, { timeout: 100 });
+          } else {
+            // Fallback for browsers without requestIdleCallback
+            setTimeout(() => {
+              setLoadingProgress(95);
+              setLoadingMessage('Finalizing timeline...');
+              setTimeout(() => {
+                setLoadingProgress(100);
+                setLoadingMessage('Ready!');
+                setTimeout(() => {
+                  setIsLoading(false);
+                }, 300);
+              }, 200);
+            }, 200);
+          }
         }
       } catch (error) {
         console.error('Error preloading entries:', error);
@@ -1402,15 +1406,17 @@ function App() {
         onOpenSearch={() => setShowSearch(true)}
       />
       {preferences.showMinimap !== false && (
-        <GlobalTimelineMinimap
-          key={`minimap-${preferences.minimapSize || 'medium'}`}
-          selectedDate={selectedDate}
-          viewMode={viewMode}
-          onTimePeriodSelect={handleTimePeriodSelect}
-          onEntrySelect={handleEntrySelect}
-          minimapSize={preferences.minimapSize || 'medium'}
-          weekStartsOn={preferences.weekStartsOn ?? 0}
-        />
+        <Suspense fallback={null}>
+          <GlobalTimelineMinimap
+            key={`minimap-${preferences.minimapSize || 'medium'}`}
+            selectedDate={selectedDate}
+            viewMode={viewMode}
+            onTimePeriodSelect={handleTimePeriodSelect}
+            onEntrySelect={handleEntrySelect}
+            minimapSize={preferences.minimapSize || 'medium'}
+            weekStartsOn={preferences.weekStartsOn ?? 0}
+          />
+        </Suspense>
       )}
       <div className="app-content">
         <div className="timeline-section">
@@ -1470,10 +1476,12 @@ function App() {
       )}
       {showSearch && (
         <div className="search-overlay">
-          <SearchView
-            onEntrySelect={handleEntrySelect}
-            onClose={() => setShowSearch(false)}
-          />
+          <Suspense fallback={<div className="search-loading">Loading search...</div>}>
+            <SearchView
+              onEntrySelect={handleEntrySelect}
+              onClose={() => setShowSearch(false)}
+            />
+          </Suspense>
         </div>
       )}
       {showExportModal && pendingExportFormat && (
