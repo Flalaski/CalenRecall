@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback, memo } from 'react';
 import { TimeRange, Preferences } from '../types';
 import {
   getDaysInMonth,
@@ -37,7 +37,7 @@ interface CalendarViewProps {
   weekStartsOn?: 0 | 1 | 2 | 3 | 4 | 5 | 6;
 }
 
-export default function CalendarView({
+function CalendarView({
   selectedDate,
   viewMode,
   onTimePeriodSelect,
@@ -436,4 +436,14 @@ export default function CalendarView({
       return renderMonthView();
   }
 }
+
+// Memoize component to prevent unnecessary re-renders
+export default memo(CalendarView, (prevProps, nextProps) => {
+  return (
+    prevProps.selectedDate.getTime() === nextProps.selectedDate.getTime() &&
+    prevProps.viewMode === nextProps.viewMode &&
+    prevProps.weekStartsOn === nextProps.weekStartsOn &&
+    prevProps.onTimePeriodSelect === nextProps.onTimePeriodSelect
+  );
+});
 

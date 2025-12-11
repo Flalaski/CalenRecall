@@ -1,6 +1,6 @@
 {
   "name": "calenrecall",
-  "version": "2025.12.11.1",
+  "version": "2025.12.11.6",
   "description": "A calendar journal for recalling memories across decades, years, months, weeks, and days",
   "main": "dist-electron/main.js",
   "author": "",
@@ -26,6 +26,10 @@
     "dist:win:pack:cleanup": "node scripts/clean-release-partial.js",
     "dist:win:installer": "npm run version:auto && npm run build && npm run clean:release && electron-builder --win nsis --x64 && npm run open:release",
     "dist:win:portable": "npm run version:auto && npm run build && npm run clean:release && electron-builder --win portable --x64 && npm run open:release",
+    "dist:mac": "npm run version:auto && npm run build && npm run clean:release && electron-builder --mac && npm run open:release",
+    "dist:mac:dmg": "npm run version:auto && npm run build && npm run clean:release && electron-builder --mac dmg && npm run open:release",
+    "dist:mac:zip": "npm run version:auto && npm run build && npm run clean:release && electron-builder --mac zip && npm run open:release",
+    "dist:mac:universal": "npm run version:auto && npm run build && npm run clean:release && electron-builder --mac --x64 --arm64 && npm run open:release",
     "open:release": "node scripts/open-release.js",
     "preview": "vite preview",
     "version:show": "node -p \"require('./package.json').version\"",
@@ -76,7 +80,7 @@
     "ts-jest": "^29.1.1",
     "ts-node": "^10.9.2",
     "typescript": "^5.3.3",
-    "vite": "^7.2.6",
+    "vite": "^5.4.11",
     "wait-on": "^7.2.0"
   },
   "build": {
@@ -85,13 +89,14 @@
     "directories": {
       "output": "release"
     },
-    "icon": "assets/icon.png",
+    "icon": "assets/icon-1024.png",
     "files": [
       "dist/**/*",
       "dist-electron/**/*",
       "assets/**/*",
       "node_modules/**/*"
     ],
+    "artifactName": "${productName}-${version}-${arch}.${ext}",
     "win": {
       "target": [
         {
@@ -113,6 +118,53 @@
       "allowToChangeInstallationDirectory": true,
       "deleteAppDataOnUninstall": false,
       "warningsAsErrors": false
+    },
+    "mac": {
+      "icon": "assets/icon-1024.png",
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        },
+        {
+          "target": "zip",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        }
+      ],
+      "artifactName": "${productName}-${version}-${arch}.${ext}",
+      "category": "public.app-category.productivity",
+      "hardenedRuntime": true,
+      "gatekeeperAssess": false,
+      "entitlements": "build/entitlements.mac.plist",
+      "entitlementsInherit": "build/entitlements.mac.plist"
+    },
+    "dmg": {
+      "title": "${productName} ${version}",
+      "icon": "assets/icon-512.png",
+      "background": null,
+      "contents": [
+        {
+          "x": 130,
+          "y": 220
+        },
+        {
+          "x": 410,
+          "y": 220,
+          "type": "link",
+          "path": "/Applications"
+        }
+      ],
+      "window": {
+        "width": 540,
+        "height": 400
+      },
+      "artifactName": "${productName}-${version}-${arch}.dmg"
     }
   }
 }

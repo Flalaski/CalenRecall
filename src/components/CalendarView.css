@@ -17,6 +17,9 @@
   overflow-x: hidden; /* Prevent horizontal scrolling */
   width: 100%;
   box-sizing: border-box;
+  /* Performance optimizations */
+  contain: layout style;
+  will-change: scroll-position;
 }
 
 .decade-view {
@@ -99,6 +102,10 @@
   align-items: center;
   justify-content: center;
   overflow-x: hidden;
+  /* Performance optimizations */
+  contain: layout style paint;
+  will-change: transform;
+  transform: translateZ(0); /* Force GPU acceleration */
 }
 
 .calendar-cell.day-cell {

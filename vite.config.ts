@@ -12,6 +12,9 @@ export default defineConfig({
     outDir: 'dist',
     emptyOutDir: true,
     cssCodeSplit: false, // Bundle all CSS into a single file to preserve order
+    minify: 'esbuild', // Faster than terser, good compression
+    target: 'esnext', // Target modern browsers for better performance
+    sourcemap: false, // Disable sourcemaps in production for smaller bundles
     rollupOptions: {
       input: {
         main: path.resolve(__dirname, 'index.html'),
@@ -23,12 +26,25 @@ export default defineConfig({
         'archive-export': path.resolve(__dirname, 'archive-export.html'),
         'export-profile-selector': path.resolve(__dirname, 'export-profile-selector.html'),
       },
+      output: {
+        // Code splitting for better caching and loading performance
+        manualChunks: {
+          'react-vendor': ['react', 'react-dom'],
+          'date-vendor': ['date-fns'],
+        },
+      },
     },
+    // Optimize chunk size warnings
+    chunkSizeWarningLimit: 1000,
   },
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src')
     }
-  }
+  },
+  // Optimize dependencies
+  optimizeDeps: {
+    include: ['react', 'react-dom', 'date-fns'],
+  },
 })
 

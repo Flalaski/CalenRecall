@@ -1,14 +1,15 @@
 /**
  * Custom Theme Loader
  * 
- * Loads custom themes from the AppData/themes directory dynamically.
+ * Loads custom themes from the user data directory (themes subfolder) dynamically.
  * These themes are loaded at runtime and injected into the document as <style> tags.
+ * Platform paths: Windows (AppData), macOS (Application Support), Linux (~/.config)
  */
 
 import { loadAllThemes } from './themes';
 
 /**
- * Load all custom themes from AppData and inject them into the document
+ * Load all custom themes from the user data directory and inject them into the document
  */
 export async function loadCustomThemes(): Promise<void> {
   // Only run in Electron environment
