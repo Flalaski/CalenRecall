@@ -29,6 +29,22 @@ body,
   contain: layout style paint;
 }
 
+/* Prevent flickering during window transitions (maximize/fullscreen) */
+body.window-transitioning,
+body.window-transitioning * {
+  /* Temporarily disable will-change during transitions to prevent GPU thrashing */
+  will-change: auto !important;
+}
+
+/* Reduce layout recalculations during transitions */
+body.window-transitioning .app,
+body.window-transitioning .app-content,
+body.window-transitioning .timeline-section,
+body.window-transitioning .editor-section {
+  /* Temporarily relax containment during transitions */
+  contain: style paint;
+}
+
 /* GPU acceleration for scrollable containers - only enable will-change when scrolling */
 .app-content,
 .timeline-section,

@@ -16,6 +16,7 @@ import { formatDateToISO, parseISODate } from './utils/dateUtils';
 import { applyTheme, initializeTheme, applyFontSize } from './utils/themes';
 import { useEntries } from './contexts/EntriesContext';
 import { useCalendar } from './contexts/CalendarContext';
+import { initializeWindowStateTracker } from './utils/windowStateTracker';
 import './App.css';
 
 function App() {
@@ -51,6 +52,12 @@ function App() {
   const backgroundImagePathRef = useRef<string | null>(null);
   // Track theme cleanup function for 'auto' theme listener
   const themeCleanupRef = useRef<(() => void) | null>(null);
+
+  // Initialize window state tracker to prevent flickering during maximize/fullscreen
+  useEffect(() => {
+    const cleanup = initializeWindowStateTracker();
+    return cleanup;
+  }, []);
 
   // SUPREME OPTIMIZATION: Preload all entries at startup
   useEffect(() => {
