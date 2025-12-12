@@ -440,8 +440,7 @@
 [data-theme="journeyman"] .entry-indicator {
   background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
   border-radius: 50%;
-  height: 12px;
-  width: 12px;
+  /* Size controlled by .entry-indicator-wrapper using CSS variables */
   box-shadow: 
     0 0 6px rgba(255, 215, 0, 0.9),
     inset 0 0 3px rgba(255, 255, 255, 0.3);

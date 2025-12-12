@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, Fragment, useMemo } from 'react';
+import { useState, useEffect, useCallback, Fragment, useMemo, memo } from 'react';
 import { JournalEntry, TimeRange, Preferences } from '../types';
 import { formatDate, getWeekStart, getWeekEnd, getMonthStart, getYearStart, getDecadeStart, parseISODate, formatTime } from '../utils/dateUtils';
 import { playEditSound, playNewEntrySound } from '../utils/audioUtils';
@@ -21,7 +21,7 @@ interface EntryViewerProps {
   weekStartsOn?: 0 | 1 | 2 | 3 | 4 | 5 | 6;
 }
 
-export default function EntryViewer({
+function EntryViewer({
   entry,
   date,
   viewMode,
@@ -809,5 +809,20 @@ export default function EntryViewer({
     </div>
   );
 }
+
+// OPTIMIZATION: Memoize component to prevent unnecessary re-renders
+// Only re-render when props actually change
+export default memo(EntryViewer, (prevProps, nextProps) => {
+  return (
+    prevProps.entry?.id === nextProps.entry?.id &&
+    prevProps.date.getTime() === nextProps.date.getTime() &&
+    prevProps.viewMode === nextProps.viewMode &&
+    prevProps.weekStartsOn === nextProps.weekStartsOn &&
+    prevProps.onEdit === nextProps.onEdit &&
+    prevProps.onNewEntry === nextProps.onNewEntry &&
+    prevProps.onEntrySelect === nextProps.onEntrySelect &&
+    prevProps.onEditEntry === nextProps.onEditEntry
+  );
+});
 
 

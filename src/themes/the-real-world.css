@@ -522,8 +522,7 @@
 [data-theme="the-real-world"] .entry-indicator {
   background: #7fbf7f;
   border-radius: 0;
-  width: 9px;
-  height:11px;
+  /* Size controlled by .entry-indicator-wrapper using CSS variables */
 }
 
 [data-theme="the-real-world"] .entry-indicator-wrapper {

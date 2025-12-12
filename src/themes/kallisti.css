@@ -1778,6 +1778,16 @@
   box-shadow: 0 0 6px rgba(255, 215, 100, 0.5);
 }
 
+[data-theme="kallisti"] .entry-indicator-wrapper {
+  width: max(9px, var(--entry-indicator-size, 16px));
+  height: max(9px, var(--entry-indicator-size, 16px));
+}
+
+[data-theme="kallisti"] .entry-indicator-wrapper.in-cluster {
+  width: max(9px, var(--entry-indicator-size-cluster, 16px));
+  height: max(9px, var(--entry-indicator-size-cluster, 16px));
+}
+
 [data-theme="kallisti"] .current-period-indicator {
   background: var(--highlight-golden);
   border: 1px solid var(--golden-apple);

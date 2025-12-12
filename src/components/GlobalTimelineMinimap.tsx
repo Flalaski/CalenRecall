@@ -134,6 +134,18 @@ function hexToRgba(hex: string, alpha: number): string {
   return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 }
 
+// Convert hex to RGB object
+function hexToRgb(hex: string): { r: number; g: number; b: number } {
+  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  if (!result) return { r: 74, g: 144, b: 226 }; // Default fallback
+  
+  return {
+    r: parseInt(result[1], 16),
+    g: parseInt(result[2], 16),
+    b: parseInt(result[3], 16),
+  };
+}
+
 // Lighten a hex color for better readability on dark backgrounds
 function lightenColor(hex: string, amount: number = 0.4): string {
   const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
@@ -143,6 +155,46 @@ function lightenColor(hex: string, amount: number = 0.4): string {
   const r = Math.min(255, parseInt(result[1], 16) + Math.round(255 * amount));
   const g = Math.min(255, parseInt(result[2], 16) + Math.round(255 * amount));
   const b = Math.min(255, parseInt(result[3], 16) + Math.round(255 * amount));
+  
+  return `#${[r, g, b].map(x => {
+    const hex = x.toString(16);
+    return hex.length === 1 ? '0' + hex : hex;
+  }).join('')}`;
+}
+
+// Desaturate and soften a color to make it more subtle
+// This reduces vibrancy to match the rest of the interface
+function softenColor(hex: string, desaturate: number = 0.5, lighten: number = 0.3): string {
+  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  
+  if (!result) return hex;
+  
+  // Convert to RGB
+  let r = parseInt(result[1], 16);
+  let g = parseInt(result[2], 16);
+  let b = parseInt(result[3], 16);
+  
+  // Check if color is already very light/white - don't soften further
+  const luminance = (r * 0.299 + g * 0.587 + b * 0.114) / 255;
+  if (luminance > 0.9) {
+    // Very light color, just slightly desaturate
+    const gray = Math.round(r * 0.299 + g * 0.587 + b * 0.114);
+    r = Math.round(r * 0.9 + gray * 0.1);
+    g = Math.round(g * 0.9 + gray * 0.1);
+    b = Math.round(b * 0.9 + gray * 0.1);
+  } else {
+    // Normal color - apply full softening
+    // Desaturate by blending with gray
+    const gray = Math.round(r * 0.299 + g * 0.587 + b * 0.114); // Perceptual luminance
+    r = Math.round(r * (1 - desaturate) + gray * desaturate);
+    g = Math.round(g * (1 - desaturate) + gray * desaturate);
+    b = Math.round(b * (1 - desaturate) + gray * desaturate);
+    
+    // Lighten
+    r = Math.min(255, r + Math.round((255 - r) * lighten));
+    g = Math.min(255, g + Math.round((255 - g) * lighten));
+    b = Math.min(255, b + Math.round((255 - b) * lighten));
+  }
   
   return `#${[r, g, b].map(x => {
     const hex = x.toString(16);
@@ -186,6 +238,9 @@ function hslToHex(hsl: string): string {
 
 // Cache for theme entry indicator color to avoid repeated getComputedStyle calls
 let themeEntryIndicatorColorCache: { theme: string; color: string } | null = null;
+
+// Cache for theme time range colors - simple string cache: "theme-timeRange" -> color string
+const themeTimeRangeColorCache: Map<string, string> = new Map();
 
 // Get theme's entry-indicator color from CSS
 // This function safely reads the active theme's entry-indicator background color
@@ -262,6 +317,131 @@ function getThemeEntryIndicatorColor(theme: string = 'light'): string {
   
   // Cache the result
   themeEntryIndicatorColorCache = { theme: activeTheme, color };
+  
+  return color;
+}
+
+// Get theme color for a specific time range from CSS
+// OPTIMIZATION: Caches results to avoid repeated getComputedStyle calls
+function getThemeTimeRangeColor(timeRange: TimeRange, theme: string = 'light'): string {
+  // Ensure we have a valid document context
+  if (typeof document === 'undefined' || !document.body) {
+    // Fallback to default colors
+    const defaults: Record<TimeRange, string> = {
+      decade: '#9c27b0',
+      year: '#0277bd',
+      month: '#ef6c00',
+      week: '#2e7d32',
+      day: '#4a90e2',
+    };
+    return defaults[timeRange];
+  }
+  
+  // Get the actual active theme from document
+  const activeTheme = document.documentElement.getAttribute('data-theme') || theme;
+  
+  // Check cache - use theme-timeRange as key
+  const cacheKey = `${activeTheme}-${timeRange}`;
+  const cached = themeTimeRangeColorCache.get(cacheKey);
+  if (cached) {
+    return cached;
+  }
+  
+  // Map time range to CSS class name
+  const classMap: Record<TimeRange, string> = {
+    decade: 'entry-decade',
+    year: 'entry-year',
+    month: 'entry-month',
+    week: 'entry-week',
+    day: 'entry-day',
+  };
+  
+  const className = classMap[timeRange];
+  const defaults: Record<TimeRange, string> = {
+    decade: '#9c27b0',
+    year: '#0277bd',
+    month: '#ef6c00',
+    week: '#2e7d32',
+    day: '#4a90e2',
+  };
+  
+  // Create a temporary element to get computed style
+  const tempEl = document.createElement('div');
+  tempEl.className = className;
+  // Set data-theme on a parent to match CSS selector [data-theme="..."] .entry-*
+  const parentEl = document.createElement('div');
+  parentEl.setAttribute('data-theme', activeTheme);
+  parentEl.style.position = 'absolute';
+  parentEl.style.visibility = 'hidden';
+  parentEl.style.pointerEvents = 'none';
+  parentEl.style.width = '1px';
+  parentEl.style.height = '1px';
+  parentEl.appendChild(tempEl);
+  document.body.appendChild(parentEl);
+  
+  let color = defaults[timeRange];
+  
+  try {
+    const computedStyle = window.getComputedStyle(tempEl);
+    // Try color first (text color), then background-color as fallback
+    let textColor = computedStyle.color;
+    let bgColor = computedStyle.backgroundColor;
+    
+    // Remove the temporary element
+    document.body.removeChild(parentEl);
+    
+    // Helper to convert rgb/rgba to hex
+    const rgbToHex = (rgbString: string): string | null => {
+      if (!rgbString || !rgbString.startsWith('rgb')) return null;
+      const matches = rgbString.match(/\d+/g);
+      if (matches && matches.length >= 3) {
+        const r = parseInt(matches[0]);
+        const g = parseInt(matches[1]);
+        const b = parseInt(matches[2]);
+        // Check if it's white or very light (might be unthemed)
+        const luminance = (r * 0.299 + g * 0.587 + b * 0.114) / 255;
+        if (luminance > 0.95) return null; // Too light, likely unthemed
+        return `#${[r, g, b].map(x => {
+          const hex = x.toString(16);
+          return hex.length === 1 ? '0' + hex : hex;
+        }).join('')}`;
+      }
+      return null;
+    };
+    
+    // Try text color first
+    if (textColor) {
+      const hex = rgbToHex(textColor);
+      if (hex) {
+        color = hex;
+      } else if (textColor.startsWith('#') && textColor !== '#ffffff' && textColor !== '#fff') {
+        // Use hex directly if not white
+        color = textColor;
+      } else {
+        // Text color is white/light, try background color
+        if (bgColor) {
+          const bgHex = rgbToHex(bgColor);
+          if (bgHex) {
+            color = bgHex;
+          } else if (bgColor.startsWith('#') && bgColor !== '#ffffff' && bgColor !== '#fff') {
+            color = bgColor;
+          }
+        }
+      }
+    }
+  } catch (error) {
+    // If anything goes wrong, clean up and return fallback
+    try {
+      if (parentEl.parentNode) {
+        document.body.removeChild(parentEl);
+      }
+    } catch (cleanupError) {
+      // Ignore cleanup errors
+    }
+  }
+  
+  // Cache the result - store as string directly for simplicity
+  themeTimeRangeColorCache.set(cacheKey, color);
   
   return color;
 }
@@ -421,6 +601,8 @@ function GlobalTimelineMinimap({
         
         // Invalidate theme color cache so new theme color is read
         themeEntryIndicatorColorCache = null;
+        // Clear time range color cache when theme changes
+        themeTimeRangeColorCache.clear();
         
         // Update state immediately - no database read needed
         setMinimapCrystalUseDefaultColors(useDefaultColors);
@@ -434,6 +616,10 @@ function GlobalTimelineMinimap({
       
       // Fallback: load from database for other preference changes
       themeEntryIndicatorColorCache = null;
+      // Clear time range color cache when theme changes
+      if (customEvent.detail?.key === 'theme') {
+        themeTimeRangeColorCache.clear();
+      }
       loadPreference();
     };
     
@@ -879,16 +1065,45 @@ function GlobalTimelineMinimap({
     }
   }, [currentIndicatorMetrics.position, selectedDate, viewMode, weekStartsOn]);
 
-  // Get color for current view mode
+  // Get color for current view mode - uses theme colors from CSS
+  // OPTIMIZATION: Regular function that reads theme directly from DOM (no hook dependencies)
   const getViewModeColor = (mode: TimeRange): string => {
-    switch (mode) {
-      case 'decade': return '#9c27b0';
-      case 'year': return '#0277bd';
-      case 'month': return '#ef6c00';
-      case 'week': return '#2e7d32';
-      case 'day': return '#4a90e2';
-      default: return '#4a90e2';
+    // Get the current theme directly from DOM (always up-to-date)
+    const activeTheme = typeof document !== 'undefined' 
+      ? document.documentElement.getAttribute('data-theme') || 'light'
+      : 'light';
+    
+    // Get theme color for this time range
+    const themeColor = getThemeTimeRangeColor(mode, activeTheme);
+    
+    // Fallback to default colors if theme color not found or is white/too light
+    const defaults: Record<TimeRange, string> = {
+      decade: '#9c27b0',
+      year: '#0277bd',
+      month: '#ef6c00',
+      week: '#2e7d32',
+      day: '#4a90e2',
+    };
+    
+    // Check if theme color is valid (not white/too light)
+    if (themeColor) {
+      const hexMatch = themeColor.match(/^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i);
+      if (hexMatch) {
+        const r = parseInt(hexMatch[1], 16);
+        const g = parseInt(hexMatch[2], 16);
+        const b = parseInt(hexMatch[3], 16);
+        const luminance = (r * 0.299 + g * 0.587 + b * 0.114) / 255;
+        // If color is too light (likely unthemed), use default
+        if (luminance < 0.95) {
+          return themeColor;
+        }
+      } else if (themeColor !== '#ffffff' && themeColor !== '#fff' && themeColor !== 'white') {
+        return themeColor;
+      }
     }
+    
+    // Use default color if theme color not found or too light
+    return defaults[mode] || defaults.day;
   };
 
   // Get color for the currently selected segment of time based on zodiac colors
@@ -1080,7 +1295,7 @@ function GlobalTimelineMinimap({
     });
 
     return indicators;
-  }, [selectedDate, viewMode, timelineData]);
+  }, [selectedDate, viewMode, timelineData]); // getViewModeColor is a regular function, no need in deps
 
   // Localization range - only show scales within ±20% of the current indicator
   const LOCALIZATION_RANGE = 20; // percentage of timeline width
@@ -1090,7 +1305,11 @@ function GlobalTimelineMinimap({
     return (currentIndicatorMetrics.position / 100) * 1000;
   }, [currentIndicatorMetrics.position]);
 
-  const activeColor = getViewModeColor(viewMode);
+  // Get active color for current view mode - uses theme colors
+  // Recalculates when theme or viewMode changes
+  const activeColor = useMemo(() => {
+    return getViewModeColor(viewMode);
+  }, [viewMode, currentTheme]); // currentTheme ensures recalculation when theme changes
 
   // Calculate gradient stop positions for separator lines
   // Return numeric values (0-1 range) for arithmetic operations
@@ -3822,7 +4041,7 @@ function GlobalTimelineMinimap({
     const currentOnTimePeriodSelect = onTimePeriodSelectRef.current;
     
     // Get user behavior profile for adaptive systems (calculate once, reuse throughout)
-    const behaviorProfile = dragBehaviorTracker.getProfile();
+    // const behaviorProfile = dragBehaviorTracker.getProfile(); // Reserved for future adaptive features
     
     if (!containerRef.current || !currentTimelineData.startDate || !currentTimelineData.endDate || !dragStartPositionRef.current) {
       return;
@@ -4716,52 +4935,52 @@ function GlobalTimelineMinimap({
               <stop offset="0%" stopColor="#999" stopOpacity="0.2" />
               <stop offset={`${gradientStops.fadeStart * 100}%`} stopColor="#999" stopOpacity="0.2" />
               {/* Expand colorStart/End so the colored center covers a much wider band */}
-              <stop offset={`${Math.max(0, gradientStops.colorStart - 0.11) * 100}%`} stopColor={activeColor} stopOpacity="0.5" />
-              <stop offset={`${Math.max(0, gradientStops.colorStart) * 100}%`} stopColor={activeColor} stopOpacity="0.8" />
-              <stop offset={`${Math.max(0, gradientStops.center - 0.065) * 100}%`} stopColor={activeColor} stopOpacity="1" />
-              <stop offset={`${gradientStops.center * 100}%`} stopColor={activeColor} stopOpacity="1" />
-              <stop offset={`${Math.min(1, gradientStops.center + 0.065) * 100}%`} stopColor={activeColor} stopOpacity="1" />
-              <stop offset={`${Math.min(1, gradientStops.colorEnd) * 100}%`} stopColor={activeColor} stopOpacity="0.8" />
-              <stop offset={`${Math.min(1, gradientStops.colorEnd + 0.11) * 100}%`} stopColor={activeColor} stopOpacity="0.5" />
+              <stop offset={`${Math.max(0, gradientStops.colorStart - 0.11) * 100}%`} stopColor={softenColor(activeColor, 0.5, 0.3)} stopOpacity="0.15" />
+              <stop offset={`${Math.max(0, gradientStops.colorStart) * 100}%`} stopColor={softenColor(activeColor, 0.5, 0.3)} stopOpacity="0.25" />
+              <stop offset={`${Math.max(0, gradientStops.center - 0.065) * 100}%`} stopColor={softenColor(activeColor, 0.5, 0.3)} stopOpacity="0.35" />
+              <stop offset={`${gradientStops.center * 100}%`} stopColor={softenColor(activeColor, 0.5, 0.3)} stopOpacity="0.35" />
+              <stop offset={`${Math.min(1, gradientStops.center + 0.065) * 100}%`} stopColor={softenColor(activeColor, 0.5, 0.3)} stopOpacity="0.35" />
+              <stop offset={`${Math.min(1, gradientStops.colorEnd) * 100}%`} stopColor={softenColor(activeColor, 0.5, 0.3)} stopOpacity="0.25" />
+              <stop offset={`${Math.min(1, gradientStops.colorEnd + 0.11) * 100}%`} stopColor={softenColor(activeColor, 0.5, 0.3)} stopOpacity="0.15" />
               <stop offset={`${gradientStops.fadeEnd * 100}%`} stopColor="#999" stopOpacity="0.2" />
               <stop offset="100%" stopColor="#999" stopOpacity="0.2" />
             </linearGradient>
             <linearGradient id="separatorGradient2" x1="0%" y1="0%" x2="100%" y2="0%">
               <stop offset="0%" stopColor="#999" stopOpacity="0.2" />
               <stop offset={`${gradientStops.fadeStart * 100}%`} stopColor="#999" stopOpacity="0.2" />
-              <stop offset={`${Math.max(0, gradientStops.colorStart - 0.11) * 100}%`} stopColor={activeColor} stopOpacity="0.5" />
-              <stop offset={`${Math.max(0, gradientStops.colorStart) * 100}%`} stopColor={activeColor} stopOpacity="0.8" />
-              <stop offset={`${Math.max(0, gradientStops.center - 0.065) * 100}%`} stopColor={activeColor} stopOpacity="1" />
-              <stop offset={`${gradientStops.center * 100}%`} stopColor={activeColor} stopOpacity="1" />
-              <stop offset={`${Math.min(1, gradientStops.center + 0.065) * 100}%`} stopColor={activeColor} stopOpacity="1" />
-              <stop offset={`${Math.min(1, gradientStops.colorEnd) * 100}%`} stopColor={activeColor} stopOpacity="0.8" />
-              <stop offset={`${Math.min(1, gradientStops.colorEnd + 0.11) * 100}%`} stopColor={activeColor} stopOpacity="0.5" />
+              <stop offset={`${Math.max(0, gradientStops.colorStart - 0.11) * 100}%`} stopColor={softenColor(activeColor, 0.5, 0.3)} stopOpacity="0.15" />
+              <stop offset={`${Math.max(0, gradientStops.colorStart) * 100}%`} stopColor={softenColor(activeColor, 0.5, 0.3)} stopOpacity="0.25" />
+              <stop offset={`${Math.max(0, gradientStops.center - 0.065) * 100}%`} stopColor={softenColor(activeColor, 0.5, 0.3)} stopOpacity="0.35" />
+              <stop offset={`${gradientStops.center * 100}%`} stopColor={softenColor(activeColor, 0.5, 0.3)} stopOpacity="0.35" />
+              <stop offset={`${Math.min(1, gradientStops.center + 0.065) * 100}%`} stopColor={softenColor(activeColor, 0.5, 0.3)} stopOpacity="0.35" />
+              <stop offset={`${Math.min(1, gradientStops.colorEnd) * 100}%`} stopColor={softenColor(activeColor, 0.5, 0.3)} stopOpacity="0.25" />
+              <stop offset={`${Math.min(1, gradientStops.colorEnd + 0.11) * 100}%`} stopColor={softenColor(activeColor, 0.5, 0.3)} stopOpacity="0.15" />
               <stop offset={`${gradientStops.fadeEnd * 100}%`} stopColor="#999" stopOpacity="0.2" />
               <stop offset="100%" stopColor="#999" stopOpacity="0.2" />
             </linearGradient>
             <linearGradient id="separatorGradient3" x1="0%" y1="0%" x2="100%" y2="0%">
               <stop offset="0%" stopColor="#999" stopOpacity="0.2" />
               <stop offset={`${gradientStops.fadeStart * 100}%`} stopColor="#999" stopOpacity="0.2" />
-              <stop offset={`${Math.max(0, gradientStops.colorStart - 0.11) * 100}%`} stopColor={activeColor} stopOpacity="0.5" />
-              <stop offset={`${Math.max(0, gradientStops.colorStart) * 100}%`} stopColor={activeColor} stopOpacity="0.8" />
-              <stop offset={`${Math.max(0, gradientStops.center - 0.065) * 100}%`} stopColor={activeColor} stopOpacity="1" />
-              <stop offset={`${gradientStops.center * 100}%`} stopColor={activeColor} stopOpacity="1" />
-              <stop offset={`${Math.min(1, gradientStops.center + 0.065) * 100}%`} stopColor={activeColor} stopOpacity="1" />
-              <stop offset={`${Math.min(1, gradientStops.colorEnd) * 100}%`} stopColor={activeColor} stopOpacity="0.8" />
-              <stop offset={`${Math.min(1, gradientStops.colorEnd + 0.11) * 100}%`} stopColor={activeColor} stopOpacity="0.5" />
+              <stop offset={`${Math.max(0, gradientStops.colorStart - 0.11) * 100}%`} stopColor={softenColor(activeColor, 0.5, 0.3)} stopOpacity="0.15" />
+              <stop offset={`${Math.max(0, gradientStops.colorStart) * 100}%`} stopColor={softenColor(activeColor, 0.5, 0.3)} stopOpacity="0.25" />
+              <stop offset={`${Math.max(0, gradientStops.center - 0.065) * 100}%`} stopColor={softenColor(activeColor, 0.5, 0.3)} stopOpacity="0.35" />
+              <stop offset={`${gradientStops.center * 100}%`} stopColor={softenColor(activeColor, 0.5, 0.3)} stopOpacity="0.35" />
+              <stop offset={`${Math.min(1, gradientStops.center + 0.065) * 100}%`} stopColor={softenColor(activeColor, 0.5, 0.3)} stopOpacity="0.35" />
+              <stop offset={`${Math.min(1, gradientStops.colorEnd) * 100}%`} stopColor={softenColor(activeColor, 0.5, 0.3)} stopOpacity="0.25" />
+              <stop offset={`${Math.min(1, gradientStops.colorEnd + 0.11) * 100}%`} stopColor={softenColor(activeColor, 0.5, 0.3)} stopOpacity="0.15" />
               <stop offset={`${gradientStops.fadeEnd * 100}%`} stopColor="#999" stopOpacity="0.2" />
               <stop offset="100%" stopColor="#999" stopOpacity="0.2" />
             </linearGradient>
             <linearGradient id="separatorGradient4" x1="0%" y1="0%" x2="100%" y2="0%">
               <stop offset="0%" stopColor="#999" stopOpacity="0.2" />
               <stop offset={`${gradientStops.fadeStart * 100}%`} stopColor="#999" stopOpacity="0.2" />
-              <stop offset={`${Math.max(0, gradientStops.colorStart - 0.11) * 100}%`} stopColor={activeColor} stopOpacity="0.5" />
-              <stop offset={`${Math.max(0, gradientStops.colorStart) * 100}%`} stopColor={activeColor} stopOpacity="0.8" />
-              <stop offset={`${Math.max(0, gradientStops.center - 0.065) * 100}%`} stopColor={activeColor} stopOpacity="1" />
-              <stop offset={`${gradientStops.center * 100}%`} stopColor={activeColor} stopOpacity="1" />
-              <stop offset={`${Math.min(1, gradientStops.center + 0.065) * 100}%`} stopColor={activeColor} stopOpacity="1" />
-              <stop offset={`${Math.min(1, gradientStops.colorEnd) * 100}%`} stopColor={activeColor} stopOpacity="0.8" />
-              <stop offset={`${Math.min(1, gradientStops.colorEnd + 0.11) * 100}%`} stopColor={activeColor} stopOpacity="0.5" />
+              <stop offset={`${Math.max(0, gradientStops.colorStart - 0.11) * 100}%`} stopColor={softenColor(activeColor, 0.5, 0.3)} stopOpacity="0.15" />
+              <stop offset={`${Math.max(0, gradientStops.colorStart) * 100}%`} stopColor={softenColor(activeColor, 0.5, 0.3)} stopOpacity="0.25" />
+              <stop offset={`${Math.max(0, gradientStops.center - 0.065) * 100}%`} stopColor={softenColor(activeColor, 0.5, 0.3)} stopOpacity="0.35" />
+              <stop offset={`${gradientStops.center * 100}%`} stopColor={softenColor(activeColor, 0.5, 0.3)} stopOpacity="0.35" />
+              <stop offset={`${Math.min(1, gradientStops.center + 0.065) * 100}%`} stopColor={softenColor(activeColor, 0.5, 0.3)} stopOpacity="0.35" />
+              <stop offset={`${Math.min(1, gradientStops.colorEnd) * 100}%`} stopColor={softenColor(activeColor, 0.5, 0.3)} stopOpacity="0.25" />
+              <stop offset={`${Math.min(1, gradientStops.colorEnd + 0.11) * 100}%`} stopColor={softenColor(activeColor, 0.5, 0.3)} stopOpacity="0.15" />
               <stop offset={`${gradientStops.fadeEnd * 100}%`} stopColor="#999" stopOpacity="0.2" />
               <stop offset="100%" stopColor="#999" stopOpacity="0.2" />
             </linearGradient>
@@ -4789,8 +5008,10 @@ function GlobalTimelineMinimap({
               }
             });
             
-            const sectionColor = getViewModeColor(range);
-            const opacity = isFocused ? 0.15 : 0.08;
+            // Use theme color for this time range - softened to match interface
+            const sectionColor = softenColor(getViewModeColor(range), 0.6, 0.4);
+            // Use rgba for 50% opacity instead of opacity attribute to ensure it works
+            const sectionColorWithOpacity = hexToRgba(sectionColor, 0.369);
             
             return (
               <rect
@@ -4799,24 +5020,22 @@ function GlobalTimelineMinimap({
                 y={sectionTop}
                 width="1000"
                 height={sectionHeight}
-                fill={sectionColor}
-                opacity={opacity}
-                style={{
-                  transition: 'height 0.5s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.5s ease, y 0.5s cubic-bezier(0.4, 0, 0.2, 1)'
-                }}
+                fill={sectionColorWithOpacity}
+                // EXTREME PERFORMANCE: Disable transition for instant updates
+                style={{}}
               />
             );
           })}
 
-          {/* Infinity tree trunk centered on the current indicator */}
+          {/* Infinity tree trunk centered on the current indicator - uses theme color */}
           <line
             x1={Math.round(centerX) + 0.5}
             y1="0.5"
             x2={Math.round(centerX) + 0.5}
             y2={`${minimapDimensions.height - 0.5}`}
-            stroke="#4a90e2"
+            stroke={softenColor(activeColor, 0.5, 0.3)}
             strokeWidth="2"
-            opacity="0.55"
+            opacity="0.2" // Much more subtle
             className="infinity-tree-trunk"
             shapeRendering="crispEdges"
           />
@@ -4834,8 +5053,8 @@ function GlobalTimelineMinimap({
             const isCurrentTierSeparator = idx === Math.min(currentScaleIndex, separatorPositions.length - 1);
             
             // Full opacity for current tier separator, faded for others
-            const baseOpacity = isCurrentTierSeparator ? "1.0" : "0.3";
-            const overlayOpacity = isCurrentTierSeparator ? "1.0" : "0.4";
+            const baseOpacity = isCurrentTierSeparator ? 1.0 : 0.3;
+            const overlayOpacity = isCurrentTierSeparator ? 1.0 : 0.4;
             
             return (
               <g key={`separator-${idx}`}>
@@ -4856,12 +5075,12 @@ function GlobalTimelineMinimap({
                   y1={yPosFormatted}
                   x2="1000"
                   y2={yPosFormatted}
-                  stroke={activeColor}
+                  stroke={softenColor(activeColor, 0.5, 0.3)}
                   strokeWidth="2"
-                  opacity={overlayOpacity}
+                  opacity={Math.min(overlayOpacity, 0.3)} // Cap at 0.3 max
                   shapeRendering="crispEdges"
                   style={{ 
-                    filter: `drop-shadow(0 0 2px ${activeColor})`
+                    filter: `drop-shadow(0 0 1px ${softenColor(activeColor, 0.5, 0.3)})`
                   }}
                 />
               </g>
@@ -4873,21 +5092,20 @@ function GlobalTimelineMinimap({
             {timeScaleOrder.map((scale) => {
               const isActiveScale = scale === viewMode;
               const levelIndex = timeScaleOrder.indexOf(scale);
-              // Make active tier much more pronounced
-              const baseOpacity = isActiveScale ? 1.0 : 0.35;
-              // Make active tier significantly thicker and more visible
-              const thickness = isActiveScale ? 4.5 : 1.6;
+              // Make active tier more pronounced but still subtle
+              const baseOpacity = isActiveScale ? 0.4 : 0.15; // Much more subtle
+              // Make active tier thicker but not too much
+              const thickness = isActiveScale ? 3.0 : 1.2; // Reduced thickness
               
-              // Get tier-specific colors
-              const tierColor = getViewModeColor(scale);
+              // Get tier-specific colors - softened to match interface
+              const tierColor = softenColor(getViewModeColor(scale), 0.5, 0.3);
               // For right branch, use a slightly lighter variant for visual distinction
-              // Using same color temporarily to test if color is the issue
-              const tierColorRight = lightenColor(tierColor, 0.15);
+              const tierColorRight = softenColor(getViewModeColor(scale), 0.6, 0.4);
               
               // Create separate glow filters to ensure both work correctly
               const glowFilterIdLeft = `glow-left-${scale}-${levelIndex}`;
               const glowFilterIdRight = `glow-right-${scale}-${levelIndex}`;
-              const glowIntensity = isActiveScale ? 3 : 1.5;
+              const glowIntensity = isActiveScale ? 1.0 : 0.5; // Reduced glow
 
               return (
                 <g key={scale}>
@@ -5060,12 +5278,6 @@ function GlobalTimelineMinimap({
                 const sourceColor = getEntryColor(entry);
                 const targetColor = getEntryColor(targetEntry);
                 // Convert hex to RGB, blend, and convert back
-                const hexToRgb = (hex: string) => {
-                  const r = parseInt(hex.slice(1, 3), 16);
-                  const g = parseInt(hex.slice(3, 5), 16);
-                  const b = parseInt(hex.slice(5, 7), 16);
-                  return { r, g, b };
-                };
                 const rgbToHex = (r: number, g: number, b: number) => {
                   return `#${Math.round(r).toString(16).padStart(2, '0')}${Math.round(g).toString(16).padStart(2, '0')}${Math.round(b).toString(16).padStart(2, '0')}`;
                 };
@@ -5085,24 +5297,19 @@ function GlobalTimelineMinimap({
                 const entryColor = minimapCrystalUseDefaultColors
                   ? (entry.id ? (entryColorCache.get(entry.id) || calculateEntryColor(entry)) : calculateEntryColor(entry))
                   : getThemeEntryIndicatorColor(currentTheme);
-                const hexToRgb = (hex: string) => {
-                  const r = parseInt(hex.slice(1, 3), 16);
-                  const g = parseInt(hex.slice(3, 5), 16);
-                  const b = parseInt(hex.slice(5, 7), 16);
-                  return { r, g, b };
-                };
                 const rgbToHex = (r: number, g: number, b: number) => {
                   return `#${Math.round(r).toString(16).padStart(2, '0')}${Math.round(g).toString(16).padStart(2, '0')}${Math.round(b).toString(16).padStart(2, '0')}`;
                 };
                 // Convert HSL to hex if needed
                 const entryHex = entryColor.startsWith('hsl') ? hslToHex(entryColor) : entryColor;
                 const entryRgb = hexToRgb(entryHex);
-                // Blend with active color (blue-ish for focus)
-                const focusRgb = { r: 74, g: 144, b: 226 }; // #4a90e2
+                // Blend with active color (uses theme color for focus)
+                const activeColorRgb = hexToRgb(activeColor);
+                // rgbToHex is already declared above at line 5230, reuse it
                 connectionColor = rgbToHex(
-                  (entryRgb.r * 0.6 + focusRgb.r * 0.4),
-                  (entryRgb.g * 0.6 + focusRgb.g * 0.4),
-                  (entryRgb.b * 0.6 + focusRgb.b * 0.4)
+                  (entryRgb.r * 0.6 + activeColorRgb.r * 0.4),
+                  (entryRgb.g * 0.6 + activeColorRgb.g * 0.4),
+                  (entryRgb.b * 0.6 + activeColorRgb.b * 0.4)
                 );
               } else {
                 // Web connections use entry color - use cached color instead of recalculating
@@ -5194,12 +5401,13 @@ function GlobalTimelineMinimap({
           </g>
           
           {/* All time scale levels - displayed simultaneously, localized to current indicator */}
-          {/* DECADE SCALE (topmost, largest scale) */}
+          {/* DECADE SCALE (topmost, largest scale) - uses theme colors */}
           {allScaleMarkings.decade.major
             .filter(mark => Math.abs(mark.position - currentIndicatorMetrics.position) <= LOCALIZATION_RANGE)
             .map((mark, idx) => {
             const x = Math.round((mark.position / 100) * 1000) + 0.5;
             const isCurrentScale = viewMode === 'decade';
+            const scaleColor = isCurrentScale ? softenColor(getViewModeColor('decade'), 0.5, 0.3) : '#666';
             return (
               <line
                 key={`decade-major-${idx}`}
@@ -5207,7 +5415,7 @@ function GlobalTimelineMinimap({
                 y1="0.5"
                 x2={x}
                 y2="40.5"
-                stroke={isCurrentScale ? "#4a90e2" : "#333"}
+                stroke={scaleColor}
                 strokeWidth={isCurrentScale ? "4" : "3"}
                 opacity={isCurrentScale ? "0.9" : "0.8"}
                 shapeRendering="crispEdges"
@@ -5219,6 +5427,7 @@ function GlobalTimelineMinimap({
             .map((mark, idx) => {
             const x = Math.round((mark.position / 100) * 1000) + 0.5;
             const isCurrentScale = viewMode === 'decade';
+            const scaleColor = isCurrentScale ? softenColor(getViewModeColor('decade'), 0.6, 0.4) : '#888';
             return (
               <line
                 key={`decade-minor-${idx}`}
@@ -5226,7 +5435,7 @@ function GlobalTimelineMinimap({
                 y1="0.5"
                 x2={x}
                 y2="30.5"
-                stroke={isCurrentScale ? "#6ab7ff" : "#555"}
+                stroke={scaleColor}
                 strokeWidth={isCurrentScale ? "3" : "2"}
                 opacity={isCurrentScale ? "0.7" : "0.6"}
                 shapeRendering="crispEdges"
@@ -5234,12 +5443,13 @@ function GlobalTimelineMinimap({
             );
           })}
           
-          {/* YEAR SCALE */}
+          {/* YEAR SCALE - uses theme colors */}
           {allScaleMarkings.year.major
             .filter(mark => Math.abs(mark.position - currentIndicatorMetrics.position) <= LOCALIZATION_RANGE)
             .map((mark, idx) => {
             const x = Math.round((mark.position / 100) * 1000) + 0.5;
             const isCurrentScale = viewMode === 'year';
+            const scaleColor = isCurrentScale ? softenColor(getViewModeColor('year'), 0.5, 0.3) : '#666';
             return (
               <line
                 key={`year-major-${idx}`}
@@ -5247,7 +5457,7 @@ function GlobalTimelineMinimap({
                 y1="40.5"
                 x2={x}
                 y2="80.5"
-                stroke={isCurrentScale ? "#4a90e2" : "#444"}
+                stroke={scaleColor}
                 strokeWidth={isCurrentScale ? "4" : "3"}
                 opacity={isCurrentScale ? "0.85" : "0.75"}
                 shapeRendering="crispEdges"
@@ -5259,6 +5469,7 @@ function GlobalTimelineMinimap({
             .map((mark, idx) => {
             const x = Math.round((mark.position / 100) * 1000) + 0.5;
             const isCurrentScale = viewMode === 'year';
+            const scaleColor = isCurrentScale ? softenColor(getViewModeColor('year'), 0.6, 0.4) : '#888';
             return (
               <line
                 key={`year-minor-${idx}`}
@@ -5266,7 +5477,7 @@ function GlobalTimelineMinimap({
                 y1="40.5"
                 x2={x}
                 y2="70.5"
-                stroke={isCurrentScale ? "#6ab7ff" : "#666"}
+                stroke={scaleColor}
                 strokeWidth={isCurrentScale ? "2" : "2"}
                 opacity={isCurrentScale ? "0.6" : "0.5"}
                 shapeRendering="crispEdges"
@@ -5274,12 +5485,13 @@ function GlobalTimelineMinimap({
             );
           })}
           
-          {/* MONTH SCALE (center, current view highlighted) */}
+          {/* MONTH SCALE (center, current view highlighted) - uses theme colors */}
           {allScaleMarkings.month.major
             .filter(mark => Math.abs(mark.position - currentIndicatorMetrics.position) <= LOCALIZATION_RANGE)
             .map((mark, idx) => {
             const x = Math.round((mark.position / 100) * 1000) + 0.5;
             const isCurrentScale = viewMode === 'month';
+            const scaleColor = isCurrentScale ? softenColor(getViewModeColor('month'), 0.5, 0.3) : '#666';
             return (
               <line
                 key={`month-major-${idx}`}
@@ -5287,9 +5499,9 @@ function GlobalTimelineMinimap({
                 y1="80.5"
                 x2={x}
                 y2="120.5"
-                stroke={isCurrentScale ? "#4a90e2" : "#555"}
-                strokeWidth={isCurrentScale ? "4" : "3"}
-                opacity={isCurrentScale ? "0.9" : "0.7"}
+                stroke={scaleColor}
+                strokeWidth={isCurrentScale ? "3" : "2"}
+                opacity={isCurrentScale ? "0.4" : "0.25"}
                 shapeRendering="crispEdges"
               />
             );
@@ -5299,6 +5511,7 @@ function GlobalTimelineMinimap({
             .map((mark, idx) => {
             const x = Math.round((mark.position / 100) * 1000) + 0.5;
             const isCurrentScale = viewMode === 'month';
+            const scaleColor = isCurrentScale ? lightenColor(getViewModeColor('month'), 0.3) : '#777';
             return (
               <line
                 key={`month-minor-${idx}`}
@@ -5306,20 +5519,21 @@ function GlobalTimelineMinimap({
                 y1="80.5"
                 x2={x}
                 y2="110.5"
-                stroke={isCurrentScale ? "#6ab7ff" : "#777"}
+                stroke={scaleColor}
                 strokeWidth={isCurrentScale ? "2" : "1"}
-                opacity={isCurrentScale ? "0.7" : "0.5"}
+                opacity={isCurrentScale ? "0.3" : "0.2"}
                 shapeRendering="crispEdges"
               />
             );
           })}
           
-          {/* WEEK SCALE */}
+          {/* WEEK SCALE - uses theme colors */}
           {allScaleMarkings.week.major
             .filter(mark => Math.abs(mark.position - currentIndicatorMetrics.position) <= LOCALIZATION_RANGE)
             .map((mark, idx) => {
             const x = Math.round((mark.position / 100) * 1000) + 0.5;
             const isCurrentScale = viewMode === 'week';
+            const scaleColor = isCurrentScale ? getViewModeColor('week') : '#555';
             return (
               <line
                 key={`week-major-${idx}`}
@@ -5327,9 +5541,9 @@ function GlobalTimelineMinimap({
                 y1="120.5"
                 x2={x}
                 y2="160.5"
-                stroke={isCurrentScale ? "#4a90e2" : "#555"}
-                strokeWidth={isCurrentScale ? "3" : "3"}
-                opacity={isCurrentScale ? "0.8" : "0.6"}
+                stroke={scaleColor}
+                strokeWidth={isCurrentScale ? "2.5" : "2"}
+                opacity={isCurrentScale ? "0.35" : "0.2"}
                 shapeRendering="crispEdges"
               />
             );
@@ -5339,6 +5553,7 @@ function GlobalTimelineMinimap({
             .map((mark, idx) => {
             const x = Math.round((mark.position / 100) * 1000) + 0.5;
             const isCurrentScale = viewMode === 'week';
+            const scaleColor = isCurrentScale ? lightenColor(getViewModeColor('week'), 0.3) : '#888';
             return (
               <line
                 key={`week-minor-${idx}`}
@@ -5346,20 +5561,21 @@ function GlobalTimelineMinimap({
                 y1="120.5"
                 x2={x}
                 y2="150.5"
-                stroke={isCurrentScale ? "#6ab7ff" : "#888"}
+                stroke={scaleColor}
                 strokeWidth={isCurrentScale ? "1" : "1"}
-                opacity={isCurrentScale ? "0.6" : "0.4"}
+                opacity={isCurrentScale ? "0.25" : "0.15"}
                 shapeRendering="crispEdges"
               />
             );
           })}
           
-          {/* DAY SCALE (bottommost, finest scale) */}
+          {/* DAY SCALE (bottommost, finest scale) - uses theme colors */}
           {allScaleMarkings.day.major
             .filter(mark => Math.abs(mark.position - currentIndicatorMetrics.position) <= LOCALIZATION_RANGE)
             .map((mark, idx) => {
             const x = Math.round((mark.position / 100) * 1000) + 0.5;
             const isCurrentScale = viewMode === 'day';
+            const scaleColor = isCurrentScale ? getViewModeColor('day') : '#666';
             return (
               <line
                 key={`day-major-${idx}`}
@@ -5367,9 +5583,9 @@ function GlobalTimelineMinimap({
                 y1="160.5"
                 x2={x}
                 y2="200.5"
-                stroke={isCurrentScale ? "#4a90e2" : "#666"}
-                strokeWidth={isCurrentScale ? "3" : "2"}
-                opacity={isCurrentScale ? "0.7" : "0.5"}
+                stroke={scaleColor}
+                strokeWidth={isCurrentScale ? "2.5" : "2"}
+                opacity={isCurrentScale ? "0.3" : "0.2"}
                 shapeRendering="crispEdges"
               />
             );
@@ -5378,6 +5594,8 @@ function GlobalTimelineMinimap({
             .filter(mark => Math.abs(mark.position - currentIndicatorMetrics.position) <= LOCALIZATION_RANGE)
             .map((mark, idx) => {
             const x = Math.round((mark.position / 100) * 1000) + 0.5;
+            const isCurrentScale = viewMode === 'day';
+            const scaleColor = isCurrentScale ? lightenColor(getViewModeColor('day'), 0.3) : '#999';
             return (
               <line
                 key={`day-minor-${idx}`}
@@ -5385,9 +5603,9 @@ function GlobalTimelineMinimap({
                 y1="160.5"
                 x2={x}
                 y2="190.5"
-                stroke="#999"
-                strokeWidth="1"
-                opacity="0.3"
+                stroke={scaleColor}
+                strokeWidth={isCurrentScale ? "1" : "1"}
+                opacity={isCurrentScale ? "0.2" : "0.15"}
                 shapeRendering="crispEdges"
               />
             );
@@ -5942,6 +6160,8 @@ function GlobalTimelineMinimap({
                     : `translate(-50%, -50%) ${isFocusedSection ? 'scale(1.4)' : 'scale(1)'}`,
                   zIndex: isInCluster ? (clusterIndex || 0) + 4 : (isFocusedSection ? 5 : 4),
                   transition: 'transform 0.5s cubic-bezier(0.4, 0, 0.2, 1), z-index 0.5s ease',
+                  // Dynamic sizing controlled by CSS variables in themes
+                  // Only set explicit size for clusters (which have calculated clusterCrystalSize)
                   width: isInCluster && clusterCrystalSize !== undefined ? `${clusterCrystalSize}px` : undefined,
                   height: isInCluster && clusterCrystalSize !== undefined ? `${clusterCrystalSize}px` : undefined,
                 }}

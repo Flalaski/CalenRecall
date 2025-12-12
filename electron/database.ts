@@ -3,6 +3,7 @@ import * as path from 'path';
 import * as fs from 'fs';
 import { app } from 'electron';
 import { JournalEntry, TimeRange, ExportFormat, ExportMetadata } from './types';
+import { parseJSONArray } from './utils/jsonCache';
 import {
   getAllProfiles,
   getProfile,
@@ -1056,11 +1057,11 @@ export function getAllEntries(includeArchived: boolean = false): JournalEntry[] 
       second: timeFields.second,
       title: row.title,
       content: row.content,
-      tags: row.tags ? JSON.parse(row.tags) : [],
-      linkedEntries: row.linked_entries ? JSON.parse(row.linked_entries) : [],
+      tags: parseJSONArray(row.tags),
+      linkedEntries: parseJSONArray(row.linked_entries),
       archived: row.archived === 1,
       pinned: row.pinned === 1,
-      attachments: row.attachments ? JSON.parse(row.attachments) : [],
+      attachments: parseJSONArray(row.attachments),
       createdAt: row.created_at,
       updatedAt: row.updated_at,
     };
@@ -1088,7 +1089,7 @@ export function getEntries(startDate: string, endDate: string, includeArchived: 
       second: timeFields.second,
       title: row.title,
       content: row.content,
-      tags: row.tags ? JSON.parse(row.tags) : [],
+      tags: parseJSONArray(row.tags),
       createdAt: row.created_at,
       updatedAt: row.updated_at,
     };
@@ -1190,11 +1191,11 @@ export function getEntriesByDateAndRange(date: string, timeRange: 'decade' | 'ye
       second: timeFields.second,
       title: row.title,
       content: row.content,
-      tags: row.tags ? JSON.parse(row.tags) : [],
-      linkedEntries: row.linked_entries ? JSON.parse(row.linked_entries) : [],
+      tags: parseJSONArray(row.tags),
+      linkedEntries: parseJSONArray(row.linked_entries),
       archived: row.archived === 1,
       pinned: row.pinned === 1,
-      attachments: row.attachments ? JSON.parse(row.attachments) : [],
+      attachments: parseJSONArray(row.attachments),
       createdAt: row.created_at,
       updatedAt: row.updated_at,
     };
@@ -1585,7 +1586,7 @@ export function getArchivedEntries(): JournalEntry[] {
       second: timeFields.second,
       title: row.title,
       content: row.content,
-      tags: row.tags ? JSON.parse(row.tags) : [],
+      tags: parseJSONArray(row.tags),
       linkedEntries: row.linked_entries ? JSON.parse(row.linked_entries) : [],
       archived: true,
       pinned: row.pinned === 1,
@@ -1627,7 +1628,7 @@ export function getPinnedEntries(): JournalEntry[] {
       second: timeFields.second,
       title: row.title,
       content: row.content,
-      tags: row.tags ? JSON.parse(row.tags) : [],
+      tags: parseJSONArray(row.tags),
       linkedEntries: row.linked_entries ? JSON.parse(row.linked_entries) : [],
       archived: row.archived === 1,
       pinned: true,
@@ -1759,11 +1760,11 @@ export function searchEntries(query: string, includeArchived: boolean = false): 
       second: timeFields.second,
       title: row.title,
       content: row.content,
-      tags: row.tags ? JSON.parse(row.tags) : [],
-      linkedEntries: row.linked_entries ? JSON.parse(row.linked_entries) : [],
+      tags: parseJSONArray(row.tags),
+      linkedEntries: parseJSONArray(row.linked_entries),
       archived: row.archived === 1,
       pinned: row.pinned === 1,
-      attachments: row.attachments ? JSON.parse(row.attachments) : [],
+      attachments: parseJSONArray(row.attachments),
       createdAt: row.created_at,
       updatedAt: row.updated_at,
     };

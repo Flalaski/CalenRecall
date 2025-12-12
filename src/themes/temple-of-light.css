@@ -936,6 +936,16 @@
   border: 1px solid var(--gold-soft);
 }
 
+[data-theme="temple-of-light"] .entry-indicator-wrapper {
+  width: max(9px, var(--entry-indicator-size, 16px));
+  height: max(9px, var(--entry-indicator-size, 16px));
+}
+
+[data-theme="temple-of-light"] .entry-indicator-wrapper.in-cluster {
+  width: max(9px, var(--entry-indicator-size-cluster, 16px));
+  height: max(9px, var(--entry-indicator-size-cluster, 16px));
+}
+
 [data-theme="temple-of-light"] .current-period-indicator {
   background: var(--highlight-gold);
   border: 1px solid var(--wood-mahogany);

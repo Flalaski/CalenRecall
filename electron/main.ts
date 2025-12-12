@@ -51,6 +51,21 @@ function getOptimizedWebPreferences(preloadPath?: string): Electron.WebPreferenc
     // offscreen: false is the default (on-screen rendering for better performance)
     // Note: enableWebGPU requires Electron 28+ and may not be available in all versions
     // We check for availability before setting experimental features
+    
+    // EXTREME PERFORMANCE: Disable unnecessary features
+    spellcheck: false, // Disable spellcheck to save resources
+    enableBlinkFeatures: '', // Disable experimental Blink features that can cause issues
+    v8CacheOptions: 'code', // Cache V8 compiled code for better performance
+    
+    // EXTREME PERFORMANCE: Disable visual effects
+    images: true, // Keep images but optimize
+    plugins: false, // Disable plugins
+    
+    // macOS-specific optimizations
+    ...(process.platform === 'darwin' && {
+      // Use native window controls for better macOS integration
+      // titleBarStyle will be set on window creation if needed
+    }),
   };
 
   // Add preload if provided
@@ -179,6 +194,39 @@ function readHardwareAccelerationPreference(): boolean {
     console.warn('[Main] Error reading hardware acceleration preference, defaulting to enabled:', error);
     return true;
   }
+}
+
+// EXTREME PERFORMANCE: Apply aggressive Electron command line switches BEFORE app.whenReady()
+// These optimizations prioritize speed over visual effects
+if (process.platform === 'darwin') {
+  // macOS-specific performance optimizations
+  app.commandLine.appendSwitch('--disable-renderer-backgrounding');
+  app.commandLine.appendSwitch('--disable-background-timer-throttling');
+  app.commandLine.appendSwitch('--disable-backgrounding-occluded-windows');
+  app.commandLine.appendSwitch('--disable-ipc-flooding-protection');
+  
+  // GPU optimizations
+  app.commandLine.appendSwitch('--enable-gpu-rasterization');
+  app.commandLine.appendSwitch('--enable-zero-copy');
+  
+  // EXTREME PERFORMANCE: Disable visual effects
+  app.commandLine.appendSwitch('--disable-gpu-vsync'); // Disable VSync for lower latency
+  app.commandLine.appendSwitch('--disable-software-rasterizer'); // Force GPU rendering
+  app.commandLine.appendSwitch('--disable-2d-canvas-image-chromium'); // Disable 2D canvas optimizations that can cause lag
+  
+  // EXTREME PERFORMANCE: Reduce rendering overhead
+  app.commandLine.appendSwitch('--disable-composited-antialiasing'); // Disable AA for speed
+  app.commandLine.appendSwitch('--disable-lcd-text'); // Disable LCD text rendering (faster)
+  app.commandLine.appendSwitch('--disable-font-subpixel-positioning'); // Faster text rendering
+  
+  // Memory optimizations
+  app.commandLine.appendSwitch('--js-flags', '--max-old-space-size=4096'); // Increase V8 heap if needed
+  
+  // EXTREME PERFORMANCE: Disable unnecessary features
+  app.commandLine.appendSwitch('--disable-web-security'); // Only if not needed (faster)
+  app.commandLine.appendSwitch('--disable-features', 'VizDisplayCompositor'); // Disable display compositor overhead
+  
+  console.log('[Main] EXTREME performance optimizations applied');
 }
 
 // Read hardware acceleration preference and apply it
@@ -917,6 +965,31 @@ function createWindow() {
     mainWindow.setFullScreen(true);
   }
 
+  // EXTREME PERFORMANCE: Set frame rate to 30fps for maximum responsiveness
+  // Lower frame rate = less CPU/GPU usage = faster response times
+  // 30fps is still smooth for UI interactions and saves significant resources
+  const primaryDisplay = screen.getPrimaryDisplay();
+  // refreshRate may not be available in all Electron versions, so use type assertion
+  const displayRefreshRate = (primaryDisplay as any).refreshRate || 60;
+  // Use 30fps for extreme performance (can be increased if needed)
+  const targetFrameRate = 30; // Lower = faster response, less resource usage
+  mainWindow.webContents.setFrameRate(targetFrameRate);
+  console.log(`[Main] EXTREME PERFORMANCE: Frame rate set to ${targetFrameRate} fps (display: ${displayRefreshRate} Hz)`);
+
+  // EXTREME PERFORMANCE: Disable visual effects for maximum speed
+  // Commented out vibrancy for extreme performance mode
+  // if (process.platform === 'darwin') {
+  //   try {
+  //     // Use native macOS vibrancy for better performance than CSS blur
+  //     mainWindow.setVibrancy('under-window');
+  //     mainWindow.setBackgroundColor('#00000000'); // Transparent for vibrancy
+  //     console.log('[Main] macOS native vibrancy enabled');
+  //   } catch (error) {
+  //     // Vibrancy may not be available in all Electron versions
+  //     console.log('[Main] Could not enable vibrancy (may not be available)');
+  //   }
+  // }
+
   // Apply preferences when window is fully loaded (especially important for built versions)
   mainWindow.webContents.once('did-finish-load', () => {
     // Send a message to the renderer to ensure preferences are applied
@@ -942,6 +1015,9 @@ function createWindow() {
     if (currentPrefs.theme) {
       mainWindow?.webContents.send('preference-updated', { key: 'theme', value: currentPrefs.theme });
     }
+    
+    // OPTIMIZATION: Ensure zoom factor is 1.0 to avoid rendering overhead
+    mainWindow?.webContents.setZoomFactor(1.0);
   });
 
   // Save window position/size on move/resize

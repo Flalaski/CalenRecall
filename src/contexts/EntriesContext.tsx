@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, useMemo, useRef, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, useMemo, useCallback, useRef, ReactNode } from 'react';
 import { JournalEntry } from '../types';
 import { buildEntryLookup, type EntryLookup } from '../utils/entryLookupUtils';
 import { calculateEntryColor } from '../utils/entryColorUtils';
@@ -84,19 +84,20 @@ export function EntriesProvider({ children }: { children: ReactNode }) {
     return colorMap;
   }, [entries]);
 
-  const addEntry = (entry: JournalEntry) => {
+  // OPTIMIZATION: Memoize callback functions to prevent recreation
+  const addEntry = useCallback((entry: JournalEntry) => {
     setEntries(prev => [...prev, entry]);
-  };
+  }, []);
 
-  const updateEntry = (updatedEntry: JournalEntry) => {
+  const updateEntry = useCallback((updatedEntry: JournalEntry) => {
     setEntries(prev => 
       prev.map(entry => entry.id === updatedEntry.id ? updatedEntry : entry)
     );
-  };
+  }, []);
 
-  const removeEntry = (entryId: number) => {
+  const removeEntry = useCallback((entryId: number) => {
     setEntries(prev => prev.filter(entry => entry.id !== entryId));
-  };
+  }, []);
 
   // Reload entries from database when a new entry is saved
   useEffect(() => {
@@ -119,20 +120,22 @@ export function EntriesProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
+  // OPTIMIZATION: Memoize context value to prevent unnecessary re-renders
+  // Only recreate when actual values change
+  const contextValue = useMemo(() => ({
+    entries,
+    setEntries,
+    addEntry,
+    updateEntry,
+    removeEntry,
+    isLoading,
+    setIsLoading,
+    entryLookup,
+    entryColors,
+  }), [entries, isLoading, entryLookup, entryColors, addEntry, updateEntry, removeEntry]);
+
   return (
-    <EntriesContext.Provider
-      value={{
-        entries,
-        setEntries,
-        addEntry,
-        updateEntry,
-        removeEntry,
-        isLoading,
-        setIsLoading,
-        entryLookup,
-        entryColors,
-      }}
-    >
+    <EntriesContext.Provider value={contextValue}>
       {children}
     </EntriesContext.Provider>
   );
