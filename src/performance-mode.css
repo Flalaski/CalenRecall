@@ -1,0 +1,85 @@
+/* EXTREME PERFORMANCE MODE - Year 2000 Computer Speed */
+/* This CSS disables ALL visual effects for maximum performance */
+
+/* Disable ALL animations globally */
+*,
+*::before,
+*::after {
+  animation: none !important;
+  animation-duration: 0s !important;
+  animation-delay: 0s !important;
+  animation-timing-function: linear !important;
+}
+
+/* Disable ALL transitions globally */
+*,
+*::before,
+*::after {
+  transition: none !important;
+  transition-duration: 0s !important;
+  transition-delay: 0s !important;
+  transition-property: none !important;
+}
+
+/* Disable visual effects */
+* {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  filter: none !important;
+  -webkit-filter: none !important;
+  box-shadow: none !important;
+  text-shadow: none !important;
+  opacity: 1 !important; /* Force full opacity for faster rendering */
+}
+
+/* Disable smooth scrolling */
+html {
+  scroll-behavior: auto !important;
+}
+
+/* Optimize rendering - force GPU acceleration where needed */
+.app,
+.app-content,
+.timeline-section,
+.editor-section {
+  contain: layout style paint;
+  will-change: auto; /* Disable will-change for performance */
+  transform: translateZ(0); /* Force GPU layer */
+}
+
+/* Disable hover effects */
+*:hover {
+  transform: none !important;
+  opacity: 1 !important;
+  filter: none !important;
+}
+
+/* Disable all keyframe animations */
+@keyframes {
+  from, to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Performance mode class - can be toggled */
+.performance-mode *,
+.performance-mode *::before,
+.performance-mode *::after {
+  animation: none !important;
+  transition: none !important;
+  backdrop-filter: none !important;
+  filter: none !important;
+  box-shadow: none !important;
+  text-shadow: none !important;
+}
+
+/* Respect system preference */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}

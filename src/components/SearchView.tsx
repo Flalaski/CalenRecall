@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { JournalEntry, TimeRange, Preferences } from '../types';
 import { searchJournalEntries } from '../services/journalService';
 import { formatDate, parseISODate, formatTime } from '../utils/dateUtils';
@@ -45,11 +45,15 @@ export default function SearchView({ onEntrySelect, onClose }: SearchViewProps) 
     loadPreferences();
   }, []);
 
+  // OPTIMIZATION: Memoize tag extraction to avoid recalculating on every render
   // Get all unique tags from results
-  const allTags = Array.from(new Set(results.flatMap(entry => entry.tags || [])));
+  const allTags = useMemo(() => 
+    Array.from(new Set(results.flatMap(entry => entry.tags || []))),
+    [results]
+  );
 
-  // Perform search
-  const performSearch = async () => {
+  // Perform search - memoized for performance
+  const performSearch = useCallback(async () => {
     if (!query.trim() && selectedTags.length === 0 && selectedTimeRanges.length === 0 && !startDate && !endDate) {
       setResults([]);
       return;
@@ -137,13 +141,13 @@ export default function SearchView({ onEntrySelect, onClose }: SearchViewProps) 
     } finally {
       setLoading(false);
     }
-  };
+  }, [query, selectedTags, selectedTimeRanges, startDate, endDate, sortBy, sortOrder]);
 
-  // Debounced search
+  // EXTREME PERFORMANCE: Instant search with minimal debounce (50ms) to prevent excessive queries
   useEffect(() => {
     const timer = setTimeout(() => {
       performSearch();
-    }, 300);
+    }, 50); // Minimal delay for extreme performance
 
     return () => clearTimeout(timer);
   }, [query, selectedTags, selectedTimeRanges, startDate, endDate, sortBy, sortOrder]);

@@ -2057,8 +2057,7 @@
   }
   
   .entry-indicator {
-    width: 6px;
-    height: 6px;
+    /* Size controlled by .entry-indicator-wrapper using CSS variables */
     border-width: 1.5px;
   }
   

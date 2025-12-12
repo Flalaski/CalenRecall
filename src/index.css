@@ -1,5 +1,6 @@
 @import './fonts.css';
 @import './themes.css';
+@import './performance-mode.css';
 
 * {
   margin: 0;
@@ -70,6 +71,7 @@ body.window-transitioning .editor-section {
   will-change: scroll-position;
 }
 
+/* EXTREME PERFORMANCE: Disable transitions by default for instant response */
 /* GPU acceleration for interactive elements - only enable will-change on hover/active */
 button,
 .nav-button,
@@ -81,8 +83,9 @@ button,
 .entry-card-full {
   /* Optimize hover/click animations */
   backface-visibility: hidden;
-  /* Enable smooth transitions */
-  transition: transform 0.2s ease, opacity 0.2s ease;
+  /* DISABLED: Enable smooth transitions - REMOVED for extreme performance */
+  /* transition: transform 0.2s ease, opacity 0.2s ease; */
+  transition: none; /* Instant response */
 }
 
 /* Only apply will-change when interacting */

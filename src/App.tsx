@@ -788,11 +788,10 @@ function App() {
   const pendingViewModeRef = useRef<TimeRange | null>(null);
   const rafIdRef = useRef<number | null>(null);
   
-  // Configurable delay for indicator movement (in milliseconds)
-  // Adjust this value to control how quickly the indicator responds to navigation
-  // Default: 16ms (approximately 1 frame at 60fps)
+  // EXTREME PERFORMANCE: Minimal delay for instant response
+  // Reduced to 0ms for maximum responsiveness (year 2000 computer speed)
   // Lower values = faster response, Higher values = more batching/smoother
-  const INDICATOR_MOVEMENT_DELAY = 16; // ms - you can adjust this value
+  const INDICATOR_MOVEMENT_DELAY = 0; // ms - EXTREME PERFORMANCE: Instant response
   const lastUpdateTimeRef = useRef<number>(0); // Track time between updates to detect dragging
   const rapidUpdateThreshold = 50; // ms - if updates come faster than this, we're dragging
 
@@ -828,15 +827,14 @@ function App() {
       cancelAnimationFrame(rafIdRef.current);
     }
     
+    // EXTREME PERFORMANCE: Instant update (no debounce delay)
     rafIdRef.current = requestAnimationFrame(() => {
-      navigationTimeoutRef.current = setTimeout(() => {
-        if (pendingDateRef.current) {
-          setSelectedDate(pendingDateRef.current);
-          pendingDateRef.current = null;
-        }
-        navigationTimeoutRef.current = null;
-        rafIdRef.current = null;
-      }, 16);
+      if (pendingDateRef.current) {
+        setSelectedDate(pendingDateRef.current);
+        pendingDateRef.current = null;
+      }
+      navigationTimeoutRef.current = null;
+      rafIdRef.current = null;
     });
   }, [hasUnsavedChanges, showUnsavedChangesMessageWithTimer]);
 
@@ -889,20 +887,18 @@ function App() {
         rafIdRef.current = null;
       });
     } else {
-      // Normal update with debounce for batching
+      // EXTREME PERFORMANCE: Instant update (no debounce delay)
       rafIdRef.current = requestAnimationFrame(() => {
-        navigationTimeoutRef.current = setTimeout(() => {
-          if (pendingDateRef.current && pendingViewModeRef.current) {
-            setViewMode(pendingViewModeRef.current);
-            setSelectedDate(pendingDateRef.current);
-            setIsEditing(false);
-            setIsNewEntry(false);
-            pendingDateRef.current = null;
-            pendingViewModeRef.current = null;
-          }
-          navigationTimeoutRef.current = null;
-          rafIdRef.current = null;
-        }, INDICATOR_MOVEMENT_DELAY);
+        if (pendingDateRef.current && pendingViewModeRef.current) {
+          setViewMode(pendingViewModeRef.current);
+          setSelectedDate(pendingDateRef.current);
+          setIsEditing(false);
+          setIsNewEntry(false);
+          pendingDateRef.current = null;
+          pendingViewModeRef.current = null;
+        }
+        navigationTimeoutRef.current = null;
+        rafIdRef.current = null;
       });
     }
   }, [hasUnsavedChanges, showUnsavedChangesMessageWithTimer]);

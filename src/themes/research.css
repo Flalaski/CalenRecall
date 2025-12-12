@@ -310,3 +310,14 @@
    Additional components will be added following the same pattern as 
    Parchment Scholar theme, adapted to Research Archive color palette. */
 
+/* Global Timeline Minimap - Entry Indicators */
+[data-theme="research"] .entry-indicator-wrapper {
+  width: max(9px, var(--entry-indicator-size, 16px));
+  height: max(9px, var(--entry-indicator-size, 16px));
+}
+
+[data-theme="research"] .entry-indicator-wrapper.in-cluster {
+  width: max(9px, var(--entry-indicator-size-cluster, 16px));
+  height: max(9px, var(--entry-indicator-size-cluster, 16px));
+}
+
