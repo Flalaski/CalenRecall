@@ -145,6 +145,32 @@ button:active,
   backface-visibility: hidden;
 }
 
+/* Custom tooltip overlay rendered above the cursor */
+.global-tooltip {
+  position: fixed;
+  top: 0;
+  left: 0;
+  transform: translate(-50%, calc(-100% - 10px));
+  padding: 6px 10px;
+  background: rgba(16, 20, 28, 0.95);
+  color: #ffffff;
+  border-radius: 8px;
+  font-size: 12px;
+  line-height: 1.4;
+  z-index: 100000;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 80ms ease, transform 80ms ease;
+  white-space: normal;
+  max-width: 320px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+}
+
+.global-tooltip.visible {
+  opacity: 1;
+  transform: translate(-50%, calc(-100% - 8px));
+}
+
 /* Only apply will-change when actively animating */
 .entry-indicator:hover,
 .entry-indicator.active,
