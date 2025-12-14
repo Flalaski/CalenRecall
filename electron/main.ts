@@ -1374,8 +1374,135 @@ function createMenu() {
       submenu: themeMenuItems,
     },
     {
-      label: 'Extra Links',
+      label: 'Layers',
       submenu: [
+        {
+          label: 'Show Seasons',
+          type: 'checkbox',
+          checked: getAllPreferences().showSolsticesEquinoxes === true,
+          click: () => {
+            const currentPrefs = getAllPreferences();
+            const newValue = !(currentPrefs.showSolsticesEquinoxes === true);
+            setPreference('showSolsticesEquinoxes', newValue);
+            // Notify the renderer process about the change
+            if (mainWindow && !mainWindow.isDestroyed()) {
+              mainWindow.webContents.send('preference-updated', { key: 'showSolsticesEquinoxes', value: newValue });
+            }
+            // Also notify preferences window if it exists
+            if (preferencesWindow && !preferencesWindow.isDestroyed()) {
+              preferencesWindow.webContents.send('preference-updated', { key: 'showSolsticesEquinoxes', value: newValue });
+            }
+            // Update the menu to reflect the change
+            updateMenu();
+          },
+        },
+        {
+          label: 'Show Moon Phases',
+          type: 'checkbox',
+          checked: getAllPreferences().showMoonPhases === true,
+          click: () => {
+            const currentPrefs = getAllPreferences();
+            const newValue = !(currentPrefs.showMoonPhases === true);
+            setPreference('showMoonPhases', newValue);
+            // Notify the renderer process about the change
+            if (mainWindow && !mainWindow.isDestroyed()) {
+              mainWindow.webContents.send('preference-updated', { key: 'showMoonPhases', value: newValue });
+            }
+            // Also notify preferences window if it exists
+            if (preferencesWindow && !preferencesWindow.isDestroyed()) {
+              preferencesWindow.webContents.send('preference-updated', { key: 'showMoonPhases', value: newValue });
+            }
+            // Update the menu to reflect the change
+            updateMenu();
+          },
+        },
+        { type: 'separator' },
+        {
+          label: 'Show Chinese 60-Year Cycle',
+          type: 'checkbox',
+          checked: getAllPreferences().showChineseSexagenaryCycle === true,
+          click: () => {
+            const currentPrefs = getAllPreferences();
+            const newValue = !(currentPrefs.showChineseSexagenaryCycle === true);
+            setPreference('showChineseSexagenaryCycle', newValue);
+            if (mainWindow && !mainWindow.isDestroyed()) {
+              mainWindow.webContents.send('preference-updated', { key: 'showChineseSexagenaryCycle', value: newValue });
+            }
+            if (preferencesWindow && !preferencesWindow.isDestroyed()) {
+              preferencesWindow.webContents.send('preference-updated', { key: 'showChineseSexagenaryCycle', value: newValue });
+            }
+            updateMenu();
+          },
+        },
+        {
+          label: 'Show Mayan Long Count Cycles',
+          type: 'checkbox',
+          checked: getAllPreferences().showMayanLongCountCycles === true,
+          click: () => {
+            const currentPrefs = getAllPreferences();
+            const newValue = !(currentPrefs.showMayanLongCountCycles === true);
+            setPreference('showMayanLongCountCycles', newValue);
+            if (mainWindow && !mainWindow.isDestroyed()) {
+              mainWindow.webContents.send('preference-updated', { key: 'showMayanLongCountCycles', value: newValue });
+            }
+            if (preferencesWindow && !preferencesWindow.isDestroyed()) {
+              preferencesWindow.webContents.send('preference-updated', { key: 'showMayanLongCountCycles', value: newValue });
+            }
+            updateMenu();
+          },
+        },
+        {
+          label: 'Show Metonic Cycle',
+          type: 'checkbox',
+          checked: getAllPreferences().showMetonicCycle === true,
+          click: () => {
+            const currentPrefs = getAllPreferences();
+            const newValue = !(currentPrefs.showMetonicCycle === true);
+            setPreference('showMetonicCycle', newValue);
+            if (mainWindow && !mainWindow.isDestroyed()) {
+              mainWindow.webContents.send('preference-updated', { key: 'showMetonicCycle', value: newValue });
+            }
+            if (preferencesWindow && !preferencesWindow.isDestroyed()) {
+              preferencesWindow.webContents.send('preference-updated', { key: 'showMetonicCycle', value: newValue });
+            }
+            updateMenu();
+          },
+        },
+        {
+          label: 'Show Mayan Calendar Round',
+          type: 'checkbox',
+          checked: getAllPreferences().showMayanCalendarRound === true,
+          click: () => {
+            const currentPrefs = getAllPreferences();
+            const newValue = !(currentPrefs.showMayanCalendarRound === true);
+            setPreference('showMayanCalendarRound', newValue);
+            if (mainWindow && !mainWindow.isDestroyed()) {
+              mainWindow.webContents.send('preference-updated', { key: 'showMayanCalendarRound', value: newValue });
+            }
+            if (preferencesWindow && !preferencesWindow.isDestroyed()) {
+              preferencesWindow.webContents.send('preference-updated', { key: 'showMayanCalendarRound', value: newValue });
+            }
+            updateMenu();
+          },
+        },
+        {
+          label: 'Show Hindu Yuga Cycles',
+          type: 'checkbox',
+          checked: getAllPreferences().showHinduYugaCycles === true,
+          click: () => {
+            const currentPrefs = getAllPreferences();
+            const newValue = !(currentPrefs.showHinduYugaCycles === true);
+            setPreference('showHinduYugaCycles', newValue);
+            if (mainWindow && !mainWindow.isDestroyed()) {
+              mainWindow.webContents.send('preference-updated', { key: 'showHinduYugaCycles', value: newValue });
+            }
+            if (preferencesWindow && !preferencesWindow.isDestroyed()) {
+              preferencesWindow.webContents.send('preference-updated', { key: 'showHinduYugaCycles', value: newValue });
+            }
+            updateMenu();
+          },
+        },
+        { type: 'separator' },
         {
           label: 'Show AstroMonix.xyz Toolbar Button',
           type: 'checkbox',

@@ -10,6 +10,9 @@ import { dateToCalendarDate } from '../utils/calendars/calendarConverter';
 import { formatCalendarDate } from '../utils/calendars/calendarConverter';
 import { deleteJournalEntry } from '../services/journalService';
 import { buildEntryLookup, getDayEntriesOptimized, getMonthEntriesOptimized, getAllEntriesForYearOptimized, getAllEntriesForMonthOptimized } from '../utils/entryLookupUtils';
+import { getAstronomicalEventsForRange, getAstronomicalEventLabel, type DateAstronomicalEvent } from '../utils/astronomicalEvents';
+import { gregorianToJDN } from '../utils/calendars/julianDayUtils';
+import { getAllMacroCycles, getChineseSexagenaryCycle, getMayanLongCountCycles, getMetonicCycle, getMayanCalendarRound, getHinduYugaCycle, type YugaType } from '../utils/calendars/macroCycleUtils';
 import './TimelineView.css';
 
 interface TimelineViewProps {
@@ -37,15 +40,58 @@ function TimelineView({
   const [monthEntriesBulkEditMode, setMonthEntriesBulkEditMode] = useState(false);
   const [selectedMonthEntryIds, setSelectedMonthEntryIds] = useState<Set<number>>(new Set());
 
-  // Load preferences for time format
+  // Load preferences for time format and astronomical events
   useEffect(() => {
     const loadPreferences = async () => {
       if (window.electronAPI) {
         const prefs = await window.electronAPI.getAllPreferences();
-        setPreferences(prefs);
+        console.log('[TimelineView] ✅ Loaded ALL preferences:', prefs);
+        console.log('[TimelineView] showSolsticesEquinoxes:', prefs.showSolsticesEquinoxes, 'type:', typeof prefs.showSolsticesEquinoxes);
+        console.log('[TimelineView] showMoonPhases:', prefs.showMoonPhases, 'type:', typeof prefs.showMoonPhases);
+        setPreferences({
+          ...prefs,
+          showSolsticesEquinoxes: prefs.showSolsticesEquinoxes ?? false,
+          showMoonPhases: prefs.showMoonPhases ?? false,
+          showChineseSexagenaryCycle: prefs.showChineseSexagenaryCycle ?? false,
+          showMayanLongCountCycles: prefs.showMayanLongCountCycles ?? false,
+          showMetonicCycle: prefs.showMetonicCycle ?? false,
+          showMayanCalendarRound: prefs.showMayanCalendarRound ?? false,
+          showHinduYugaCycles: prefs.showHinduYugaCycles ?? false
+        });
       }
     };
     loadPreferences();
+
+    // Listen for preference updates (e.g., from menu toggles)
+    if (window.electronAPI && window.electronAPI.onPreferenceUpdated) {
+      const handlePreferenceUpdate = (data: { key: string; value: any }) => {
+        console.log('[TimelineView] Preference update received:', data);
+        const macroCycleKeys = [
+          'showSolsticesEquinoxes',
+          'showMoonPhases',
+          'showChineseSexagenaryCycle',
+          'showMayanLongCountCycles',
+          'showMetonicCycle',
+          'showMayanCalendarRound',
+          'showHinduYugaCycles'
+        ];
+        if (macroCycleKeys.includes(data.key)) {
+          setPreferences(prev => {
+            const updated = { ...prev, [data.key]: data.value };
+            console.log('[TimelineView] Updated preferences:', updated);
+            return updated;
+          });
+        }
+      };
+      
+      window.electronAPI.onPreferenceUpdated(handlePreferenceUpdate);
+      
+      return () => {
+        if (window.electronAPI && window.electronAPI.removePreferenceUpdatedListener) {
+          window.electronAPI.removePreferenceUpdatedListener();
+        }
+      };
+    }
   }, []);
 
   // OPTIMIZATION: Use lookup from context (stable across renders) or build with weekStartsOn if different
@@ -57,6 +103,93 @@ function TimelineView({
     // Otherwise rebuild with custom weekStartsOn
     return buildEntryLookup(allEntries, weekStartsOn);
   }, [contextEntryLookup, allEntries, weekStartsOn]);
+
+  // Get astronomical events for the visible date range
+  const astronomicalEvents = useMemo(() => {
+    // Use truthy check instead of strict === true to handle undefined as false
+    const showSolsticesEquinoxes = !!(preferences.showSolsticesEquinoxes);
+    const showMoonPhases = !!(preferences.showMoonPhases);
+    
+    console.log('[TimelineView] useMemo - preferences state:', {
+      showSolsticesEquinoxes: preferences.showSolsticesEquinoxes,
+      showMoonPhases: preferences.showMoonPhases,
+      computed: { showSolsticesEquinoxes, showMoonPhases }
+    });
+    
+    // Early return if both are disabled
+    if (!showSolsticesEquinoxes && !showMoonPhases) {
+      console.log('[TimelineView] ⚠️ Both astronomical features disabled, returning empty map');
+      return new Map<string, DateAstronomicalEvent[]>();
+    }
+    
+    let startDate: Date;
+    let endDate: Date;
+    
+    switch (viewMode) {
+      case 'decade': {
+        const decadeStart = Math.floor(selectedDate.getFullYear() / 10) * 10;
+        startDate = new Date(decadeStart, 0, 1);
+        endDate = new Date(decadeStart + 9, 11, 31);
+        break;
+      }
+      case 'year': {
+        startDate = new Date(selectedDate.getFullYear(), 0, 1);
+        endDate = new Date(selectedDate.getFullYear(), 11, 31);
+        break;
+      }
+      case 'month': {
+        startDate = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1);
+        endDate = new Date(selectedDate.getFullYear(), selectedDate.getMonth() + 1, 0);
+        break;
+      }
+      case 'week': {
+        startDate = getWeekStart(selectedDate, weekStartsOn);
+        const weekEnd = new Date(startDate);
+        weekEnd.setDate(weekEnd.getDate() + 6);
+        endDate = weekEnd;
+        break;
+      }
+      case 'day': {
+        startDate = selectedDate;
+        endDate = selectedDate;
+        break;
+      }
+      default: {
+        startDate = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1);
+        endDate = new Date(selectedDate.getFullYear(), selectedDate.getMonth() + 1, 0);
+      }
+    }
+    
+    const events = getAstronomicalEventsForRange(
+      startDate,
+      endDate,
+      showSolsticesEquinoxes,
+      showMoonPhases
+    );
+    
+    // Debug logging - ALWAYS log to help diagnose
+    console.log('[TimelineView] Astronomical events calculation:', {
+      viewMode,
+      startDate: startDate.toISOString().split('T')[0],
+      endDate: endDate.toISOString().split('T')[0],
+      showSolsticesEquinoxes,
+      showMoonPhases,
+      preferences: {
+        showSolsticesEquinoxes: preferences.showSolsticesEquinoxes,
+        showMoonPhases: preferences.showMoonPhases
+      },
+      eventCount: events.size,
+      events: Array.from(events.entries()).slice(0, 10) // Log first 10 events
+    });
+    
+    // Log a sample of date keys for debugging
+    if (events.size > 0) {
+      const sampleKeys = Array.from(events.keys()).slice(0, 5);
+      console.log('[TimelineView] Sample event date keys:', sampleKeys);
+    }
+    
+    return events;
+  }, [selectedDate, viewMode, weekStartsOn, preferences.showSolsticesEquinoxes, preferences.showMoonPhases]);
 
 
   useEffect(() => {
@@ -427,6 +560,15 @@ function TimelineView({
                   : [];
                 const gradientColor = getZodiacGradientColor(day);
                 const hasEntries = prioritizedEntries.length > 0;
+                
+                // Get astronomical events for this day
+                // Use local date string to match event keys
+                const year = day.getFullYear();
+                const month = String(day.getMonth() + 1).padStart(2, '0');
+                const dayNum = String(day.getDate()).padStart(2, '0');
+                const dayKey = `${year}-${month}-${dayNum}`;
+                const dayEvents = astronomicalEvents.get(dayKey) || [];
+                
                 return (
                   <div
                     key={idx}
@@ -438,6 +580,15 @@ function TimelineView({
                     style={{ '--zodiac-gradient': gradientColor } as React.CSSProperties}
                   >
                     <div className="cell-date">{day.getDate()}</div>
+                    {dayEvents.length > 0 && (
+                      <div className="cell-astronomical-events" title={dayEvents.map(e => e.displayName).join(', ')}>
+                        {dayEvents.map((event, eIdx) => (
+                          <span key={eIdx} className="astronomical-event-icon">
+                            {getAstronomicalEventLabel(event)}
+                          </span>
+                        ))}
+                      </div>
+                    )}
                     {hasEntries && (
                     <div className="cell-entries">
                       {prioritizedEntries.slice(0, 3).map((entry, eIdx) => {
@@ -672,6 +823,15 @@ function TimelineView({
           {days.map((day, idx) => {
             const dayEntries = getEntriesForDate(day);
             const gradientColor = getZodiacGradientColor(day);
+            
+            // Get astronomical events for this day
+            // Use local date string to match event keys
+            const year = day.getFullYear();
+            const month = String(day.getMonth() + 1).padStart(2, '0');
+            const dayNum = String(day.getDate()).padStart(2, '0');
+            const dayKey = `${year}-${month}-${dayNum}`;
+            const dayEvents = astronomicalEvents.get(dayKey) || [];
+            
             return (
               <div
                 key={idx}
@@ -682,6 +842,15 @@ function TimelineView({
                 }}
                 style={{ '--zodiac-gradient': gradientColor } as React.CSSProperties}
               >
+                {dayEvents.length > 0 && (
+                  <div className="cell-astronomical-events" title={dayEvents.map(e => e.displayName).join(', ')}>
+                    {dayEvents.map((event, eIdx) => (
+                      <span key={eIdx} className="astronomical-event-icon">
+                        {getAstronomicalEventLabel(event)}
+                      </span>
+                    ))}
+                  </div>
+                )}
                 <div className="cell-entries-vertical">
                   {dayEntries.map((entry, eIdx) => {
                     const entryColor = calculateEntryColor(entry);
@@ -994,9 +1163,155 @@ function TimelineView({
     });
   }, [selectedYear, entryLookup, getAllEntriesForMonth, createMonthPixelMap, prioritizeEntriesByTier]);
 
+  // Helper function to render macro cycle indicators
+  // Now shows cycles regardless of calendar selection when toggles are enabled
+  const renderMacroCycleIndicators = (year: number, jdn: number) => {
+    // Get cycles for all calendar types (not just current calendar)
+    const cyclesChinese = getAllMacroCycles(jdn, 'chinese', year);
+    const cyclesMayan = getAllMacroCycles(jdn, 'mayan-longcount', year);
+    const cyclesHebrew = getAllMacroCycles(jdn, 'hebrew', year);
+    const cyclesIndian = getAllMacroCycles(jdn, 'indian-saka', year);
+    
+    const indicators: JSX.Element[] = [];
+    
+    // Chinese 60-year cycle - ALWAYS show when enabled (not just for Chinese calendar)
+    if (preferences.showChineseSexagenaryCycle === true && cyclesChinese.chineseSexagenary) {
+      const { combined, cyclePosition, branchEnglish, stem, branch } = cyclesChinese.chineseSexagenary;
+      const isTransition = cyclePosition === 1; // Highlight start of cycle
+      indicators.push(
+        <div 
+          key="chinese" 
+          className={`macro-cycle-indicator chinese-cycle ${isTransition ? 'cycle-transition' : ''}`} 
+          title={`Chinese Sexagenary Cycle (干支): ${combined} (${stem}${branch}) - ${branchEnglish} Year\nPosition: ${cyclePosition} of 60\n\nThe 60-year cycle combines 10 Heavenly Stems (天干) and 12 Earthly Branches (地支). Each year has a unique name. This cycle is used in traditional Chinese calendar systems.`}
+        >
+          <span className="cycle-label">{combined}</span>
+          <span className="cycle-position">{cyclePosition}/60</span>
+        </div>
+      );
+    }
+    
+    // Mayan Long Count cycles - ALWAYS show when enabled
+    if (preferences.showMayanLongCountCycles === true && cyclesMayan.mayanLongCount) {
+      const { baktun, katun, katunCycleGlobal, daysIntoKatun, tun } = cyclesMayan.mayanLongCount;
+      const isKatunTransition = daysIntoKatun < 100 || daysIntoKatun > 7100;
+      const isBaktunTransition = katun === 0 && daysIntoKatun < 100;
+      
+      // Always show katun (every year)
+      indicators.push(
+        <div 
+          key="katun" 
+          className={`macro-cycle-indicator mayan-katun ${isKatunTransition ? 'cycle-transition' : ''}`}
+          title={`Mayan Katun ${katunCycleGlobal}\nBaktun ${baktun}, Katun ${katun}, Tun ${tun}\nDays into Katun: ${daysIntoKatun.toLocaleString()} of 7,200\n\nA Katun is a period of 7,200 days (~19.7 years). 20 Katuns = 1 Baktun (144,000 days ≈ 394 years). The Maya used these cycles to track long periods of time.`}
+        >
+          <span className="cycle-label">K{katunCycleGlobal}</span>
+          {isKatunTransition && <span className="cycle-badge">Transition</span>}
+        </div>
+      );
+      
+      // Show baktun when at transition or every baktun
+      if (isBaktunTransition || baktun % 1 === 0) {
+        indicators.push(
+          <div 
+            key="baktun" 
+            className={`macro-cycle-indicator mayan-baktun ${isBaktunTransition ? 'cycle-transition' : ''}`}
+            title={`Mayan Baktun ${baktun}\n\nA Baktun is a period of 144,000 days (approximately 394 years). The completion of Baktun 13 on December 21, 2012 was a significant date in Mayan cosmology.`}
+          >
+            <span className="cycle-label">B{baktun}</span>
+            {isBaktunTransition && <span className="cycle-badge">New</span>}
+          </div>
+        );
+      }
+    }
+    
+    // Metonic cycle - ALWAYS show when enabled
+    if (preferences.showMetonicCycle === true && cyclesHebrew.metonic) {
+      const { cyclePosition, isLeapYear } = cyclesHebrew.metonic;
+      const isTransition = cyclePosition === 1 || cyclePosition === 19;
+      indicators.push(
+        <div 
+          key="metonic" 
+          className={`macro-cycle-indicator metonic-cycle ${isTransition ? 'cycle-transition' : ''}`}
+          title={`Metonic Cycle Position ${cyclePosition} of 19${isLeapYear ? ' (Leap Year)' : ''}\n\nThe Metonic cycle is a 19-year period after which the phases of the moon recur on the same days of the year. Used in the Hebrew calendar to synchronize lunar months with solar years. 7 out of every 19 years are leap years (13 months).`}
+        >
+          <span className="cycle-label">M{cyclePosition}</span>
+          {isLeapYear && <span className="cycle-badge">Leap</span>}
+        </div>
+      );
+    }
+    
+    // Mayan Calendar Round - ALWAYS show when enabled
+    if (preferences.showMayanCalendarRound === true && cyclesMayan.mayanCalendarRound) {
+      const { roundNumber, yearsIntoRound } = cyclesMayan.mayanCalendarRound;
+      const isTransition = yearsIntoRound === 0 || yearsIntoRound === 51;
+      indicators.push(
+        <div 
+          key="calendar-round" 
+          className={`macro-cycle-indicator mayan-round ${isTransition ? 'cycle-transition' : ''}`}
+          title={`Mayan Calendar Round ${roundNumber}\nYear ${yearsIntoRound} of 52\n\nThe Calendar Round is a 52-year cycle (18,980 days) formed by combining the 260-day Tzolk'in and 365-day Haab' calendars. After 52 Haab' years, both cycles realign.`}
+        >
+          <span className="cycle-label">R{roundNumber}</span>
+          <span className="cycle-position">{yearsIntoRound}/52</span>
+        </div>
+      );
+    }
+    
+    // Hindu Yuga cycles - ALWAYS show when enabled (show current Yuga)
+    if (preferences.showHinduYugaCycles === true && cyclesIndian.hinduYuga) {
+      const { yugaType, yearsIntoYuga, mahayugaNumber } = cyclesIndian.hinduYuga;
+      const yugaDurations: Record<YugaType, number> = {
+        'Satya': 1728000,
+        'Treta': 1296000,
+        'Dvapara': 864000,
+        'Kali': 432000
+      };
+      const totalYugaYears = yugaDurations[yugaType];
+      const progressPercent = Math.round((yearsIntoYuga / totalYugaYears) * 100);
+      
+      const yugaEmoji: Record<YugaType, string> = {
+        'Satya': '🟢',
+        'Treta': '🟡',
+        'Dvapara': '🟠',
+        'Kali': '🔴'
+      };
+      
+      const yugaDescriptions: Record<YugaType, string> = {
+        'Satya': 'Golden Age - Age of Truth and Perfection',
+        'Treta': 'Silver Age - Age of Three Quarters',
+        'Dvapara': 'Bronze Age - Age of Two Quarters',
+        'Kali': 'Iron Age - Current Age of Strife'
+      };
+      
+      indicators.push(
+        <div 
+          key="yuga" 
+          className="macro-cycle-indicator hindu-yuga"
+          title={`${yugaType} Yuga - ${yugaDescriptions[yugaType]}\n${yearsIntoYuga.toLocaleString()} of ${totalYugaYears.toLocaleString()} years (${progressPercent}%)\nMahayuga ${mahayugaNumber}\n\nHindu cosmology divides time into four Yugas (ages) that repeat in cycles. A complete Mahayuga is 4,320,000 years. We are currently in Kali Yuga, which began in 3102 BCE.`}
+        >
+          <span className="cycle-label">{yugaEmoji[yugaType]} {yugaType}</span>
+          <span className="cycle-position">{progressPercent}%</span>
+        </div>
+      );
+    }
+    
+    return indicators.length > 0 ? (
+      <div className="macro-cycles-container">
+        {indicators}
+      </div>
+    ) : null;
+  };
+
   const renderYearView = () => {
+    const yearNum = selectedDate.getFullYear();
+    const jdn = gregorianToJDN(yearNum, 1, 1);
+    const yearMacroCycles = renderMacroCycleIndicators(yearNum, jdn);
+    
     return (
       <div className="timeline-year-view">
+        {yearMacroCycles && (
+          <div className="year-macro-cycles">
+            {yearMacroCycles}
+          </div>
+        )}
         <div className="year-grid">
           {yearViewMonthData.map((monthData, idx) => {
             const { month, monthEntries, allMonthEntries, pixelMap } = monthData;
@@ -1087,8 +1402,27 @@ function TimelineView({
   }, [selectedYearForDecade, entryLookup, getAllEntriesForYear, createYearPixelMap, prioritizeEntriesByTier]);
 
   const renderDecadeView = () => {
+    // Check if any macro cycle toggles are enabled
+    const hasAnyMacroCycles = 
+      preferences.showChineseSexagenaryCycle === true ||
+      preferences.showMayanLongCountCycles === true ||
+      preferences.showMetonicCycle === true ||
+      preferences.showMayanCalendarRound === true ||
+      preferences.showHinduYugaCycles === true;
+    
+    // Get macro cycles for the decade start year (for header display)
+    const decadeStartYear = Math.floor(selectedDate.getFullYear() / 10) * 10;
+    const decadeStartJDN = gregorianToJDN(decadeStartYear, 1, 1);
+    const decadeMacroCycles = hasAnyMacroCycles ? renderMacroCycleIndicators(decadeStartYear, decadeStartJDN) : null;
+    
     return (
       <div className="timeline-decade-view">
+        {hasAnyMacroCycles && decadeMacroCycles && (
+          <div className="decade-macro-cycles-header">
+            <div className="decade-macro-cycles-title">Macro Cycles for {decadeStartYear}s</div>
+            {decadeMacroCycles}
+          </div>
+        )}
         <div className="decade-grid">
           {decadeViewYearData.map((yearData, idx) => {
             const { year, yearEntries, allYearEntries, pixelMap, yearGradientColor } = yearData;
@@ -1144,6 +1478,12 @@ function TimelineView({
                     <div className="entry-badge more-entries">+{yearEntries.length - 2}</div>
                   )}
                 </div>
+                {/* Macro cycle indicators for decade view (year level) */}
+                {(() => {
+                  const yearNum = year.getFullYear();
+                  const jdn = gregorianToJDN(yearNum, 1, 1);
+                  return renderMacroCycleIndicators(yearNum, jdn);
+                })()}
               </div>
             );
           })}

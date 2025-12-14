@@ -135,6 +135,13 @@ export interface Preferences {
   soundEffectsEnabled?: boolean; // Whether sound effects are enabled
   showAstromonixToolbarButton?: boolean; // Whether to show the AstroMonix toolbar button in day view
   fullScreen?: boolean; // Whether to load the profile in full screen mode
+  showSolsticesEquinoxes?: boolean; // Whether to display solstices and equinoxes in the calendar
+  showMoonPhases?: boolean; // Whether to display moon phases in the calendar
+  showChineseSexagenaryCycle?: boolean; // Whether to display Chinese 60-year sexagenary cycle indicators
+  showMayanLongCountCycles?: boolean; // Whether to display Mayan Long Count cycle indicators (Baktun/Katun)
+  showMetonicCycle?: boolean; // Whether to display Metonic cycle indicators (Hebrew 19-year cycle)
+  showMayanCalendarRound?: boolean; // Whether to display Mayan Calendar Round indicators (52-year cycle)
+  showHinduYugaCycles?: boolean; // Whether to display Hindu Yuga cycle indicators
 }
 
 declare global {
