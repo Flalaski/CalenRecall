@@ -50,11 +50,8 @@ export function getAstronomicalEventsForRange(
     const startYear = startDate.getFullYear();
     const endYear = endDate.getFullYear();
     
-    console.log('[astronomicalEvents] Getting solstices/equinoxes for years:', startYear, 'to', endYear);
-    
     for (let year = startYear; year <= endYear; year++) {
       const yearEvents = getSolsticesEquinoxesForYear(year);
-      console.log(`[astronomicalEvents] Year ${year} has ${yearEvents.length} solstice/equinox events`);
       
       for (const event of yearEvents) {
         if (event.jdn >= startJDN && event.jdn <= endJDN) {
@@ -82,8 +79,6 @@ export function getAstronomicalEventsForRange(
             name: event.name as SolsticeEquinoxType,
             displayName: displayNames[event.name as SolsticeEquinoxType]
           });
-          
-          console.log(`[astronomicalEvents] Added ${event.name} on ${dateKey}`);
         }
       }
     }
@@ -92,7 +87,6 @@ export function getAstronomicalEventsForRange(
   // Get moon phases for the range
   if (showMoonPhases) {
     const moonEvents = getMoonPhasesForRange(startJDN, endJDN);
-    console.log(`[astronomicalEvents] Found ${moonEvents.length} moon phase events in range`);
     
     for (const event of moonEvents) {
       const eventDate = event.date;
@@ -119,14 +113,7 @@ export function getAstronomicalEventsForRange(
         name: event.name as MoonPhaseType,
         displayName: displayNames[event.name as MoonPhaseType]
       });
-      
-      console.log(`[astronomicalEvents] Added ${event.name} moon phase on ${dateKey}`);
     }
-  }
-  
-  console.log(`[astronomicalEvents] Total events map size: ${eventsMap.size}`);
-  if (eventsMap.size > 0) {
-    console.log('[astronomicalEvents] Sample keys:', Array.from(eventsMap.keys()).slice(0, 5));
   }
   
   return eventsMap;
