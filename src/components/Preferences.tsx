@@ -31,7 +31,6 @@ export default function PreferencesComponent() {
     imported: undefined as number | undefined,
     skipped: undefined as number | undefined,
   });
-  const [panelPositions, setPanelPositions] = useState<Record<string, { column: number; row: number }>>({});
   const sectionRefs = useRef<Map<string, HTMLDivElement>>(new Map());
   const contentRef = useRef<HTMLDivElement>(null);
 
@@ -860,6 +859,90 @@ export default function PreferencesComponent() {
               Enable sound effects
             </label>
             <small>Play sound effects for interactions</small>
+          </div>
+
+          <div className="preference-item">
+            <label>
+              <input
+                type="checkbox"
+                checked={preferences.showSolsticesEquinoxes === true}
+                onChange={(e) => updatePreference('showSolsticesEquinoxes', e.target.checked)}
+              />
+              Show solstices and equinoxes
+            </label>
+            <small>Display Earth's seasons (vernal equinox, summer solstice, autumnal equinox, winter solstice) in the calendar view</small>
+          </div>
+
+          <div className="preference-item">
+            <label>
+              <input
+                type="checkbox"
+                checked={preferences.showMoonPhases === true}
+                onChange={(e) => updatePreference('showMoonPhases', e.target.checked)}
+              />
+              Show moon phases
+            </label>
+            <small>Display actual moon phases (new moon, first quarter, full moon, last quarter) in the calendar view</small>
+          </div>
+
+          <div className="preference-item">
+            <label>
+              <input
+                type="checkbox"
+                checked={preferences.showChineseSexagenaryCycle === true}
+                onChange={(e) => updatePreference('showChineseSexagenaryCycle', e.target.checked)}
+              />
+              Show Chinese 60-Year Cycle
+            </label>
+            <small>Display Chinese sexagenary cycle (干支) indicators in year and decade views when using Chinese calendar</small>
+          </div>
+
+          <div className="preference-item">
+            <label>
+              <input
+                type="checkbox"
+                checked={preferences.showMayanLongCountCycles === true}
+                onChange={(e) => updatePreference('showMayanLongCountCycles', e.target.checked)}
+              />
+              Show Mayan Long Count Cycles
+            </label>
+            <small>Display Mayan Baktun and Katun cycle indicators in year and decade views when using Mayan Long Count calendar</small>
+          </div>
+
+          <div className="preference-item">
+            <label>
+              <input
+                type="checkbox"
+                checked={preferences.showMetonicCycle === true}
+                onChange={(e) => updatePreference('showMetonicCycle', e.target.checked)}
+              />
+              Show Metonic Cycle
+            </label>
+            <small>Display Metonic cycle (19-year) indicators in year and decade views when using Hebrew calendar</small>
+          </div>
+
+          <div className="preference-item">
+            <label>
+              <input
+                type="checkbox"
+                checked={preferences.showMayanCalendarRound === true}
+                onChange={(e) => updatePreference('showMayanCalendarRound', e.target.checked)}
+              />
+              Show Mayan Calendar Round
+            </label>
+            <small>Display Mayan Calendar Round (52-year cycle) indicators in year and decade views when using Mayan calendars</small>
+          </div>
+
+          <div className="preference-item">
+            <label>
+              <input
+                type="checkbox"
+                checked={preferences.showHinduYugaCycles === true}
+                onChange={(e) => updatePreference('showHinduYugaCycles', e.target.checked)}
+              />
+              Show Hindu Yuga Cycles
+            </label>
+            <small>Display Hindu Yuga cycle indicators (Satya, Treta, Dvapara, Kali) in year and decade views when using Indian Saka calendar</small>
           </div>
         </div>
 

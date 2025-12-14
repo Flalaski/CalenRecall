@@ -233,6 +233,49 @@
   font-weight: 500;
 }
 
+.cell-astronomical-events {
+  display: flex;
+  flex-direction: row;
+  gap: 0.2rem;
+  margin-top: 0.2rem;
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.astronomical-event-icon {
+  font-size: 0.9rem;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: help;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.2));
+  transition: transform 0.2s ease, filter 0.2s ease;
+}
+
+.astronomical-event-icon:hover {
+  transform: scale(1.15);
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+}
+
+/* Theme-compatible styling for astronomical events */
+.cell-astronomical-events {
+  opacity: 0.9;
+}
+
+/* Ensure visibility in dark themes */
+[data-theme*="dark"] .astronomical-event-icon,
+[data-theme*="darkness"] .astronomical-event-icon {
+  filter: drop-shadow(0 1px 2px rgba(255, 255, 255, 0.1)) drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3));
+}
+
+[data-theme*="dark"] .astronomical-event-icon:hover,
+[data-theme*="darkness"] .astronomical-event-icon:hover {
+  filter: drop-shadow(0 2px 4px rgba(255, 255, 255, 0.15)) drop-shadow(0 2px 4px rgba(0, 0, 0, 0.4));
+}
+
 .month-cell .cell-content {
   justify-content: flex-start;
   padding-top: 0.75rem;

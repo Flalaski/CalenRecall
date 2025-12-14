@@ -13,7 +13,7 @@
  * - Solar terms (Chinese calendar)
  */
 
-import { gregorianToJDN, jdnToGregorian } from './julianDayUtils';
+import { gregorianToJDN, jdnToGregorian, jdnToDate } from './julianDayUtils';
 
 /**
  * Calculate the number of Julian centuries since J2000.0 (January 1, 2000, 12:00 UTC)
@@ -148,18 +148,6 @@ function meanLunarAnomaly(T: number): number {
   const M = 134.9633964 + 477198.8675055 * T + 0.0087414 * T * T + 
             T * T * T / 69699 - T * T * T * T / 14712000;
   return ((M % 360) + 360) % 360; // Normalize to 0-360
-}
-
-/**
- * Calculate the lunar elongation (distance from Sun)
- * @param T Julian centuries since J2000.0
- * @returns Lunar elongation in degrees (0-360)
- */
-function lunarElongation(T: number): number {
-  // Formula from Meeus, "Astronomical Algorithms", Chapter 47
-  const D = 297.8501921 + 445267.1114034 * T - 0.0018819 * T * T + 
-            T * T * T / 545868 - T * T * T * T / 113065000;
-  return ((D % 360) + 360) % 360; // Normalize to 0-360
 }
 
 /**
@@ -357,5 +345,384 @@ export function solarTermJDN(year: number, term: number): number {
 export function winterSolsticeJDN(year: number): number {
   // Winter solstice is solar term 21
   return solarTermJDN(year, 21);
+}
+
+/**
+ * Calculate the date of a solstice or equinox based on target solar longitude
+ * @param year Gregorian year
+ * @param targetLongitude Target solar longitude in degrees (0° = vernal equinox, 90° = summer solstice, 180° = autumnal equinox, 270° = winter solstice)
+ * @returns Julian Day Number of the event
+ */
+function solsticeEquinoxJDN(year: number, targetLongitude: number): number {
+  // Approximate date based on target longitude
+  // 0° (vernal equinox): ~March 20
+  // 90° (summer solstice): ~June 21
+  // 180° (autumnal equinox): ~September 23
+  // 270° (winter solstice): ~December 22
+  let approximateMonth: number;
+  let approximateDay: number;
+  
+  if (targetLongitude === 0) {
+    approximateMonth = 3;
+    approximateDay = 20;
+  } else if (targetLongitude === 90) {
+    approximateMonth = 6;
+    approximateDay = 21;
+  } else if (targetLongitude === 180) {
+    approximateMonth = 9;
+    approximateDay = 23;
+  } else if (targetLongitude === 270) {
+    approximateMonth = 12;
+    approximateDay = 22;
+  } else {
+    // Generic calculation for any longitude
+    const daysPerDegree = 365.25 / 360;
+    const daysFromVernal = (targetLongitude * daysPerDegree) % 365.25;
+    const vernalJDN = vernalEquinoxJDN(year);
+    const approximateJDN = vernalJDN + daysFromVernal;
+    const { month, day } = jdnToGregorian(approximateJDN);
+    approximateMonth = month;
+    approximateDay = day;
+  }
+  
+  let jdn = gregorianToJDN(year, approximateMonth, approximateDay) + 0.5;
+  
+  // Refine using iterative method
+  for (let i = 0; i < 10; i++) {
+    const longitude = trueSolarLongitude(jdn);
+    
+    // Calculate difference from target
+    let diff = longitude - targetLongitude;
+    if (diff > 180) diff -= 360;
+    if (diff < -180) diff += 360;
+    
+    // If very close, we're done
+    if (Math.abs(diff) < 0.01 || Math.abs(diff - 360) < 0.01) {
+      break;
+    }
+    
+    // Calculate rate of change (degrees per day)
+    const longitude1 = trueSolarLongitude(jdn + 1);
+    let rateOfChange = longitude1 - longitude;
+    if (rateOfChange > 180) rateOfChange -= 360;
+    if (rateOfChange < -180) rateOfChange += 360;
+    
+    // Adjust date
+    let adjustment = 0;
+    if (Math.abs(rateOfChange) > 0.01) {
+      adjustment = -diff / rateOfChange;
+      jdn += adjustment;
+    } else {
+      // Fallback: use average rate
+      adjustment = -diff / 0.9856; // Average solar motion ~0.9856°/day
+      jdn += adjustment;
+    }
+    
+    // Prevent infinite loops
+    if (Math.abs(adjustment) < 0.0001) {
+      break;
+    }
+  }
+  
+  return Math.round(jdn);
+}
+
+/**
+ * Calculate the summer solstice JDN for a given year
+ * Summer solstice occurs when the Sun's true longitude is 90°
+ * @param year Gregorian year
+ * @returns Julian Day Number of the summer solstice
+ */
+export function summerSolsticeJDN(year: number): number {
+  return solsticeEquinoxJDN(year, 90);
+}
+
+/**
+ * Calculate the autumnal equinox JDN for a given year
+ * Autumnal equinox occurs when the Sun's true longitude is 180°
+ * @param year Gregorian year
+ * @returns Julian Day Number of the autumnal equinox
+ */
+export function autumnalEquinoxJDN(year: number): number {
+  return solsticeEquinoxJDN(year, 180);
+}
+
+/**
+ * Calculate the date of a specific moon phase
+ * @param jdn Reference Julian Day Number (approximate date)
+ * @param phaseOffset Phase offset in degrees (0° = new moon, 90° = first quarter, 180° = full moon, 270° = last quarter)
+ * @returns Julian Day Number of the moon phase
+ */
+function moonPhaseJDN(jdn: number, phaseOffset: number): number {
+  // Start with approximate date
+  let currentJDN = jdn;
+  
+  // Refine using iterative method
+  for (let i = 0; i < 10; i++) {
+    const solarLong = trueSolarLongitude(currentJDN);
+    const lunarLong = lunarEclipticLongitude(currentJDN);
+    
+    // Calculate the difference between lunar and solar longitude
+    let diff = lunarLong - solarLong;
+    if (diff > 180) diff -= 360;
+    if (diff < -180) diff += 360;
+    
+    // Calculate target difference based on phase offset
+    let targetDiff = phaseOffset;
+    if (targetDiff > 180) targetDiff -= 360;
+    if (targetDiff < -180) targetDiff += 360;
+    
+    // Calculate how far we are from the target phase
+    let phaseDiff = diff - targetDiff;
+    if (phaseDiff > 180) phaseDiff -= 360;
+    if (phaseDiff < -180) phaseDiff += 360;
+    
+    // If very close, we're done
+    if (Math.abs(phaseDiff) < 0.1) {
+      break;
+    }
+    
+    // Estimate rate of change (degrees per day)
+    const solarLong1 = trueSolarLongitude(currentJDN + 1);
+    const lunarLong1 = lunarEclipticLongitude(currentJDN + 1);
+    let rateOfChange = (lunarLong1 - lunarLong) - (solarLong1 - solarLong);
+    if (rateOfChange > 180) rateOfChange -= 360;
+    if (rateOfChange < -180) rateOfChange += 360;
+    
+    // Adjust date
+    let adjustment = 0;
+    if (Math.abs(rateOfChange) > 0.01) {
+      adjustment = -phaseDiff / rateOfChange;
+      currentJDN += adjustment;
+    } else {
+      // Fallback: use mean synodic month
+      const SYNODIC_MONTH = 29.53058867;
+      adjustment = phaseDiff > 0 ? -SYNODIC_MONTH / 4 : SYNODIC_MONTH / 4;
+      currentJDN += adjustment;
+    }
+    
+    // Prevent infinite loops
+    if (Math.abs(adjustment) < 0.0001) {
+      break;
+    }
+  }
+  
+  return Math.round(currentJDN);
+}
+
+/**
+ * Calculate the full moon JDN
+ * A full moon occurs when the Moon is 180° from the Sun
+ * @param jdn Reference Julian Day Number (approximate date)
+ * @returns Julian Day Number of the full moon
+ */
+export function fullMoonJDN(jdn: number): number {
+  return moonPhaseJDN(jdn, 180);
+}
+
+/**
+ * Calculate the first quarter moon JDN
+ * First quarter occurs when the Moon is 90° ahead of the Sun
+ * @param jdn Reference Julian Day Number (approximate date)
+ * @returns Julian Day Number of the first quarter moon
+ */
+export function firstQuarterMoonJDN(jdn: number): number {
+  return moonPhaseJDN(jdn, 90);
+}
+
+/**
+ * Calculate the last quarter moon JDN
+ * Last quarter occurs when the Moon is 270° ahead of the Sun (or 90° behind)
+ * @param jdn Reference Julian Day Number (approximate date)
+ * @returns Julian Day Number of the last quarter moon
+ */
+export function lastQuarterMoonJDN(jdn: number): number {
+  return moonPhaseJDN(jdn, 270);
+}
+
+/**
+ * Find the next full moon after a given date
+ * @param jdn Reference Julian Day Number
+ * @returns Julian Day Number of the next full moon
+ */
+export function nextFullMoonJDN(jdn: number): number {
+  // Approximate: full moons occur about every 29.5 days
+  const SYNODIC_MONTH = 29.53058867;
+  const approximateJDN = jdn + SYNODIC_MONTH / 2;
+  return fullMoonJDN(approximateJDN);
+}
+
+/**
+ * Find the previous full moon before a given date
+ * @param jdn Reference Julian Day Number
+ * @returns Julian Day Number of the previous full moon
+ */
+export function previousFullMoonJDN(jdn: number): number {
+  // Approximate: full moons occur about every 29.5 days
+  const SYNODIC_MONTH = 29.53058867;
+  const approximateJDN = jdn - SYNODIC_MONTH / 2;
+  return fullMoonJDN(approximateJDN);
+}
+
+/**
+ * Get the moon phase for a given date
+ * @param jdn Julian Day Number
+ * @returns Moon phase: 'new' | 'waxing-crescent' | 'first-quarter' | 'waxing-gibbous' | 'full' | 'waning-gibbous' | 'last-quarter' | 'waning-crescent'
+ */
+export function getMoonPhase(jdn: number): 'new' | 'waxing-crescent' | 'first-quarter' | 'waxing-gibbous' | 'full' | 'waning-gibbous' | 'last-quarter' | 'waning-crescent' {
+  const solarLong = trueSolarLongitude(jdn);
+  const lunarLong = lunarEclipticLongitude(jdn);
+  
+  // Calculate the difference between lunar and solar longitude
+  let diff = lunarLong - solarLong;
+  if (diff < 0) diff += 360;
+  
+  // Determine phase based on angular difference
+  // 0° = new moon, 90° = first quarter, 180° = full moon, 270° = last quarter
+  if (diff < 22.5 || diff >= 337.5) {
+    return 'new';
+  } else if (diff >= 22.5 && diff < 67.5) {
+    return 'waxing-crescent';
+  } else if (diff >= 67.5 && diff < 112.5) {
+    return 'first-quarter';
+  } else if (diff >= 112.5 && diff < 157.5) {
+    return 'waxing-gibbous';
+  } else if (diff >= 157.5 && diff < 202.5) {
+    return 'full';
+  } else if (diff >= 202.5 && diff < 247.5) {
+    return 'waning-gibbous';
+  } else if (diff >= 247.5 && diff < 292.5) {
+    return 'last-quarter';
+  } else {
+    return 'waning-crescent';
+  }
+}
+
+/**
+ * Types for astronomical events
+ */
+export type SolsticeEquinoxType = 'vernal-equinox' | 'summer-solstice' | 'autumnal-equinox' | 'winter-solstice';
+export type MoonPhaseType = 'new' | 'first-quarter' | 'full' | 'last-quarter';
+
+export interface AstronomicalEvent {
+  type: 'solstice-equinox' | 'moon-phase';
+  name: SolsticeEquinoxType | MoonPhaseType;
+  jdn: number;
+  date: Date;
+}
+
+/**
+ * Get all solstices and equinoxes for a given year
+ * @param year Gregorian year
+ * @returns Array of astronomical events
+ */
+export function getSolsticesEquinoxesForYear(year: number): AstronomicalEvent[] {
+  const events: AstronomicalEvent[] = [];
+  
+  const vernalJDN = vernalEquinoxJDN(year);
+  const summerJDN = summerSolsticeJDN(year);
+  const autumnalJDN = autumnalEquinoxJDN(year);
+  const winterJDN = winterSolsticeJDN(year);
+  
+  events.push({
+    type: 'solstice-equinox',
+    name: 'vernal-equinox',
+    jdn: vernalJDN,
+    date: jdnToDate(vernalJDN)
+  });
+  
+  events.push({
+    type: 'solstice-equinox',
+    name: 'summer-solstice',
+    jdn: summerJDN,
+    date: jdnToDate(summerJDN)
+  });
+  
+  events.push({
+    type: 'solstice-equinox',
+    name: 'autumnal-equinox',
+    jdn: autumnalJDN,
+    date: jdnToDate(autumnalJDN)
+  });
+  
+  events.push({
+    type: 'solstice-equinox',
+    name: 'winter-solstice',
+    jdn: winterJDN,
+    date: jdnToDate(winterJDN)
+  });
+  
+  return events.sort((a, b) => a.jdn - b.jdn);
+}
+
+/**
+ * Get all major moon phases (new, first quarter, full, last quarter) for a date range
+ * @param startJDN Start Julian Day Number
+ * @param endJDN End Julian Day Number
+ * @returns Array of astronomical events
+ */
+export function getMoonPhasesForRange(startJDN: number, endJDN: number): AstronomicalEvent[] {
+  const events: AstronomicalEvent[] = [];
+  const SYNODIC_MONTH = 29.53058867;
+  
+  // Start from a new moon before the start date
+  let currentJDN = previousNewMoonJDN(startJDN);
+  
+  // Collect all major moon phases in the range
+  while (currentJDN <= endJDN + SYNODIC_MONTH) {
+    // New moon
+    const newMoon = newMoonJDN(currentJDN);
+    if (newMoon >= startJDN && newMoon <= endJDN) {
+      events.push({
+        type: 'moon-phase',
+        name: 'new',
+        jdn: newMoon,
+        date: jdnToDate(newMoon)
+      });
+    }
+    
+    // First quarter (approximately 7.4 days after new moon)
+    const firstQuarter = firstQuarterMoonJDN(newMoon + 7.4);
+    if (firstQuarter >= startJDN && firstQuarter <= endJDN) {
+      events.push({
+        type: 'moon-phase',
+        name: 'first-quarter',
+        jdn: firstQuarter,
+        date: jdnToDate(firstQuarter)
+      });
+    }
+    
+    // Full moon (approximately 14.8 days after new moon)
+    const fullMoon = fullMoonJDN(newMoon + 14.8);
+    if (fullMoon >= startJDN && fullMoon <= endJDN) {
+      events.push({
+        type: 'moon-phase',
+        name: 'full',
+        jdn: fullMoon,
+        date: jdnToDate(fullMoon)
+      });
+    }
+    
+    // Last quarter (approximately 22.1 days after new moon)
+    const lastQuarter = lastQuarterMoonJDN(newMoon + 22.1);
+    if (lastQuarter >= startJDN && lastQuarter <= endJDN) {
+      events.push({
+        type: 'moon-phase',
+        name: 'last-quarter',
+        jdn: lastQuarter,
+        date: jdnToDate(lastQuarter)
+      });
+    }
+    
+    // Move to next new moon
+    currentJDN = nextNewMoonJDN(newMoon);
+    
+    // Safety check to prevent infinite loops
+    if (currentJDN <= newMoon) {
+      break;
+    }
+  }
+  
+  return events.sort((a, b) => a.jdn - b.jdn);
 }
 

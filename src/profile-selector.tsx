@@ -163,8 +163,12 @@ function ProfileSelector() {
 
   // Listen for theme updates from Electron menu - profile selector has its own independent theme stored in localStorage
   useEffect(() => {
+    if (!window.electronAPI) {
+      return;
+    }
+    
     const api = getProfileSelectorAPI();
-    if (!api.onPreferenceUpdated) {
+    if (!api || !api.onPreferenceUpdated) {
       return;
     }
 
@@ -191,7 +195,7 @@ function ProfileSelector() {
     api.onPreferenceUpdated(handlePreferenceUpdate);
 
     return () => {
-      if (api.removePreferenceUpdatedListener) {
+      if (api && api.removePreferenceUpdatedListener) {
         api.removePreferenceUpdatedListener();
       }
     };

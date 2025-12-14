@@ -12,7 +12,6 @@ import {
   getZodiacColor,
   getZodiacGradientColor,
   getZodiacGradientColorForYear,
-  parseISODate,
   createDate,
   getMonthStart,
   getMonthEnd,
@@ -20,14 +19,14 @@ import {
   formatTime,
 } from '../utils/dateUtils';
 import { isSameDay, isSameMonth, isSameYear } from 'date-fns';
-import { JournalEntry } from '../types';
 import { playCalendarSelectionSound } from '../utils/audioUtils';
 import { useCalendar } from '../contexts/CalendarContext';
 import { useEntries } from '../contexts/EntriesContext';
 import { dateToCalendarDate } from '../utils/calendars/calendarConverter';
 import { formatCalendarDate } from '../utils/calendars/calendarConverter';
-import { buildEntryLookup, hasEntryForDateOptimized, getDayEntriesOptimized, getEntriesWithTimeOptimized, filterEntriesByDateRangeOptimized } from '../utils/entryLookupUtils';
+import { buildEntryLookup, hasEntryForDateOptimized, getEntriesWithTimeOptimized } from '../utils/entryLookupUtils';
 import { getEntryColorForDateOptimized } from '../utils/entryColorUtils';
+import { getAstronomicalEventsForRange, getAstronomicalEventLabel, type DateAstronomicalEvent } from '../utils/astronomicalEvents';
 import './CalendarView.css';
 
 interface CalendarViewProps {
@@ -47,15 +46,54 @@ function CalendarView({
   const { entries: allEntries, entryLookup: contextEntryLookup, entryColors } = useEntries();
   const [preferences, setPreferences] = useState<Preferences>({});
 
-  // Load preferences for time format
+  // Load preferences for time format and astronomical events
   useEffect(() => {
+    console.log('[CalendarView] Component mounted, loading preferences...');
     const loadPreferences = async () => {
       if (window.electronAPI) {
-        const prefs = await window.electronAPI.getAllPreferences();
-        setPreferences(prefs);
+        try {
+          const prefs = await window.electronAPI.getAllPreferences();
+          console.log('[CalendarView] ✅ Loaded ALL preferences:', prefs);
+          console.log('[CalendarView] showSolsticesEquinoxes:', prefs.showSolsticesEquinoxes, 'type:', typeof prefs.showSolsticesEquinoxes);
+          console.log('[CalendarView] showMoonPhases:', prefs.showMoonPhases, 'type:', typeof prefs.showMoonPhases);
+          
+          // Force set preferences even if they're undefined (will default to false)
+          setPreferences({
+            ...prefs,
+            showSolsticesEquinoxes: prefs.showSolsticesEquinoxes ?? false,
+            showMoonPhases: prefs.showMoonPhases ?? false
+          });
+        } catch (error) {
+          console.error('[CalendarView] ❌ Error loading preferences:', error);
+        }
+      } else {
+        console.warn('[CalendarView] ⚠️ window.electronAPI not available');
       }
     };
     loadPreferences();
+
+    // Listen for preference updates (e.g., from menu toggles)
+    if (window.electronAPI && window.electronAPI.onPreferenceUpdated) {
+      const handlePreferenceUpdate = (data: { key: string; value: any }) => {
+        console.log('[CalendarView] Preference update received:', data);
+        if (data.key === 'showSolsticesEquinoxes' || data.key === 'showMoonPhases') {
+          // Update preferences state immediately
+          setPreferences(prev => {
+            const updated = { ...prev, [data.key]: data.value };
+            console.log('[CalendarView] Updated preferences:', updated);
+            return updated;
+          });
+        }
+      };
+      
+      window.electronAPI.onPreferenceUpdated(handlePreferenceUpdate);
+      
+      return () => {
+        if (window.electronAPI && window.electronAPI.removePreferenceUpdatedListener) {
+          window.electronAPI.removePreferenceUpdatedListener();
+        }
+      };
+    }
   }, []);
 
   // OPTIMIZATION: Use lookup from context (stable across renders) or build with weekStartsOn if different
@@ -68,8 +106,26 @@ function CalendarView({
     return buildEntryLookup(allEntries, weekStartsOn);
   }, [contextEntryLookup, allEntries, weekStartsOn]);
 
-  // OPTIMIZATION: Filter entries using optimized lookup instead of O(n) filtering
-  const entries = useMemo(() => {
+  // Note: entries filtering is handled by EntriesContext, no need to filter here
+
+  // Get astronomical events for the visible date range
+  const astronomicalEvents = useMemo(() => {
+    // Use truthy check instead of strict === true to handle undefined as false
+    const showSolsticesEquinoxes = !!(preferences.showSolsticesEquinoxes);
+    const showMoonPhases = !!(preferences.showMoonPhases);
+    
+    console.log('[CalendarView] useMemo - preferences state:', {
+      showSolsticesEquinoxes: preferences.showSolsticesEquinoxes,
+      showMoonPhases: preferences.showMoonPhases,
+      computed: { showSolsticesEquinoxes, showMoonPhases }
+    });
+    
+    // Early return if both are disabled
+    if (!showSolsticesEquinoxes && !showMoonPhases) {
+      console.log('[CalendarView] ⚠️ Both astronomical features disabled, returning empty map');
+      return new Map<string, DateAstronomicalEvent[]>();
+    }
+    
     let startDate: Date;
     let endDate: Date;
     
@@ -93,32 +149,49 @@ function CalendarView({
       case 'week': {
         startDate = getWeekStart(selectedDate, weekStartsOn);
         endDate = getWeekEnd(selectedDate, weekStartsOn);
-        // For week view, we also need to load month entries that could apply
-        // So expand the range to include the full month(s) that contain this week
-        const weekStartMonth = getMonthStart(startDate);
-        const weekEndMonth = getMonthEnd(endDate);
-        // Use the wider range to catch month entries
-        if (weekStartMonth < startDate) startDate = weekStartMonth;
-        if (weekEndMonth > endDate) endDate = weekEndMonth;
         break;
       }
       case 'day': {
-        // For day view, load entries for the full month to catch month/week entries
-        startDate = getMonthStart(selectedDate);
-        endDate = getMonthEnd(selectedDate);
+        startDate = selectedDate;
+        endDate = selectedDate;
         break;
       }
       default: {
-        startDate = selectedDate;
-        endDate = selectedDate;
+        startDate = getMonthStart(selectedDate);
+        endDate = getMonthEnd(selectedDate);
       }
     }
     
-    // Use optimized lookup-based filtering instead of O(n) array filtering
-    // Skip day entries for decade and year views (not needed at those tiers)
-    const excludeDayEntries = viewMode === 'decade' || viewMode === 'year';
-    return filterEntriesByDateRangeOptimized(entryLookup, startDate, endDate, weekStartsOn, excludeDayEntries);
-  }, [entryLookup, selectedDate, viewMode, weekStartsOn]);
+    const events = getAstronomicalEventsForRange(
+      startDate,
+      endDate,
+      showSolsticesEquinoxes,
+      showMoonPhases
+    );
+    
+    // Debug logging - ALWAYS log to help diagnose
+    console.log('[CalendarView] Astronomical events calculation:', {
+      viewMode,
+      startDate: startDate.toISOString().split('T')[0],
+      endDate: endDate.toISOString().split('T')[0],
+      showSolsticesEquinoxes,
+      showMoonPhases,
+      preferences: {
+        showSolsticesEquinoxes: preferences.showSolsticesEquinoxes,
+        showMoonPhases: preferences.showMoonPhases
+      },
+      eventCount: events.size,
+      events: Array.from(events.entries()).slice(0, 10) // Log first 10 events
+    });
+    
+    // Log a sample of date keys for debugging
+    if (events.size > 0) {
+      const sampleKeys = Array.from(events.keys()).slice(0, 5);
+      console.log('[CalendarView] Sample event date keys:', sampleKeys);
+    }
+    
+    return events;
+  }, [selectedDate, viewMode, weekStartsOn, preferences.showSolsticesEquinoxes, preferences.showMoonPhases]);
 
   // Removed loadEntries - now using EntriesContext with memoized filtering
 
@@ -154,6 +227,30 @@ function CalendarView({
           const yearGradientColor = getZodiacGradientColorForYear(year.getFullYear());
           const hasEntryForYear = hasEntry(year);
           const entryColor = hasEntryForYear ? getEntryColorForDateOptimized(entryLookup, year, 'year', weekStartsOn, entryColors) : null;
+          
+          // Get astronomical events for this year (check solstices/equinoxes)
+          const yearEvents: DateAstronomicalEvent[] = [];
+          // Check all solstices and equinoxes for this year
+          for (let month = 0; month < 12; month++) {
+            for (let day = 1; day <= 31; day++) {
+              try {
+                const checkDate = createDate(year.getFullYear(), month, day);
+                const checkYear = checkDate.getFullYear();
+                const checkMonth = String(checkDate.getMonth() + 1).padStart(2, '0');
+                const checkDay = String(checkDate.getDate()).padStart(2, '0');
+                const checkKey = `${checkYear}-${checkMonth}-${checkDay}`;
+                const events = astronomicalEvents.get(checkKey) || [];
+                if (events.length > 0) {
+                  yearEvents.push(...events);
+                }
+              } catch (e) {
+                // Invalid date, skip
+              }
+            }
+          }
+          // Deduplicate events
+          const uniqueEvents = Array.from(new Map(yearEvents.map(e => [e.type + '-' + e.name, e])).values());
+          
           return (
             <div
               key={idx}
@@ -175,6 +272,15 @@ function CalendarView({
                     }
                   })()}
                 </div>
+                {uniqueEvents.length > 0 && (
+                  <div className="cell-astronomical-events" title={uniqueEvents.map(e => e.displayName).join(', ')}>
+                    {uniqueEvents.slice(0, 4).map((event, eIdx) => (
+                      <span key={eIdx} className="astronomical-event-icon">
+                        {getAstronomicalEventLabel(event)}
+                      </span>
+                    ))}
+                  </div>
+                )}
                 {hasEntryForYear && entryColor && (
                   <div 
                     className="entry-indicator"
@@ -208,7 +314,6 @@ function CalendarView({
           const daysInMonth = getDaysInMonth(month).length;
           
           // OPTIMIZATION: Count entries using lookup instead of filtering
-          const monthStart = getMonthStart(month);
           const monthEnd = getMonthEnd(month);
           monthEnd.setHours(23, 59, 59, 999);
           // Count entries more efficiently using lookup
@@ -221,6 +326,26 @@ function CalendarView({
             const dayStr = formatDate(dayDate);
             entryCount += entryLookup.byDateString.get(dayStr)?.length || 0;
           }
+          
+          // Get astronomical events for this month
+          const monthEvents: DateAstronomicalEvent[] = [];
+          for (let day = 1; day <= daysInMonth; day++) {
+            try {
+              const dayDate = createDate(month.getFullYear(), month.getMonth(), day);
+              const dayYear = dayDate.getFullYear();
+              const dayMonth = String(dayDate.getMonth() + 1).padStart(2, '0');
+              const dayDay = String(dayDate.getDate()).padStart(2, '0');
+              const dayKey = `${dayYear}-${dayMonth}-${dayDay}`;
+              const events = astronomicalEvents.get(dayKey) || [];
+              if (events.length > 0) {
+                monthEvents.push(...events);
+              }
+            } catch (e) {
+              // Invalid date, skip
+            }
+          }
+          // Deduplicate events
+          const uniqueMonthEvents = Array.from(new Map(monthEvents.map(e => [e.type + '-' + e.name, e])).values());
           
           return (
             <div
@@ -240,6 +365,15 @@ function CalendarView({
                     <div className="month-entry-count">{entryCount} {entryCount === 1 ? 'entry' : 'entries'}</div>
                   )}
                 </div>
+                {uniqueMonthEvents.length > 0 && (
+                  <div className="cell-astronomical-events" title={uniqueMonthEvents.map(e => e.displayName).join(', ')}>
+                    {uniqueMonthEvents.slice(0, 3).map((event, eIdx) => (
+                      <span key={eIdx} className="astronomical-event-icon">
+                        {getAstronomicalEventLabel(event)}
+                      </span>
+                    ))}
+                  </div>
+                )}
                 {hasEntryForMonth && entryColor && (
                   <div 
                     className="entry-indicator"
@@ -282,6 +416,10 @@ function CalendarView({
             const entriesWithTime = getEntriesWithTimeOptimized(entryLookup, day);
             const timeFormat = preferences.timeFormat || '12h';
             
+            // Get astronomical events for this day
+            const dayKey = day.toISOString().split('T')[0];
+            const dayEvents = astronomicalEvents.get(dayKey) || [];
+            
             return (
               <div
                 key={idx}
@@ -299,6 +437,15 @@ function CalendarView({
                       className="entry-indicator"
                       style={{ backgroundColor: entryColor }}
                     ></div>
+                  )}
+                  {dayEvents.length > 0 && (
+                    <div className="cell-astronomical-events" title={dayEvents.map(e => e.displayName).join(', ')}>
+                      {dayEvents.map((event, eIdx) => (
+                        <span key={eIdx} className="astronomical-event-icon">
+                          {getAstronomicalEventLabel(event)}
+                        </span>
+                      ))}
+                    </div>
                   )}
                   {entriesWithTime.length > 0 && (
                     <div className="cell-time-info">
@@ -354,6 +501,14 @@ function CalendarView({
             const entriesWithTime = getEntriesWithTimeOptimized(entryLookup, day);
             const timeFormat = preferences.timeFormat || '12h';
             
+            // Get astronomical events for this day
+            // Use local date string to match event keys
+            const year = day.getFullYear();
+            const month = String(day.getMonth() + 1).padStart(2, '0');
+            const dayNum = String(day.getDate()).padStart(2, '0');
+            const dayKey = `${year}-${month}-${dayNum}`;
+            const dayEvents = astronomicalEvents.get(dayKey) || [];
+            
             return (
               <div
                 key={idx}
@@ -370,6 +525,15 @@ function CalendarView({
                       className="entry-indicator"
                       style={{ backgroundColor: entryColor }}
                     ></div>
+                  )}
+                  {dayEvents.length > 0 && (
+                    <div className="cell-astronomical-events" title={dayEvents.map(e => e.displayName).join(', ')}>
+                      {dayEvents.map((event, eIdx) => (
+                        <span key={eIdx} className="astronomical-event-icon">
+                          {getAstronomicalEventLabel(event)}
+                        </span>
+                      ))}
+                    </div>
                   )}
                   {entriesWithTime.length > 0 && (
                     <div className="cell-time-info">
@@ -396,6 +560,14 @@ function CalendarView({
   };
 
   const renderDayView = () => {
+    // Get astronomical events for this day
+    // Use local date string to match event keys
+    const year = selectedDate.getFullYear();
+    const month = String(selectedDate.getMonth() + 1).padStart(2, '0');
+    const dayNum = String(selectedDate.getDate()).padStart(2, '0');
+    const dayKey = `${year}-${month}-${dayNum}`;
+    const dayEvents = astronomicalEvents.get(dayKey) || [];
+    
     return (
       <div className="calendar-day-view">
         <div
@@ -411,6 +583,15 @@ function CalendarView({
                 }
               })()}
             </div>
+            {dayEvents.length > 0 && (
+              <div className="cell-astronomical-events" title={dayEvents.map(e => e.displayName).join(', ')}>
+                {dayEvents.map((event, eIdx) => (
+                  <span key={eIdx} className="astronomical-event-icon">
+                    {getAstronomicalEventLabel(event)}
+                  </span>
+                ))}
+              </div>
+            )}
             {hasEntry(selectedDate) && <div className="entry-indicator"></div>}
           </div>
         </div>
