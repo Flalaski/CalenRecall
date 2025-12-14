@@ -114,15 +114,8 @@ function CalendarView({
     const showSolsticesEquinoxes = !!(preferences.showSolsticesEquinoxes);
     const showMoonPhases = !!(preferences.showMoonPhases);
     
-    console.log('[CalendarView] useMemo - preferences state:', {
-      showSolsticesEquinoxes: preferences.showSolsticesEquinoxes,
-      showMoonPhases: preferences.showMoonPhases,
-      computed: { showSolsticesEquinoxes, showMoonPhases }
-    });
-    
     // Early return if both are disabled
     if (!showSolsticesEquinoxes && !showMoonPhases) {
-      console.log('[CalendarView] ⚠️ Both astronomical features disabled, returning empty map');
       return new Map<string, DateAstronomicalEvent[]>();
     }
     
@@ -168,27 +161,6 @@ function CalendarView({
       showSolsticesEquinoxes,
       showMoonPhases
     );
-    
-    // Debug logging - ALWAYS log to help diagnose
-    console.log('[CalendarView] Astronomical events calculation:', {
-      viewMode,
-      startDate: startDate.toISOString().split('T')[0],
-      endDate: endDate.toISOString().split('T')[0],
-      showSolsticesEquinoxes,
-      showMoonPhases,
-      preferences: {
-        showSolsticesEquinoxes: preferences.showSolsticesEquinoxes,
-        showMoonPhases: preferences.showMoonPhases
-      },
-      eventCount: events.size,
-      events: Array.from(events.entries()).slice(0, 10) // Log first 10 events
-    });
-    
-    // Log a sample of date keys for debugging
-    if (events.size > 0) {
-      const sampleKeys = Array.from(events.keys()).slice(0, 5);
-      console.log('[CalendarView] Sample event date keys:', sampleKeys);
-    }
     
     return events;
   }, [selectedDate, viewMode, weekStartsOn, preferences.showSolsticesEquinoxes, preferences.showMoonPhases]);
