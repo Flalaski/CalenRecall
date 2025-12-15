@@ -1,3 +1,68 @@
+/* Decade view: ensure macro cycle badges always fit inside year cards */
+.decade-grid .year-card {
+  container-type: size;
+  container-name: yearcard;
+}
+
+.decade-grid .year-card .macro-badges {
+  /* Base layout of badges within the year card */
+  display: grid;
+  grid-auto-flow: row;
+  grid-auto-rows: min-content;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
+  /* Scaling hook */
+  --macro-scale: 1;
+  transform: scale(var(--macro-scale));
+  transform-origin: top left;
+  will-change: transform;
+}
+
+.decade-grid .year-card .macro-badges > * {
+  /* Prevent text overflow within badges when scaled */
+  min-width: 0;
+}
+
+/* Container-based responsive scaling steps
+   Shrink badges progressively as the year card gets tighter,
+   so all chips remain visible instead of being clipped. */
+@container yearcard (max-width: 280px) {
+  .decade-grid .year-card .macro-badges { --macro-scale: 0.95; }
+}
+@container yearcard (max-width: 260px) {
+  .decade-grid .year-card .macro-badges { --macro-scale: 0.9; }
+}
+@container yearcard (max-width: 240px) {
+  .decade-grid .year-card .macro-badges { --macro-scale: 0.85; }
+}
+@container yearcard (max-width: 220px) {
+  .decade-grid .year-card .macro-badges { --macro-scale: 0.8; }
+}
+@container yearcard (max-width: 200px) {
+  .decade-grid .year-card .macro-badges { --macro-scale: 0.75; }
+}
+@container yearcard (max-width: 180px) {
+  .decade-grid .year-card .macro-badges { --macro-scale: 0.7; }
+}
+@container yearcard (max-width: 160px) {
+  .decade-grid .year-card .macro-badges { --macro-scale: 0.65; }
+}
+
+/* Ensure the scaled content still reserves space to avoid overlap.
+   Wrap the macro badges in a scaling wrapper and reserve height based on scale. */
+.decade-grid .year-card .macro-badges-wrapper {
+  position: relative;
+}
+.decade-grid .year-card .macro-badges-wrapper .macro-badges {
+  position: absolute;
+  inset: 0;
+}
+.decade-grid .year-card .macro-badges-wrapper {
+  /* Reserve space equal to the scaled content; tweak baseline height if needed */
+  --baseline-height: 120px; /* approximate unscaled badges block height */
+  height: calc(var(--baseline-height) * var(--macro-scale));
+}
+
 .timeline-loading {
   display: flex;
   justify-content: center;
