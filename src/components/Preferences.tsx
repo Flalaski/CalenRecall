@@ -34,6 +34,23 @@ export default function PreferencesComponent() {
   const sectionRefs = useRef<Map<string, HTMLDivElement>>(new Map());
   const contentRef = useRef<HTMLDivElement>(null);
 
+  // Allow ESC to close the preferences window
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' || event.key === 'Esc') {
+        event.preventDefault();
+        if (window.electronAPI?.closePreferencesWindow) {
+          window.electronAPI.closePreferencesWindow();
+        } else {
+          window.close();
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
   useEffect(() => {
     // Load all themes (built-in + custom) first
     loadAllThemes().then(() => {
