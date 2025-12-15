@@ -1446,6 +1446,19 @@
   z-index: 0;
 }
 
+/* Reduce padding on smaller viewports to maximize usable space */
+@media (max-width: 1100px) {
+  .timeline-decade-view {
+    padding: 0.75rem;
+  }
+}
+
+@media (max-width: 800px) {
+  .timeline-decade-view {
+    padding: 0.5rem;
+  }
+}
+
 .year-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -1459,11 +1472,40 @@
 .decade-grid {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
-  grid-template-rows: repeat(2, 1fr);
+  grid-auto-rows: 1fr;
   gap: 1rem;
   flex: 1;
   min-height: 0;
   height: 100%;
+}
+
+/* Responsive decade grid: reduce columns on smaller viewports */
+@media (max-width: 1400px) {
+  .decade-grid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.85rem;
+  }
+}
+
+@media (max-width: 1100px) {
+  .decade-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.75rem;
+  }
+}
+
+@media (max-width: 800px) {
+  .decade-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.6rem;
+  }
+}
+
+@media (max-width: 500px) {
+  .decade-grid {
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
+  }
 }
 
 .month-cell,
@@ -1474,6 +1516,25 @@
   padding: 0.75rem;
   height: 100%;
   overflow: hidden;
+}
+
+/* Reduce year-cell padding on smaller viewports */
+@media (max-width: 1100px) {
+  .year-cell {
+    padding: 0.65rem;
+  }
+}
+
+@media (max-width: 800px) {
+  .year-cell {
+    padding: 0.5rem;
+  }
+}
+
+@media (max-width: 500px) {
+  .year-cell {
+    padding: 0.4rem;
+  }
 }
 
 .month-cell .cell-entries,
@@ -1516,6 +1577,29 @@
   background: rgba(0, 0, 0, 0.05);
   border-radius: 4px;
   overflow: hidden;
+}
+
+/* Scale down pixel maps on smaller screens */
+@media (max-width: 1100px) {
+  .year-pixel-map {
+    height: 50px;
+    margin-bottom: 0.4rem;
+  }
+}
+
+@media (max-width: 800px) {
+  .year-pixel-map {
+    height: 40px;
+    margin-bottom: 0.35rem;
+    gap: 0.5px;
+  }
+}
+
+@media (max-width: 500px) {
+  .year-pixel-map {
+    height: 35px;
+    margin-bottom: 0.3rem;
+  }
 }
 
 .year-pixel-map .pixel {
@@ -2036,6 +2120,28 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+/* Compact macro cycles header on smaller screens */
+@media (max-width: 1100px) {
+  .decade-macro-cycles-header {
+    padding: 0.18rem 0.4rem;
+    margin-bottom: 0.5rem;
+    gap: 0.4rem;
+  }
+}
+
+@media (max-width: 800px) {
+  .decade-macro-cycles-header {
+    padding: 0.15rem 0.35rem;
+    margin-bottom: 0.4rem;
+    gap: 0.35rem;
+  }
+  
+  .decade-macro-cycles-title {
+    font-size: 0.65rem;
+  }
 }
 
 .decade-macro-cycles-title {
