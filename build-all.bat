@@ -32,6 +32,9 @@ if not exist "node_modules" (
     echo.
 )
 
+echo Setting consistent release version...
+call npm run version:auto
+
 echo Building application (includes rebuilding native dependencies for Electron)...
 call npm run build
 if errorlevel 1 (
@@ -47,7 +50,7 @@ taskkill /F /IM electron.exe >nul 2>&1
 taskkill /F /IM node.exe >nul 2>&1
 wmic process where "name like '%%electron%%' or name like '%%node%%'" delete >nul 2>&1
 timeout /t 5 /nobreak >nul
-call npm run dist:win:pack
+call npm run dist:win:current
 if errorlevel 1 (
     echo.
     echo ERROR: Distribution build failed

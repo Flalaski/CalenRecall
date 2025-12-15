@@ -38,6 +38,9 @@ if [ ! -d "node_modules" ]; then
     echo ""
 fi
 
+echo "Setting consistent release version..."
+npm run version:auto
+
 echo "Building application (includes rebuilding native dependencies for Electron)..."
 npm run build
 if [ $? -ne 0 ]; then
@@ -51,7 +54,7 @@ echo "Creating macOS distribution (both DMG and ZIP)..."
 pkill -f electron > /dev/null 2>&1
 pkill -f node > /dev/null 2>&1
 sleep 5
-npm run dist:mac
+npm run dist:mac:current
 if [ $? -ne 0 ]; then
     echo ""
     echo "ERROR: Distribution build failed"
