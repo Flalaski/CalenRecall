@@ -1,6 +1,6 @@
 {
   "name": "calenrecall",
-  "version": "2025.12.12.1",
+  "version": "2025.12.14.1",
   "description": "A calendar journal for recalling memories across decades, years, months, weeks, and days",
   "main": "dist-electron/main.js",
   "author": "",
@@ -52,6 +52,7 @@
     "@fontsource/noto-sans-thai": "^5.2.8",
     "archiver": "^7.0.1",
     "better-sqlite3": "^12.5.0",
+    "electron-updater": "^6.1.8",
     "date-fns": "^3.0.0",
     "pdfkit": "^0.14.0",
     "react": "^18.2.0",

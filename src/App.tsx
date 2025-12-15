@@ -9,6 +9,7 @@ const SearchView = lazy(() => import('./components/SearchView'));
 import EntryEditModal from './components/EntryEditModal';
 import ExportMetadataModal from './components/ExportMetadataModal';
 import LoadingScreen from './components/LoadingScreen';
+import UpdateBanner from './components/UpdateBanner';
 import BackgroundArt from './components/BackgroundArt';
 import { TimeRange, JournalEntry, Preferences, ExportFormat, ExportMetadata } from './types';
 import { getEntryForDate } from './services/journalService';
@@ -1386,6 +1387,7 @@ function App() {
         theme={preferences.theme}
       />
       <div className="app">
+      <UpdateBanner />
       {currentProfile && (
         <div className="profile-name-display">
           {currentProfile.name}

@@ -1,10 +1,13 @@
-import { useEffect, useRef, useCallback } from 'react';
+import { useEffect, useRef, useCallback, useState } from 'react';
 import packageJson from '../../package.json';
 import { initializeTheme, type ThemeName, applyFontSize } from '../utils/themes';
 import './About.css';
 
 export default function AboutComponent() {
   const themeCleanupRef = useRef<(() => void) | null>(null);
+  const [updateStatus, setUpdateStatus] = useState<'idle' | 'checking' | 'available' | 'up-to-date' | 'error'>('idle');
+  const [newVersion, setNewVersion] = useState<string>('');
+  const [checkingManually, setCheckingManually] = useState(false);
 
   // Load theme from profile selector's localStorage (same as profile selector)
   const loadProfileSelectorTheme = (): ThemeName => {
@@ -177,6 +180,46 @@ export default function AboutComponent() {
     };
   }, [handleThemeChange]);
 
+  // Listen for update events
+  useEffect(() => {
+    if (!window.electronAPI) return;
+
+    const removeChecking = window.electronAPI.onUpdateChecking?.(() => {
+      setUpdateStatus('checking');
+    });
+
+    const removeAvailable = window.electronAPI.onUpdateAvailable?.((version: string) => {
+      setUpdateStatus('available');
+      setNewVersion(version);
+      setCheckingManually(false);
+    });
+
+    const removeNotAvailable = window.electronAPI.onUpdateNotAvailable?.(() => {
+      setUpdateStatus('up-to-date');
+      setCheckingManually(false);
+    });
+
+    const removeError = window.electronAPI.onUpdateError?.(() => {
+      setUpdateStatus('error');
+      setCheckingManually(false);
+    });
+
+    return () => {
+      removeChecking?.();
+      removeAvailable?.();
+      removeNotAvailable?.();
+      removeError?.();
+    };
+  }, []);
+
+  const handleCheckForUpdates = () => {
+    if (window.electronAPI?.checkForUpdates) {
+      setCheckingManually(true);
+      setUpdateStatus('checking');
+      window.electronAPI.checkForUpdates();
+    }
+  };
+
   return (
     <div className="about-container">
       <div className="about-content">
@@ -201,6 +244,45 @@ export default function AboutComponent() {
           <p className="about-note">
             All your journaling history is stored locally on your device.
           </p>
+        </div>
+
+        <div className="about-section about-updates">
+          <h2>Updates</h2>
+          <div className="update-check-container">
+            {updateStatus === 'idle' && (
+              <button 
+                className="update-check-button"
+                onClick={handleCheckForUpdates}
+                disabled={!window.electronAPI?.checkForUpdates}
+              >
+                Check for Updates
+              </button>
+            )}
+            {updateStatus === 'checking' && (
+              <div className="update-status checking">
+                <span className="update-spinner">⟳</span>
+                <span>Checking for updates...</span>
+              </div>
+            )}
+            {updateStatus === 'available' && (
+              <div className="update-status available">
+                <span className="update-icon">↓</span>
+                <span>Update {newVersion} is available and will download in the background</span>
+              </div>
+            )}
+            {updateStatus === 'up-to-date' && (
+              <div className="update-status up-to-date">
+                <span className="update-icon">✓</span>
+                <span>You're running the latest version</span>
+              </div>
+            )}
+            {updateStatus === 'error' && (
+              <div className="update-status error">
+                <span className="update-icon">⚠</span>
+                <span>Could not check for updates. Please try again later.</span>
+              </div>
+            )}
+          </div>
         </div>
 
         <div className="about-section about-credits">

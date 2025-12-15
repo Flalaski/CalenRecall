@@ -5,6 +5,7 @@ import Database from 'better-sqlite3';
 import { initDatabase, getAllPreferences, setPreference, closeDatabase, switchProfile, getCurrentProfile, Preferences } from './database';
 import { setupIpcHandlers, setMainWindow, setProfileSelectorWindow, setPreferencesWindow, setMenuUpdateCallback, setImportProgressWindow, setCreateImportProgressWindowCallback } from './ipc-handlers';
 import { getAutoLoadProfileId, setAutoLoadProfileId, getCurrentProfileId, getProfile } from './profile-manager';
+import { initAutoUpdater, manualCheckForUpdates } from './auto-updater';
 
 let mainWindow: BrowserWindow | null = null;
 let preferencesWindow: BrowserWindow | null = null;
@@ -1997,6 +1998,14 @@ app.whenReady().then(() => {
     console.error('[Main] ❌ Failed to create startup loading window:', error);
     // Continue anyway - app might still work
   }
+
+  const getActiveWindow = () =>
+    mainWindow ||
+    profileSelectorWindow ||
+    preferencesWindow ||
+    archiveExportWindow ||
+    aboutWindow ||
+    null;
   
   // Now do initialization in the background (window is already visible)
   // Initialize database (this will handle migration to profiles if needed)
@@ -2086,6 +2095,12 @@ app.whenReady().then(() => {
     updateMenu();
   });
 
+  // Handle manual check for updates
+  ipcMain.handle('check-for-updates', () => {
+    console.log('[Main] Manual update check requested');
+    manualCheckForUpdates();
+  });
+
   // Handle profile selection - open main window
   ipcMain.handle('open-main-window', () => {
     if (profileSelectorWindow) {
@@ -2133,6 +2148,8 @@ app.whenReady().then(() => {
     // Show profile selector window if no auto-load profile is set
     createProfileSelectorWindow();
   }
+
+  initAutoUpdater(getActiveWindow);
   
   // Update menu after a delay to ensure custom themes folder is fully initialized
   // This gives time for the folder to be created and any templates to be copied

@@ -220,3 +220,95 @@ html.about-page #root {
   overflow: visible !important;
   background: transparent !important; /* Let html/body background show through */
 }
+
+/* Update Check Section */
+.about-updates h2 {
+  margin: 0 0 16px 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--theme-heading, var(--theme-text, #333333));
+}
+
+.update-check-container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.update-check-button {
+  padding: 10px 20px;
+  background: var(--theme-accent, #4a90e2);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.1s;
+  align-self: flex-start;
+}
+
+.update-check-button:hover {
+  background: var(--theme-accent-hover, #357abd);
+  transform: translateY(-1px);
+}
+
+.update-check-button:active {
+  transform: translateY(0);
+}
+
+.update-check-button:disabled {
+  background: var(--theme-border, #cccccc);
+  cursor: not-allowed;
+  transform: none;
+}
+
+.update-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  border-radius: 6px;
+  font-size: 14px;
+  background: var(--theme-panel-bg, #f5f5f5);
+  border: 1px solid var(--theme-border, #e0e0e0);
+}
+
+.update-status.checking {
+  color: var(--theme-accent, #4a90e2);
+  background: var(--theme-panel-bg, rgba(74, 144, 226, 0.1));
+}
+
+.update-status.available {
+  color: var(--theme-accent, #4a90e2);
+  background: var(--theme-panel-bg, rgba(74, 144, 226, 0.1));
+}
+
+.update-status.up-to-date {
+  color: var(--theme-success, #10b981);
+  background: var(--theme-panel-bg, rgba(16, 185, 129, 0.1));
+}
+
+.update-status.error {
+  color: var(--theme-error, #ef4444);
+  background: var(--theme-panel-bg, rgba(239, 68, 68, 0.1));
+}
+
+.update-spinner {
+  display: inline-block;
+  animation: spin 1s linear infinite;
+  font-size: 16px;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.update-icon {
+  font-size: 16px;
+}

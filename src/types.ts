@@ -204,6 +204,13 @@ declare global {
       getAutoLoadProfileId: () => Promise<string | null>;
       setAutoLoadProfileId: (profileId: string | null) => Promise<{ success: boolean }>;
       getCurrentProfile: () => Promise<{ id: string; name: string; createdAt: string; lastUsed: string; databasePath: string; isDefault: boolean; autoLoad?: boolean } | null>;
+      checkForUpdates: () => Promise<void>;
+      onUpdateChecking: (callback: () => void) => () => void;
+      onUpdateAvailable: (callback: (version: string) => void) => () => void;
+      onUpdateNotAvailable: (callback: () => void) => () => void;
+      onUpdateDownloadProgress: (callback: (percent: number) => void) => () => void;
+      onUpdateDownloaded: (callback: (version: string) => void) => () => void;
+      onUpdateError: (callback: (message: string) => void) => () => void;
     };
   }
 }

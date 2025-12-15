@@ -41,6 +41,33 @@ export interface Preferences {
 }
 
 contextBridge.exposeInMainWorld('electronAPI', {
+  // Update event listeners
+  onUpdateChecking: (callback: () => void) => {
+    ipcRenderer.on('update-checking', callback);
+    return () => ipcRenderer.removeListener('update-checking', callback);
+  },
+  onUpdateAvailable: (callback: (version: string) => void) => {
+    ipcRenderer.on('update-available', (_event, version) => callback(version));
+    return () => ipcRenderer.removeAllListeners('update-available');
+  },
+  onUpdateNotAvailable: (callback: () => void) => {
+    ipcRenderer.on('update-not-available', callback);
+    return () => ipcRenderer.removeListener('update-not-available', callback);
+  },
+  onUpdateDownloadProgress: (callback: (percent: number) => void) => {
+    ipcRenderer.on('update-download-progress', (_event, percent) => callback(percent));
+    return () => ipcRenderer.removeAllListeners('update-download-progress');
+  },
+  onUpdateDownloaded: (callback: (version: string) => void) => {
+    ipcRenderer.on('update-downloaded', (_event, version) => callback(version));
+    return () => ipcRenderer.removeAllListeners('update-downloaded');
+  },
+  onUpdateError: (callback: (message: string) => void) => {
+    ipcRenderer.on('update-error', (_event, message) => callback(message));
+    return () => ipcRenderer.removeAllListeners('update-error');
+  },
+  checkForUpdates: () => ipcRenderer.invoke('check-for-updates'),
+  
   // Journal entry operations
   getEntries: (startDate: string, endDate: string): Promise<JournalEntry[]> =>
     ipcRenderer.invoke('get-entries', startDate, endDate),
