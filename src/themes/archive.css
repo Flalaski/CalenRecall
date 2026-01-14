@@ -306,6 +306,171 @@
   box-shadow: 0 2px 6px rgba(93, 64, 55, 0.2);
 }
 
+[data-theme="archive"] .time-inputs-section {
+  background: var(--victorian-bg-secondary);
+  border: 1px solid var(--border-walnut);
+  border-radius: 3px;
+  padding: 0.75rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="archive"] .time-label {
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: 0.25rem;
+}
+
+[data-theme="archive"] .time-inputs {
+  background: transparent;
+}
+
+[data-theme="archive"] .time-input-group {
+  background: transparent;
+}
+
+[data-theme="archive"] .time-input-group label {
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  font-weight: 400;
+}
+
+[data-theme="archive"] .time-input {
+  background: var(--victorian-bg);
+  border: 1px solid var(--border-walnut-light);
+  border-radius: 3px;
+  color: var(--text-primary);
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 0.9rem;
+  text-align: center;
+  padding: 0.5rem 0.75rem;
+  transition: all 0.2s ease;
+}
+
+[data-theme="archive"] .time-input:focus {
+  border-color: var(--accent-burgundy);
+  outline: none;
+  background: var(--victorian-bg-hover);
+  box-shadow: 0 0 0 2px rgba(107, 45, 58, 0.2);
+}
+
+[data-theme="archive"] .time-input-group select.time-input {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%231a1a2e' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.5rem center;
+  padding-right: 2rem;
+  text-align: left;
+}
+
+[data-theme="archive"] .clear-time-button {
+  background: var(--victorian-bg);
+  border: 1px solid var(--border-walnut);
+  border-radius: 3px;
+  color: var(--text-primary);
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 0.85rem;
+  padding: 0.5rem 1rem;
+  transition: all 0.2s ease;
+}
+
+[data-theme="archive"] .clear-time-button:hover {
+  background: var(--victorian-bg-hover);
+  border-color: var(--accent-burgundy);
+}
+
+/* Modal time inputs section - matching time-inputs-section styles */
+[data-theme="archive"] .modal-time-inputs-section {
+  background: var(--victorian-bg-secondary);
+  border: 1px solid var(--border-walnut);
+  border-radius: 3px;
+  padding: 0.75rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="archive"] .modal-time-label {
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: 0.25rem;
+}
+
+[data-theme="archive"] .modal-time-inputs {
+  background: transparent;
+}
+
+[data-theme="archive"] .modal-time-input-group {
+  background: transparent;
+}
+
+[data-theme="archive"] .modal-time-input-group label {
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  font-weight: 400;
+}
+
+[data-theme="archive"] .modal-time-input {
+  background: var(--victorian-bg);
+  border: 1px solid var(--border-walnut-light);
+  border-radius: 3px;
+  color: var(--text-primary);
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 0.9rem;
+  text-align: center;
+  padding: 0.5rem 0.75rem;
+  transition: all 0.2s ease;
+}
+
+[data-theme="archive"] .modal-time-input:focus {
+  border-color: var(--accent-burgundy);
+  outline: none;
+  background: var(--victorian-bg-hover);
+  box-shadow: 0 0 0 2px rgba(107, 45, 58, 0.2);
+}
+
+[data-theme="archive"] .modal-time-input-group select.modal-time-input {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%231a1a2e' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.5rem center;
+  padding-right: 2rem;
+  text-align: left;
+}
+
+[data-theme="archive"] .modal-clear-time-button {
+  background: var(--victorian-bg);
+  border: 1px solid var(--border-walnut);
+  border-radius: 3px;
+  color: var(--text-primary);
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 0.85rem;
+  padding: 0.5rem 1rem;
+  transition: all 0.2s ease;
+}
+
+[data-theme="archive"] .modal-clear-time-button:hover {
+  background: var(--victorian-bg-hover);
+  border-color: var(--accent-burgundy);
+}
+
+[data-theme="archive"] .modal-now-time-button {
+  background: var(--victorian-bg);
+  border: 1px solid var(--accent-burgundy);
+  border-radius: 3px;
+  color: var(--text-primary);
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 0.85rem;
+  padding: 0.5rem 1rem;
+  transition: all 0.2s ease;
+}
+
+[data-theme="archive"] .modal-now-time-button:hover {
+  background: var(--accent-burgundy);
+  color: var(--victorian-bg);
+}
+
 /* ============================================
    CALENDAR VIEW
    ============================================ */
