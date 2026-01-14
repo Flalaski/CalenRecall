@@ -1433,6 +1433,188 @@
   opacity: 1;
 }
 
+[data-theme="on-screen"] .time-inputs-section {
+  background: #003366;
+  border: none;
+  border-bottom: 3px solid #FF9900;
+  border-radius: 0;
+  padding: 0.75rem;
+}
+
+[data-theme="on-screen"] .time-label {
+  color: #FFFFFF;
+  font-family: 'Antonio', 'Arial Narrow', 'Helvetica Condensed', sans-serif;
+  font-weight: 600;
+  font-size: 0.85rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  margin-bottom: 0.25rem;
+}
+
+[data-theme="on-screen"] .time-inputs {
+  background: transparent;
+}
+
+[data-theme="on-screen"] .time-input-group {
+  background: transparent;
+}
+
+[data-theme="on-screen"] .time-input-group label {
+  color: #E6D5B8;
+  font-family: 'Antonio', 'Arial Narrow', 'Helvetica Condensed', sans-serif;
+  font-size: 0.75rem;
+  font-weight: 400;
+  letter-spacing: 0.05em;
+}
+
+[data-theme="on-screen"] .time-input {
+  background: #004488;
+  border: none;
+  border-bottom: 2px solid #FF9900;
+  border-radius: 0;
+  color: #FFFFFF;
+  font-family: 'Antonio', 'Arial Narrow', 'Helvetica Condensed', sans-serif;
+  font-size: 0.9rem;
+  text-align: center;
+  padding: 0.5rem 0.75rem;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+[data-theme="on-screen"] .time-input:focus {
+  border-bottom-color: #FFAA00;
+  border-bottom-width: 3px;
+  outline: none;
+  background: #0055AA;
+  box-shadow: 0 4px 8px rgba(255, 153, 0, 0.2);
+}
+
+[data-theme="on-screen"] .time-input-group select.time-input {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23ffffff' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.5rem center;
+  padding-right: 2rem;
+  text-align: left;
+}
+
+[data-theme="on-screen"] .clear-time-button {
+  background: #004488;
+  border: none;
+  border-radius: 20px 20px 0 0;
+  color: #FFFFFF;
+  font-family: 'Antonio', 'Arial Narrow', 'Helvetica Condensed', sans-serif;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  padding: 0.5rem 1rem;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+[data-theme="on-screen"] .clear-time-button:hover {
+  background: #FF9900;
+  color: #000000;
+}
+
+/* Modal time inputs section - matching time-inputs-section styles */
+[data-theme="on-screen"] .modal-time-inputs-section {
+  background: #003366;
+  border: none;
+  border-bottom: 3px solid #FF9900;
+  border-radius: 0;
+  padding: 0.75rem;
+}
+
+[data-theme="on-screen"] .modal-time-label {
+  color: #FFFFFF;
+  font-family: 'Antonio', 'Arial Narrow', 'Helvetica Condensed', sans-serif;
+  font-weight: 600;
+  font-size: 0.85rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  margin-bottom: 0.25rem;
+}
+
+[data-theme="on-screen"] .modal-time-inputs {
+  background: transparent;
+}
+
+[data-theme="on-screen"] .modal-time-input-group {
+  background: transparent;
+}
+
+[data-theme="on-screen"] .modal-time-input-group label {
+  color: #E6D5B8;
+  font-family: 'Antonio', 'Arial Narrow', 'Helvetica Condensed', sans-serif;
+  font-size: 0.75rem;
+  font-weight: 400;
+  letter-spacing: 0.05em;
+}
+
+[data-theme="on-screen"] .modal-time-input {
+  background: #004488;
+  border: none;
+  border-bottom: 2px solid #FF9900;
+  border-radius: 0;
+  color: #FFFFFF;
+  font-family: 'Antonio', 'Arial Narrow', 'Helvetica Condensed', sans-serif;
+  font-size: 0.9rem;
+  text-align: center;
+  padding: 0.5rem 0.75rem;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+[data-theme="on-screen"] .modal-time-input:focus {
+  border-bottom-color: #FFAA00;
+  border-bottom-width: 3px;
+  outline: none;
+  background: #0055AA;
+  box-shadow: 0 4px 8px rgba(255, 153, 0, 0.2);
+}
+
+[data-theme="on-screen"] .modal-time-input-group select.modal-time-input {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23ffffff' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.5rem center;
+  padding-right: 2rem;
+  text-align: left;
+}
+
+[data-theme="on-screen"] .modal-clear-time-button {
+  background: #004488;
+  border: none;
+  border-radius: 20px 20px 0 0;
+  color: #FFFFFF;
+  font-family: 'Antonio', 'Arial Narrow', 'Helvetica Condensed', sans-serif;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  padding: 0.5rem 1rem;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+[data-theme="on-screen"] .modal-clear-time-button:hover {
+  background: #FF9900;
+  color: #000000;
+}
+
+[data-theme="on-screen"] .modal-now-time-button {
+  background: #FF9900;
+  border: none;
+  border-radius: 20px 20px 0 0;
+  color: #000000;
+  font-family: 'Antonio', 'Arial Narrow', 'Helvetica Condensed', sans-serif;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  padding: 0.5rem 1rem;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+[data-theme="on-screen"] .modal-now-time-button:hover {
+  background: #FFAA00;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(255, 170, 0, 0.3);
+}
+
 [data-theme="on-screen"] .editor-actions {
   background: transparent;
   border-top: 2px solid #FF9900;
