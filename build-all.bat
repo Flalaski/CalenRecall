@@ -1,4 +1,7 @@
 @echo off
+REM Change to the directory where this batch file is located
+cd /d "%~dp0"
+
 echo ========================================
 echo CalenRecall - Building All Windows Releases
 echo ========================================
@@ -50,7 +53,10 @@ taskkill /F /IM electron.exe >nul 2>&1
 taskkill /F /IM node.exe >nul 2>&1
 wmic process where "name like '%%electron%%' or name like '%%node%%'" delete >nul 2>&1
 timeout /t 5 /nobreak >nul
-call npm run dist:win:current
+
+REM Use the dist:win:pack script which properly builds both installer and portable
+REM This script builds NSIS first, cleans win-unpacked, then builds portable
+call npm run dist:win:pack
 if errorlevel 1 (
     echo.
     echo ERROR: Distribution build failed
@@ -58,6 +64,7 @@ if errorlevel 1 (
     pause
     exit /b 1
 )
+
 echo.
 
 echo ========================================

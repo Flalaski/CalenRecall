@@ -976,18 +976,37 @@ function TimelineView({
     const dayEntries = getEntriesForDate(selectedDate);
     const entriesWithIds = dayEntries.filter(entry => entry.id !== undefined);
     
+    // Get astronomical events for this day
+    // Use local date string to match event keys
+    const year = selectedDate.getFullYear();
+    const month = String(selectedDate.getMonth() + 1).padStart(2, '0');
+    const dayNum = String(selectedDate.getDate()).padStart(2, '0');
+    const dayKey = `${year}-${month}-${dayNum}`;
+    const dayEvents = astronomicalEvents.get(dayKey) || [];
+    
     return (
       <div className="timeline-day-view">
         <div className="day-header">
-          <h2>
-            {(() => {
-              try {
-                return formatCalendarDate(dateToCalendarDate(selectedDate, calendar), 'EEEE, MMMM D, YYYY');
-              } catch (e) {
-                return formatDate(selectedDate, 'EEEE, MMMM d, yyyy');
-              }
-            })()}
-          </h2>
+          <div className="day-header-title-section">
+            <h2>
+              {(() => {
+                try {
+                  return formatCalendarDate(dateToCalendarDate(selectedDate, calendar), 'EEEE, MMMM D, YYYY');
+                } catch (e) {
+                  return formatDate(selectedDate, 'EEEE, MMMM d, yyyy');
+                }
+              })()}
+            </h2>
+            {dayEvents.length > 0 && (
+              <div className="cell-astronomical-events" title={dayEvents.map(e => e.displayName).join(', ')}>
+                {dayEvents.map((event, eIdx) => (
+                  <span key={eIdx} className="astronomical-event-icon">
+                    {getAstronomicalEventLabel(event)}
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
           {dayEntries.length > 0 && (
             <div className="day-header-actions">
               <button 
