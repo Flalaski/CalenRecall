@@ -1081,6 +1081,14 @@
   min-width: 0; /* Allow flex items to shrink */
 }
 
+.day-header-title-section {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1;
+  min-width: 0;
+}
+
 .day-header h2 {
   margin: 0;
   font-size: 1.5rem;
@@ -1108,6 +1116,12 @@
   gap: 0.5rem;
   flex-shrink: 0; /* Don't shrink action buttons */
   min-width: 0; /* Allow shrinking if needed */
+}
+
+.day-header .cell-astronomical-events {
+  width: auto;
+  flex-shrink: 0;
+  margin-top: 0;
 }
 
 .day-entries-list {

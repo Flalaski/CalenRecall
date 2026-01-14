@@ -389,7 +389,11 @@ function CalendarView({
             const timeFormat = preferences.timeFormat || '12h';
             
             // Get astronomical events for this day
-            const dayKey = day.toISOString().split('T')[0];
+            // Use local date string to match event keys
+            const year = day.getFullYear();
+            const month = String(day.getMonth() + 1).padStart(2, '0');
+            const dayNum = String(day.getDate()).padStart(2, '0');
+            const dayKey = `${year}-${month}-${dayNum}`;
             const dayEvents = astronomicalEvents.get(dayKey) || [];
             
             return (
