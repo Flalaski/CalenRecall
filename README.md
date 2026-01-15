@@ -94,6 +94,28 @@ Each calendar system includes:
 - Support for negative years and ancient dates
 - Proper handling of leap years and intercalary periods
 
+#### Calendar Accuracy & Cultural Verification
+
+**Technical Accuracy**: All calendar implementations use authoritative academic sources (Dershowitz & Reingold, Meeus, etc.) and are verified against known reference dates. The algorithms and calculations are technically accurate.
+
+**Cultural Verification**: While the calendars are technically accurate, **cultural verification through consultation with cultural experts and communities has not yet been completed**. We recognize that technical accuracy (algorithms, calculations) is distinct from cultural verification (community needs, cultural appropriateness, respectful representation).
+
+**We Request**: We welcome and request consultation with cultural experts, community leaders, and representatives from the cultures that use these calendar systems to ensure that our implementations:
+- Meet the needs and expectations of the original cultural communities
+- Respectfully represent cultural practices
+- Are culturally appropriate
+- Accurately reflect community traditions and expectations
+
+**Priority Calendars for Cultural Consultation**:
+- **Iroquois (Haudenosaunee)**: Verify year start timing, moon naming conventions, community practices
+- **Cherokee**: Verify month name translations, cultural associations, respectful representation
+- **Hebrew**: Verify religious observances, consult with rabbinic authorities
+- **Islamic**: Verify relationship with observational calendar, community needs
+- **Chinese**: Verify user needs, regional variations
+- **All Other Cultural Calendars**: Would benefit from cultural expert consultation
+
+If you are a cultural expert, community representative, or member of a cultural community that uses any of these calendar systems, we would be grateful for your input and guidance. Please see `src/utils/calendars/CULTURAL_VERIFICATION_STATUS.md` for detailed information about what verification is needed.
+
 ### Themes
 
 CalenRecall includes **37 built-in themes** to customize your journaling experience:
