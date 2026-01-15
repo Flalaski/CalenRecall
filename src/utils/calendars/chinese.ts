@@ -17,11 +17,33 @@
  * This implementation uses accurate astronomical calculations:
  * - Calculates actual new moon dates using lunar longitude
  * - Calculates 24 solar terms (jieqi) based on solar longitude
- * - Determines leap months based on solar terms (month with no solar term)
+ * - Determines leap months based on solar terms (month with no major solar term)
  * - Calculates Chinese New Year as second new moon after winter solstice
  * 
- * Reference: "Calendrical Calculations" by Dershowitz & Reingold, Chapter 19
- *            "Astronomical Algorithms" by Jean Meeus
+ * HISTORICAL ACCURACY:
+ * The Chinese calendar has undergone more than 50 reforms since its inception in the
+ * 14th century BCE. This implementation uses modern calculation methods (post-1645 CE
+ * Shixian calendar system) which are accurate for dates from approximately 1645 CE
+ * onwards. For historical dates before 1645 CE, different calculation methods were
+ * used in different dynasties, and the results may not match historical records
+ * exactly. However, the astronomical calculations provide reasonable approximations
+ * for most practical purposes.
+ * 
+ * The implementation correctly handles:
+ * - Modern Chinese calendar (1645 CE onwards) ✅
+ * - Intercalary month determination based on solar terms ✅
+ * - 60-year sexagenary cycle (干支) ✅
+ * - Lunar month lengths (29-30 days) ✅
+ * 
+ * Known limitations:
+ * - Historical periods before 1645 CE may use different calculation methods
+ * - Regional variations in traditional usage may differ
+ * - Some historical calendar reforms are not implemented
+ * 
+ * References:
+ * - "Calendrical Calculations" by Dershowitz & Reingold, Chapter 19
+ * - "Astronomical Algorithms" by Jean Meeus
+ * - Aslaksen, Helmer. "The Mathematics of the Chinese Calendar." (2008)
  */
 
 import { CalendarConverter, CalendarDate, CalendarInfo } from './types';
