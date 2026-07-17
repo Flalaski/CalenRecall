@@ -10,6 +10,7 @@ import EntryEditModal from './components/EntryEditModal';
 import ExportMetadataModal from './components/ExportMetadataModal';
 import LoadingScreen from './components/LoadingScreen';
 import UpdateBanner from './components/UpdateBanner';
+import perfTrail from './utils/performance/perfTrail';
 import BackgroundArt from './components/BackgroundArt';
 import { TimeRange, JournalEntry, Preferences, ExportFormat, ExportMetadata } from './types';
 import { getEntryForDate } from './services/journalService';
@@ -44,7 +45,7 @@ function App() {
   const [currentProfile, setCurrentProfile] = useState<{ name: string; id: string } | null>(null);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [showUnsavedChangesMessage, setShowUnsavedChangesMessage] = useState(false);
-  const unsavedChangesMessageTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const unsavedChangesMessageTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   
   // Track if initial load has completed - after this, default view mode should NEVER be applied
   const initialLoadCompleteRef = useRef(false);
@@ -55,6 +56,10 @@ function App() {
   const backgroundImagePathRef = useRef<string | null>(null);
   // Track theme cleanup function for 'auto' theme listener
   const themeCleanupRef = useRef<(() => void) | null>(null);
+  // Ref for current viewMode to avoid stale closures in handleDateChange
+  const viewModeRef = useRef(viewMode);
+  // Keep ref in sync
+  useEffect(() => { viewModeRef.current = viewMode; }, [viewMode]);
 
   // Initialize window state tracker to prevent flickering during maximize/fullscreen
   useEffect(() => {
@@ -69,6 +74,7 @@ function App() {
     }
 
     const preloadAllEntries = async () => {
+      perfTrail.start('load-entries');
       try {
         setLoadingMessage('Loading all journal entries...');
         setLoadingProgress(5);
@@ -125,7 +131,10 @@ function App() {
             }, 200);
           }
         }
+        // End the load-entries span once entries are set (not waiting for animation delay)
+        perfTrail.end('load-entries');
       } catch (error) {
+        perfTrail.end('load-entries');
         console.error('Error preloading entries:', error);
         setIsLoading(false);
       }
@@ -817,6 +826,11 @@ function App() {
       showUnsavedChangesMessageWithTimer();
       return;
     }
+
+    perfTrail.checkpoint('nav-date-change', {
+      mode: viewModeRef.current,
+      date: date.toISOString().slice(0, 10),
+    });
     
     // Debounced date change for smooth navigation
     pendingDateRef.current = date;
@@ -840,6 +854,10 @@ function App() {
   }, [hasUnsavedChanges, showUnsavedChangesMessageWithTimer]);
 
   const handleTimePeriodSelect = useCallback((date: Date, newViewMode: TimeRange) => {
+    perfTrail.checkpoint('time-period-select', {
+      mode: newViewMode,
+      date: date.toISOString().slice(0, 10),
+    });
     // Prevent navigation if there are unsaved changes
     if (hasUnsavedChanges) {
       showUnsavedChangesMessageWithTimer();
@@ -905,6 +923,7 @@ function App() {
   }, [hasUnsavedChanges, showUnsavedChangesMessageWithTimer]);
 
   const handleViewModeChange = (mode: TimeRange) => {
+    perfTrail.checkpoint('view-mode-change', { mode, from: viewModeRef.current });
     // Prevent navigation if there are unsaved changes
     if (hasUnsavedChanges) {
       showUnsavedChangesMessageWithTimer();
@@ -1030,7 +1049,7 @@ function App() {
     let animatedCurrentDate = new Date(actualStartDate);
     const totalJourneyDays = Math.abs(differenceInDays(actualStartDate, targetDate));
     
-    let timeoutId: NodeJS.Timeout | null = null;
+    let timeoutId: ReturnType<typeof setTimeout> | null = null;
     
     const easeOutCubic = (t: number): number => {
       return 1 - Math.pow(1 - t, 3);
@@ -1296,6 +1315,7 @@ function App() {
       // Handle Ctrl+F or Cmd+F for search
       if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
         e.preventDefault();
+        perfTrail.checkpoint('search-open', {});
         setShowSearch(true);
         return;
       }
@@ -1331,6 +1351,7 @@ function App() {
   };
 
   const handleEntrySaved = async () => {
+    perfTrail.start('entry-save');
     // Reload the entry after saving
     setIsEditing(false);
     setIsNewEntry(false);
@@ -1354,6 +1375,7 @@ function App() {
     }
     
     loadCurrentEntry();
+    perfTrail.end('entry-save');
   };
 
   const handleEditEntry = (entry: JournalEntry) => {

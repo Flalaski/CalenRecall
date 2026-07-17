@@ -35,6 +35,13 @@ class DisplayRefreshRate {
     this.detectionFrames = [];
     this.lastFrameTime = performance.now();
 
+    // Guard: only use RAF in browser environments
+    if (typeof requestAnimationFrame === 'undefined') {
+      this.detectionFrames = [];
+      this.isDetecting = false;
+      return;
+    }
+
     const measureFrame = (currentTime: number) => {
       const frameTime = currentTime - this.lastFrameTime;
       this.lastFrameTime = currentTime;

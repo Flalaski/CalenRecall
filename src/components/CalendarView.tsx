@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useCallback, memo } from 'react';
-import { TimeRange, Preferences } from '../types';
+import { TimeRange, Preferences, RemoteEvent } from '../types';
 import {
   getDaysInMonth,
   getDaysInWeek,
@@ -45,6 +45,7 @@ function CalendarView({
   const { calendar } = useCalendar();
   const { entries: allEntries, entryLookup: contextEntryLookup, entryColors } = useEntries();
   const [preferences, setPreferences] = useState<Preferences>({});
+  const [remoteEvents, setRemoteEvents] = useState<RemoteEvent[]>([]);
 
   // Load preferences for time format and astronomical events
   useEffect(() => {
@@ -95,6 +96,68 @@ function CalendarView({
       };
     }
   }, []);
+
+  useEffect(() => {
+    const loadRemoteEvents = async () => {
+      if (!window.electronAPI || !window.electronAPI.getRemoteEvents) {
+        return;
+      }
+
+      let startDate: Date;
+      let endDate: Date;
+
+      switch (viewMode) {
+        case 'decade': {
+          const decadeStart = Math.floor(selectedDate.getFullYear() / 10) * 10;
+          startDate = createDate(decadeStart, 0, 1);
+          endDate = createDate(decadeStart + 9, 11, 31);
+          break;
+        }
+        case 'year':
+          startDate = createDate(selectedDate.getFullYear(), 0, 1);
+          endDate = createDate(selectedDate.getFullYear(), 11, 31);
+          break;
+        case 'month':
+          startDate = getMonthStart(selectedDate);
+          endDate = getMonthEnd(selectedDate);
+          break;
+        case 'week':
+          startDate = getWeekStart(selectedDate, weekStartsOn);
+          endDate = getWeekEnd(selectedDate, weekStartsOn);
+          break;
+        case 'day':
+        default:
+          startDate = selectedDate;
+          endDate = selectedDate;
+          break;
+      }
+
+      try {
+        const events = await window.electronAPI.getRemoteEvents(
+          startDate.toISOString(),
+          new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate(), 23, 59, 59, 999).toISOString()
+        );
+        setRemoteEvents(events);
+      } catch (error) {
+        console.error('[CalendarView] Error loading remote events:', error);
+        setRemoteEvents([]);
+      }
+    };
+
+    loadRemoteEvents();
+  }, [selectedDate, viewMode, weekStartsOn]);
+
+  const remoteEventsByDay = useMemo(() => {
+    const map = new Map<string, RemoteEvent[]>();
+    for (const event of remoteEvents) {
+      const eventDate = new Date(event.startAt);
+      const key = `${eventDate.getFullYear()}-${String(eventDate.getMonth() + 1).padStart(2, '0')}-${String(eventDate.getDate()).padStart(2, '0')}`;
+      const existing = map.get(key) || [];
+      existing.push(event);
+      map.set(key, existing);
+    }
+    return map;
+  }, [remoteEvents]);
 
   // OPTIMIZATION: Use lookup from context (stable across renders) or build with weekStartsOn if different
   const entryLookup = useMemo(() => {
@@ -395,6 +458,7 @@ function CalendarView({
             const dayNum = String(day.getDate()).padStart(2, '0');
             const dayKey = `${year}-${month}-${dayNum}`;
             const dayEvents = astronomicalEvents.get(dayKey) || [];
+            const dayRemoteEvents = remoteEventsByDay.get(dayKey) || [];
             
             return (
               <div
@@ -435,6 +499,21 @@ function CalendarView({
                       })}
                       {entriesWithTime.length > 2 && (
                         <div className="cell-time-more">+{entriesWithTime.length - 2}</div>
+                      )}
+                    </div>
+                  )}
+                  {dayRemoteEvents.length > 0 && (
+                    <div className="cell-remote-events" title={dayRemoteEvents.map(event => event.title || 'Untitled event').join(', ')}>
+                      {dayRemoteEvents.slice(0, 2).map((event, remoteIdx) => {
+                        const remoteTime = event.isAllDay ? 'All day' : formatTime(new Date(event.startAt).getHours(), new Date(event.startAt).getMinutes(), 0, timeFormat) || 'Event';
+                        return (
+                          <div key={remoteIdx} className="cell-remote-badge">
+                            {remoteTime}
+                          </div>
+                        );
+                      })}
+                      {dayRemoteEvents.length > 2 && (
+                        <div className="cell-remote-more">+{dayRemoteEvents.length - 2} cal</div>
                       )}
                     </div>
                   )}
@@ -484,6 +563,7 @@ function CalendarView({
             const dayNum = String(day.getDate()).padStart(2, '0');
             const dayKey = `${year}-${month}-${dayNum}`;
             const dayEvents = astronomicalEvents.get(dayKey) || [];
+            const dayRemoteEvents = remoteEventsByDay.get(dayKey) || [];
             
             return (
               <div
@@ -526,6 +606,21 @@ function CalendarView({
                       )}
                     </div>
                   )}
+                  {dayRemoteEvents.length > 0 && (
+                    <div className="cell-remote-events" title={dayRemoteEvents.map(event => event.title || 'Untitled event').join(', ')}>
+                      {dayRemoteEvents.slice(0, 2).map((event, remoteIdx) => {
+                        const remoteTime = event.isAllDay ? 'All day' : formatTime(new Date(event.startAt).getHours(), new Date(event.startAt).getMinutes(), 0, timeFormat) || 'Event';
+                        return (
+                          <div key={remoteIdx} className="cell-remote-badge">
+                            {remoteTime}
+                          </div>
+                        );
+                      })}
+                      {dayRemoteEvents.length > 2 && (
+                        <div className="cell-remote-more">+{dayRemoteEvents.length - 2} cal</div>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
             );
@@ -543,6 +638,7 @@ function CalendarView({
     const dayNum = String(selectedDate.getDate()).padStart(2, '0');
     const dayKey = `${year}-${month}-${dayNum}`;
     const dayEvents = astronomicalEvents.get(dayKey) || [];
+    const dayRemoteEvents = remoteEventsByDay.get(dayKey) || [];
     
     return (
       <div className="calendar-day-view">
@@ -566,6 +662,19 @@ function CalendarView({
                     {getAstronomicalEventLabel(event)}
                   </span>
                 ))}
+              </div>
+            )}
+            {dayRemoteEvents.length > 0 && (
+              <div className="cell-remote-events day-remote-events" title={dayRemoteEvents.map(event => event.title || 'Untitled event').join(', ')}>
+                {dayRemoteEvents.slice(0, 6).map((event, remoteIdx) => {
+                  const start = new Date(event.startAt);
+                  const remoteTime = event.isAllDay ? 'All day' : formatTime(start.getHours(), start.getMinutes(), 0, preferences.timeFormat || '12h') || 'Event';
+                  return (
+                    <div key={remoteIdx} className="cell-remote-badge">
+                      {remoteTime} {event.title || 'Untitled event'}
+                    </div>
+                  );
+                })}
               </div>
             )}
             {hasEntry(selectedDate) && <div className="entry-indicator"></div>}

@@ -394,6 +394,56 @@
   color: #c2185b;
 }
 
+/* Gregorian Reference — dual-calendar indicator */
+/* Uses currentColor with opacity for automatic theme compatibility */
+.gregorian-reference {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  margin-left: 1.5rem;
+  margin-right: 1rem;
+  margin-top: 0.15rem;
+  line-height: 1.2;
+  flex-shrink: 1;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+  opacity: 0.55;
+  transition: opacity 0.2s ease;
+  color: var(--text-color, currentColor);
+}
+.gregorian-reference:hover {
+  opacity: 0.85;
+}
+.gregorian-reference-label {
+  display: flex;
+  align-items: center;
+  gap: 0.35em;
+  font-size: 0.55rem;
+  font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  opacity: 0.7;
+  font-weight: 600;
+}
+.gregorian-reference-native {
+  opacity: 0.6;
+}
+.gregorian-reference-arrow {
+  font-size: 0.65em;
+  opacity: 0.5;
+}
+.gregorian-reference-date {
+  font-size: 0.7rem;
+  font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+  opacity: 0.8;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+  font-weight: 400;
+}
+
 .right-controls {
   display: flex;
   flex-direction: column;

@@ -103,7 +103,7 @@ export function useDebouncedCallback<T extends (...args: any[]) => any>(
   options: { leading?: boolean; trailing?: boolean } = {}
 ): T {
   const { leading = false, trailing = true } = options;
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastCallRef = useRef<{ args: Parameters<T>; time: number } | null>(null);
   const callbackRef = useRef(callback);
 

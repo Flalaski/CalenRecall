@@ -109,3 +109,67 @@ export interface TimeFields {
   second: number;
 }
 
+export interface CalendarAccountRow {
+  id: number;
+  provider: string;
+  account_identifier: string;
+  display_name: string | null;
+  encrypted_refresh_token: string | null;
+  encrypted_access_token: string | null;
+  access_token_expires_at: string | null;
+  scope: string | null;
+  status: string;
+  created_at: string;
+  updated_at: string;
+  last_sync_at: string | null;
+  last_error: string | null;
+}
+
+export interface RemoteCalendarRow {
+  id: number;
+  account_id: number;
+  provider_calendar_id: string;
+  name: string;
+  color: string | null;
+  is_primary: number;
+  is_selected: number;
+  timezone: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface RemoteEventRow {
+  id: number;
+  calendar_id: number;
+  provider_event_id: string;
+  provider_etag: string | null;
+  status: string | null;
+  title: string | null;
+  description: string | null;
+  location: string | null;
+  start_at: string;
+  end_at: string;
+  is_all_day: number;
+  timezone: string | null;
+  recurrence_rule: string | null;
+  recurrence_instance_id: string | null;
+  raw_payload: string | null;
+  updated_remote_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CalendarSyncStateRow {
+  id: number;
+  account_id: number;
+  calendar_id: number | null;
+  sync_token: string | null;
+  page_token: string | null;
+  last_full_sync_at: string | null;
+  last_incremental_sync_at: string | null;
+  last_success_at: string | null;
+  last_error: string | null;
+  created_at: string;
+  updated_at: string;
+}
+

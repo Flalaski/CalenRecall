@@ -2,7 +2,7 @@ import Database from 'better-sqlite3';
 import * as path from 'path';
 import * as fs from 'fs';
 import { app } from 'electron';
-import { JournalEntry, TimeRange, ExportFormat, ExportMetadata } from './types';
+import { JournalEntry, TimeRange, ExportFormat, ExportMetadata, CalendarAccount, CalendarAccountInput, CalendarProvider, RemoteCalendar, RemoteEvent, CalendarSyncStatus } from './types';
 import { parseJSONArray } from './utils/jsonCache';
 import {
   getAllProfiles,
@@ -27,6 +27,10 @@ import {
   JournalModePragma,
   SqliteMasterRow,
   TimeFields,
+  CalendarAccountRow,
+  RemoteCalendarRow,
+  RemoteEventRow,
+  CalendarSyncStateRow,
 } from './database-types';
 
 /**
@@ -116,6 +120,157 @@ function extractTimeFields(row: JournalEntryRow): TimeFields {
 
 let db: Database.Database | null = null;
 let currentProfile: Profile | null = null;
+
+function toCalendarAccount(row: CalendarAccountRow): CalendarAccount {
+  return {
+    id: row.id,
+    provider: row.provider as CalendarProvider,
+    accountIdentifier: row.account_identifier,
+    displayName: row.display_name || undefined,
+    scope: row.scope || undefined,
+    status: row.status as CalendarAccount['status'],
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+    lastSyncAt: row.last_sync_at || undefined,
+    lastError: row.last_error || undefined,
+  };
+}
+
+function toRemoteCalendar(row: RemoteCalendarRow): RemoteCalendar {
+  return {
+    id: row.id,
+    accountId: row.account_id,
+    providerCalendarId: row.provider_calendar_id,
+    name: row.name,
+    color: row.color || undefined,
+    isPrimary: row.is_primary === 1,
+    isSelected: row.is_selected === 1,
+    timezone: row.timezone || undefined,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
+
+function toRemoteEvent(row: RemoteEventRow): RemoteEvent {
+  return {
+    id: row.id,
+    calendarId: row.calendar_id,
+    providerEventId: row.provider_event_id,
+    providerEtag: row.provider_etag || undefined,
+    status: row.status || undefined,
+    title: row.title || undefined,
+    description: row.description || undefined,
+    location: row.location || undefined,
+    startAt: row.start_at,
+    endAt: row.end_at,
+    isAllDay: row.is_all_day === 1,
+    timezone: row.timezone || undefined,
+    recurrenceRule: row.recurrence_rule || undefined,
+    recurrenceInstanceId: row.recurrence_instance_id || undefined,
+    rawPayload: row.raw_payload || undefined,
+    updatedRemoteAt: row.updated_remote_at || undefined,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
+
+function ensureCalendarSyncTables(database: Database.Database): void {
+  database.exec(`
+    CREATE TABLE IF NOT EXISTS calendar_accounts (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      provider TEXT NOT NULL,
+      account_identifier TEXT NOT NULL,
+      display_name TEXT,
+      encrypted_refresh_token TEXT,
+      encrypted_access_token TEXT,
+      access_token_expires_at TEXT,
+      scope TEXT,
+      status TEXT NOT NULL DEFAULT 'active',
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL,
+      last_sync_at TEXT,
+      last_error TEXT
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_calendar_accounts_provider ON calendar_accounts(provider);
+    CREATE INDEX IF NOT EXISTS idx_calendar_accounts_identifier ON calendar_accounts(account_identifier);
+
+    CREATE TABLE IF NOT EXISTS remote_calendars (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      account_id INTEGER NOT NULL,
+      provider_calendar_id TEXT NOT NULL,
+      name TEXT NOT NULL,
+      color TEXT,
+      is_primary INTEGER NOT NULL DEFAULT 0,
+      is_selected INTEGER NOT NULL DEFAULT 1,
+      timezone TEXT,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL,
+      UNIQUE(account_id, provider_calendar_id),
+      FOREIGN KEY (account_id) REFERENCES calendar_accounts(id) ON DELETE CASCADE
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_remote_calendars_account ON remote_calendars(account_id);
+
+    CREATE TABLE IF NOT EXISTS remote_events (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      calendar_id INTEGER NOT NULL,
+      provider_event_id TEXT NOT NULL,
+      provider_etag TEXT,
+      status TEXT,
+      title TEXT,
+      description TEXT,
+      location TEXT,
+      start_at TEXT NOT NULL,
+      end_at TEXT NOT NULL,
+      is_all_day INTEGER NOT NULL DEFAULT 0,
+      timezone TEXT,
+      recurrence_rule TEXT,
+      recurrence_instance_id TEXT,
+      raw_payload TEXT,
+      updated_remote_at TEXT,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL,
+      FOREIGN KEY (calendar_id) REFERENCES remote_calendars(id) ON DELETE CASCADE
+    );
+
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_remote_events_unique
+      ON remote_events(calendar_id, provider_event_id, recurrence_instance_id);
+    CREATE INDEX IF NOT EXISTS idx_remote_events_calendar ON remote_events(calendar_id);
+    CREATE INDEX IF NOT EXISTS idx_remote_events_start ON remote_events(start_at);
+    CREATE INDEX IF NOT EXISTS idx_remote_events_status ON remote_events(status);
+
+    CREATE TABLE IF NOT EXISTS sync_state (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      account_id INTEGER NOT NULL,
+      calendar_id INTEGER,
+      sync_token TEXT,
+      page_token TEXT,
+      last_full_sync_at TEXT,
+      last_incremental_sync_at TEXT,
+      last_success_at TEXT,
+      last_error TEXT,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL,
+      FOREIGN KEY (account_id) REFERENCES calendar_accounts(id) ON DELETE CASCADE,
+      FOREIGN KEY (calendar_id) REFERENCES remote_calendars(id) ON DELETE CASCADE
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_sync_state_account ON sync_state(account_id);
+    CREATE INDEX IF NOT EXISTS idx_sync_state_calendar ON sync_state(calendar_id);
+
+    CREATE TABLE IF NOT EXISTS journal_remote_links (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      journal_entry_id INTEGER NOT NULL,
+      remote_event_id INTEGER NOT NULL,
+      link_type TEXT NOT NULL DEFAULT 'reference',
+      created_at TEXT NOT NULL,
+      UNIQUE(journal_entry_id, remote_event_id),
+      FOREIGN KEY (journal_entry_id) REFERENCES journal_entries(id) ON DELETE CASCADE,
+      FOREIGN KEY (remote_event_id) REFERENCES remote_events(id) ON DELETE CASCADE
+    );
+  `);
+}
 
 function checkColumnExists(database: Database.Database, tableName: string, columnName: string): boolean {
   try {
@@ -318,6 +473,8 @@ function migrateDatabase(database: Database.Database) {
       // Don't throw - time fields are optional
     }
   }
+
+  ensureCalendarSyncTables(database);
 }
 
 /**
@@ -913,6 +1070,8 @@ function createTables(database: Database.Database) {
     CREATE INDEX IF NOT EXISTS idx_entry_versions_entry_id ON entry_versions(entry_id);
     CREATE INDEX IF NOT EXISTS idx_entry_versions_created_at ON entry_versions(version_created_at);
   `);
+
+  ensureCalendarSyncTables(database);
   
   // Remove any old unique constraints/indexes
   // SQLite doesn't support DROP CONSTRAINT directly, so we check indexes
@@ -1732,6 +1891,426 @@ export function deleteTemplate(id: number): void {
   stmt.run(id);
 }
 
+export function createCalendarAccount(input: CalendarAccountInput): CalendarAccount {
+  const database = getDatabase();
+  const now = new Date().toISOString();
+  const stmt = database.prepare(`
+    INSERT INTO calendar_accounts (
+      provider,
+      account_identifier,
+      display_name,
+      encrypted_refresh_token,
+      encrypted_access_token,
+      access_token_expires_at,
+      scope,
+      status,
+      created_at,
+      updated_at
+    )
+    VALUES (?, ?, ?, ?, ?, ?, ?, 'active', ?, ?)
+  `);
+
+  const result = stmt.run(
+    input.provider,
+    input.accountIdentifier,
+    input.displayName || null,
+    input.encryptedRefreshToken || null,
+    input.encryptedAccessToken || null,
+    input.accessTokenExpiresAt || null,
+    input.scope || null,
+    now,
+    now
+  );
+
+  const account = getCalendarAccountById(Number(result.lastInsertRowid));
+  if (!account) {
+    throw new Error('Failed to create calendar account');
+  }
+  return account;
+}
+
+export function getCalendarAccountById(id: number): CalendarAccount | null {
+  const database = getDatabase();
+  const stmt = database.prepare('SELECT * FROM calendar_accounts WHERE id = ?');
+  const row = stmt.get(id) as CalendarAccountRow | undefined;
+  return row ? toCalendarAccount(row) : null;
+}
+
+export function listCalendarAccounts(): CalendarAccount[] {
+  const database = getDatabase();
+  const stmt = database.prepare(`
+    SELECT * FROM calendar_accounts
+    WHERE status != 'disconnected'
+    ORDER BY created_at DESC
+  `);
+  const rows = stmt.all() as CalendarAccountRow[];
+  return rows.map(toCalendarAccount);
+}
+
+export function getCalendarAccountSecrets(accountId: number): {
+  id: number;
+  provider: CalendarProvider;
+  accountIdentifier: string;
+  encryptedAccessToken?: string;
+  encryptedRefreshToken?: string;
+  accessTokenExpiresAt?: string;
+  scope?: string;
+  status: string;
+} | null {
+  const database = getDatabase();
+  const stmt = database.prepare(`
+    SELECT id, provider, account_identifier, encrypted_access_token, encrypted_refresh_token, access_token_expires_at, scope, status
+    FROM calendar_accounts
+    WHERE id = ?
+  `);
+
+  const row = stmt.get(accountId) as Pick<CalendarAccountRow, 'id' | 'provider' | 'account_identifier' | 'encrypted_access_token' | 'encrypted_refresh_token' | 'access_token_expires_at' | 'scope' | 'status'> | undefined;
+  if (!row) {
+    return null;
+  }
+
+  return {
+    id: row.id,
+    provider: row.provider as CalendarProvider,
+    accountIdentifier: row.account_identifier,
+    encryptedAccessToken: row.encrypted_access_token || undefined,
+    encryptedRefreshToken: row.encrypted_refresh_token || undefined,
+    accessTokenExpiresAt: row.access_token_expires_at || undefined,
+    scope: row.scope || undefined,
+    status: row.status,
+  };
+}
+
+export function updateCalendarAccountTokens(accountId: number, data: {
+  encryptedAccessToken?: string;
+  encryptedRefreshToken?: string;
+  accessTokenExpiresAt?: string;
+  scope?: string;
+}): void {
+  const database = getDatabase();
+  const now = new Date().toISOString();
+  const stmt = database.prepare(`
+    UPDATE calendar_accounts
+    SET encrypted_access_token = ?,
+        encrypted_refresh_token = COALESCE(?, encrypted_refresh_token),
+        access_token_expires_at = ?,
+        scope = COALESCE(?, scope),
+        updated_at = ?,
+        status = 'active',
+        last_error = NULL
+    WHERE id = ?
+  `);
+
+  stmt.run(
+    data.encryptedAccessToken || null,
+    data.encryptedRefreshToken || null,
+    data.accessTokenExpiresAt || null,
+    data.scope || null,
+    now,
+    accountId
+  );
+}
+
+export function updateCalendarAccountSyncResult(accountId: number, success: boolean, errorMessage?: string): void {
+  const database = getDatabase();
+  const now = new Date().toISOString();
+  const stmt = database.prepare(`
+    UPDATE calendar_accounts
+    SET last_sync_at = ?,
+        last_error = ?,
+        status = CASE WHEN ? = 1 THEN 'active' ELSE 'error' END,
+        updated_at = ?
+    WHERE id = ?
+  `);
+
+  stmt.run(now, success ? null : (errorMessage || 'Unknown sync error'), success ? 1 : 0, now, accountId);
+}
+
+export function upsertRemoteCalendars(accountId: number, calendars: Array<{
+  providerCalendarId: string;
+  name: string;
+  color?: string;
+  isPrimary?: boolean;
+  isSelected?: boolean;
+  timezone?: string;
+}>): RemoteCalendar[] {
+  const database = getDatabase();
+  const now = new Date().toISOString();
+  const upsertStmt = database.prepare(`
+    INSERT INTO remote_calendars (account_id, provider_calendar_id, name, color, is_primary, is_selected, timezone, created_at, updated_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ON CONFLICT(account_id, provider_calendar_id)
+    DO UPDATE SET
+      name = excluded.name,
+      color = excluded.color,
+      is_primary = excluded.is_primary,
+      timezone = excluded.timezone,
+      updated_at = excluded.updated_at
+  `);
+
+  const tx = database.transaction(() => {
+    for (const cal of calendars) {
+      upsertStmt.run(
+        accountId,
+        cal.providerCalendarId,
+        cal.name,
+        cal.color || null,
+        cal.isPrimary ? 1 : 0,
+        cal.isSelected === false ? 0 : 1,
+        cal.timezone || null,
+        now,
+        now
+      );
+    }
+  });
+  tx();
+
+  return listRemoteCalendars(accountId);
+}
+
+export function upsertRemoteEvents(calendarId: number, events: Array<{
+  providerEventId: string;
+  providerEtag?: string;
+  status?: string;
+  title?: string;
+  description?: string;
+  location?: string;
+  startAt: string;
+  endAt: string;
+  isAllDay?: boolean;
+  timezone?: string;
+  recurrenceRule?: string;
+  recurrenceInstanceId?: string;
+  rawPayload?: string;
+  updatedRemoteAt?: string;
+}>): { insertedOrUpdated: number; removedCancelled: number } {
+  const database = getDatabase();
+  const now = new Date().toISOString();
+  const upsertStmt = database.prepare(`
+    INSERT INTO remote_events (
+      calendar_id,
+      provider_event_id,
+      provider_etag,
+      status,
+      title,
+      description,
+      location,
+      start_at,
+      end_at,
+      is_all_day,
+      timezone,
+      recurrence_rule,
+      recurrence_instance_id,
+      raw_payload,
+      updated_remote_at,
+      created_at,
+      updated_at
+    )
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ON CONFLICT(calendar_id, provider_event_id, recurrence_instance_id)
+    DO UPDATE SET
+      provider_etag = excluded.provider_etag,
+      status = excluded.status,
+      title = excluded.title,
+      description = excluded.description,
+      location = excluded.location,
+      start_at = excluded.start_at,
+      end_at = excluded.end_at,
+      is_all_day = excluded.is_all_day,
+      timezone = excluded.timezone,
+      recurrence_rule = excluded.recurrence_rule,
+      raw_payload = excluded.raw_payload,
+      updated_remote_at = excluded.updated_remote_at,
+      updated_at = excluded.updated_at
+  `);
+
+  const deleteCancelledStmt = database.prepare(`
+    DELETE FROM remote_events
+    WHERE calendar_id = ?
+      AND status = 'cancelled'
+  `);
+
+  let removedCancelled = 0;
+  const tx = database.transaction(() => {
+    for (const event of events) {
+      upsertStmt.run(
+        calendarId,
+        event.providerEventId,
+        event.providerEtag || null,
+        event.status || null,
+        event.title || null,
+        event.description || null,
+        event.location || null,
+        event.startAt,
+        event.endAt,
+        event.isAllDay ? 1 : 0,
+        event.timezone || null,
+        event.recurrenceRule || null,
+        event.recurrenceInstanceId || '',
+        event.rawPayload || null,
+        event.updatedRemoteAt || null,
+        now,
+        now
+      );
+    }
+    removedCancelled = deleteCancelledStmt.run(calendarId).changes;
+  });
+
+  tx();
+  return { insertedOrUpdated: events.length, removedCancelled };
+}
+
+export function upsertSyncState(accountId: number, data: {
+  calendarId?: number;
+  syncToken?: string;
+  pageToken?: string;
+  lastFullSyncAt?: string;
+  lastIncrementalSyncAt?: string;
+  lastSuccessAt?: string;
+  lastError?: string;
+}): void {
+  const database = getDatabase();
+  const now = new Date().toISOString();
+
+  const existing = database.prepare(`
+    SELECT id FROM sync_state
+    WHERE account_id = ? AND calendar_id IS ?
+    LIMIT 1
+  `).get(accountId, data.calendarId ?? null) as { id: number } | undefined;
+
+  if (existing) {
+    database.prepare(`
+      UPDATE sync_state
+      SET sync_token = ?,
+          page_token = ?,
+          last_full_sync_at = ?,
+          last_incremental_sync_at = ?,
+          last_success_at = ?,
+          last_error = ?,
+          updated_at = ?
+      WHERE id = ?
+    `).run(
+      data.syncToken || null,
+      data.pageToken || null,
+      data.lastFullSyncAt || null,
+      data.lastIncrementalSyncAt || null,
+      data.lastSuccessAt || null,
+      data.lastError || null,
+      now,
+      existing.id
+    );
+    return;
+  }
+
+  database.prepare(`
+    INSERT INTO sync_state (
+      account_id,
+      calendar_id,
+      sync_token,
+      page_token,
+      last_full_sync_at,
+      last_incremental_sync_at,
+      last_success_at,
+      last_error,
+      created_at,
+      updated_at
+    )
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `).run(
+    accountId,
+    data.calendarId ?? null,
+    data.syncToken || null,
+    data.pageToken || null,
+    data.lastFullSyncAt || null,
+    data.lastIncrementalSyncAt || null,
+    data.lastSuccessAt || null,
+    data.lastError || null,
+    now,
+    now
+  );
+}
+
+export function disconnectCalendarAccount(accountId: number): void {
+  const database = getDatabase();
+  const now = new Date().toISOString();
+  const stmt = database.prepare(`
+    UPDATE calendar_accounts
+    SET status = 'disconnected',
+        encrypted_refresh_token = NULL,
+        encrypted_access_token = NULL,
+        access_token_expires_at = NULL,
+        updated_at = ?
+    WHERE id = ?
+  `);
+  stmt.run(now, accountId);
+}
+
+export function listRemoteCalendars(accountId: number): RemoteCalendar[] {
+  const database = getDatabase();
+  const stmt = database.prepare(`
+    SELECT * FROM remote_calendars
+    WHERE account_id = ?
+    ORDER BY is_primary DESC, name ASC
+  `);
+  const rows = stmt.all(accountId) as RemoteCalendarRow[];
+  return rows.map(toRemoteCalendar);
+}
+
+export function setRemoteCalendarSelected(calendarId: number, selected: boolean): void {
+  const database = getDatabase();
+  const now = new Date().toISOString();
+  const stmt = database.prepare(`
+    UPDATE remote_calendars
+    SET is_selected = ?, updated_at = ?
+    WHERE id = ?
+  `);
+  stmt.run(selected ? 1 : 0, now, calendarId);
+}
+
+export function getRemoteEvents(startIso: string, endIso: string): RemoteEvent[] {
+  const database = getDatabase();
+  const stmt = database.prepare(`
+    SELECT re.*
+    FROM remote_events re
+    INNER JOIN remote_calendars rc ON rc.id = re.calendar_id
+    INNER JOIN calendar_accounts ca ON ca.id = rc.account_id
+    WHERE rc.is_selected = 1
+      AND ca.status = 'active'
+      AND re.end_at >= ?
+      AND re.start_at <= ?
+      AND (re.status IS NULL OR re.status != 'cancelled')
+    ORDER BY re.start_at ASC
+  `);
+  const rows = stmt.all(startIso, endIso) as RemoteEventRow[];
+  return rows.map(toRemoteEvent);
+}
+
+export function getCalendarSyncStatus(accountId?: number): CalendarSyncStatus[] {
+  const database = getDatabase();
+  let query = `
+    SELECT account_id, calendar_id, last_full_sync_at, last_incremental_sync_at, last_success_at, last_error
+    FROM sync_state
+  `;
+  const params: unknown[] = [];
+
+  if (accountId !== undefined) {
+    query += ' WHERE account_id = ?';
+    params.push(accountId);
+  }
+
+  query += ' ORDER BY updated_at DESC';
+  const rows = database.prepare(query).all(...params) as CalendarSyncStateRow[];
+
+  return rows.map(row => ({
+    accountId: row.account_id,
+    calendarId: row.calendar_id || undefined,
+    lastFullSyncAt: row.last_full_sync_at || undefined,
+    lastIncrementalSyncAt: row.last_incremental_sync_at || undefined,
+    lastSuccessAt: row.last_success_at || undefined,
+    lastError: row.last_error || undefined,
+  }));
+}
+
 export function deleteEntryByDateAndRange(date: string, timeRange: 'decade' | 'year' | 'month' | 'week' | 'day'): void {
   const database = getDatabase();
   const stmt = database.prepare('DELETE FROM journal_entries WHERE date = ? AND time_range = ?');
@@ -1945,6 +2524,7 @@ export interface Preferences {
   showMetonicCycle?: boolean; // Whether to display Metonic cycle indicators (Hebrew 19-year cycle)
   showMayanCalendarRound?: boolean; // Whether to display Mayan Calendar Round indicators (52-year cycle)
   showHinduYugaCycles?: boolean; // Whether to display Hindu Yuga cycle indicators
+  googleOAuthClientId?: string; // Google OAuth Desktop app Client ID (for Google Calendar sync)
 }
 
 const DEFAULT_PREFERENCES: Preferences = {

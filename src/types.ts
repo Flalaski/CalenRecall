@@ -95,6 +95,64 @@ export interface EntryVersion {
   versionCreatedAt: string;
 }
 
+export type CalendarProvider = 'google' | 'microsoft' | 'caldav' | 'ics';
+
+export interface CalendarAccount {
+  id: number;
+  provider: CalendarProvider;
+  accountIdentifier: string;
+  displayName?: string;
+  scope?: string;
+  status: 'active' | 'error' | 'disconnected';
+  createdAt: string;
+  updatedAt: string;
+  lastSyncAt?: string;
+  lastError?: string;
+}
+
+export interface RemoteCalendar {
+  id: number;
+  accountId: number;
+  providerCalendarId: string;
+  name: string;
+  color?: string;
+  isPrimary: boolean;
+  isSelected: boolean;
+  timezone?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface RemoteEvent {
+  id: number;
+  calendarId: number;
+  providerEventId: string;
+  providerEtag?: string;
+  status?: string;
+  title?: string;
+  description?: string;
+  location?: string;
+  startAt: string;
+  endAt: string;
+  isAllDay: boolean;
+  timezone?: string;
+  recurrenceRule?: string;
+  recurrenceInstanceId?: string;
+  rawPayload?: string;
+  updatedRemoteAt?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CalendarSyncStatus {
+  accountId: number;
+  calendarId?: number;
+  lastFullSyncAt?: string;
+  lastIncrementalSyncAt?: string;
+  lastSuccessAt?: string;
+  lastError?: string;
+}
+
 export interface EntryTemplate {
   id?: number;
   name: string;
@@ -142,6 +200,7 @@ export interface Preferences {
   showMetonicCycle?: boolean; // Whether to display Metonic cycle indicators (Hebrew 19-year cycle)
   showMayanCalendarRound?: boolean; // Whether to display Mayan Calendar Round indicators (52-year cycle)
   showHinduYugaCycles?: boolean; // Whether to display Hindu Yuga cycle indicators
+  googleOAuthClientId?: string; // Google OAuth Desktop app Client ID (for Google Calendar sync)
 }
 
 declare global {
@@ -201,6 +260,18 @@ declare global {
       removeMenuListeners: () => void;
       openExternalUrl: (url: string, width: number, height: number) => Promise<{ success: boolean; error?: string }>;
       openExternalBrowser: (url: string) => Promise<{ success: boolean; error?: string }>;
+      startCalendarAuth: (provider: CalendarProvider) => Promise<{ success: boolean; accountId?: number; error?: string; message?: string }>;
+      getPendingCalendarAuth: () => Promise<{ provider: CalendarProvider; state: string; redirectUri: string; createdAt: number } | null>;
+      getCalendarAuthResult: () => Promise<{ success: boolean; provider: CalendarProvider; accountId?: number; message?: string; error?: string; completedAt: number } | null>;
+      getGoogleCalendarConfigStatus: () => Promise<{ configured: boolean; clientIdConfigured: boolean; redirectUri: string; missing: string[] }>;
+      saveGoogleOAuthClientId: (clientId: string) => Promise<{ success: boolean; error?: string }>;
+      listCalendarAccounts: () => Promise<CalendarAccount[]>;
+      disconnectCalendarAccount: (accountId: number) => Promise<{ success: boolean; error?: string }>;
+      listRemoteCalendars: (accountId: number) => Promise<RemoteCalendar[]>;
+      setRemoteCalendarSelected: (calendarId: number, selected: boolean) => Promise<{ success: boolean; error?: string }>;
+      getRemoteEvents: (startIso: string, endIso: string) => Promise<RemoteEvent[]>;
+      runCalendarSync: (accountId?: number) => Promise<{ success: boolean; imported: number; updated: number; removed: number; error?: string; message?: string }>;
+      getCalendarSyncStatus: (accountId?: number) => Promise<CalendarSyncStatus[]>;
       getAutoLoadProfileId: () => Promise<string | null>;
       setAutoLoadProfileId: (profileId: string | null) => Promise<{ success: boolean }>;
       getCurrentProfile: () => Promise<{ id: string; name: string; createdAt: string; lastUsed: string; databasePath: string; isDefault: boolean; autoLoad?: boolean } | null>;

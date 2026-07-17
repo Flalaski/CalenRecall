@@ -1,11 +1,16 @@
-import { ipcMain, dialog, app, BrowserWindow, shell, clipboard } from 'electron';
+import { ipcMain, dialog, app, BrowserWindow, shell, clipboard, safeStorage } from 'electron';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as child_process from 'child_process';
 import * as util from 'util';
+import * as crypto from 'crypto';
+import * as http from 'http';
+import * as https from 'https';
 import archiver from 'archiver';
 import PDFDocument from 'pdfkit';
 import { validatePath, sanitizeFileName, safePathJoin } from './utils/pathValidation';
+import { perfTrail } from './utils/perfTrail';
+import { logger, LogLevel } from './utils/logger';
 import {
   isValidTimeRange,
   isValidExportFormat,
@@ -81,6 +86,19 @@ import {
   switchProfile,
   getDatabase,
   closeDatabase,
+  listCalendarAccounts,
+  disconnectCalendarAccount,
+  listRemoteCalendars,
+  setRemoteCalendarSelected,
+  getRemoteEvents,
+  getCalendarSyncStatus,
+  createCalendarAccount,
+  getCalendarAccountSecrets,
+  updateCalendarAccountTokens,
+  updateCalendarAccountSyncResult,
+  upsertRemoteCalendars,
+  upsertRemoteEvents,
+  upsertSyncState,
 } from './database';
 import {
   getAllProfiles,
@@ -103,13 +121,688 @@ import {
   type Profile,
 } from './profile-manager';
 import { EntryVersion } from './types';
-import { JournalEntry, TimeRange, ExportFormat, EntryAttachment, ExportMetadata } from './types';
+import { JournalEntry, TimeRange, ExportFormat, EntryAttachment, ExportMetadata, CalendarProvider } from './types';
 import { EntryTemplate, getAllTemplates, getTemplate, saveTemplate, deleteTemplate } from './database';
 
 let mainWindowRef: Electron.BrowserWindow | null = null;
 let profileSelectorWindowRef: Electron.BrowserWindow | null = null;
 let preferencesWindowRef: Electron.BrowserWindow | null = null;
 let menuUpdateCallback: (() => void) | null = null;
+
+interface PendingCalendarAuth {
+  provider: CalendarProvider;
+  state: string;
+  codeVerifier: string;
+  redirectUri: string;
+  createdAt: number;
+}
+
+interface CalendarAuthResult {
+  success: boolean;
+  provider: CalendarProvider;
+  accountId?: number;
+  message?: string;
+  error?: string;
+  completedAt: number;
+}
+
+let pendingCalendarAuth: PendingCalendarAuth | null = null;
+let lastCalendarAuthResult: CalendarAuthResult | null = null;
+let calendarAuthServer: http.Server | null = null;
+let calendarAuthTimeout: NodeJS.Timeout | null = null;
+
+function toBase64Url(input: Buffer): string {
+  return input
+    .toString('base64')
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=+$/g, '');
+}
+
+function createPkcePair(): { codeVerifier: string; codeChallenge: string } {
+  const codeVerifier = toBase64Url(crypto.randomBytes(32));
+  const codeChallenge = toBase64Url(crypto.createHash('sha256').update(codeVerifier).digest());
+  return { codeVerifier, codeChallenge };
+}
+
+function getGoogleOAuthClientId(): string | undefined {
+  const rawClientId = process.env.GOOGLE_OAUTH_CLIENT_ID?.trim();
+  if (!rawClientId) {
+    // Fall back to database-stored client ID (works in production builds too)
+    try {
+      const dbClientId = getPreference('googleOAuthClientId') as string | undefined;
+      if (!dbClientId?.trim()) return undefined;
+      const n = dbClientId.trim().toLowerCase();
+      if (n.includes('your-google') || n.includes('your_google') || n.includes('your-client-id')) return undefined;
+      return dbClientId.trim();
+    } catch {
+      return undefined;
+    }
+  }
+
+  const normalizedClientId = rawClientId.toLowerCase();
+  const looksLikePlaceholder =
+    normalizedClientId === 'your_google_client_id' ||
+    normalizedClientId.includes('your-google') ||
+    normalizedClientId.includes('your_google') ||
+    normalizedClientId.includes('your-client-id');
+
+  if (looksLikePlaceholder) {
+    return undefined;
+  }
+
+  return rawClientId;
+}
+
+function buildGoogleAuthUrl(state: string, codeChallenge: string, redirectUri: string): string {
+  const clientId = getGoogleOAuthClientId();
+  if (!clientId) {
+    throw new Error('GOOGLE_OAUTH_CLIENT_ID is not configured with a real client ID');
+  }
+
+  const params = new URLSearchParams({
+    client_id: clientId,
+    redirect_uri: redirectUri,
+    response_type: 'code',
+    scope: 'https://www.googleapis.com/auth/calendar.readonly',
+    access_type: 'offline',
+    include_granted_scopes: 'true',
+    prompt: 'consent',
+    state,
+    code_challenge: codeChallenge,
+    code_challenge_method: 'S256',
+  });
+
+  return `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`;
+}
+
+function getGoogleCalendarConfigStatus(): {
+  configured: boolean;
+  clientIdConfigured: boolean;
+  redirectUri: string;
+  missing: string[];
+} {
+  const clientIdConfigured = Boolean(getGoogleOAuthClientId());
+  const redirectUri = process.env.GOOGLE_OAUTH_REDIRECT_URI || 'http://127.0.0.1:53682/oauth/callback';
+  const missing: string[] = [];
+
+  if (!clientIdConfigured) {
+    missing.push('GOOGLE_OAUTH_CLIENT_ID');
+  }
+
+  return {
+    configured: clientIdConfigured,
+    clientIdConfigured,
+    redirectUri,
+    missing,
+  };
+}
+
+function postForm(urlString: string, formData: Record<string, string>): Promise<{ statusCode: number; body: string }> {
+  const urlObj = new URL(urlString);
+  const body = new URLSearchParams(formData).toString();
+
+  return new Promise((resolve, reject) => {
+    const req = https.request(
+      {
+        method: 'POST',
+        hostname: urlObj.hostname,
+        path: `${urlObj.pathname}${urlObj.search}`,
+        port: urlObj.port ? Number(urlObj.port) : 443,
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'Content-Length': Buffer.byteLength(body),
+        },
+      },
+      (res) => {
+        let responseData = '';
+        res.on('data', (chunk) => {
+          responseData += chunk.toString();
+        });
+        res.on('end', () => {
+          resolve({ statusCode: res.statusCode || 500, body: responseData });
+        });
+      }
+    );
+
+    req.on('error', reject);
+    req.write(body);
+    req.end();
+  });
+}
+
+function getJson(urlString: string, headers: Record<string, string> = {}): Promise<{ statusCode: number; body: string }> {
+  const urlObj = new URL(urlString);
+
+  return new Promise((resolve, reject) => {
+    const req = https.request(
+      {
+        method: 'GET',
+        hostname: urlObj.hostname,
+        path: `${urlObj.pathname}${urlObj.search}`,
+        port: urlObj.port ? Number(urlObj.port) : 443,
+        headers,
+      },
+      (res) => {
+        let responseData = '';
+        res.on('data', (chunk) => {
+          responseData += chunk.toString();
+        });
+        res.on('end', () => {
+          resolve({ statusCode: res.statusCode || 500, body: responseData });
+        });
+      }
+    );
+
+    req.on('error', reject);
+    req.end();
+  });
+}
+
+function encryptTokenForStorage(token?: string): string | undefined {
+  if (!token) {
+    return undefined;
+  }
+
+  try {
+    if (safeStorage.isEncryptionAvailable()) {
+      return safeStorage.encryptString(token).toString('base64');
+    }
+  } catch (error) {
+    console.warn('[Calendar Sync] Token encryption unavailable, falling back to base64 encoding:', error);
+  }
+
+  return Buffer.from(token, 'utf8').toString('base64');
+}
+
+function sendOAuthCallbackPage(res: http.ServerResponse, title: string, message: string, isError: boolean = false): void {
+  const bg = isError ? '#fff5f5' : '#f3fff6';
+  const border = isError ? '#f5b5b5' : '#a7e2b6';
+  const color = isError ? '#7f1d1d' : '#14532d';
+  const html = `<!doctype html><html><head><meta charset="utf-8"><title>${title}</title></head><body style="font-family: Segoe UI, Arial, sans-serif; background:${bg}; color:${color}; padding:24px;"><div style="max-width:640px;margin:20px auto;padding:20px;border:1px solid ${border};border-radius:10px;background:#fff;"><h2 style="margin-top:0;">${title}</h2><p>${message}</p><p>You can close this tab and return to CalenRecall.</p></div></body></html>`;
+  res.writeHead(isError ? 400 : 200, { 'Content-Type': 'text/html; charset=utf-8' });
+  res.end(html);
+}
+
+function stopCalendarAuthServer(): void {
+  if (calendarAuthTimeout) {
+    clearTimeout(calendarAuthTimeout);
+    calendarAuthTimeout = null;
+  }
+  if (calendarAuthServer) {
+    try {
+      calendarAuthServer.close();
+    } catch (error) {
+      console.warn('[Calendar Sync] Error while closing auth callback server:', error);
+    }
+    calendarAuthServer = null;
+  }
+}
+
+async function exchangeGoogleAuthCode(code: string, redirectUri: string, codeVerifier: string): Promise<{ accessToken: string; refreshToken?: string; expiresIn?: number; scope?: string }> {
+  const clientId = getGoogleOAuthClientId();
+  if (!clientId) {
+    throw new Error('GOOGLE_OAUTH_CLIENT_ID is not configured with a real client ID');
+  }
+
+  const tokenResponse = await postForm('https://oauth2.googleapis.com/token', {
+    client_id: clientId,
+    code,
+    code_verifier: codeVerifier,
+    grant_type: 'authorization_code',
+    redirect_uri: redirectUri,
+  });
+
+  if (tokenResponse.statusCode < 200 || tokenResponse.statusCode >= 300) {
+    throw new Error(`Token exchange failed (${tokenResponse.statusCode}): ${tokenResponse.body}`);
+  }
+
+  const parsed = JSON.parse(tokenResponse.body) as {
+    access_token?: string;
+    refresh_token?: string;
+    expires_in?: number;
+    scope?: string;
+  };
+
+  if (!parsed.access_token) {
+    throw new Error('Token exchange succeeded but no access_token was returned');
+  }
+
+  return {
+    accessToken: parsed.access_token,
+    refreshToken: parsed.refresh_token,
+    expiresIn: parsed.expires_in,
+    scope: parsed.scope,
+  };
+}
+
+async function fetchGoogleAccountIdentifier(accessToken: string): Promise<{ accountIdentifier: string; displayName?: string }> {
+  try {
+    const me = await getJson('https://www.googleapis.com/calendar/v3/users/me/calendarList?maxResults=1', {
+      Authorization: `Bearer ${accessToken}`,
+    });
+
+    if (me.statusCode >= 200 && me.statusCode < 300) {
+      const parsed = JSON.parse(me.body) as {
+        items?: Array<{ id?: string; summary?: string }>;
+      };
+      const firstItem = parsed.items?.[0];
+      if (firstItem?.id) {
+        return {
+          accountIdentifier: firstItem.id,
+          displayName: firstItem.summary,
+        };
+      }
+    }
+  } catch (error) {
+    console.warn('[Calendar Sync] Could not resolve Google account identifier from calendar list:', error);
+  }
+
+  return {
+    accountIdentifier: `google-${Date.now()}`,
+    displayName: 'Google Account',
+  };
+}
+
+function decryptTokenFromStorage(value?: string): string | undefined {
+  if (!value) {
+    return undefined;
+  }
+
+  try {
+    const data = Buffer.from(value, 'base64');
+    if (safeStorage.isEncryptionAvailable()) {
+      try {
+        return safeStorage.decryptString(data);
+      } catch {
+        return data.toString('utf8');
+      }
+    }
+    return data.toString('utf8');
+  } catch (error) {
+    console.warn('[Calendar Sync] Failed to decode token from storage:', error);
+    return undefined;
+  }
+}
+
+async function refreshGoogleAccessToken(refreshToken: string): Promise<{ accessToken: string; refreshToken?: string; expiresIn?: number; scope?: string }> {
+  const clientId = getGoogleOAuthClientId();
+  if (!clientId) {
+    throw new Error('GOOGLE_OAUTH_CLIENT_ID is not configured with a real client ID');
+  }
+
+  const tokenResponse = await postForm('https://oauth2.googleapis.com/token', {
+    client_id: clientId,
+    grant_type: 'refresh_token',
+    refresh_token: refreshToken,
+  });
+
+  if (tokenResponse.statusCode < 200 || tokenResponse.statusCode >= 300) {
+    throw new Error(`Token refresh failed (${tokenResponse.statusCode}): ${tokenResponse.body}`);
+  }
+
+  const parsed = JSON.parse(tokenResponse.body) as {
+    access_token?: string;
+    refresh_token?: string;
+    expires_in?: number;
+    scope?: string;
+  };
+
+  if (!parsed.access_token) {
+    throw new Error('Token refresh succeeded but no access_token was returned');
+  }
+
+  return {
+    accessToken: parsed.access_token,
+    refreshToken: parsed.refresh_token,
+    expiresIn: parsed.expires_in,
+    scope: parsed.scope,
+  };
+}
+
+async function googleApiGet(accessToken: string, endpoint: string, params: Record<string, string> = {}): Promise<{ statusCode: number; parsedBody: any }> {
+  const query = new URLSearchParams(params).toString();
+  const url = `https://www.googleapis.com${endpoint}${query ? `?${query}` : ''}`;
+  const response = await getJson(url, {
+    Authorization: `Bearer ${accessToken}`,
+  });
+
+  let parsedBody: any = null;
+  try {
+    parsedBody = JSON.parse(response.body);
+  } catch {
+    parsedBody = response.body;
+  }
+
+  return {
+    statusCode: response.statusCode,
+    parsedBody,
+  };
+}
+
+function normalizeGoogleEvent(rawEvent: any): {
+  providerEventId: string;
+  providerEtag?: string;
+  status?: string;
+  title?: string;
+  description?: string;
+  location?: string;
+  startAt: string;
+  endAt: string;
+  isAllDay?: boolean;
+  timezone?: string;
+  recurrenceRule?: string;
+  recurrenceInstanceId?: string;
+  rawPayload?: string;
+  updatedRemoteAt?: string;
+} | null {
+  if (!rawEvent || typeof rawEvent.id !== 'string') {
+    return null;
+  }
+
+  const startDateTime = rawEvent.start?.dateTime as string | undefined;
+  const startDate = rawEvent.start?.date as string | undefined;
+  const endDateTime = rawEvent.end?.dateTime as string | undefined;
+  const endDate = rawEvent.end?.date as string | undefined;
+
+  if (!startDateTime && !startDate) {
+    return null;
+  }
+
+  const isAllDay = Boolean(startDate && !startDateTime);
+  const startAt = startDateTime || `${startDate}T00:00:00.000Z`;
+  const endAt = endDateTime || `${endDate || startDate}T00:00:00.000Z`;
+
+  return {
+    providerEventId: rawEvent.id,
+    providerEtag: rawEvent.etag,
+    status: rawEvent.status,
+    title: rawEvent.summary,
+    description: rawEvent.description,
+    location: rawEvent.location,
+    startAt,
+    endAt,
+    isAllDay,
+    timezone: rawEvent.start?.timeZone || rawEvent.end?.timeZone,
+    recurrenceRule: Array.isArray(rawEvent.recurrence) ? rawEvent.recurrence.join('\n') : undefined,
+    recurrenceInstanceId: rawEvent.recurringEventId ? `${rawEvent.recurringEventId}:${rawEvent.originalStartTime?.dateTime || rawEvent.originalStartTime?.date || ''}` : undefined,
+    rawPayload: JSON.stringify(rawEvent),
+    updatedRemoteAt: rawEvent.updated,
+  };
+}
+
+async function syncGoogleAccount(accountId: number): Promise<{ imported: number; updated: number; removed: number }> {
+  const account = getCalendarAccountSecrets(accountId);
+  if (!account || account.provider !== 'google') {
+    throw new Error('Google account not found');
+  }
+
+  let accessToken = decryptTokenFromStorage(account.encryptedAccessToken);
+  const refreshToken = decryptTokenFromStorage(account.encryptedRefreshToken);
+
+  if (!accessToken && refreshToken) {
+    const refreshed = await refreshGoogleAccessToken(refreshToken);
+    accessToken = refreshed.accessToken;
+    updateCalendarAccountTokens(accountId, {
+      encryptedAccessToken: encryptTokenForStorage(refreshed.accessToken),
+      encryptedRefreshToken: encryptTokenForStorage(refreshed.refreshToken) || account.encryptedRefreshToken,
+      accessTokenExpiresAt: refreshed.expiresIn ? new Date(Date.now() + refreshed.expiresIn * 1000).toISOString() : undefined,
+      scope: refreshed.scope,
+    });
+  }
+
+  if (!accessToken) {
+    throw new Error('No valid access token available. Reconnect the Google account.');
+  }
+
+  let calendarResponse = await googleApiGet(accessToken, '/calendar/v3/users/me/calendarList', { maxResults: '250' });
+  if (calendarResponse.statusCode === 401 && refreshToken) {
+    const refreshed = await refreshGoogleAccessToken(refreshToken);
+    accessToken = refreshed.accessToken;
+    updateCalendarAccountTokens(accountId, {
+      encryptedAccessToken: encryptTokenForStorage(refreshed.accessToken),
+      encryptedRefreshToken: encryptTokenForStorage(refreshed.refreshToken) || account.encryptedRefreshToken,
+      accessTokenExpiresAt: refreshed.expiresIn ? new Date(Date.now() + refreshed.expiresIn * 1000).toISOString() : undefined,
+      scope: refreshed.scope,
+    });
+    calendarResponse = await googleApiGet(accessToken, '/calendar/v3/users/me/calendarList', { maxResults: '250' });
+  }
+
+  if (calendarResponse.statusCode < 200 || calendarResponse.statusCode >= 300) {
+    throw new Error(`Calendar list failed (${calendarResponse.statusCode})`);
+  }
+
+  const calendarItems = Array.isArray(calendarResponse.parsedBody?.items) ? calendarResponse.parsedBody.items : [];
+  const remoteCalendars = upsertRemoteCalendars(
+    accountId,
+    calendarItems.map((item: any) => ({
+      providerCalendarId: item.id,
+      name: item.summary || item.id,
+      color: item.backgroundColor || item.foregroundColor,
+      isPrimary: item.primary === true,
+      isSelected: item.selected !== false,
+      timezone: item.timeZone,
+    }))
+  ).filter((calendar) => calendar.isSelected);
+
+  let imported = 0;
+  let updated = 0;
+  let removed = 0;
+  const timeMin = new Date(Date.now() - 365 * 24 * 60 * 60 * 1000).toISOString();
+  const timeMax = new Date(Date.now() + 730 * 24 * 60 * 60 * 1000).toISOString();
+
+  for (const calendar of remoteCalendars) {
+    let pageToken: string | undefined;
+    const normalizedEvents: Array<ReturnType<typeof normalizeGoogleEvent>> = [];
+
+    do {
+      const eventResponse = await googleApiGet(accessToken, `/calendar/v3/calendars/${encodeURIComponent(calendar.providerCalendarId)}/events`, {
+        singleEvents: 'true',
+        orderBy: 'startTime',
+        showDeleted: 'true',
+        maxResults: '2500',
+        timeMin,
+        timeMax,
+        ...(pageToken ? { pageToken } : {}),
+      });
+
+      if (eventResponse.statusCode < 200 || eventResponse.statusCode >= 300) {
+        throw new Error(`Event sync failed for ${calendar.name} (${eventResponse.statusCode})`);
+      }
+
+      const eventItems = Array.isArray(eventResponse.parsedBody?.items) ? eventResponse.parsedBody.items : [];
+      for (const eventItem of eventItems) {
+        const normalized = normalizeGoogleEvent(eventItem);
+        if (normalized) {
+          normalizedEvents.push(normalized);
+        }
+      }
+
+      pageToken = eventResponse.parsedBody?.nextPageToken;
+    } while (pageToken);
+
+    const writeResult = upsertRemoteEvents(
+      calendar.id,
+      normalizedEvents as Array<{
+        providerEventId: string;
+        providerEtag?: string;
+        status?: string;
+        title?: string;
+        description?: string;
+        location?: string;
+        startAt: string;
+        endAt: string;
+        isAllDay?: boolean;
+        timezone?: string;
+        recurrenceRule?: string;
+        recurrenceInstanceId?: string;
+        rawPayload?: string;
+        updatedRemoteAt?: string;
+      }>
+    );
+
+    imported += writeResult.insertedOrUpdated;
+    updated += writeResult.insertedOrUpdated;
+    removed += writeResult.removedCancelled;
+  }
+
+  const nowIso = new Date().toISOString();
+  upsertSyncState(accountId, {
+    lastFullSyncAt: nowIso,
+    lastIncrementalSyncAt: nowIso,
+    lastSuccessAt: nowIso,
+    lastError: undefined,
+  });
+
+  updateCalendarAccountSyncResult(accountId, true);
+  return { imported, updated, removed };
+}
+
+async function completeGoogleAuthFromCode(code: string, pending: PendingCalendarAuth): Promise<{ accountId: number; message: string }> {
+  const token = await exchangeGoogleAuthCode(code, pending.redirectUri, pending.codeVerifier);
+  const identity = await fetchGoogleAccountIdentifier(token.accessToken);
+  const expiresAt = token.expiresIn ? new Date(Date.now() + token.expiresIn * 1000).toISOString() : undefined;
+
+  const account = createCalendarAccount({
+    provider: 'google',
+    accountIdentifier: identity.accountIdentifier,
+    displayName: identity.displayName,
+    encryptedAccessToken: encryptTokenForStorage(token.accessToken),
+    encryptedRefreshToken: encryptTokenForStorage(token.refreshToken),
+    accessTokenExpiresAt: expiresAt,
+    scope: token.scope,
+  });
+
+  let syncSummary = '';
+  try {
+    const syncResult = await syncGoogleAccount(account.id);
+    syncSummary = ` Synced ${syncResult.imported} events.`;
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Initial sync failed';
+    updateCalendarAccountSyncResult(account.id, false, message);
+    syncSummary = ` Initial sync failed: ${message}`;
+  }
+
+  return {
+    accountId: account.id,
+    message: `Connected Google account: ${account.accountIdentifier}.${syncSummary}`,
+  };
+}
+
+function startCalendarAuthCallbackServer(pending: PendingCalendarAuth): Promise<void> {
+  const redirect = new URL(pending.redirectUri);
+  const callbackHost = redirect.hostname;
+  const callbackPort = Number(redirect.port || '80');
+  const callbackPath = redirect.pathname || '/';
+
+  if (!['127.0.0.1', 'localhost'].includes(callbackHost)) {
+    throw new Error('Only localhost/127.0.0.1 callback hosts are supported for now');
+  }
+
+  return new Promise((resolve, reject) => {
+    stopCalendarAuthServer();
+
+    calendarAuthServer = http.createServer(async (req, res) => {
+      try {
+        if (!pendingCalendarAuth) {
+          sendOAuthCallbackPage(res, 'Auth Session Expired', 'No active authentication session was found.', true);
+          return;
+        }
+
+        const requestUrl = new URL(req.url || '/', pending.redirectUri);
+        if (requestUrl.pathname !== callbackPath) {
+          sendOAuthCallbackPage(res, 'Invalid Callback Path', 'This callback URL is not recognized.', true);
+          return;
+        }
+
+        const error = requestUrl.searchParams.get('error');
+        if (error) {
+          lastCalendarAuthResult = {
+            success: false,
+            provider: pendingCalendarAuth.provider,
+            error,
+            message: requestUrl.searchParams.get('error_description') || 'Provider returned an authentication error.',
+            completedAt: Date.now(),
+          };
+          sendOAuthCallbackPage(res, 'Authentication Failed', lastCalendarAuthResult.message || 'Authentication failed.', true);
+          pendingCalendarAuth = null;
+          stopCalendarAuthServer();
+          return;
+        }
+
+        const code = requestUrl.searchParams.get('code');
+        const state = requestUrl.searchParams.get('state');
+
+        if (!code || !state) {
+          sendOAuthCallbackPage(res, 'Invalid Callback', 'Missing required code or state query parameters.', true);
+          return;
+        }
+
+        if (state !== pendingCalendarAuth.state) {
+          lastCalendarAuthResult = {
+            success: false,
+            provider: pendingCalendarAuth.provider,
+            error: 'state_mismatch',
+            message: 'State mismatch detected. Please retry authentication.',
+            completedAt: Date.now(),
+          };
+          sendOAuthCallbackPage(res, 'Authentication Failed', 'State mismatch detected. Please retry authentication.', true);
+          pendingCalendarAuth = null;
+          stopCalendarAuthServer();
+          return;
+        }
+
+        const completion = await completeGoogleAuthFromCode(code, pendingCalendarAuth);
+        lastCalendarAuthResult = {
+          success: true,
+          provider: pendingCalendarAuth.provider,
+          accountId: completion.accountId,
+          message: completion.message,
+          completedAt: Date.now(),
+        };
+
+        sendOAuthCallbackPage(res, 'Google Connected', completion.message);
+        pendingCalendarAuth = null;
+        stopCalendarAuthServer();
+      } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : 'Unknown authentication callback error';
+        lastCalendarAuthResult = {
+          success: false,
+          provider: pendingCalendarAuth?.provider || 'google',
+          error: 'callback_processing_failed',
+          message,
+          completedAt: Date.now(),
+        };
+        sendOAuthCallbackPage(res, 'Authentication Failed', message, true);
+        pendingCalendarAuth = null;
+        stopCalendarAuthServer();
+      }
+    });
+
+    calendarAuthServer.once('error', (error) => {
+      stopCalendarAuthServer();
+      reject(error);
+    });
+
+    calendarAuthServer.listen(callbackPort, callbackHost, () => {
+      calendarAuthTimeout = setTimeout(() => {
+        if (pendingCalendarAuth) {
+          lastCalendarAuthResult = {
+            success: false,
+            provider: pendingCalendarAuth.provider,
+            error: 'auth_timeout',
+            message: 'Authentication timed out. Please retry.',
+            completedAt: Date.now(),
+          };
+          pendingCalendarAuth = null;
+        }
+        stopCalendarAuthServer();
+      }, 10 * 60 * 1000);
+
+      resolve();
+    });
+  });
+}
 
 /**
  * Extract full styling from a theme CSS file
@@ -405,13 +1098,32 @@ export function setCreateImportProgressWindowCallback(callback: (() => Electron.
 
 export function setupIpcHandlers() {
   console.log('[IPC] Setting up IPC handlers...');
-  
+
+  // PerfTrail: forward renderer log messages to main process logger
+  ipcMain.on('log-to-main', (_event, message: string, level: string) => {
+    if (level === 'perf') {
+      logger.log(`[Renderer Perf] ${message}`, undefined, 'PerfTrail');
+    } else {
+      logger.logLevel(
+        level === 'error' ? LogLevel.ERROR :
+        level === 'warn' ? LogLevel.WARN :
+        LogLevel.INFO,
+        message, undefined, 'Renderer'
+      );
+    }
+  });
+
   ipcMain.handle('get-entries', async (_event, startDate: string, endDate: string) => {
     return getEntries(startDate, endDate);
   });
 
   ipcMain.handle('get-all-entries', async () => {
-    return getAllEntries();
+    perfTrail.start('ipc-get-all-entries');
+    try {
+      return getAllEntries();
+    } finally {
+      perfTrail.end('ipc-get-all-entries');
+    }
   });
 
   ipcMain.handle('get-entry-count', async () => {
@@ -731,6 +1443,7 @@ export function setupIpcHandlers() {
   });
 
   ipcMain.handle('save-entry', async (_event, entry: JournalEntry) => {
+    perfTrail.start('ipc-save-entry');
     try {
       // Validate input
       const validation = validateJournalEntry(entry);
@@ -804,6 +1517,7 @@ export function setupIpcHandlers() {
       
       console.log('[IPC] ✅ save-entry handler COMPLETED - database.saveEntry() called and flushed');
       console.log('═══════════════════════════════════════════════════════════');
+      perfTrail.end('ipc-save-entry');
       return { success: true, entry: savedEntry };
     } catch (error) {
       console.error('═══════════════════════════════════════════════════════════');
@@ -813,6 +1527,7 @@ export function setupIpcHandlers() {
         stack: error instanceof Error ? error.stack : undefined,
       });
       console.error('═══════════════════════════════════════════════════════════');
+      perfTrail.end('ipc-save-entry');
       throw error;
     }
   });
@@ -837,7 +1552,12 @@ export function setupIpcHandlers() {
   });
 
   ipcMain.handle('search-entries', async (_event, query: string) => {
-    return searchEntries(query);
+    perfTrail.start('ipc-search');
+    try {
+      return searchEntries(query);
+    } finally {
+      perfTrail.end('ipc-search');
+    }
   });
 
   ipcMain.handle('get-entries-by-range', async (_event, range: TimeRange, value: number) => {
@@ -857,8 +1577,10 @@ export function setupIpcHandlers() {
    * formats the content with metadata, and writes it to disk.
    */
   ipcMain.handle('export-entries', async (_event, format: ExportFormat, metadata?: ExportMetadata) => {
+    perfTrail.start('ipc-export');
     // Validate input
     if (!isValidExportFormat(format)) {
+      perfTrail.end('ipc-export');
       return {
         success: false,
         canceled: false,
@@ -992,6 +1714,7 @@ export function setupIpcHandlers() {
         userMessage = 'Permission denied. Check file permissions.';
       }
       
+      perfTrail.end('ipc-export');
       return { 
         success: false, 
         canceled: false, 
@@ -1000,6 +1723,7 @@ export function setupIpcHandlers() {
         details: errorMessage 
       };
     }
+    perfTrail.end('ipc-export');
   });
 
   /**
@@ -1514,6 +2238,205 @@ export function setupIpcHandlers() {
     }
   });
 
+  ipcMain.handle('start-calendar-auth', async (_event, provider: CalendarProvider) => {
+    if (!['google', 'microsoft', 'caldav', 'ics'].includes(provider)) {
+      return { success: false, error: 'invalid_provider' };
+    }
+
+    if (provider !== 'google') {
+      return {
+        success: false,
+        error: 'not_implemented',
+        message: `${provider} auth is not implemented yet.`,
+      };
+    }
+
+    try {
+      const state = toBase64Url(crypto.randomBytes(24));
+      const { codeVerifier, codeChallenge } = createPkcePair();
+      const redirectUri = process.env.GOOGLE_OAUTH_REDIRECT_URI || 'http://127.0.0.1:53682/oauth/callback';
+      const authUrl = buildGoogleAuthUrl(state, codeChallenge, redirectUri);
+
+      pendingCalendarAuth = {
+        provider,
+        state,
+        codeVerifier,
+        redirectUri,
+        createdAt: Date.now(),
+      };
+
+      await startCalendarAuthCallbackServer(pendingCalendarAuth);
+
+      await shell.openExternal(authUrl);
+
+      return {
+        success: true,
+        message: 'Browser authentication started. Return to CalenRecall after approving access.',
+      };
+    } catch (error: unknown) {
+      pendingCalendarAuth = null;
+      stopCalendarAuthServer();
+      const errorMessage = error instanceof Error ? error.message : 'unknown_error';
+      return {
+        success: false,
+        error: 'auth_start_failed',
+        message: errorMessage,
+      };
+    }
+  });
+
+  ipcMain.handle('get-pending-calendar-auth', async () => {
+    if (!pendingCalendarAuth) {
+      return null;
+    }
+
+    const maxAgeMs = 10 * 60 * 1000;
+    if (Date.now() - pendingCalendarAuth.createdAt > maxAgeMs) {
+      pendingCalendarAuth = null;
+      return null;
+    }
+
+    return {
+      provider: pendingCalendarAuth.provider,
+      state: pendingCalendarAuth.state,
+      redirectUri: pendingCalendarAuth.redirectUri,
+      createdAt: pendingCalendarAuth.createdAt,
+    };
+  });
+
+  ipcMain.handle('get-calendar-auth-result', async () => {
+    return lastCalendarAuthResult;
+  });
+
+  ipcMain.handle('get-google-calendar-config-status', async () => {
+    return getGoogleCalendarConfigStatus();
+  });
+
+  ipcMain.handle('save-google-oauth-client-id', async (_event, clientId: unknown) => {
+    try {
+      const trimmed = (typeof clientId === 'string' ? clientId : '').trim();
+      if (!trimmed) {
+        return { success: false, error: 'Client ID cannot be empty.' };
+      }
+      if (!trimmed.endsWith('.apps.googleusercontent.com')) {
+        return { success: false, error: 'Invalid format — Client ID must end with .apps.googleusercontent.com' };
+      }
+      setPreference('googleOAuthClientId', trimmed);
+      return { success: true };
+    } catch (error) {
+      return { success: false, error: error instanceof Error ? error.message : String(error) };
+    }
+  });
+
+  ipcMain.handle('list-calendar-accounts', async () => {
+    return listCalendarAccounts();
+  });
+
+  ipcMain.handle('disconnect-calendar-account', async (_event, accountId: number) => {
+    if (!isValidEntryId(accountId)) {
+      return { success: false, error: 'invalid_account_id' };
+    }
+
+    disconnectCalendarAccount(accountId);
+    return { success: true };
+  });
+
+  ipcMain.handle('list-remote-calendars', async (_event, accountId: number) => {
+    if (!isValidEntryId(accountId)) {
+      return [];
+    }
+
+    return listRemoteCalendars(accountId);
+  });
+
+  ipcMain.handle('set-remote-calendar-selected', async (_event, calendarId: number, selected: boolean) => {
+    if (!isValidEntryId(calendarId)) {
+      return { success: false, error: 'invalid_calendar_id' };
+    }
+    if (typeof selected !== 'boolean') {
+      return { success: false, error: 'invalid_selected_flag' };
+    }
+
+    setRemoteCalendarSelected(calendarId, selected);
+    return { success: true };
+  });
+
+  ipcMain.handle('get-remote-events', async (_event, startIso: string, endIso: string) => {
+    if (typeof startIso !== 'string' || typeof endIso !== 'string') {
+      return [];
+    }
+
+    const start = Date.parse(startIso);
+    const end = Date.parse(endIso);
+    if (Number.isNaN(start) || Number.isNaN(end) || start > end) {
+      return [];
+    }
+
+    return getRemoteEvents(startIso, endIso);
+  });
+
+  ipcMain.handle('run-calendar-sync', async (_event, accountId?: number) => {
+    if (accountId !== undefined && !isValidEntryId(accountId)) {
+      return {
+        success: false,
+        imported: 0,
+        updated: 0,
+        removed: 0,
+        error: 'invalid_account_id',
+      };
+    }
+
+    try {
+      const accounts = listCalendarAccounts();
+      const targets = accountId !== undefined ? accounts.filter((account) => account.id === accountId) : accounts;
+
+      let imported = 0;
+      let updated = 0;
+      let removed = 0;
+
+      for (const target of targets) {
+        if (target.provider !== 'google') {
+          continue;
+        }
+
+        const result = await syncGoogleAccount(target.id);
+        imported += result.imported;
+        updated += result.updated;
+        removed += result.removed;
+      }
+
+      return {
+        success: true,
+        imported,
+        updated,
+        removed,
+      };
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Unknown sync error';
+
+      if (accountId !== undefined) {
+        updateCalendarAccountSyncResult(accountId, false, message);
+      }
+
+      return {
+        success: false,
+        imported: 0,
+        updated: 0,
+        removed: 0,
+        error: 'sync_failed',
+        message,
+      };
+    }
+  });
+
+  ipcMain.handle('get-calendar-sync-status', async (_event, accountId?: number) => {
+    if (accountId !== undefined && !isValidEntryId(accountId)) {
+      return [];
+    }
+
+    return getCalendarSyncStatus(accountId);
+  });
+
   ipcMain.handle('reset-preferences', async () => {
     resetPreferences();
     return { success: true };
@@ -1606,6 +2529,7 @@ export function setupIpcHandlers() {
    * Runs asynchronously and sends progress updates to a separate progress window.
    */
   ipcMain.handle('import-entries', async (event, format: 'json' | 'markdown') => {
+    perfTrail.start('ipc-import');
     // Get current profile information for user feedback
     const currentProfile = getCurrentProfile();
     const profileName = currentProfile?.name || 'current profile';

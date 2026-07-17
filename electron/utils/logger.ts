@@ -171,5 +171,38 @@ export const logger = {
         break;
     }
   },
+
+  /**
+   * Log a performance timing event.
+   * Forwards to all open renderer windows via IPC for live display.
+   *
+   * @param label - Span label
+   * @param elapsed - Duration in ms
+   * @param budget - Budget threshold in ms
+   * @param overBudget - Whether the span exceeded its budget
+   */
+  perf: (label: string, elapsed: number, budget: number, overBudget: boolean): void => {
+    if (!shouldLog(LogLevel.DEBUG)) return;
+    const icon = overBudget ? '⚠️ OVER-BUDGET' : '[PERF]';
+    const pct = budget === Infinity ? '' : ` (${(elapsed / budget * 100).toFixed(0)}%)`;
+    const formatted = formatMessage(overBudget ? 'WARN' : 'INFO', `${icon} ${label}: ${elapsed.toFixed(2)}ms${pct}`, 'PerfTrail');
+    console.log(formatted);
+
+    // Forward to renderer windows for live display
+    try {
+      const { BrowserWindow } = require('electron');
+      BrowserWindow.getAllWindows().forEach((win: any) => {
+        if (!win.isDestroyed()) {
+          win.webContents.send('perf-trail-update', {
+            label,
+            elapsed,
+            budget,
+            overBudget,
+            timestamp: new Date().toISOString(),
+          });
+        }
+      });
+    } catch { /* ignore — may not be in Electron context */ }
+  },
 };
 

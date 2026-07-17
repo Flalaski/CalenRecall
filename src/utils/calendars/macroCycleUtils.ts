@@ -18,7 +18,7 @@
  * See macroCycleAccuracy.md for detailed verification information.
  */
 
-import { CalendarType } from './types';
+import { CalendarSystem as CalendarType } from './types';
 import { gregorianToJDN, jdnToGregorian } from './julianDayUtils';
 import { mayanLongCountCalendar } from './mayanLongCount';
 

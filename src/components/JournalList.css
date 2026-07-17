@@ -133,6 +133,54 @@
   margin-bottom: 1rem;
 }
 
+.remote-events-panel {
+  padding: 0.85rem 1rem;
+  margin-bottom: 1rem;
+  border: 1px solid #cfe6db;
+  border-radius: 6px;
+  background: #f3fbf7;
+}
+
+.remote-events-title {
+  font-size: 0.95rem;
+  font-weight: 600;
+  margin-bottom: 0.65rem;
+  color: #14532d;
+}
+
+.remote-events-list {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.remote-event-item {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.65rem;
+  align-items: baseline;
+  padding: 0.35rem 0;
+  border-bottom: 1px solid rgba(20, 83, 45, 0.08);
+}
+
+.remote-event-item:last-child {
+  border-bottom: none;
+}
+
+.remote-event-time {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #1f7a5a;
+  white-space: nowrap;
+}
+
+.remote-event-title {
+  font-size: 0.9rem;
+  color: #1f2937;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .journal-list-filter,
 .journal-list-sort {
   margin-bottom: 0.75rem;

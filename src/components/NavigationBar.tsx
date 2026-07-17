@@ -8,9 +8,10 @@ import { getTimeRangeLabelInCalendar } from '../utils/calendars/timeRangeConvert
 import { CALENDAR_DESCRIPTIONS } from '../utils/calendars/calendarDescriptions';
 import { createDate } from '../utils/dateUtils';
 import { getDateEntryConfig } from '../utils/calendars/dateEntryConfig';
-import { calendarDateToDate } from '../utils/calendars/calendarConverter';
+import { calendarDateToDate, dateToCalendarDate, formatCalendarDate } from '../utils/calendars/calendarConverter';
 import { isWindowTransitioning } from '../utils/windowStateTracker';
 import { getTierName } from '../utils/calendarTierNames';
+import perfTrail from '../utils/performance/perfTrail';
 import './NavigationBar.css';
 
 interface NavigationBarProps {
@@ -41,7 +42,7 @@ export default function NavigationBar({
   const [dateLabelLines, setDateLabelLines] = useState<[string, string?]>(['', undefined]);
   const currentFontSizeRef = useRef<number>(3.5); // Track current font size for comparison
   const isUpdatingRef = useRef<boolean>(false); // Prevent overlapping updates
-  const updateTimeoutRef = useRef<NodeJS.Timeout | null>(null); // Debounce timer
+  const updateTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null); // Debounce timer
   const lastUpdateTimeRef = useRef<number>(0); // Track last update time for throttling
   const lastDimensionsRef = useRef<{ width: number; height: number } | null>(null); // Track last known dimensions
   const cooldownUntilRef = useRef<number>(0); // Cooldown period after updates to prevent loops
@@ -191,6 +192,7 @@ export default function NavigationBar({
   // Fields will only be populated during explicit navigation movements
 
   const navigate = (direction: 'prev' | 'next', shiftPressed: boolean = false) => {
+    perfTrail.start('nav-arrow');
     // Play tier-aware navigation sound with direction and shift distinction
     playTierNavigationSound(viewMode, direction, shiftPressed);
     
@@ -230,6 +232,7 @@ export default function NavigationBar({
         }
       }, 0);
     }
+    perfTrail.end('nav-arrow');
   };
 
   const getDateLabel = () => {
@@ -277,10 +280,31 @@ export default function NavigationBar({
     return label;
   };
 
+  /**
+   * Get the Gregorian reference label shown when using a non-Gregorian calendar.
+   * Shows what the current date/time range is in the Gregorian system.
+   */
+  const getGregorianReference = (): string | null => {
+    if (calendar === 'gregorian') return null;
+    try {
+      return getTimeRangeLabelInCalendar(selectedDate, viewMode, 'gregorian');
+    } catch {
+      // Fallback
+      try {
+        const calDate = dateToCalendarDate(selectedDate, 'gregorian');
+        return formatCalendarDate(calDate, 'YYYY-MM-DD');
+      } catch {
+        return null;
+      }
+    }
+  };
+
   const goToToday = () => {
+    perfTrail.start('nav-today');
     playNavigationSound();
     const today = new Date();
     onDateChange(today);
+    perfTrail.end('nav-today');
     // Populate date fields after navigation (only if user is not typing)
     // Use setTimeout to ensure state has updated
     if (!isUserTypingRef.current) {
@@ -641,7 +665,7 @@ export default function NavigationBar({
     const totalJourneyDays = Math.abs(differenceInDays(actualStartDate, targetDate));
     
     // Store timeout ID to allow cancellation
-    let timeoutId: NodeJS.Timeout | null = null;
+    let timeoutId: ReturnType<typeof setTimeout> | null = null;
     
     // Easing function: ease-out-cubic for smooth deceleration
     const easeOutCubic = (t: number): number => {
@@ -1460,6 +1484,21 @@ export default function NavigationBar({
               renderDateLabel()
             )}
           </h2>
+          {calendar !== 'gregorian' && (() => {
+            const gregRef = getGregorianReference();
+            if (!gregRef) return null;
+            const calInfo = CALENDAR_INFO[calendar];
+            return (
+              <div className="gregorian-reference" dir="ltr">
+                <span className="gregorian-reference-label">
+                  <span className="gregorian-reference-native">{calInfo?.nativeName || ''}</span>
+                  <span className="gregorian-reference-arrow">→</span>
+                  <span>Gregorian</span>
+                </span>
+                <span className="gregorian-reference-date">{gregRef}</span>
+              </div>
+            );
+          })()}
           <div className="date-input-container" key={`date-input-${calendar}`}>
             <div className="date-input-wrapper">
               <div className="date-input-fields" role="group" aria-label="Go to date">

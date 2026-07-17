@@ -213,6 +213,31 @@ This will:
 - Watch for Electron file changes
 - Launch Electron automatically
 
+### Google Calendar Setup
+
+Google Calendar sync requires a local OAuth client configuration during development.
+
+1. In Google Cloud Console, create or select a project.
+2. Enable the Google Calendar API for that project.
+3. Configure the Google Auth Platform consent screen.
+4. If the app audience is `External`, add your Google account under test users.
+5. Create an OAuth client of type `Desktop app`.
+6. Set `GOOGLE_OAUTH_CLIENT_ID` in [.env](.env) to that desktop client ID.
+7. CalenRecall uses this loopback redirect URI for the browser callback:
+
+```text
+http://127.0.0.1:53682/oauth/callback
+```
+
+If your OAuth client configuration exposes redirect URI settings, make sure the value above is allowed. If you override the redirect URI with `GOOGLE_OAUTH_REDIRECT_URI`, the value in `.env` and the value accepted by the OAuth client must stay identical.
+
+Important:
+- This flow is implemented as a Windows/macOS desktop OAuth flow using the system browser and PKCE.
+- `https://www.googleapis.com/auth/calendar.readonly` is a sensitive scope. Local testing is fine, but public rollout will eventually require Google OAuth verification.
+- Unverified apps using sensitive scopes can be capped at 100 new users until verification is completed.
+
+Without `GOOGLE_OAUTH_CLIENT_ID`, the Google Calendar button in Preferences will stay disabled and the app will show the exact missing configuration.
+
 ### Building
 
 **Build the application for production:**

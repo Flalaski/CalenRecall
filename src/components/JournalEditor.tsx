@@ -47,7 +47,7 @@ export default function JournalEditor({
   const [preferences, setPreferences] = useState<Preferences>({});
   const [amPm, setAmPm] = useState<'AM' | 'PM'>('AM');
   const titleInputRef = useRef<HTMLInputElement>(null);
-  const autoSaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const autoSaveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isSavingRef = useRef<boolean>(false);
 
   // Load preferences for time format

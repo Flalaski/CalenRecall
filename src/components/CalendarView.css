@@ -233,6 +233,39 @@
   font-weight: 500;
 }
 
+.cell-remote-events {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  margin-top: 0.25rem;
+  width: 100%;
+  align-items: center;
+}
+
+.cell-remote-badge {
+  font-size: 0.6rem;
+  padding: 0.15rem 0.35rem;
+  background: #1f7a5a;
+  color: white;
+  border-radius: 3px;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.cell-remote-more {
+  font-size: 0.58rem;
+  color: var(--text-secondary, #666);
+  font-weight: 600;
+}
+
+.day-remote-events {
+  margin-top: 0.75rem;
+  align-items: stretch;
+}
+
 .cell-astronomical-events {
   display: flex;
   flex-direction: row;

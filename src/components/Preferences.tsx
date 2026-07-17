@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useLayoutEffect } from 'react';
-import { Preferences, ExportFormat } from '../types';
+import { Preferences, ExportFormat, CalendarAccount, RemoteCalendar } from '../types';
 import { playResetSound, playExportSound } from '../utils/audioUtils';
 import { CALENDAR_INFO } from '../utils/calendars/types';
 import { getAvailableThemes, loadAllThemes, applyTheme, initializeTheme, applyFontSize } from '../utils/themes';
@@ -23,6 +23,28 @@ export default function PreferencesComponent() {
   const [isRestoring, setIsRestoring] = useState(false);
   const [backgroundImagePreview, setBackgroundImagePreview] = useState<string | null>(null);
   const [themeListKey, setThemeListKey] = useState(0); // Force re-render when themes update
+  const [calendarAccounts, setCalendarAccounts] = useState<CalendarAccount[]>([]);
+  const [remoteCalendarsByAccount, setRemoteCalendarsByAccount] = useState<Record<number, RemoteCalendar[]>>({});
+  const [isConnectingGoogle, setIsConnectingGoogle] = useState(false);
+  const [isRunningCalendarSync, setIsRunningCalendarSync] = useState(false);
+  const [calendarAuthMessage, setCalendarAuthMessage] = useState<string | null>(null);
+  const [isRefreshingCalendarAccounts, setIsRefreshingCalendarAccounts] = useState(false);
+  const [googleCalendarConfigStatus, setGoogleCalendarConfigStatus] = useState<{
+    configured: boolean;
+    clientIdConfigured: boolean;
+    redirectUri: string;
+    missing: string[];
+  }>({
+    configured: false,
+    clientIdConfigured: false,
+    redirectUri: 'http://127.0.0.1:53682/oauth/callback',
+    missing: ['GOOGLE_OAUTH_CLIENT_ID'],
+  });
+  const calendarAuthPollRef = useRef<number | null>(null);
+  const [googleSetupStep, setGoogleSetupStep] = useState(0);
+  const [googleClientIdInput, setGoogleClientIdInput] = useState('');
+  const [googleClientIdSaveError, setGoogleClientIdSaveError] = useState<string | null>(null);
+  const [googleClientIdSaving, setGoogleClientIdSaving] = useState(false);
   const [importProgress, setImportProgress] = useState({
     isOpen: false,
     progress: 0,
@@ -163,6 +185,10 @@ export default function PreferencesComponent() {
     }
     
     return () => {
+      if (calendarAuthPollRef.current) {
+        window.clearInterval(calendarAuthPollRef.current);
+        calendarAuthPollRef.current = null;
+      }
       if (themeCleanupRef.current) {
         themeCleanupRef.current();
         themeCleanupRef.current = undefined;
@@ -263,10 +289,207 @@ export default function PreferencesComponent() {
       if (prefs.defaultExportFormat) {
         setExportFormat(prefs.defaultExportFormat);
       }
+
+      await loadCalendarAccounts();
     } catch (error) {
       console.error('Error loading preferences:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadCalendarAccounts = async () => {
+    if (!window.electronAPI || !window.electronAPI.listCalendarAccounts) {
+      return;
+    }
+
+    try {
+      setIsRefreshingCalendarAccounts(true);
+
+      if (window.electronAPI.getGoogleCalendarConfigStatus) {
+        try {
+          const configStatus = await window.electronAPI.getGoogleCalendarConfigStatus();
+          setGoogleCalendarConfigStatus(configStatus);
+        } catch (error) {
+          console.warn('[Preferences] Google calendar config status handler unavailable, using fallback state:', error);
+          setGoogleCalendarConfigStatus({
+            configured: false,
+            clientIdConfigured: false,
+            redirectUri: 'http://127.0.0.1:53682/oauth/callback',
+            missing: ['GOOGLE_OAUTH_CLIENT_ID'],
+          });
+        }
+      }
+
+      const accounts = await window.electronAPI.listCalendarAccounts();
+      setCalendarAccounts(accounts);
+
+      const calendarEntries = await Promise.all(
+        accounts.map(async (account) => {
+          try {
+            const calendars = await window.electronAPI.listRemoteCalendars(account.id);
+            return [account.id, calendars] as const;
+          } catch (error) {
+            console.error(`[Preferences] Error loading remote calendars for account ${account.id}:`, error);
+            return [account.id, []] as const;
+          }
+        })
+      );
+
+      setRemoteCalendarsByAccount(Object.fromEntries(calendarEntries));
+    } catch (error) {
+      console.error('[Preferences] Error loading calendar accounts:', error);
+    } finally {
+      setIsRefreshingCalendarAccounts(false);
+    }
+  };
+
+  const pollCalendarAuthResult = () => {
+    if (!window.electronAPI || !window.electronAPI.getCalendarAuthResult) {
+      return;
+    }
+
+    if (calendarAuthPollRef.current) {
+      window.clearInterval(calendarAuthPollRef.current);
+      calendarAuthPollRef.current = null;
+    }
+
+    let attempts = 0;
+    const maxAttempts = 60;
+    calendarAuthPollRef.current = window.setInterval(async () => {
+      attempts += 1;
+      try {
+        const result = await window.electronAPI.getCalendarAuthResult();
+        if (result && Date.now() - result.completedAt < 2 * 60 * 1000) {
+          setIsConnectingGoogle(false);
+          setCalendarAuthMessage(result.success ? (result.message || 'Google account connected.') : `Connection failed: ${result.message || result.error || 'Unknown error'}`);
+          await loadCalendarAccounts();
+          if (calendarAuthPollRef.current) {
+            window.clearInterval(calendarAuthPollRef.current);
+            calendarAuthPollRef.current = null;
+          }
+          return;
+        }
+      } catch (error) {
+        console.error('[Preferences] Error polling calendar auth result:', error);
+      }
+
+      if (attempts >= maxAttempts && calendarAuthPollRef.current) {
+        window.clearInterval(calendarAuthPollRef.current);
+        calendarAuthPollRef.current = null;
+        setIsConnectingGoogle(false);
+        setCalendarAuthMessage('Connection timed out. Please try again.');
+      }
+    }, 2000);
+  };
+
+  const handleSaveGoogleClientId = async () => {
+    if (!window.electronAPI?.saveGoogleOAuthClientId) return;
+    setGoogleClientIdSaveError(null);
+    setGoogleClientIdSaving(true);
+    try {
+      const result = await window.electronAPI.saveGoogleOAuthClientId(googleClientIdInput);
+      if (result.success) {
+        const status = await window.electronAPI.getGoogleCalendarConfigStatus();
+        setGoogleCalendarConfigStatus(status);
+        setGoogleSetupStep(0);
+        setGoogleClientIdInput('');
+      } else {
+        setGoogleClientIdSaveError(result.error || 'Failed to save.');
+      }
+    } catch (err) {
+      setGoogleClientIdSaveError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setGoogleClientIdSaving(false);
+    }
+  };
+
+  const handleConnectGoogleCalendar = async () => {
+    if (!window.electronAPI || !window.electronAPI.startCalendarAuth || isConnectingGoogle) {
+      return;
+    }
+
+    if (!googleCalendarConfigStatus.configured) {
+      setCalendarAuthMessage(`Google Calendar is not configured. Missing: ${googleCalendarConfigStatus.missing.join(', ')}.`);
+      return;
+    }
+
+    try {
+      setIsConnectingGoogle(true);
+      setCalendarAuthMessage(null);
+      const response = await window.electronAPI.startCalendarAuth('google');
+      if (!response.success) {
+        setIsConnectingGoogle(false);
+        setCalendarAuthMessage(`Connection failed: ${response.message || response.error || 'Unknown error'}`);
+        return;
+      }
+
+      setCalendarAuthMessage(response.message || 'Browser opened for Google authentication.');
+      pollCalendarAuthResult();
+    } catch (error) {
+      console.error('[Preferences] Error starting Google calendar auth:', error);
+      setIsConnectingGoogle(false);
+      setCalendarAuthMessage('Failed to start Google authentication.');
+    }
+  };
+
+  const handleDisconnectCalendarAccount = async (accountId: number) => {
+    if (!window.electronAPI || !window.electronAPI.disconnectCalendarAccount) {
+      return;
+    }
+
+    try {
+      const result = await window.electronAPI.disconnectCalendarAccount(accountId);
+      if (!result.success) {
+        setCalendarAuthMessage(`Failed to disconnect account: ${result.error || 'Unknown error'}`);
+        return;
+      }
+      setCalendarAuthMessage('Account disconnected.');
+      await loadCalendarAccounts();
+    } catch (error) {
+      console.error('[Preferences] Error disconnecting calendar account:', error);
+      setCalendarAuthMessage('Failed to disconnect account.');
+    }
+  };
+
+  const handleRunCalendarSync = async (accountId?: number) => {
+    if (!window.electronAPI || !window.electronAPI.runCalendarSync || isRunningCalendarSync) {
+      return;
+    }
+
+    try {
+      setIsRunningCalendarSync(true);
+      setCalendarAuthMessage('Running calendar sync...');
+      const result = await window.electronAPI.runCalendarSync(accountId);
+      if (result.success) {
+        setCalendarAuthMessage(`Sync completed: ${result.imported} processed, ${result.removed} removed.`);
+      } else {
+        setCalendarAuthMessage(`Sync failed: ${result.message || result.error || 'Unknown error'}`);
+      }
+      await loadCalendarAccounts();
+    } catch (error) {
+      console.error('[Preferences] Error running calendar sync:', error);
+      setCalendarAuthMessage('Sync failed due to an unexpected error.');
+    } finally {
+      setIsRunningCalendarSync(false);
+    }
+  };
+
+  const handleToggleRemoteCalendar = async (calendarId: number, selected: boolean) => {
+    if (!window.electronAPI || !window.electronAPI.setRemoteCalendarSelected) {
+      return;
+    }
+
+    try {
+      const result = await window.electronAPI.setRemoteCalendarSelected(calendarId, selected);
+      if (!result.success) {
+        setCalendarAuthMessage(`Failed to update calendar selection: ${result.error || 'Unknown error'}`);
+        return;
+      }
+      await loadCalendarAccounts();
+    } catch (error) {
+      console.error('[Preferences] Error updating remote calendar selection:', error);
+      setCalendarAuthMessage('Failed to update calendar selection.');
     }
   };
 
@@ -960,6 +1183,225 @@ export default function PreferencesComponent() {
               Show Hindu Yuga Cycles
             </label>
             <small>Display Hindu Yuga cycle indicators (Satya, Treta, Dvapara, Kali) in year and decade views when using Indian Saka calendar</small>
+          </div>
+
+          <div className="preference-item full-width">
+            <label>Online Calendars (Beta)</label>
+            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
+              <button
+                className="preferences-button"
+                onClick={handleConnectGoogleCalendar}
+                disabled={isConnectingGoogle || !googleCalendarConfigStatus.configured}
+              >
+                {isConnectingGoogle ? 'Connecting Google...' : 'Connect Google Calendar'}
+              </button>
+              <button
+                className="preferences-button"
+                onClick={() => handleRunCalendarSync()}
+                disabled={isRunningCalendarSync || calendarAccounts.length === 0}
+              >
+                {isRunningCalendarSync ? 'Syncing...' : 'Sync All Now'}
+              </button>
+              <button
+                className="preferences-button"
+                onClick={loadCalendarAccounts}
+                disabled={isRefreshingCalendarAccounts}
+              >
+                {isRefreshingCalendarAccounts ? 'Refreshing...' : 'Refresh Accounts'}
+              </button>
+            </div>
+
+            {calendarAuthMessage && (
+              <small style={{ display: 'block', marginTop: '8px' }}>{calendarAuthMessage}</small>
+            )}
+
+            {!googleCalendarConfigStatus.configured && (
+              <div style={{ marginTop: '10px', padding: '10px 12px', border: '1px solid #f0c36d', borderRadius: '6px', background: '#fff9e8' }}>
+                <div style={{ fontWeight: 600, marginBottom: '6px' }}>Google OAuth setup required</div>
+                <div style={{ fontSize: '0.9rem', marginBottom: '6px' }}>
+                  Create a Google OAuth client of type <code>Desktop app</code>, then set <code>GOOGLE_OAUTH_CLIENT_ID</code> in the local <code>.env</code> file in the project root.
+                </div>
+                <div style={{ fontSize: '0.9rem', marginBottom: '6px' }}>
+                  Enable the Google Calendar API and, if your app audience is external, add yourself as a test user before trying to connect.
+                </div>
+                <div style={{ fontSize: '0.9rem', marginBottom: '6px' }}>
+                  CalenRecall expects this loopback redirect URI for the browser callback:
+                </div>
+                <div style={{ fontFamily: 'monospace', fontSize: '0.9rem', padding: '6px 8px', background: '#fff', borderRadius: '4px', border: '1px solid #ead9a4' }}>
+                  {googleCalendarConfigStatus.redirectUri}
+                </div>
+                <div style={{ fontSize: '0.85rem', marginTop: '8px', opacity: 0.85 }}>
+                  Missing: {googleCalendarConfigStatus.missing.join(', ')}
+                </div>
+              </div>
+            )}
+            {!googleCalendarConfigStatus.configured && (
+              <div style={{ marginTop: '10px', padding: '12px 14px', border: '1px solid #f0c36d', borderRadius: '6px', background: '#fff9e8' }}>
+                {googleSetupStep === 0 && (
+                  <>
+                    <div style={{ fontWeight: 600, marginBottom: '6px' }}>Google Calendar setup required</div>
+                    <div style={{ fontSize: '0.88rem', marginBottom: '10px', lineHeight: 1.5 }}>
+                      CalenRecall uses <strong>your own</strong> Google OAuth credentials so your calendar data stays private. The setup takes about 3 minutes and only needs to be done once.
+                    </div>
+                    <button className="preferences-button" onClick={() => setGoogleSetupStep(1)}>
+                      Start Setup Guide →
+                    </button>
+                  </>
+                )}
+
+                {googleSetupStep > 0 && googleSetupStep < 5 && (
+                  <div style={{ fontSize: '0.8rem', color: '#888', marginBottom: '10px' }}>
+                    Step {googleSetupStep} of 4
+                    <span style={{ display: 'inline-block', marginLeft: '10px', width: `${googleSetupStep * 25}%`, height: '3px', background: '#f0c36d', borderRadius: '2px', verticalAlign: 'middle' }} />
+                  </div>
+                )}
+
+                {googleSetupStep === 1 && (
+                  <>
+                    <div style={{ fontWeight: 600, marginBottom: '6px' }}>Step 1 — Create a Google Cloud project &amp; enable Calendar API</div>
+                    <ol style={{ fontSize: '0.88rem', lineHeight: 1.7, paddingLeft: '1.2em', margin: '0 0 10px' }}>
+                      <li>Open <a href="#" onClick={(e) => { e.preventDefault(); window.electronAPI?.openExternalBrowser('https://console.cloud.google.com'); }}>console.cloud.google.com</a> and sign in.</li>
+                      <li>Click the project selector at the top → <strong>New Project</strong> → give it a name (e.g. "CalenRecall") → Create.</li>
+                      <li>In the left menu go to <strong>APIs &amp; Services → Library</strong>.</li>
+                      <li>Search for <strong>Google Calendar API</strong> → click it → click <strong>Enable</strong>.</li>
+                    </ol>
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      <button className="preferences-button" onClick={() => setGoogleSetupStep(0)}>← Back</button>
+                      <button className="preferences-button" onClick={() => setGoogleSetupStep(2)}>Next →</button>
+                    </div>
+                  </>
+                )}
+
+                {googleSetupStep === 2 && (
+                  <>
+                    <div style={{ fontWeight: 600, marginBottom: '6px' }}>Step 2 — Configure the OAuth consent screen</div>
+                    <ol style={{ fontSize: '0.88rem', lineHeight: 1.7, paddingLeft: '1.2em', margin: '0 0 10px' }}>
+                      <li>In the left menu go to <strong>APIs &amp; Services → OAuth consent screen</strong>.</li>
+                      <li>Select user type <strong>External</strong> → click Create.</li>
+                      <li>Fill in <strong>App name</strong> (e.g. "CalenRecall"), your <strong>support email</strong>, and <strong>developer contact email</strong>.</li>
+                      <li>Click <strong>Save and Continue</strong> through the Scopes screen (no changes needed).</li>
+                      <li>On the <strong>Test users</strong> screen click <strong>+ Add Users</strong> and add your Google account email. Click Save.</li>
+                      <li>Click <strong>Save and Continue</strong> → Back to Dashboard.</li>
+                    </ol>
+                    <div style={{ fontSize: '0.82rem', marginBottom: '10px', padding: '6px 8px', background: '#fff8e1', borderRadius: '4px' }}>
+                      <strong>Note:</strong> You only need to add test users for personal use. To share with others you'll eventually need to go through Google's verification process.
+                    </div>
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      <button className="preferences-button" onClick={() => setGoogleSetupStep(1)}>← Back</button>
+                      <button className="preferences-button" onClick={() => setGoogleSetupStep(3)}>Next →</button>
+                    </div>
+                  </>
+                )}
+
+                {googleSetupStep === 3 && (
+                  <>
+                    <div style={{ fontWeight: 600, marginBottom: '6px' }}>Step 3 — Create a Desktop app OAuth client</div>
+                    <ol style={{ fontSize: '0.88rem', lineHeight: 1.7, paddingLeft: '1.2em', margin: '0 0 10px' }}>
+                      <li>In the left menu go to <strong>APIs &amp; Services → Credentials</strong>.</li>
+                      <li>Click <strong>+ Create Credentials → OAuth client ID</strong>.</li>
+                      <li>For Application type select <strong>Desktop app</strong>.</li>
+                      <li>Click <strong>Create</strong> — a dialog shows your Client ID and Client Secret.</li>
+                      <li>Copy the <strong>Client ID</strong> (ends in <code>.apps.googleusercontent.com</code>). You don't need the secret.</li>
+                    </ol>
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      <button className="preferences-button" onClick={() => setGoogleSetupStep(2)}>← Back</button>
+                      <button className="preferences-button" onClick={() => setGoogleSetupStep(4)}>Next →</button>
+                    </div>
+                  </>
+                )}
+
+                {googleSetupStep === 4 && (
+                  <>
+                    <div style={{ fontWeight: 600, marginBottom: '6px' }}>Step 4 — Paste your Client ID</div>
+                    <div style={{ fontSize: '0.88rem', marginBottom: '8px' }}>
+                      Paste the Client ID you copied from Google Cloud Console:
+                    </div>
+                    <input
+                      type="text"
+                      value={googleClientIdInput}
+                      onChange={(e) => { setGoogleClientIdInput(e.target.value); setGoogleClientIdSaveError(null); }}
+                      placeholder="123456789-abc.apps.googleusercontent.com"
+                      style={{ width: '100%', padding: '6px 8px', borderRadius: '4px', border: '1px solid #ccc', fontFamily: 'monospace', fontSize: '0.85rem', boxSizing: 'border-box', marginBottom: '8px' }}
+                    />
+                    {googleClientIdSaveError && (
+                      <div style={{ fontSize: '0.85rem', color: '#c0392b', marginBottom: '8px' }}>{googleClientIdSaveError}</div>
+                    )}
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      <button className="preferences-button" onClick={() => setGoogleSetupStep(3)}>← Back</button>
+                      <button
+                        className="preferences-button"
+                        onClick={handleSaveGoogleClientId}
+                        disabled={googleClientIdSaving || !googleClientIdInput.trim()}
+                      >
+                        {googleClientIdSaving ? 'Saving…' : 'Save & Connect'}
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
+
+            {calendarAccounts.length > 0 ? (
+              <div style={{ marginTop: '10px', display: 'grid', gap: '8px' }}>
+                {calendarAccounts.map((account) => (
+                  <div
+                    key={account.id}
+                    style={{
+                      border: '1px solid #ddd',
+                      borderRadius: '6px',
+                      padding: '10px',
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      gap: '12px',
+                      flexWrap: 'wrap',
+                    }}
+                  >
+                    <div>
+                      <div style={{ fontWeight: 600 }}>{account.displayName || account.accountIdentifier}</div>
+                      <div style={{ fontSize: '0.85rem', opacity: 0.75 }}>
+                        Provider: {account.provider} | Status: {account.status}{account.lastSyncAt ? ` | Last sync: ${new Date(account.lastSyncAt).toLocaleString()}` : ''}
+                      </div>
+                      {account.lastError && (
+                        <div style={{ fontSize: '0.8rem', color: '#b42318', marginTop: '2px' }}>Last error: {account.lastError}</div>
+                      )}
+                      {(remoteCalendarsByAccount[account.id] || []).length > 0 && (
+                        <div style={{ marginTop: '8px', display: 'grid', gap: '4px' }}>
+                          {(remoteCalendarsByAccount[account.id] || []).map((calendar) => (
+                            <label key={calendar.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.85rem' }}>
+                              <input
+                                type="checkbox"
+                                checked={calendar.isSelected}
+                                onChange={(event) => handleToggleRemoteCalendar(calendar.id, event.target.checked)}
+                              />
+                              <span>{calendar.name}</span>
+                              {calendar.isPrimary && <span style={{ opacity: 0.6 }}>(Primary)</span>}
+                            </label>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                    <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                      <button
+                        className="preferences-button"
+                        onClick={() => handleRunCalendarSync(account.id)}
+                        disabled={isRunningCalendarSync}
+                      >
+                        Sync Now
+                      </button>
+                      <button
+                        className="preferences-button"
+                        onClick={() => handleDisconnectCalendarAccount(account.id)}
+                      >
+                        Disconnect
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <small style={{ display: 'block', marginTop: '8px' }}>No online calendar accounts connected.</small>
+            )}
           </div>
         </div>
 

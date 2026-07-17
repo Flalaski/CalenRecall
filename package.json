@@ -1,10 +1,6 @@
 {
   "name": "calenrecall",
-<<<<<<< HEAD
   "version": "2026.01.14-5",
-=======
-  "version": "2026.01.13-1",
->>>>>>> 1ea86053d89fa01651bd3e0a0e8f93b7168bc114
   "description": "A calendar journal for recalling memories across decades, years, months, weeks, and days",
   "main": "dist-electron/main.js",
   "author": "",

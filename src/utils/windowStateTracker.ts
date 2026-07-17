@@ -4,7 +4,7 @@
  */
 
 let isTransitioning = false;
-let transitionEndTimeout: NodeJS.Timeout | null = null;
+let transitionEndTimeout: ReturnType<typeof setTimeout> | null = null;
 const TRANSITION_END_DELAY = 500; // Wait 500ms after transition before resuming handlers
 
 /**
@@ -61,7 +61,7 @@ export function initializeWindowStateTracker(): () => void {
   // Track window size changes to detect maximize/fullscreen transitions
   let lastWidth = window.innerWidth;
   let lastHeight = window.innerHeight;
-  let resizeTimeout: NodeJS.Timeout | null = null;
+  let resizeTimeout: ReturnType<typeof setTimeout> | null = null;
   let rapidResizeCount = 0;
   
   const handleResize = () => {

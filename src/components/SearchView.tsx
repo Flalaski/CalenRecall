@@ -5,6 +5,7 @@ import { formatDate, parseISODate, formatTime } from '../utils/dateUtils';
 import { useCalendar } from '../contexts/CalendarContext';
 import { getTimeRangeLabelInCalendar } from '../utils/calendars/timeRangeConverter';
 import { playNavigationSound, playTypingSound } from '../utils/audioUtils';
+import perfTrail from '../utils/performance/perfTrail';
 import './SearchView.css';
 
 interface SearchViewProps {
@@ -60,6 +61,7 @@ export default function SearchView({ onEntrySelect, onClose }: SearchViewProps) 
     }
 
     setLoading(true);
+    perfTrail.start('search-entries');
     try {
       let searchResults: JournalEntry[] = [];
 
@@ -136,9 +138,11 @@ export default function SearchView({ onEntrySelect, onClose }: SearchViewProps) 
 
       setResults(filtered);
     } catch (error) {
+      perfTrail.error('search', 'Search failed', { query: query.slice(0, 50) });
       console.error('Error performing search:', error);
       setResults([]);
     } finally {
+      perfTrail.end('search-entries');
       setLoading(false);
     }
   }, [query, selectedTags, selectedTimeRanges, startDate, endDate, sortBy, sortOrder]);

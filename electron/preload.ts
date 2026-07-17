@@ -1,5 +1,5 @@
 import { contextBridge, ipcRenderer } from 'electron';
-import { JournalEntry, TimeRange, ExportFormat, EntryVersion, EntryAttachment, ExportMetadata } from './types';
+import { JournalEntry, TimeRange, ExportFormat, EntryVersion, EntryAttachment, ExportMetadata, CalendarProvider, CalendarAccount, RemoteCalendar, RemoteEvent, CalendarSyncStatus } from './types';
 import { EntryTemplate } from './database';
 
 export interface Preferences {
@@ -38,6 +38,7 @@ export interface Preferences {
   showMetonicCycle?: boolean; // Whether to display Metonic cycle indicators (Hebrew 19-year cycle)
   showMayanCalendarRound?: boolean; // Whether to display Mayan Calendar Round indicators (52-year cycle)
   showHinduYugaCycles?: boolean; // Whether to display Hindu Yuga cycle indicators
+  googleOAuthClientId?: string; // Google OAuth Desktop app Client ID (for Google Calendar sync)
 }
 
 contextBridge.exposeInMainWorld('electronAPI', {
@@ -258,6 +259,43 @@ contextBridge.exposeInMainWorld('electronAPI', {
   openExternalBrowser: (url: string): Promise<{ success: boolean; error?: string }> =>
     ipcRenderer.invoke('open-external-browser', url),
 
+  // Online calendar sync operations
+  startCalendarAuth: (provider: CalendarProvider): Promise<{ success: boolean; accountId?: number; error?: string; message?: string }> =>
+    ipcRenderer.invoke('start-calendar-auth', provider),
+
+  getPendingCalendarAuth: (): Promise<{ provider: CalendarProvider; state: string; redirectUri: string; createdAt: number } | null> =>
+    ipcRenderer.invoke('get-pending-calendar-auth'),
+
+  getCalendarAuthResult: (): Promise<{ success: boolean; provider: CalendarProvider; accountId?: number; message?: string; error?: string; completedAt: number } | null> =>
+    ipcRenderer.invoke('get-calendar-auth-result'),
+
+  getGoogleCalendarConfigStatus: (): Promise<{ configured: boolean; clientIdConfigured: boolean; redirectUri: string; missing: string[] }> =>
+    ipcRenderer.invoke('get-google-calendar-config-status'),
+
+  saveGoogleOAuthClientId: (clientId: string): Promise<{ success: boolean; error?: string }> =>
+    ipcRenderer.invoke('save-google-oauth-client-id', clientId),
+
+  listCalendarAccounts: (): Promise<CalendarAccount[]> =>
+    ipcRenderer.invoke('list-calendar-accounts'),
+
+  disconnectCalendarAccount: (accountId: number): Promise<{ success: boolean; error?: string }> =>
+    ipcRenderer.invoke('disconnect-calendar-account', accountId),
+
+  listRemoteCalendars: (accountId: number): Promise<RemoteCalendar[]> =>
+    ipcRenderer.invoke('list-remote-calendars', accountId),
+
+  setRemoteCalendarSelected: (calendarId: number, selected: boolean): Promise<{ success: boolean; error?: string }> =>
+    ipcRenderer.invoke('set-remote-calendar-selected', calendarId, selected),
+
+  getRemoteEvents: (startIso: string, endIso: string): Promise<RemoteEvent[]> =>
+    ipcRenderer.invoke('get-remote-events', startIso, endIso),
+
+  runCalendarSync: (accountId?: number): Promise<{ success: boolean; imported: number; updated: number; removed: number; error?: string; message?: string }> =>
+    ipcRenderer.invoke('run-calendar-sync', accountId),
+
+  getCalendarSyncStatus: (accountId?: number): Promise<CalendarSyncStatus[]> =>
+    ipcRenderer.invoke('get-calendar-sync-status', accountId),
+
   // Profile management operations
   getAllProfiles: (): Promise<Profile[]> =>
     ipcRenderer.invoke('get-all-profiles'),
@@ -370,6 +408,11 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
   onProfilePasswordRecovered: (callback: (data: { profileId: string; newRecoveryKey?: string | null }) => void) => {
     ipcRenderer.on('profile-password-recovered', (_event, data) => callback(data));
+  },
+
+  // PerfTrail: forward renderer perf logs to main process
+  logToMain: (message: string, level: string) => {
+    ipcRenderer.send('log-to-main', message, level);
   },
 });
 

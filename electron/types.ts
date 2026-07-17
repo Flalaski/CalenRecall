@@ -96,6 +96,74 @@ export interface EntryVersion {
   versionCreatedAt: string;
 }
 
+export type CalendarProvider = 'google' | 'microsoft' | 'caldav' | 'ics';
+
+export interface CalendarAccount {
+  id: number;
+  provider: CalendarProvider;
+  accountIdentifier: string;
+  displayName?: string;
+  scope?: string;
+  status: 'active' | 'error' | 'disconnected';
+  createdAt: string;
+  updatedAt: string;
+  lastSyncAt?: string;
+  lastError?: string;
+}
+
+export interface CalendarAccountInput {
+  provider: CalendarProvider;
+  accountIdentifier: string;
+  displayName?: string;
+  encryptedRefreshToken?: string;
+  encryptedAccessToken?: string;
+  accessTokenExpiresAt?: string;
+  scope?: string;
+}
+
+export interface RemoteCalendar {
+  id: number;
+  accountId: number;
+  providerCalendarId: string;
+  name: string;
+  color?: string;
+  isPrimary: boolean;
+  isSelected: boolean;
+  timezone?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface RemoteEvent {
+  id: number;
+  calendarId: number;
+  providerEventId: string;
+  providerEtag?: string;
+  status?: string;
+  title?: string;
+  description?: string;
+  location?: string;
+  startAt: string;
+  endAt: string;
+  isAllDay: boolean;
+  timezone?: string;
+  recurrenceRule?: string;
+  recurrenceInstanceId?: string;
+  rawPayload?: string;
+  updatedRemoteAt?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CalendarSyncStatus {
+  accountId: number;
+  calendarId?: number;
+  lastFullSyncAt?: string;
+  lastIncrementalSyncAt?: string;
+  lastSuccessAt?: string;
+  lastError?: string;
+}
+
 // Preferences interface is defined in database.ts
 // Import it directly from there when needed
 

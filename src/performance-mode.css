@@ -54,14 +54,6 @@ html {
   filter: none !important;
 }
 
-/* Disable all keyframe animations */
-@keyframes {
-  from, to {
-    opacity: 1;
-    transform: none;
-  }
-}
-
 /* Performance mode class - can be toggled */
 .performance-mode *,
 .performance-mode *::before,
