@@ -6187,12 +6187,16 @@ function GlobalTimelineMinimap({
                 data-cluster-index={isInCluster ? clusterIndex : undefined}
                 onMouseEnter={(e) => {
                   if (isInCluster) {
-                    e.currentTarget.style.transform = `translate(calc(-50% + ${horizontalOffset}px), -50%) scale(2.5)`;
+                    e.currentTarget.style.transform = `translate(calc(-50% + ${horizontalOffset}px), -50%) scale(1.3)`;
+                  } else {
+                    e.currentTarget.style.transform = `translate(-50%, -50%) ${isFocusedSection ? 'scale(1.6)' : 'scale(1.25)'}`;
                   }
                 }}
                 onMouseLeave={(e) => {
                   if (isInCluster) {
-                    e.currentTarget.style.transform = `translate(calc(-50% + ${horizontalOffset}px), -50%)`;
+                    e.currentTarget.style.transform = `translate(calc(-50% + ${horizontalOffset}px), -50%) ${isFocusedSection ? 'scale(1.4)' : 'scale(1)'}`;
+                  } else {
+                    e.currentTarget.style.transform = `translate(-50%, -50%) ${isFocusedSection ? 'scale(1.4)' : 'scale(1)'}`;
                   }
                 }}
               >

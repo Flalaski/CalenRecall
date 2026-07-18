@@ -1,13 +1,13 @@
 import { useState, useEffect, useCallback, Fragment, useMemo, memo } from 'react';
 import { JournalEntry, TimeRange, Preferences } from '../types';
-import { formatDate, getWeekStart, getWeekEnd, getMonthStart, getYearStart, getDecadeStart, parseISODate, formatTime } from '../utils/dateUtils';
+import { formatDate, getWeekStart, getWeekEnd, getDecadeStart, parseISODate, formatTime } from '../utils/dateUtils';
 import { playEditSound, playNewEntrySound } from '../utils/audioUtils';
 import { useCalendar } from '../contexts/CalendarContext';
 import { useEntries } from '../contexts/EntriesContext';
 import { filterEntriesForRange } from '../utils/entryFilterUtils';
 import { getAllEntriesForMonthOptimized, getAllEntriesForYearOptimized, filterEntriesByDateRangeOptimized } from '../utils/entryLookupUtils';
 import { getTimeRangeLabelInCalendar } from '../utils/calendars/timeRangeConverter';
-import { saveJournalEntry, deleteJournalEntry } from '../services/journalService';
+import { deleteJournalEntry } from '../services/journalService';
 import './EntryViewer.css';
 
 interface EntryViewerProps {
@@ -39,7 +39,7 @@ function EntryViewer({
   const [sortBy, setSortBy] = useState<'date' | 'title' | 'timeRange'>('date');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const [linkedEntries, setLinkedEntries] = useState<JournalEntry[]>([]);
-  const [loadingLinked, setLoadingLinked] = useState(false);
+  const [, setLoadingLinked] = useState(false);
   const [bulkEditMode, setBulkEditMode] = useState(false);
   const [selectedEntryIds, setSelectedEntryIds] = useState<Set<number>>(new Set());
   const [preferences, setPreferences] = useState<Preferences>({});
@@ -508,7 +508,7 @@ function EntryViewer({
             <div className="header-toolbar">
               <button 
                 className="astromonix-button"
-                onClick={handleOpenAstromonix}
+                onClick={() => handleOpenAstromonix()}
                 title="Open this day on AstroMonix"
               >
                 <img 
@@ -620,7 +620,7 @@ function EntryViewer({
           <div className="header-toolbar">
             <button 
               className="astromonix-button"
-              onClick={handleOpenAstromonix}
+              onClick={() => handleOpenAstromonix()}
               title="Open this day on AstroMonix"
             >
               <img 

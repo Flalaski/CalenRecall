@@ -5,6 +5,16 @@
  * Each moon corresponds to a full moon cycle and is associated with
  * specific energies, purposes, and natural phenomena.
  * 
+ * Sources:
+ * - Morgan, Lewis Henry. "League of the Ho-dé-no-sau-nee, or Iroquois."
+ *   Sage & Brother, 1851. (Traditional Haudenosaunee calendar and moon names).
+ * - Parker, Arthur C. "The Code of Handsome Lake, the Seneca Prophet."
+ *   New York State Museum Bulletin 163, 1913. (Ceremonial calendar).
+ * - Trigger, Bruce G. "Handbook of North American Indians, Vol. 15: Northeast."
+ *   Smithsonian Institution, 1978. ISBN: 978-0160045752.
+ * - Meeus, Jean. "Astronomical Algorithms." Willmann-Bell, 1998.
+ *   Ch. 49 (full moon calculation used for moon determination).
+ * 
  * IMPROVED IMPLEMENTATION:
  * This implementation uses actual full moon cycles to determine the 13 moons,
  * which is more accurate to the traditional calendar than simple approximations.
@@ -23,6 +33,26 @@ import { CalendarConverter, CalendarDate, CalendarInfo } from './types';
 import { CALENDAR_INFO } from './types';
 import { gregorianToJDN, jdnToGregorian } from './julianDayUtils';
 import { nextFullMoonJDN, vernalEquinoxJDN } from './astronomicalUtils';
+
+/** Iroquois (Haudenosaunee) moon names in Kanien'kéha (Mohawk)
+ *  Based on Lewis Henry Morgan's "League of the Ho-dé-no-sau-nee" (1851)
+ *  and Arthur C. Parker's "The Code of Handsome Lake" (1913).
+ *  Orthography follows the standard Mohawk Language Standardisation Project. */
+export const IROQUOIS_MOON_NAMES_MOHAWK = [
+  'Tsiothohrhkó:wa',               // Midwinter Moon
+  'Wáhta O\'wé:konte',             // Moon of the Crust
+  'Wáhta Tsikò:kas',               // Maple Sugar Moon
+  'Katsirhón:nien',                 // Planting Moon
+  'Ohiarí:ha',                      // Strawberry Moon
+  'Wahiakè:ne',                     // Moon of the Green Corn
+  'Seskehkó:wa',                    // Full Harvest Moon
+  'Kentenhkó:wa',                   // Moon of the Falling Leaves
+  'Kentén:ha',                      // Moon of the Hunter
+  'Tekennihwénhtsheri:so',         // Moon of the Changing Seasons
+  'Shakothì:tha',                   // Cold Moon
+  'Tsiothohrhkó:wa A\'kénhake',    // Moon of the Long Snows
+  'Tsiothohrhkó:wa Aotén:no',      // Moon of the Deep Snows
+];
 
 // Cache for Iroquois year data to avoid recalculation
 interface IroquoisYearData {
@@ -256,9 +286,16 @@ export const iroquoisCalendar: CalendarConverter = {
   },
   
   formatDate(date: CalendarDate, format: string = 'YYYY-MM-DD'): string {
-    // Use the comprehensive formatter which has Iroquois moon names
-    const { formatCalendarDate } = require('./dateFormatter');
-    return formatCalendarDate(date, format);
+    // Basic formatting — month names handled by the comprehensive formatter
+    // in calendarConverter.ts which delegates to dateFormatter.ts
+    const monthStr = String(date.month).padStart(2, '0');
+    const dayStr = String(date.day).padStart(2, '0');
+    return format
+      .replace(/YYYY/g, date.year.toString())
+      .replace(/YY/g, date.year.toString().slice(-2))
+      .replace(/MM/g, monthStr)
+      .replace(/DD/g, dayStr)
+      .replace(/ERA/g, date.era || '');
   },
   
   parseDate(dateStr: string): CalendarDate | null {

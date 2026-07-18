@@ -1,9 +1,7 @@
 import { useState, useEffect, useMemo, useCallback, memo } from 'react';
 import { TimeRange, Preferences, RemoteEvent } from '../types';
 import {
-  getDaysInMonth,
   getDaysInWeek,
-  getMonthsInYear,
   getYearsInDecade,
   formatDate,
   isToday,
@@ -18,17 +16,18 @@ import {
   getWeekdayLabels,
   formatTime,
 } from '../utils/dateUtils';
+import { getMonthsInYear, getDaysInMonth } from '../utils/calendarTimeTiers';
 import { isSameDay, isSameMonth, isSameYear } from 'date-fns';
 import { playCalendarSelectionSound } from '../utils/audioUtils';
 import { useCalendar } from '../contexts/CalendarContext';
 import { useEntries } from '../contexts/EntriesContext';
 import perfTrail from '../utils/performance/perfTrail';
-import { dateToCalendarDate } from '../utils/calendars/calendarConverter';
-import { formatCalendarDate } from '../utils/calendars/calendarConverter';
+import { dateToCalendarDate, formatCalendarDate } from '../utils/calendars/calendarConverter';
+import { MONTH_NAMES_SHORT } from '../utils/calendars/dateFormatter';
 import { buildEntryLookup, hasEntryForDateOptimized, getEntriesWithTimeOptimized } from '../utils/entryLookupUtils';
 import { getEntryColorForDateOptimized } from '../utils/entryColorUtils';
 import { getAstronomicalEventsForRange, getAstronomicalEventLabel, type DateAstronomicalEvent } from '../utils/astronomicalEvents';
-import perfTrail from '../utils/performance/perfTrail';
+import { getHolidaysForRange, type HolidayEvent } from '../utils/culturalHolidays';
 import './CalendarView.css';
 
 interface CalendarViewProps {
@@ -64,7 +63,8 @@ function CalendarView({
           setPreferences({
             ...prefs,
             showSolsticesEquinoxes: prefs.showSolsticesEquinoxes ?? false,
-            showMoonPhases: prefs.showMoonPhases ?? false
+            showMoonPhases: prefs.showMoonPhases ?? false,
+            showCulturalHolidays: prefs.showCulturalHolidays ?? false
           });
         } catch (error) {
           console.error('[CalendarView] ❌ Error loading preferences:', error);
@@ -79,7 +79,7 @@ function CalendarView({
     if (window.electronAPI && window.electronAPI.onPreferenceUpdated) {
       const handlePreferenceUpdate = (data: { key: string; value: any }) => {
         console.log('[CalendarView] Preference update received:', data);
-        if (data.key === 'showSolsticesEquinoxes' || data.key === 'showMoonPhases') {
+        if (data.key === 'showSolsticesEquinoxes' || data.key === 'showMoonPhases' || data.key === 'showCulturalHolidays') {
           // Update preferences state immediately
           setPreferences(prev => {
             const updated = { ...prev, [data.key]: data.value };
@@ -230,6 +230,58 @@ function CalendarView({
     return events;
   }, [selectedDate, viewMode, weekStartsOn, preferences.showSolsticesEquinoxes, preferences.showMoonPhases]);
 
+  // Get cultural holidays for the visible date range
+  const culturalHolidays = useMemo(() => {
+    const showHolidays = !!(preferences.showCulturalHolidays);
+    if (!showHolidays) return new Map<string, HolidayEvent[]>();
+
+    let startDate: Date;
+    let endDate: Date;
+
+    switch (viewMode) {
+      case 'decade': {
+        const decadeStart = Math.floor(selectedDate.getFullYear() / 10) * 10;
+        startDate = createDate(decadeStart, 0, 1);
+        endDate = createDate(decadeStart + 9, 11, 31);
+        break;
+      }
+      case 'year': {
+        startDate = createDate(selectedDate.getFullYear(), 0, 1);
+        endDate = createDate(selectedDate.getFullYear(), 11, 31);
+        break;
+      }
+      case 'month': {
+        startDate = getMonthStart(selectedDate);
+        endDate = getMonthEnd(selectedDate);
+        break;
+      }
+      case 'week': {
+        startDate = getWeekStart(selectedDate, weekStartsOn);
+        endDate = getWeekEnd(selectedDate, weekStartsOn);
+        break;
+      }
+      case 'day': {
+        startDate = selectedDate;
+        endDate = selectedDate;
+        break;
+      }
+      default: {
+        startDate = getMonthStart(selectedDate);
+        endDate = getMonthEnd(selectedDate);
+      }
+    }
+
+    const holidays = getHolidaysForRange(startDate, endDate, calendar);
+    const map = new Map<string, HolidayEvent[]>();
+    for (const h of holidays) {
+      const key = `${h.date.getFullYear()}-${String(h.date.getMonth() + 1).padStart(2, '0')}-${String(h.date.getDate()).padStart(2, '0')}`;
+      const existing = map.get(key) || [];
+      existing.push(h);
+      map.set(key, existing);
+    }
+    return map;
+  }, [selectedDate, viewMode, weekStartsOn, calendar, preferences.showCulturalHolidays]);
+
   // Removed loadEntries - now using EntriesContext with memoized filtering
 
   // Check if a date is the currently selected date (at appropriate granularity)
@@ -333,8 +385,9 @@ function CalendarView({
   };
 
   const renderYearView = () => {
-    const months = getMonthsInYear(selectedDate);
-    const monthNames = [
+    const months = getMonthsInYear(selectedDate, calendar);
+    // Use calendar-aware month names (supports all 17 calendar systems)
+    const calendarMonthNames = MONTH_NAMES_SHORT[calendar] || [
       'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
       'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
     ];
@@ -348,7 +401,7 @@ function CalendarView({
           const entryColor = hasEntryForMonth ? getEntryColorForDateOptimized(entryLookup, month, 'month', weekStartsOn, entryColors) : null;
           
           // Get number of days in this month
-          const daysInMonth = getDaysInMonth(month).length;
+          const daysInMonth = getDaysInMonth(month, calendar).length;
           
           // OPTIMIZATION: Count entries using lookup instead of filtering
           const monthEnd = getMonthEnd(month);
@@ -395,7 +448,7 @@ function CalendarView({
               style={{ '--zodiac-color': zodiacColor } as React.CSSProperties}
             >
               <div className="cell-content">
-                <div className="cell-label month-title">{monthNames[idx]}</div>
+                <div className="cell-label month-title">{calendarMonthNames[idx]}</div>
                 <div className="month-details">
                   <div className="month-days">{daysInMonth} days</div>
                   {entryCount > 0 && (
@@ -426,7 +479,7 @@ function CalendarView({
   };
 
   const renderMonthView = () => {
-    const days = getDaysInMonth(selectedDate);
+    const days = getDaysInMonth(selectedDate, calendar);
     const weekDays = getWeekdayLabels(weekStartsOn);
     
     // Get first day of month and pad with empty cells
@@ -460,6 +513,8 @@ function CalendarView({
             const dayNum = String(day.getDate()).padStart(2, '0');
             const dayKey = `${year}-${month}-${dayNum}`;
             const dayEvents = astronomicalEvents.get(dayKey) || [];
+            const dayHolidays = culturalHolidays.get(dayKey) || [];
+
             const dayRemoteEvents = remoteEventsByDay.get(dayKey) || [];
             
             return (
@@ -485,6 +540,15 @@ function CalendarView({
                       {dayEvents.map((event, eIdx) => (
                         <span key={eIdx} className="astronomical-event-icon">
                           {getAstronomicalEventLabel(event)}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                  {dayHolidays.length > 0 && (
+                    <div className="cell-holidays" title={dayHolidays.map(h => h.holiday.name).join(', ')}>
+                      {dayHolidays.slice(0, 2).map((h, hIdx) => (
+                        <span key={hIdx} className="holiday-icon" title={h.holiday.name}>
+                          {h.holiday.icon}
                         </span>
                       ))}
                     </div>
@@ -531,7 +595,8 @@ function CalendarView({
   const renderWeekView = () => {
     const days = getDaysInWeek(selectedDate, weekStartsOn);
     const weekDays = getWeekdayLabels(weekStartsOn);
-    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    // Use calendar-aware month names for week view header
+    const calendarMonthNames = MONTH_NAMES_SHORT[calendar] || ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     
     return (
       <div className="calendar-week-view">
@@ -539,7 +604,7 @@ function CalendarView({
           {weekDays.map((day, idx) => {
             const dayDate = days[idx];
             const dayNumber = dayDate.getDate();
-            const monthName = monthNames[dayDate.getMonth()];
+            const monthName = calendarMonthNames[dayDate.getMonth()];
             return (
               <div key={day} className="weekday-cell">
                 <div className="day-number">{dayNumber}</div>
@@ -641,7 +706,6 @@ function CalendarView({
     const dayKey = `${year}-${month}-${dayNum}`;
     const dayEvents = astronomicalEvents.get(dayKey) || [];
     const dayRemoteEvents = remoteEventsByDay.get(dayKey) || [];
-    
     return (
       <div className="calendar-day-view">
         <div

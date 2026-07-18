@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
-import { JournalEntry, TimeRange, Preferences } from '../types';
-import { formatDate, getCanonicalDate, formatTime } from '../utils/dateUtils';
+import { JournalEntry, Preferences } from '../types';
+import { formatDate, formatTime } from '../utils/dateUtils';
 import { saveJournalEntry, deleteJournalEntry } from '../services/journalService';
 import { playSaveSound, playCancelSound, playDeleteSound, playAddSound, playRemoveSound, playTypingSound } from '../utils/audioUtils';
 import './EntryEditModal.css';
@@ -74,11 +74,11 @@ export default function EntryEditModal({
           setHour(getDisplayHour(hour24));
           setAmPm(hour24 >= 12 ? 'PM' : 'AM');
         } else {
-          setHour(entry.hour);
+          setHour(entry.hour ?? undefined);
           setAmPm(entry.hour !== undefined && entry.hour !== null && entry.hour >= 12 ? 'PM' : 'AM');
         }
-        setMinute(entry.minute);
-        setSecond(entry.second);
+        setMinute(entry.minute ?? undefined);
+        setSecond(entry.second ?? undefined);
       } else {
         // Clear time fields for non-day entries
         setHour(undefined);
@@ -147,7 +147,7 @@ export default function EntryEditModal({
     // 1. The click target is the overlay itself (not a child)
     // 2. There's no text selection (user wasn't selecting text)
     // 3. The mousedown also happened on the overlay (not a drag from inside the modal)
-    const hasSelection = window.getSelection()?.toString().length > 0;
+    const hasSelection = (window.getSelection()?.toString() ?? '').length > 0;
     const clickedOverlay = e.target === e.currentTarget;
     const mousedownOnOverlay = mouseDownTargetRef.current === e.currentTarget;
     
@@ -271,7 +271,7 @@ export default function EntryEditModal({
       
       console.log('[EntryEditModal] 🔄 Calling saveJournalEntry IPC...');
       try {
-        const savedEntry = await saveJournalEntry(updatedEntry);
+        await saveJournalEntry(updatedEntry);
         console.log('[EntryEditModal] ✅ saveJournalEntry IPC call COMPLETED successfully');
         
         // Verify entry was saved with time

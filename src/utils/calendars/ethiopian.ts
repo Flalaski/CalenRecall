@@ -15,7 +15,13 @@
 
 import { CalendarConverter, CalendarDate, CalendarInfo } from './types';
 import { CALENDAR_INFO } from './types';
-import { gregorianToJDN, jdnToGregorian } from './julianDayUtils';
+
+
+/** Native Ge'ez (Ethiopic) month names */
+export const ETHIOPIAN_MONTH_NAMES_GE_EZ = [
+  'መስከረም', 'ጥቅምት', 'ኅዳር', 'ታኅሣሥ', 'ጥር', 'የካቲት',
+  'መጋቢት', 'ሚያዝያ', 'ግንቦት', 'ሰኔ', 'ሐምሌ', 'ነሐሴ', 'ጳጉሜ'
+];
 
 // Ethiopian epoch: August 29, 8 CE (Julian) = Meskerem 1, 1 EE
 // JDN of August 29, 8 CE (Julian) = 1724221
@@ -214,9 +220,15 @@ export const ethiopianCalendar: CalendarConverter = {
   },
   
   formatDate(date: CalendarDate, format: string = 'YYYY-MM-DD'): string {
-    // Use the comprehensive formatter which has Ethiopian month names
-    const { formatCalendarDate } = require('./dateFormatter');
-    return formatCalendarDate(date, format);
+    // Basic formatting — month names handled by comprehensive formatter
+    const monthStr = String(date.month).padStart(2, '0');
+    const dayStr = String(date.day).padStart(2, '0');
+    return format
+      .replace(/YYYY/g, date.year.toString())
+      .replace(/YY/g, date.year.toString().slice(-2))
+      .replace(/MM/g, monthStr)
+      .replace(/DD/g, dayStr)
+      .replace(/ERA/g, date.era || '');
   },
   
   parseDate(dateStr: string): CalendarDate | null {

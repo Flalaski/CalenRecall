@@ -15,7 +15,14 @@
 
 import { CalendarConverter, CalendarDate, CalendarInfo } from './types';
 import { CALENDAR_INFO } from './types';
-import { gregorianToJDN, jdnToGregorian } from './julianDayUtils';
+
+
+/** Native Coptic script month names (Unicode Coptic block: U+2C80–U+2CFF) */
+export const COPTIC_MONTH_NAMES_NATIVE = [
+  'Ⲑⲱⲟⲩⲧ', 'Ⲡⲁⲟⲡⲓ', 'Ⲁⲑⲱⲣ', 'Ⲕⲟⲓⲁⲕ', 'Ⲧⲱⲃⲓ', 'Ⲙⲉϣⲓⲣ',
+  'Ⲡⲁⲣⲉⲙϩⲁⲧ', 'Ⲡⲁⲣⲙⲟⲩⲧⲉ', 'Ⲡⲁϣⲟⲛⲥ', 'Ⲡⲁⲱⲛⲓ',
+  'Ⲉⲡⲓⲡ', 'Ⲙⲉⲥⲱⲣⲓ', 'Ⲡⲓⲕⲟⲩϫⲓ ⲛ̀ⲁⲃⲟⲧ'
+];
 
 // Coptic epoch: August 29, 284 CE (Julian) = Tout 1, 1 AM
 // Note: August 29, 284 CE in Julian calendar
@@ -215,9 +222,15 @@ export const copticCalendar: CalendarConverter = {
   },
   
   formatDate(date: CalendarDate, format: string = 'YYYY-MM-DD'): string {
-    // Use the comprehensive formatter which has Coptic month names
-    const { formatCalendarDate } = require('./dateFormatter');
-    return formatCalendarDate(date, format);
+    // Basic formatting — month names handled by comprehensive formatter
+    const monthStr = String(date.month).padStart(2, '0');
+    const dayStr = String(date.day).padStart(2, '0');
+    return format
+      .replace(/YYYY/g, date.year.toString())
+      .replace(/YY/g, date.year.toString().slice(-2))
+      .replace(/MM/g, monthStr)
+      .replace(/DD/g, dayStr)
+      .replace(/ERA/g, date.era || '');
   },
   
   parseDate(dateStr: string): CalendarDate | null {

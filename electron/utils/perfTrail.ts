@@ -66,7 +66,7 @@ class ElectronPerfTrail {
   private _spans: Map<string, SpanEntry> = new Map();
   private _aggregates: Map<string, Aggregate> = new Map();
   private _history: HistoryEntry[] = [];
-  private _budgets: Map<string, number> = new Map(Object.entries(ELECTRON_BUDGETS));
+  private _budgets: Map<string, number> = new Map(Object.entries(ELECTRON_BUDGETS)); // ELECTRON_BUDGETS is a const, always truthy
   private _lastLogged: Map<string, number> = new Map();
 
   constructor() {

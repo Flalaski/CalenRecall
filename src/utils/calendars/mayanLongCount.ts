@@ -84,43 +84,37 @@ export const mayanLongCountCalendar: CalendarConverter = {
     const baktun = year;
     const katun = month;
     
-    // Handle negative dates (before epoch)
-    const isNegative = baktun < 0 || katun < 0 || day < 0;
+    // Long Count dates must have consistent sign — all components positive for
+    // post-epoch dates, all components negative for pre-epoch dates.
+    // Mixed-sign components are ambiguous and rejected.
+    // fromJDN always returns all-positive (post-epoch) or all-negative (pre-epoch).
+    if ((baktun < 0 && katun >= 0) || (baktun >= 0 && katun < 0) ||
+        (baktun < 0 && day >= 0) || (baktun >= 0 && day < 0)) {
+      throw new Error(`Invalid Long Count date: mixed signs not allowed (baktun=${baktun}, katun=${katun}, day=${day})`);
+    }
+    
+    const isNegative = baktun < 0;
     
     // Decode tun, uinal, kin from day field
     // day = tun * 400 + uinal * 20 + kin
-    // For negative days, use absolute value for decoding, then negate
-    const absDay = Math.abs(day);
-    let tun = Math.floor(absDay / 400);
-    let remainingAfterTun = absDay % 400;
-    let uinal = Math.floor(remainingAfterTun / 20);
-    let kin = remainingAfterTun % 20;
+    const decodedTun = Math.floor(Math.abs(day) / 400);
+    const remainingAfterTun = Math.abs(day) % 400;
+    const decodedUinal = Math.floor(remainingAfterTun / 20);
+    const decodedKin = remainingAfterTun % 20;
     
-    // If negative, negate the components
-    if (isNegative) {
-      tun = -tun;
-      uinal = -uinal;
-      kin = -kin;
+    // Validate component ranges
+    if (decodedUinal >= 18) {
+      throw new Error(`Invalid uinal: ${decodedUinal} (must be 0-17)`);
+    }
+    if (decodedKin >= 20) {
+      throw new Error(`Invalid kin: ${decodedKin} (must be 0-19)`);
     }
     
-    // Validate components (use absolute values for validation)
-    if (Math.abs(uinal) >= 18) {
-      throw new Error(`Invalid uinal: ${uinal} (must be 0-17 or -17 to 0)`);
-    }
-    if (Math.abs(kin) >= 20) {
-      throw new Error(`Invalid kin: ${kin} (must be 0-19 or -19 to 0)`);
-    }
+    const daysSinceEpoch = longCountToDays(
+      Math.abs(baktun), Math.abs(katun),
+      decodedTun, decodedUinal, decodedKin
+    );
     
-    // Use absolute values for baktun and katun in calculation
-    const absBaktun = Math.abs(baktun);
-    const absKatun = Math.abs(katun);
-    const absTun = Math.abs(tun);
-    const absUinal = Math.abs(uinal);
-    const absKin = Math.abs(kin);
-    
-    const daysSinceEpoch = longCountToDays(absBaktun, absKatun, absTun, absUinal, absKin);
-    
-    // If any component is negative, negate the result
     if (isNegative) {
       return MAYAN_EPOCH - daysSinceEpoch;
     }

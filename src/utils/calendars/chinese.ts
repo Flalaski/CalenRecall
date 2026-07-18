@@ -48,13 +48,10 @@
 
 import { CalendarConverter, CalendarDate, CalendarInfo } from './types';
 import { CALENDAR_INFO } from './types';
-import { gregorianToJDN, jdnToGregorian } from './julianDayUtils';
+import { jdnToGregorian } from './julianDayUtils';
 import { 
-  newMoonJDN, 
-  nextNewMoonJDN, 
-  previousNewMoonJDN,
+  nextNewMoonJDN,
   solarTermJDN,
-  solarTerm,
   winterSolsticeJDN
 } from './astronomicalUtils';
 
@@ -63,8 +60,8 @@ const CHINESE_MONTH_NAMES = [
   '正', '二', '三', '四', '五', '六', '七', '八', '九', '十', '十一', '十二'
 ];
 
-// Chinese month names (traditional)
-const CHINESE_MONTH_NAMES_TRADITIONAL = [
+// Chinese month names (traditional with 月 suffix)
+export const CHINESE_MONTH_NAMES_TRADITIONAL = [
   '正月', '二月', '三月', '四月', '五月', '六月', '七月', '八月', '九月', '十月', '十一月', '十二月'
 ];
 
@@ -248,13 +245,11 @@ export const chineseCalendar: CalendarConverter = {
     
     // Find the target month in the year data
     let targetMonth: ChineseMonthData | null = null;
-    let monthIndex = 0;
     
     for (let i = 0; i < yearData.months.length; i++) {
       const m = yearData.months[i];
       if (m.monthNumber === actualMonth && m.isLeap === isLeapMonth) {
         targetMonth = m;
-        monthIndex = i;
         break;
       }
     }

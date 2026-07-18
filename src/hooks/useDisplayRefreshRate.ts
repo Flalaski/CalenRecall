@@ -3,7 +3,7 @@
  * Supports ultra-high refresh rate monitors
  */
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { displayRefreshRate } from '../utils/performance/displayRefreshRate';
 
 /**

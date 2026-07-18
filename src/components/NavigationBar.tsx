@@ -11,6 +11,8 @@ import { getDateEntryConfig } from '../utils/calendars/dateEntryConfig';
 import { calendarDateToDate, dateToCalendarDate, formatCalendarDate } from '../utils/calendars/calendarConverter';
 import { isWindowTransitioning } from '../utils/windowStateTracker';
 import { getTierName } from '../utils/calendarTierNames';
+import { getDefaultLayerPrefs } from '../utils/layerToggleRegistry';
+import LayerToggleList from './LayerToggleList';
 import perfTrail from '../utils/performance/perfTrail';
 import './NavigationBar.css';
 
@@ -65,6 +67,49 @@ export default function NavigationBar({
   const [dateInputError, setDateInputError] = useState(false);
   const [isDateInputFocused, setIsDateInputFocused] = useState(false);
   
+  // ── Layers dropdown state ──
+  const [showLayers, setShowLayers] = useState(false);
+  const layersRef = useRef<HTMLDivElement>(null);
+  const layersButtonRef = useRef<HTMLButtonElement>(null);
+  const [layerPrefs, setLayerPrefs] = useState<Record<string, boolean>>(getDefaultLayerPrefs());
+
+  // Load layer preferences on mount from single source of truth (LAYER_TOGGLES)
+  useEffect(() => {
+    if (!window.electronAPI) return;
+    window.electronAPI.getAllPreferences().then((prefs: any) => {
+      const defaults = getDefaultLayerPrefs();
+      const merged: Record<string, boolean> = {};
+      for (const key of Object.keys(defaults)) {
+        merged[key] = prefs[key] ?? defaults[key];
+      }
+      setLayerPrefs(merged);
+    }).catch(() => {});
+  }, []);
+
+  // Toggle a layer preference
+  const toggleLayer = useCallback((key: keyof typeof layerPrefs) => {
+    const newVal = !layerPrefs[key];
+    setLayerPrefs(prev => ({ ...prev, [key]: newVal }));
+    if (window.electronAPI) {
+      (window.electronAPI.setPreference as any)(key, newVal).catch(() => {});
+    }
+  }, [layerPrefs]);
+
+  // Close layers dropdown on outside click
+  useEffect(() => {
+    if (!showLayers) return;
+    const handleClick = (e: MouseEvent) => {
+      if (layersRef.current && !layersRef.current.contains(e.target as Node) &&
+          layersButtonRef.current && !layersButtonRef.current.contains(e.target as Node)) {
+        setShowLayers(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, [showLayers]);
+
+  // ── End layers state ──
+
   // Dynamic refs for input fields
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
   const previousFocusedFieldRef = useRef<number | null>(null);
@@ -1688,6 +1733,21 @@ export default function NavigationBar({
                 ⚙️
               </button>
             )}
+            <div className="layers-dropdown-container" ref={layersRef}>
+              <button
+                ref={layersButtonRef}
+                className={`view-mode-button layers-button ${showLayers ? 'active' : ''}`}
+                onClick={() => setShowLayers(!showLayers)}
+                title="Display Layers (astronomical events, holidays, cycles)"
+              >
+                🗂️
+              </button>
+              {showLayers && (
+                <div className="layers-dropdown">
+                  <LayerToggleList prefs={layerPrefs} onToggle={(key) => toggleLayer(key as any)} variant="dropdown" />
+                </div>
+              )}
+            </div>
           </div>
           <div className="calendar-selector">
             <select

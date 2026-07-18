@@ -38,6 +38,7 @@ export interface Preferences {
   showMetonicCycle?: boolean; // Whether to display Metonic cycle indicators (Hebrew 19-year cycle)
   showMayanCalendarRound?: boolean; // Whether to display Mayan Calendar Round indicators (52-year cycle)
   showHinduYugaCycles?: boolean; // Whether to display Hindu Yuga cycle indicators
+  showCulturalHolidays?: boolean; // Whether to display cultural holidays in the calendar view
   googleOAuthClientId?: string; // Google OAuth Desktop app Client ID (for Google Calendar sync)
 }
 
@@ -190,6 +191,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
   
   closePreferencesWindow: (): Promise<void> =>
     ipcRenderer.invoke('close-preferences-window'),
+  
+  // Layer toggle registration (register toggle definitions from renderer for dynamic Electron menu)
+  registerLayerToggles: (toggles: { key: string; label: string; section: string }[]): Promise<void> =>
+    ipcRenderer.invoke('register-layer-toggles', toggles),
   
   // Import progress listener
   onImportProgress: (callback: (progress: { stage: string; progress: number; message: string; total?: number; imported?: number; skipped?: number }) => void) => {

@@ -14,8 +14,6 @@ import { gregorianToJDN, julianToJDN } from './julianDayUtils';
  * This is the JDN of year 1, month 1, day 1 in that calendar
  */
 export function getCalendarEpoch(calendar: CalendarSystem): number {
-  const eraStart = CALENDAR_INFO[calendar].eraStart;
-  
   switch (calendar) {
     case 'gregorian':
       // Gregorian year 1, January 1 = JDN 1721424
@@ -87,7 +85,7 @@ export function getCalendarEpoch(calendar: CalendarSystem): number {
  * Check if a year is valid for a calendar system
  * Some calendars don't support years before their epoch
  */
-export function isValidCalendarYear(calendar: CalendarSystem, year: number): boolean {
+export function isValidCalendarYear(_calendar: CalendarSystem, _year: number): boolean {
   // Most calendars support negative years (before year 1)
   // But some calendars have specific constraints
   return true; // For now, allow all years

@@ -19,7 +19,7 @@
  */
 
 import { CalendarSystem as CalendarType } from './types';
-import { gregorianToJDN, jdnToGregorian } from './julianDayUtils';
+import { jdnToGregorian } from './julianDayUtils';
 import { mayanLongCountCalendar } from './mayanLongCount';
 
 /**
@@ -337,9 +337,14 @@ export function getHinduYugaCycle(year: number): YugaCycleInfo {
       yugaType = 'Treta';
       yearsIntoYuga = (KALI_YUGA_YEARS + DVAPARA_YUGA_YEARS + TRETA_YUGA_YEARS) - yearsIntoMahayuga;
       yugaNumber = 0;
-    } else {
+    } else if (yearsIntoMahayuga <= KALI_YUGA_YEARS + DVAPARA_YUGA_YEARS + TRETA_YUGA_YEARS + SATYA_YUGA_YEARS) {
       yugaType = 'Satya';
-      yearsIntoYuga = MAHAYUGA_YEARS - yearsIntoMahayuga;
+      yearsIntoYuga = (KALI_YUGA_YEARS + DVAPARA_YUGA_YEARS + TRETA_YUGA_YEARS + SATYA_YUGA_YEARS) - yearsIntoMahayuga;
+      yugaNumber = 0;
+    } else {
+      // Beyond the Mahayuga — should not happen
+      yugaType = 'Satya';
+      yearsIntoYuga = 0;
       yugaNumber = 0;
     }
     
@@ -378,10 +383,15 @@ export function getHinduYugaCycle(year: number): YugaCycleInfo {
     yugaType = 'Treta';
     yearsIntoYuga = yearsIntoCurrentMahayuga - (KALI_YUGA_YEARS + DVAPARA_YUGA_YEARS);
     yugaNumber = 0;
-  } else {
+  } else if (yearsIntoCurrentMahayuga < KALI_YUGA_YEARS + DVAPARA_YUGA_YEARS + TRETA_YUGA_YEARS + SATYA_YUGA_YEARS) {
     // In Satya Yuga
     yugaType = 'Satya';
     yearsIntoYuga = yearsIntoCurrentMahayuga - (KALI_YUGA_YEARS + DVAPARA_YUGA_YEARS + TRETA_YUGA_YEARS);
+    yugaNumber = 0;
+  } else {
+    // Beyond the Mahayuga — should not happen
+    yugaType = 'Satya';
+    yearsIntoYuga = SATYA_YUGA_YEARS;
     yugaNumber = 0;
   }
   

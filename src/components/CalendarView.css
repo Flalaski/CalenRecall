@@ -309,6 +309,34 @@
   filter: drop-shadow(0 2px 4px rgba(255, 255, 255, 0.15)) drop-shadow(0 2px 4px rgba(0, 0, 0, 0.4));
 }
 
+/* Cultural holiday icons - similar styling to astronomical events */
+.cell-holidays {
+  display: flex;
+  flex-direction: row;
+  gap: 0.15rem;
+  margin-top: 0.15rem;
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.holiday-icon {
+  font-size: 0.85rem;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: help;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.15));
+  transition: transform 0.2s ease;
+}
+
+.holiday-icon:hover {
+  transform: scale(1.2);
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.25));
+}
+
 .month-cell .cell-content {
   justify-content: flex-start;
   padding-top: 0.75rem;

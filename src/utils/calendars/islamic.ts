@@ -28,7 +28,8 @@ const ISLAMIC_MONTH_NAMES = [
   'Dhu al-Hijjah'
 ];
 
-const ISLAMIC_MONTH_NAMES_ARABIC = [
+/** Native Arabic month names (hijri calendar) */
+export const ISLAMIC_MONTH_NAMES_ARABIC = [
   'محرم',
   'صفر',
   'ربيع الأول',

@@ -7,7 +7,7 @@ export default function AboutComponent() {
   const themeCleanupRef = useRef<(() => void) | null>(null);
   const [updateStatus, setUpdateStatus] = useState<'idle' | 'checking' | 'available' | 'up-to-date' | 'error'>('idle');
   const [newVersion, setNewVersion] = useState<string>('');
-  const [checkingManually, setCheckingManually] = useState(false);
+  const [, setCheckingManually] = useState(false);
 
   // Load theme from profile selector's localStorage (same as profile selector)
   const loadProfileSelectorTheme = (): ThemeName => {

@@ -7,49 +7,92 @@
 
 import { CalendarDate, CalendarSystem, CALENDAR_INFO } from './types';
 import { calendarDateToDate } from './calendarConverter';
-import { dateToJDN as gregorianDateToJDN } from './julianDayUtils';
+import { ISLAMIC_MONTH_NAMES_ARABIC } from './islamic';
+import { HEBREW_MONTH_NAMES_HEBREW } from './hebrew';
+import { PERSIAN_MONTH_NAMES_FARSI } from './persian';
+import { ETHIOPIAN_MONTH_NAMES_GE_EZ } from './ethiopian';
+import { COPTIC_MONTH_NAMES_NATIVE } from './coptic';
+import { SAKA_MONTH_NAMES_DEVANAGARI } from './indianSaka';
+import { BAHAI_MONTH_NAMES_ARABIC } from './bahai';
+import { CHEROKEE_MONTH_NAMES_SYLLABARY } from './cherokee';
+import { CHINESE_MONTH_NAMES_TRADITIONAL } from './chinese';
+import { IROQUOIS_MOON_NAMES_MOHAWK } from './iroquois';
 
 // Month names for different calendars
 const MONTH_NAMES: Record<CalendarSystem, string[]> = {
   gregorian: ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'],
   julian: ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'],
   islamic: ['Muharram', 'Safar', 'Rabi\' al-awwal', 'Rabi\' al-thani', 'Jumada al-awwal', 'Jumada al-thani', 'Rajab', 'Sha\'ban', 'Ramadan', 'Shawwal', 'Dhu al-Qi\'dah', 'Dhu al-Hijjah'],
-  hebrew: ['Nisan', 'Iyar', 'Sivan', 'Tammuz', 'Av', 'Elul', 'Tishrei', 'Cheshvan', 'Kislev', 'Tevet', 'Shevat', 'Adar'],
+  hebrew: ['Nisan', 'Iyar', 'Sivan', 'Tammuz', 'Av', 'Elul', 'Tishrei', 'Cheshvan', 'Kislev', 'Tevet', 'Shevat', 'Adar I', 'Adar II'],
   persian: ['Farvardin', 'Ordibehesht', 'Khordad', 'Tir', 'Mordad', 'Shahrivar', 'Mehr', 'Aban', 'Azar', 'Dey', 'Bahman', 'Esfand'],
   chinese: ['正', '二', '三', '四', '五', '六', '七', '八', '九', '十', '十一', '十二'],
   ethiopian: ['Meskerem', 'Tikimt', 'Hidar', 'Tahsas', 'Tir', 'Yekatit', 'Megabit', 'Miazia', 'Genbot', 'Sene', 'Hamle', 'Nehase', 'Pagume'],
   coptic: ['Tout', 'Baba', 'Hator', 'Koiak', 'Tobi', 'Meshir', 'Paremhat', 'Paremoude', 'Pashons', 'Paoni', 'Epip', 'Mesori', 'Pi Kogi Enavot'],
   'indian-saka': ['Chaitra', 'Vaisakha', 'Jyeshtha', 'Ashadha', 'Shravana', 'Bhadra', 'Ashwin', 'Kartika', 'Agrahayana', 'Pausha', 'Magha', 'Phalguna'],
-  bahai: ['Bahá', 'Jalál', 'Jamál', '‘Aẓamat', 'Núr', 'Raḥmat', 'Kalimát', 'Kamál', 'Asmá\'', '‘Izzat', 'Mashíyyat', '‘Ilm', 'Qudrat', 'Qawl', 'Masá\'il', 'Sharaf', 'Sulṭán', 'Mulk', 'Ayyám-i-Há', '‘Alá\''],
+  bahai: ['Ayyám-i-Há', 'Bahá', 'Jalál', 'Jamál', '‘Aẓamat', 'Núr', 'Raḥmat', 'Kalimát', 'Kamál', 'Asmá\'', '‘Izzat', 'Mashíyyat', '‘Ilm', 'Qudrat', 'Qawl', 'Masá\'il', 'Sharaf', 'Sulṭán', 'Mulk', '‘Alá\''],
   'thai-buddhist': ['มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน', 'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'],
   'mayan-tzolkin': ['Imix', 'Ik\'', 'Ak\'b\'al', 'K\'an', 'Chikchan', 'Kimi', 'Manik\'', 'Lamat', 'Muluk', 'Ok', 'Chuwen', 'Eb\'', 'B\'en', 'Ix', 'Men', 'K\'ib\'', 'Kab\'an', 'Etz\'nab\'', 'Kawak', 'Ajaw'],
   'mayan-haab': ['Pop', 'Wo\'', 'Sip', 'Sotz\'', 'Sek', 'Xul', 'Yaxk\'in', 'Mol', 'Ch\'en', 'Yax', 'Sak\'', 'Keh', 'Mak', 'K\'ank\'in', 'Muwan', 'Pax', 'K\'ayab\'', 'Kumk\'u', 'Wayeb\''],
   'mayan-longcount': [],
   cherokee: ['Cold Moon', 'Bony Moon', 'Windy Moon', 'Flower Moon', 'Planting Moon', 'Green Corn Moon', 'Ripe Corn Moon', 'Fruit Moon', 'Nut Moon', 'Harvest Moon', 'Trading Moon', 'Snow Moon'],
-  iroquois: ['First Moon', 'Second Moon', 'Third Moon', 'Fourth Moon', 'Fifth Moon', 'Sixth Moon', 'Seventh Moon', 'Eighth Moon', 'Ninth Moon', 'Tenth Moon', 'Eleventh Moon', 'Twelfth Moon', 'Thirteenth Moon'],
+  iroquois: ['Midwinter Moon', 'Moon of the Crust', 'Maple Sugar Moon', 'Planting Moon', 'Strawberry Moon', 'Moon of the Green Corn', 'Full Harvest Moon', 'Moon of the Falling Leaves', 'Moon of the Hunter', 'Moon of the Changing Seasons', 'Cold Moon', 'Moon of the Long Snows', 'Moon of the Deep Snows'],
   'aztec-xiuhpohualli': ['Atlcahualo', 'Tlacaxipehualiztli', 'Tozoztontli', 'Huey Tozoztli', 'Toxcatl', 'Etzalcualiztli', 'Tecuilhuitontli', 'Huey Tecuilhuitl', 'Tlaxochimaco', 'Xocotlhuetzi', 'Ochpaniztli', 'Teotleco', 'Tepeilhuitl', 'Quecholli', 'Panquetzaliztli', 'Atemoztli', 'Tititl', 'Izcalli', 'Nemontemi']
 };
 
 // Abbreviated month names
-const MONTH_NAMES_SHORT: Record<CalendarSystem, string[]> = {
+export const MONTH_NAMES_SHORT: Record<CalendarSystem, string[]> = {
   gregorian: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
   julian: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
   islamic: ['Muh', 'Saf', 'Rab I', 'Rab II', 'Jum I', 'Jum II', 'Raj', 'Sha\'', 'Ram', 'Shaw', 'Dhu Q', 'Dhu H'],
-  hebrew: ['Nis', 'Iyy', 'Siv', 'Tam', 'Av', 'Elu', 'Tis', 'Che', 'Kis', 'Tev', 'She', 'Ada'],
+  hebrew: ['Nis', 'Iyy', 'Siv', 'Tam', 'Av', 'Elu', 'Tis', 'Che', 'Kis', 'Tev', 'She', 'Ad1', 'Ad2'],
   persian: ['Far', 'Ord', 'Kho', 'Tir', 'Mor', 'Sha', 'Meh', 'Aba', 'Aza', 'Dey', 'Bah', 'Esf'],
   chinese: ['正', '二', '三', '四', '五', '六', '七', '八', '九', '十', '十一', '十二'],
   ethiopian: ['Mes', 'Tik', 'Hid', 'Tah', 'Tir', 'Yek', 'Meg', 'Mia', 'Gen', 'Sen', 'Ham', 'Neh', 'Pag'],
   coptic: ['Tou', 'Bab', 'Hat', 'Koi', 'Tob', 'Mes', 'Par', 'Par', 'Pas', 'Pao', 'Epi', 'Mes', 'PiK'],
   'indian-saka': ['Cha', 'Vai', 'Jye', 'Ash', 'Shr', 'Bha', 'Ash', 'Kar', 'Agr', 'Pau', 'Mag', 'Pha'],
-  bahai: ['Bah', 'Jal', 'Jam', 'Aẓa', 'Núr', 'Raḥ', 'Kal', 'Kam', 'Asm', 'Izz', 'Mas', 'Ilm', 'Qud', 'Qaw', 'Mas', 'Sha', 'Sul', 'Mul', 'Ayy', 'Ala'],
+  bahai: ['Ayy', 'Bah', 'Jal', 'Jam', 'Aẓa', 'Núr', 'Raḥ', 'Kal', 'Kam', 'Asm', 'Izz', 'Mas', 'Ilm', 'Qud', 'Qaw', 'Mas', 'Sha', 'Sul', 'Mul', 'Ala'],
   'thai-buddhist': ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'],
   'mayan-tzolkin': ['Imi', 'Ik', 'Ak\'', 'K\'an', 'Chi', 'Kim', 'Man', 'Lam', 'Mul', 'Ok', 'Chu', 'Eb', 'B\'en', 'Ix', 'Men', 'K\'ib', 'Kab', 'Etz', 'Kaw', 'Aja'],
   'mayan-haab': ['Pop', 'Wo', 'Sip', 'Sot', 'Sek', 'Xul', 'Yax', 'Mol', 'Ch\'e', 'Yax', 'Sak', 'Keh', 'Mak', 'K\'an', 'Muw', 'Pax', 'K\'ay', 'Kum', 'Way'],
   'mayan-longcount': [],
   cherokee: ['Cold', 'Bony', 'Windy', 'Flower', 'Planting', 'Green Corn', 'Ripe Corn', 'Fruit', 'Nut', 'Harvest', 'Trading', 'Snow'],
-  iroquois: ['1st Moon', '2nd Moon', '3rd Moon', '4th Moon', '5th Moon', '6th Moon', '7th Moon', '8th Moon', '9th Moon', '10th Moon', '11th Moon', '12th Moon', '13th Moon'],
+  iroquois: ['Midwinter', 'Crust', 'Maple', 'Planting', 'Strawberry', 'Green Corn', 'Harvest', 'Falling Leaves', 'Hunter', 'Changing', 'Cold', 'Long Snows', 'Deep Snows'],
   'aztec-xiuhpohualli': ['Atlc', 'Tlac', 'Toz', 'Huey', 'Tox', 'Etz', 'Tec', 'Huey T', 'Tlax', 'Xoc', 'Och', 'Teot', 'Tepe', 'Que', 'Pan', 'Atem', 'Titi', 'Izca', 'Nemo']
 };
+
+// Native-script month names where available (uses script, not transliteration)
+// Falls back to MONTH_NAMES for calendars without a separate native-script form
+export const MONTH_NAMES_NATIVE: Record<CalendarSystem, string[]> = {
+  gregorian: MONTH_NAMES.gregorian,
+  julian: MONTH_NAMES.julian,
+  islamic: ISLAMIC_MONTH_NAMES_ARABIC,
+  hebrew: HEBREW_MONTH_NAMES_HEBREW,
+  persian: PERSIAN_MONTH_NAMES_FARSI,
+  chinese: CHINESE_MONTH_NAMES_TRADITIONAL,
+  ethiopian: ETHIOPIAN_MONTH_NAMES_GE_EZ,
+  coptic: COPTIC_MONTH_NAMES_NATIVE,
+  'indian-saka': SAKA_MONTH_NAMES_DEVANAGARI,
+  bahai: BAHAI_MONTH_NAMES_ARABIC,     // 20 entries incl. Ayyám-i-Há
+  'thai-buddhist': MONTH_NAMES['thai-buddhist'], // already in native Thai script
+  'mayan-tzolkin': MONTH_NAMES['mayan-tzolkin'],
+  'mayan-haab': MONTH_NAMES['mayan-haab'],
+  'mayan-longcount': [],
+  cherokee: CHEROKEE_MONTH_NAMES_SYLLABARY,
+  iroquois: IROQUOIS_MOON_NAMES_MOHAWK,
+  'aztec-xiuhpohualli': MONTH_NAMES['aztec-xiuhpohualli'],
+};
+
+/**
+ * Get a month name in the native script/orthography for a calendar system.
+ * Falls back to the standard transliterated MONTH_NAMES when no native form exists.
+ */
+export function getNativeMonthName(calendar: CalendarSystem, month: number): string {
+  const names = MONTH_NAMES_NATIVE[calendar];
+  if (!names || names.length === 0 || month < 0 || month >= names.length) {
+    return String(month + 1);
+  }
+  return names[month];
+}
 
 // Day of week names (using Gregorian week for most calendars)
 const DAY_NAMES: string[] = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
@@ -63,15 +106,6 @@ function getDayOfWeek(date: CalendarDate): number {
   // Convert calendar date to Date object, then get day of week
   const jsDate = calendarDateToDate(date);
   return jsDate.getDay(); // 0 = Sunday, 6 = Saturday
-}
-
-/**
- * Convert calendar date to JDN using the proper converter
- */
-function dateToJDN(date: CalendarDate): number {
-  // Convert calendar date to Date object, then to JDN
-  const jsDate = calendarDateToDate(date);
-  return gregorianDateToJDN(jsDate);
 }
 
 /**
@@ -95,17 +129,18 @@ export function formatCalendarDate(date: CalendarDate, format: string = 'YYYY-MM
   
   // Special handling for Mayan Long Count (positional notation)
   if (calendar === 'mayan-longcount') {
+    // Decode all 5 components from CalendarDate fields
+    // year = baktun, month = katun, day = tun * 400 + uinal * 20 + kin
     const baktun = date.year < 0 ? Math.abs(date.year) - 1 : date.year;
     const katun = Math.abs(date.month);
-    const tun = Math.abs(date.day);
-    // Default format for Long Count: baktun.katun.tun.uinal.kin
-    // Note: uinal and kin are not stored in our CalendarDate structure,
-    // so we default them to 0
+    const absDay = Math.abs(date.day);
+    const tun = Math.floor(absDay / 400);
+    const uinal = Math.floor((absDay % 400) / 20);
+    const kin = absDay % 20;
     if (format.includes('.')) {
-      return `${baktun}.${katun}.${tun}.0.0`;
+      return `${baktun}.${katun}.${tun}.${uinal}.${kin}`;
     }
-    // If format doesn't use dots, use standard formatting
-    return `${baktun}.${katun}.${tun}`;
+    return `${baktun}.${katun}.${tun}.${uinal}.${kin}`;
   }
   
   const monthNames = MONTH_NAMES[calendar] || MONTH_NAMES.gregorian;
@@ -121,7 +156,7 @@ export function formatCalendarDate(date: CalendarDate, format: string = 'YYYY-MM
     actualMonth = date.month - 12; // Convert leap month 13-24 to regular month 1-12
     isLeapMonth = true;
   } else if (calendar === 'hebrew' && date.month > 12) {
-    actualMonth = date.month - 12; // Hebrew leap months
+    actualMonth = date.month; // Hebrew uses month 12 (Adar I) and 13 (Adar II) directly
     isLeapMonth = true;
   }
   
@@ -133,9 +168,6 @@ export function formatCalendarDate(date: CalendarDate, format: string = 'YYYY-MM
   if (calendar === 'chinese' && isLeapMonth) {
     monthName = `闰${monthName}`; // "Leap" prefix in Chinese
     monthNameShort = `闰${monthNameShort}`;
-  } else if (calendar === 'hebrew' && isLeapMonth) {
-    monthName = `Adar II`; // Hebrew leap month name
-    monthNameShort = `Ad2`;
   }
   
   // Get day of week

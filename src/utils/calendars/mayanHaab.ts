@@ -9,6 +9,12 @@
  * Month names: Pop, Wo', Sip, Sotz', Sek, Xul, Yaxk'in, Mol, Ch'en, Yax,
  * Sak', Keh, Mak, K'ank'in, Muwan, Pax, K'ayab', Kumk'u, Wayeb'
  * 
+ * Sources:
+ * - Dershowitz & Reingold. "Calendrical Calculations." Ch. 4 (Mayan calendars).
+ * - Thompson, J. Eric S. "Maya Hieroglyphic Writing." 1971. (Haab' month glyphs).
+ * - Lounsbury, Floyd G. "Maya Numeration." 1978. (Calendar structure).
+ * - Aveni, Anthony F. "Skywatchers." 2001. (Haab' seasonal significance).
+ * 
  * Correlation constant (GMT): 584283 (JDN of August 11, 3114 BCE)
  */
 

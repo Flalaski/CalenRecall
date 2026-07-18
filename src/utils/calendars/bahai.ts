@@ -13,7 +13,7 @@
 
 import { CalendarConverter, CalendarDate, CalendarInfo } from './types';
 import { CALENDAR_INFO } from './types';
-import { gregorianToJDN, jdnToGregorian, isGregorianLeapYear } from './julianDayUtils';
+import { isGregorianLeapYear } from './julianDayUtils';
 import { vernalEquinoxJDN } from './astronomicalUtils';
 
 // Baháʼí epoch: March 21, 1844 CE (JDN = 2394647)
@@ -23,6 +23,14 @@ const BAHAI_EPOCH = 2394647;
 const BAHAI_MONTH_NAMES = [
   'Bahá', 'Jalál', 'Jamál', '‘Aẓamat', 'Núr', 'Raḥmat', 'Kalimát', 'Kamál', 'Asmá\'', 
   '‘Izzat', 'Mashíyyat', '‘Ilm', 'Qudrat', 'Qawl', 'Masá\'il', 'Sharaf', 'Sulṭán', 'Mulk', '‘Alá\''
+];
+
+/** Baháʼí month names in Arabic script (الأشهر البهائية)
+ *  Includes Ayyám-i-Há (intercalary days) at index 0 */
+export const BAHAI_MONTH_NAMES_ARABIC = [
+  'أيام الهاء',  // Ayyám-i-Há (intercalary days)
+  'بهاء', 'جلال', 'جمال', 'عظمة', 'نور', 'رحمة', 'كلمات', 'كمال', 'أسماء',
+  'عزة', 'مشية', 'علم', 'قدرة', 'قول', 'مسائل', 'شرف', 'سلطان', 'ملك', 'علاء'
 ];
 
 /**
@@ -72,7 +80,11 @@ export const bahaiCalendar: CalendarConverter = {
       let daysInYear = 0;
       if (month <= 18) {
         daysInYear = (month - 1) * 19 + (day - 1);
+      } else if (month === 0) {
+        // Ayyám-i-Há (intercalary days) — day directly after 18 regular months
+        daysInYear = 18 * 19 + (day - 1);
       } else if (month === 19) {
+        // Month 19 ('Alá') - comes after Ayyám-i-Há
         const intercalaryDays = isBahaiLeapYear(year) ? 5 : 4;
         daysInYear = 18 * 19 + intercalaryDays + (day - 1);
       }
@@ -95,6 +107,9 @@ export const bahaiCalendar: CalendarConverter = {
     // Add days from completed months (months 1-18, each with 19 days)
     if (month <= 18) {
       daysSinceNawRuz = (month - 1) * 19 + (day - 1);
+    } else if (month === 0) {
+      // Ayyám-i-Há (intercalary days) - comes between months 18 and 19
+      daysSinceNawRuz = 18 * 19 + (day - 1);
     } else if (month === 19) {
       // Month 19 is 'Alá' - comes after Ayyám-i-Há
       const intercalaryDays = isBahaiLeapYear(year) ? 5 : 4;
@@ -132,8 +147,8 @@ export const bahaiCalendar: CalendarConverter = {
             month = Math.floor(remainingDays / 19) + 1;
             day = (remainingDays % 19) + 1;
           } else if (remainingDays < 18 * 19 + intercalaryDays) {
-            // Ayyám-i-Há (intercalary days) - represent as month 19
-            month = 19;
+            // Ayyám-i-Há (intercalary days) - encoded as month 0
+            month = 0;
             day = remainingDays - 18 * 19 + 1;
           } else {
             // Month 19 ('Alá')
@@ -187,9 +202,8 @@ export const bahaiCalendar: CalendarConverter = {
     
     // Check if it's in the intercalary days (Ayyám-i-Há)
     if (daysSinceNawRuz >= 18 * 19 && daysSinceNawRuz < 18 * 19 + intercalaryDays) {
-      // This is Ayyám-i-Há - we'll represent it as month 18.5 or handle specially
-      // For simplicity, we'll use month 19 and adjust the day
-      month = 19;
+      // Ayyám-i-Há (intercalary days) - encoded as month 0 to distinguish from 'Alá'
+      month = 0;
       day = daysSinceNawRuz - 18 * 19 + 1;
     } else if (daysSinceNawRuz < 18 * 19) {
       // Regular month (1-18)
@@ -215,7 +229,9 @@ export const bahaiCalendar: CalendarConverter = {
   },
 
   formatDate(date: CalendarDate, format: string = 'YYYY-MM-DD'): string {
-    const monthName = date.month <= 19 ? BAHAI_MONTH_NAMES[date.month - 1] : '';
+    // Month 0 = Ayyám-i-Há (intercalary days), months 1-19 = regular months
+    const monthIndex = date.month >= 0 && date.month <= 19 ? date.month - 1 : -1;
+    const monthName = monthIndex >= 0 ? BAHAI_MONTH_NAMES[monthIndex] : 'Ayyám-i-Há';
     return format
       .replace(/YYYY/g, date.year.toString())
       .replace(/YY/g, date.year.toString().slice(-2))

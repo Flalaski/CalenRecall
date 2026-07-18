@@ -30,7 +30,8 @@ const HEBREW_MONTH_NAMES = [
   'Adar II'  // Regular Adar in leap years
 ];
 
-const HEBREW_MONTH_NAMES_HEBREW = [
+/** Native Hebrew month names (incl. leap month variants) */
+export const HEBREW_MONTH_NAMES_HEBREW = [
   'ניסן',
   'אייר',
   'סיוון',
@@ -42,9 +43,8 @@ const HEBREW_MONTH_NAMES_HEBREW = [
   'כסלו',
   'טבת',
   'שבט',
-  'אדר',
-  'אדר א',
-  'אדר ב'
+  'אדר א׳',   // Leap month (Adar I)
+  'אדר ב׳',   // Regular Adar in leap years (Adar II)
 ];
 
 // Hebrew epoch: October 7, 3761 BCE (Julian) = JDN 347997

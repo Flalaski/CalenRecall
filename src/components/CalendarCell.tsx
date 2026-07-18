@@ -1,8 +1,6 @@
 import { memo } from 'react';
 import { JournalEntry, TimeRange } from '../types';
 import { formatTime } from '../utils/dateUtils';
-import { getEntryColorForDateOptimized } from '../utils/entryColorUtils';
-import type { EntryLookup } from '../utils/entryLookupUtils';
 
 interface CalendarCellProps {
   date: Date;
@@ -45,7 +43,7 @@ const CalendarCell = memo(function CalendarCell({
   return (
     <div
       className={`calendar-cell ${viewMode}-cell ${isToday ? 'today' : ''} ${isSelected ? 'selected' : ''} ${hasEntry ? 'has-entry' : ''}`}
-      onClick={(e) => {
+      onClick={() => {
         // INP optimization: Defer to next animation frame for better responsiveness
         requestAnimationFrame(() => onClick());
       }}

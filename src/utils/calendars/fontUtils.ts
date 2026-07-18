@@ -19,22 +19,49 @@ export function getFontStackForCalendar(calendar: string): string {
   // Script-specific optimizations
   switch (calendar) {
     case 'chinese':
-      // Optimize for Chinese characters
+      // Optimize for Chinese characters (Hanzi)
       return `'Noto Sans SC', 'Noto Sans', 'Microsoft YaHei', 'SimHei', 'PingFang SC', 'Hiragino Sans GB', ${baseStack}`;
     
     case 'islamic':
     case 'persian':
     case 'bahai':
-      // Optimize for Arabic script
+      // Optimize for Arabic script (used by Islamic, Persian, and Baháʼí calendars)
       return `'Noto Sans Arabic', 'Noto Sans', 'Arial Unicode MS', 'Tahoma', ${baseStack}`;
     
     case 'hebrew':
-      // Optimize for Hebrew script
+      // Optimize for Hebrew script (Hebrew calendar)
       return `'Noto Sans Hebrew', 'Noto Sans', 'Arial Hebrew', 'David', ${baseStack}`;
     
     case 'thai-buddhist':
-      // Optimize for Thai script
+      // Optimize for Thai script (Thai Buddhist calendar)
       return `'Noto Sans Thai', 'Noto Sans', 'Thonburi', 'Sarabun', ${baseStack}`;
+    
+    case 'ethiopian':
+      // Optimize for Ge'ez/Ethiopic script
+      return `'Noto Sans Ethiopic', 'Noto Sans', 'Abyssinica SIL', 'Nyala', 'Ebrima', ${baseStack}`;
+
+    case 'coptic':
+      // Optimize for Coptic script (Unicode block U+2C80–U+2CFF)
+      return `'Noto Sans Coptic', 'Noto Sans Ethiopic', 'Noto Sans', 'Arial Unicode MS', ${baseStack}`;
+
+    case 'iroquois':
+      // Latin-based orthography with special diacritics (Kanien'kéha/Mohawk)
+      return `'Noto Sans', 'Noto Sans Canadian Aboriginal', 'Inter', 'Arial Unicode MS', 'Euphemia UCAS', ${baseStack}`;
+    
+    case 'indian-saka':
+      // Optimize for Devanagari script (Indian Saka calendar)
+      return `'Noto Sans Devanagari', 'Noto Sans', 'Nirmala UI', 'Mangal', 'Arial Unicode MS', ${baseStack}`;
+    
+    case 'cherokee':
+      // Optimize for Cherokee syllabary
+      return `'Noto Sans Cherokee', 'Noto Sans', 'Plantagenet Cherokee', 'Ebrima', ${baseStack}`;
+    
+    case 'mayan-tzolkin':
+    case 'mayan-haab':
+    case 'mayan-longcount':
+    case 'aztec-xiuhpohualli':
+      // Mesoamerican calendars use Latin script with special diacritics
+      return `'Noto Sans', 'Inter', 'Arial Unicode MS', ${baseStack}`;
     
     default:
       // Default multilingual stack

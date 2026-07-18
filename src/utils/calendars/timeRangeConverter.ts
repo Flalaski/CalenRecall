@@ -6,7 +6,7 @@
  */
 
 import { CalendarSystem, CalendarDate, CALENDAR_INFO } from './types';
-import { convertDate, dateToCalendarDate, calendarDateToDate, formatCalendarDate } from './calendarConverter';
+import { dateToCalendarDate, calendarDateToDate, formatCalendarDate } from './calendarConverter';
 import { dateToJDN, jdnToDate } from './julianDayUtils';
 import { getWeekStart, getWeekEnd, getMonthStart, getMonthEnd, getYearStart, getYearEnd, getDecadeStart, getDecadeEnd } from '../dateUtils';
 import { addDays, addWeeks, addMonths, addYears, getYear } from 'date-fns';

@@ -1263,7 +1263,6 @@
 }
 
 .entry-indicator-wrapper:hover:not(.in-cluster) {
-  transform: translate3d(-50%, -50%, 0) scale(2);
   z-index: 5;
 }
 

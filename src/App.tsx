@@ -21,6 +21,7 @@ import { useEntries } from './contexts/EntriesContext';
 import { entryCache } from './utils/entryLazyLoader';
 import { useCalendar } from './contexts/CalendarContext';
 import { initializeWindowStateTracker } from './utils/windowStateTracker';
+import { LAYER_TOGGLES } from './utils/layerToggleRegistry';
 import { differenceInDays, differenceInYears, differenceInMonths, addDays, addWeeks, addMonths, addYears } from 'date-fns';
 import './App.css';
 
@@ -79,6 +80,15 @@ function App() {
     const init = async () => {
       perfTrail.start('load-entries');
       try {
+        // Register layer toggles with Electron native menu (single source of truth)
+        if (window.electronAPI?.registerLayerToggles) {
+          const toggleDefs = LAYER_TOGGLES.map(t => ({
+            key: t.key,
+            label: t.label,
+            section: t.section,
+          }));
+          window.electronAPI.registerLayerToggles(toggleDefs);
+        }
         setLoadingMessage('Loading journal entries...');
         setLoadingProgress(5);
 

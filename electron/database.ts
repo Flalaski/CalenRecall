@@ -2593,6 +2593,7 @@ export interface Preferences {
   showMetonicCycle?: boolean; // Whether to display Metonic cycle indicators (Hebrew 19-year cycle)
   showMayanCalendarRound?: boolean; // Whether to display Mayan Calendar Round indicators (52-year cycle)
   showHinduYugaCycles?: boolean; // Whether to display Hindu Yuga cycle indicators
+  showCulturalHolidays?: boolean; // Whether to display cultural holidays in the calendar view
   googleOAuthClientId?: string; // Google OAuth Desktop app Client ID (for Google Calendar sync)
 }
 

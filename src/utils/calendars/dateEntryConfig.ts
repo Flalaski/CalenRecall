@@ -492,7 +492,37 @@ export function getDateEntryConfig(calendar: CalendarSystem): CalendarDateEntryC
         getHelperText: () => 'Enter Xiuhmolpilli (required), Veintena (1-18), and Tonalli (1-20)'
       };
 
-    // Default: Standard Year/Month/Day format (Gregorian, Julian, Islamic, Hebrew, Persian, Chinese, Indian-Saka, Thai-Buddhist, Cherokee)
+    // Hebrew calendar — 12 or 13 months (leap years add Adar I+II)
+    case 'hebrew':
+      return {
+        fields: [
+          { label: 'Year', placeholder: 'AM', maxLength: 6, formatValue: (v) => v.replace(/[^+\-\d]/g, ''), validation: (v) => !isNaN(parseInt(v, 10)) },
+          { label: 'Month', placeholder: '1-13', min: 1, max: 13, maxLength: 2, formatValue: (v) => v.replace(/\D/g, ''), validation: (v) => { const n = parseInt(v, 10); return !isNaN(n) && n >= 1 && n <= 13; } },
+          { label: 'Day', placeholder: '1-30', min: 1, max: 30, maxLength: 2, formatValue: (v) => v.replace(/\D/g, ''), validation: (v) => { const n = parseInt(v, 10); return !isNaN(n) && n >= 1 && n <= 30; } }
+        ],
+        parseDate: (values) => {
+          const [y, m, d] = values.map(v => parseInt(v.trim(), 10));
+          return (isNaN(y) || isNaN(m) || isNaN(d) || m < 1 || m > 13 || d < 1 || d > 30) ? null : { year: y, month: m, day: d };
+        },
+        getHelperText: () => 'Enter year (AM), month (1-13; months 12-13 for Adar I/II in leap years), day (1-30)'
+      };
+
+    // Chinese calendar — months 1-12 regular, 13-24 leap months
+    case 'chinese':
+      return {
+        fields: [
+          { label: 'Year', placeholder: 'CE', maxLength: 6, formatValue: (v) => v.replace(/[^+\-\d]/g, ''), validation: (v) => !isNaN(parseInt(v, 10)) },
+          { label: 'Month', placeholder: '1-12', min: 1, max: 24, maxLength: 2, formatValue: (v) => v.replace(/\D/g, ''), validation: (v) => { const n = parseInt(v, 10); return !isNaN(n) && n >= 1 && n <= 24; } },
+          { label: 'Day', placeholder: '1-30', min: 1, max: 30, maxLength: 2, formatValue: (v) => v.replace(/\D/g, ''), validation: (v) => { const n = parseInt(v, 10); return !isNaN(n) && n >= 1 && n <= 30; } }
+        ],
+        parseDate: (values) => {
+          const [y, m, d] = values.map(v => parseInt(v.trim(), 10));
+          return (isNaN(y) || isNaN(m) || isNaN(d) || m < 1 || m > 24 || d < 1 || d > 30) ? null : { year: y, month: m, day: d };
+        },
+        getHelperText: () => 'Enter year (CE), month (1-12 regular, 13-24 leap months), day (1-30)'
+      };
+
+    // Default: Standard Year/Month/Day format (Gregorian, Julian, Islamic, Persian, Indian-Saka, Thai-Buddhist, Cherokee)
     default:
       return {
         fields: [

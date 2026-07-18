@@ -72,10 +72,10 @@ export function getCalendarTierNames(calendar: CalendarSystem): TierNames {
       day: 'ቀን', // Qen (day)
     },
     coptic: {
-      decade: 'Decade', // No specific term, using approximate
+      decade: 'Decade',
       year: 'ⲣⲟⲙⲡⲉ', // Rompe (year)
-      month: 'ⲉⲡⲁⲅⲟⲙⲉⲛⲁ', // Epagomenā (month) - Note: This refers to intercalary days, but used generically for month
-      week: 'ⲥⲁⲃⲃⲁⲧⲟⲛ', // Sabbaton (week)
+      month: 'ⲁⲃⲟⲧ', // Abot (month) — corrected from previously incorrect 'epagomenā' (intercalary days)
+      week: 'ⲥⲁⲃⲃⲁⲧⲟⲛ', // Sabbaton (week, from Greek σάββατον)
       day: 'ⲉϩⲟⲟⲩ', // Ehoou (day)
     },
     'indian-saka': {
@@ -107,38 +107,38 @@ export function getCalendarTierNames(calendar: CalendarSystem): TierNames {
       day: 'Kin', // Day
     },
     'mayan-haab': {
-      decade: 'K\'atun', // 20-year period (closest equivalent)
+      decade: 'K\'atun', // 20-year period
       year: 'Haab\'', // 365-day year
       month: 'Uinal', // 20-day period (18 uinals + 5 days)
-      week: 'Period', // No standard subdivision; using generic term
+      week: 'Trecena', // 13-day cycle used across Mayan calendars
       day: 'Kin', // Day
     },
     'mayan-longcount': {
       decade: 'K\'atun', // 20-tun period (7,200 days)
       year: 'Tun', // 360-day period
       month: 'Uinal', // 20-day period
-      week: 'Period', // No standard subdivision; using generic term
+      week: 'Trecena', // 13-day cycle used across Mayan calendars
       day: 'Kin', // Day
     },
     cherokee: {
-      decade: 'Decade', // Using approximate term
-      year: 'Year', // Adapted system
-      month: 'Moon', // Lunar month concept
-      week: 'Week', // Using approximate term
-      day: 'Day',
+      decade: 'ᏍᎪᎯᏧᏈ (Decade)',
+      year: 'ᏧᏈ (Year)',
+      month: 'ᏗᎧᏁᏍᎩ (Moon)',
+      week: 'ᎯᎸᏍᎩᏴ (Week)',
+      day: 'ᎢᎦ (Day)',
     },
     iroquois: {
-      decade: 'Decade', // Using approximate term
-      year: 'Year', // 13 moons
-      month: 'Moon', // 13 moons per year
-      week: 'Week', // Using approximate term
-      day: 'Day',
+      decade: 'Decade',
+      year: 'Kashehta (Year)',
+      month: 'Eniá:ken (Moon)',
+      week: 'Week',
+      day: 'Ohneká:ron (Day)',
     },
     'aztec-xiuhpohualli': {
       decade: 'Xiuhmolpilli', // 52-year cycle (closest to decade concept)
       year: 'Xiuhpohualli', // 365-day year
       month: 'Veintena', // 20-day period (18 veintenas + 5 nemontemi)
-      week: 'Period', // No standard subdivision; using generic term
+      week: 'Trecena', // 13-day cycle (shared Mesoamerican concept)
       day: 'Tonalli', // Day
     },
   };

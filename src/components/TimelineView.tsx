@@ -10,6 +10,8 @@ import { dateToCalendarDate, formatCalendarDate } from '../utils/calendars/calen
 import { deleteJournalEntry } from '../services/journalService';
 import { buildEntryLookup, getDayEntriesOptimized, getMonthEntriesOptimized, getAllEntriesForYearOptimized, getAllEntriesForMonthOptimized, hasAnyEntriesForYear } from '../utils/entryLookupUtils';
 import { getAstronomicalEventsForRange, getAstronomicalEventLabel, type DateAstronomicalEvent } from '../utils/astronomicalEvents';
+import { getHolidaysForRange, type HolidayEvent } from '../utils/culturalHolidays';
+import { MONTH_NAMES_SHORT } from '../utils/calendars/dateFormatter';
 import { gregorianToJDN } from '../utils/calendars/julianDayUtils';
 import { getAllMacroCycles, type YugaType } from '../utils/calendars/macroCycleUtils';
 import perfTrail from '../utils/performance/perfTrail';
@@ -60,7 +62,8 @@ function TimelineView({
           showMayanLongCountCycles: prefs.showMayanLongCountCycles ?? false,
           showMetonicCycle: prefs.showMetonicCycle ?? false,
           showMayanCalendarRound: prefs.showMayanCalendarRound ?? false,
-          showHinduYugaCycles: prefs.showHinduYugaCycles ?? false
+          showHinduYugaCycles: prefs.showHinduYugaCycles ?? false,
+        showCulturalHolidays: prefs.showCulturalHolidays ?? false
         });
       }
     };
@@ -167,6 +170,58 @@ function TimelineView({
     return events;
   }, [selectedDate, viewMode, weekStartsOn, preferences.showSolsticesEquinoxes, preferences.showMoonPhases]);
 
+  // Get cultural holidays for the visible date range
+  const culturalHolidays = useMemo(() => {
+    if (!preferences.showCulturalHolidays) return new Map<string, HolidayEvent[]>();
+
+    let startDate: Date;
+    let endDate: Date;
+
+    switch (viewMode) {
+      case 'decade': {
+        const decadeStart = Math.floor(selectedDate.getFullYear() / 10) * 10;
+        startDate = new Date(decadeStart, 0, 1);
+        endDate = new Date(decadeStart + 9, 11, 31);
+        break;
+      }
+      case 'year': {
+        startDate = new Date(selectedDate.getFullYear(), 0, 1);
+        endDate = new Date(selectedDate.getFullYear(), 11, 31);
+        break;
+      }
+      case 'month': {
+        startDate = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1);
+        endDate = new Date(selectedDate.getFullYear(), selectedDate.getMonth() + 1, 0);
+        break;
+      }
+      case 'week': {
+        startDate = getWeekStart(selectedDate, weekStartsOn);
+        const weekEnd = new Date(startDate);
+        weekEnd.setDate(weekEnd.getDate() + 6);
+        endDate = weekEnd;
+        break;
+      }
+      case 'day': {
+        startDate = selectedDate;
+        endDate = selectedDate;
+        break;
+      }
+      default: {
+        startDate = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1);
+        endDate = new Date(selectedDate.getFullYear(), selectedDate.getMonth() + 1, 0);
+      }
+    }
+
+    const holidays = getHolidaysForRange(startDate, endDate, calendar);
+    const map = new Map<string, HolidayEvent[]>();
+    for (const h of holidays) {
+      const key = `${h.date.getFullYear()}-${String(h.date.getMonth() + 1).padStart(2, '0')}-${String(h.date.getDate()).padStart(2, '0')}`;
+      const existing = map.get(key) || [];
+      existing.push(h);
+      map.set(key, existing);
+    }
+    return map;
+  }, [selectedDate, viewMode, weekStartsOn, calendar, preferences.showCulturalHolidays]);
 
   useEffect(() => {
     // Clear bulk selection when changing date/view
@@ -562,6 +617,7 @@ function TimelineView({
                 const dayNum = String(day.getDate()).padStart(2, '0');
                 const dayKey = `${year}-${month}-${dayNum}`;
                 const dayEvents = astronomicalEvents.get(dayKey) || [];
+                const dayHolidays = culturalHolidays.get(dayKey) || [];
                 
                 return (
                   <div
@@ -579,6 +635,15 @@ function TimelineView({
                         {dayEvents.map((event, eIdx) => (
                           <span key={eIdx} className="astronomical-event-icon">
                             {getAstronomicalEventLabel(event)}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                    {dayHolidays.length > 0 && (
+                      <div className="cell-holidays" title={dayHolidays.map(h => h.holiday.name).join(', ')}>
+                        {dayHolidays.slice(0, 2).map((h, hIdx) => (
+                          <span key={hIdx} className="holiday-icon" title={h.holiday.name}>
+                            {h.holiday.icon}
                           </span>
                         ))}
                       </div>
@@ -790,7 +855,7 @@ function TimelineView({
   const renderWeekView = () => {
     const days = getDaysInWeek(selectedDate, weekStartsOn);
     const weekDays = getWeekdayLabels(weekStartsOn);
-    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const monthNames = MONTH_NAMES_SHORT[calendar] || ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     
     return (
       <div className="timeline-week-view">
@@ -825,6 +890,7 @@ function TimelineView({
             const dayNum = String(day.getDate()).padStart(2, '0');
             const dayKey = `${year}-${month}-${dayNum}`;
             const dayEvents = astronomicalEvents.get(dayKey) || [];
+            const dayHolidays = culturalHolidays.get(dayKey) || [];
             
             return (
               <div
@@ -845,6 +911,15 @@ function TimelineView({
                     ))}
                   </div>
                 )}
+                  {dayHolidays.length > 0 && (
+                    <div className="cell-holidays" title={dayHolidays.map(h => h.holiday.name).join(', ')}>
+                      {dayHolidays.slice(0, 1).map((h, hIdx) => (
+                        <span key={hIdx} className="holiday-icon" title={h.holiday.name}>
+                          {h.holiday.icon}
+                        </span>
+                      ))}
+                    </div>
+                  )}
                 <div className="cell-entries-vertical">
                   {dayEntries.map((entry, eIdx) => {
                     const entryColor = calculateEntryColor(entry);
@@ -1005,6 +1080,7 @@ function TimelineView({
     const dayNum = String(selectedDate.getDate()).padStart(2, '0');
     const dayKey = `${year}-${month}-${dayNum}`;
     const dayEvents = astronomicalEvents.get(dayKey) || [];
+    const dayHolidays = culturalHolidays.get(dayKey) || [];
     
     return (
       <div className="timeline-day-view">
@@ -1029,6 +1105,15 @@ function TimelineView({
               </div>
             )}
           </div>
+            {dayHolidays.length > 0 && (
+              <div className="cell-holidays" title={dayHolidays.map(h => h.holiday.name).join(', ')}>
+                {dayHolidays.slice(0, 3).map((h, hIdx) => (
+                  <span key={hIdx} className="holiday-icon" title={h.holiday.name}>
+                    {h.holiday.icon}
+                  </span>
+                ))}
+              </div>
+            )}
           {dayEntries.length > 0 && (
             <div className="day-header-actions">
               <button 

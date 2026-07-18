@@ -414,7 +414,7 @@ function ProfileSelector() {
   };
 
   // Helper function for archive exports - NO password prompt, archive will be encrypted with profile password automatically
-  const handleArchiveExport = async (profileId: string, archiveFormat: 'zip' | '7z', exportAction: (password?: string) => Promise<void>) => {
+  const handleArchiveExport = async (profileId: string, _archiveFormat: 'zip' | '7z', exportAction: (password?: string) => Promise<void>) => {
     // No password gatekeeping - export is always allowed
     // Backend will automatically use cached profile password to encrypt the archive file
     // If password not cached and profile has password, backend will return password_required error

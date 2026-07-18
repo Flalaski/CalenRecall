@@ -7,6 +7,14 @@
  * calendar structure while preserving traditional Cherokee month names and
  * their cultural significance.
  * 
+ * Sources:
+ * - Mooney, James. "Myths of the Cherokee." Bureau of American Ethnology,
+ *   Nineteenth Annual Report, 1900. (Traditional Cherokee timekeeping).
+ * - Fogelson, Raymond D. "Handbook of North American Indians, Vol. 14: Southeast."
+ *   Smithsonian Institution, 2004. ISBN: 978-0160723001.
+ * - McClinton, Rowena. "The Moravian Springplace Mission to the Cherokees, Vol. 1."
+ *   University of Nebraska Press, 2007. (19th century Cherokee calendar adaptation).
+ * 
  * IMPLEMENTATION STATUS:
  * This implementation correctly represents the modern 12-month adaptation of the
  * Cherokee calendar, which maps directly to the Gregorian calendar structure.
@@ -47,6 +55,24 @@ import { CalendarConverter, CalendarDate, CalendarInfo } from './types';
 import { CALENDAR_INFO } from './types';
 import { gregorianToJDN, jdnToGregorian } from './julianDayUtils';
 
+/** Cherokee moon names in Cherokee syllabary (ᏣᎳᎩ ᎦᏬᏂᎯᏍᏗ)
+ *  Based on James Mooney's "Myths of the Cherokee" (1900) and
+ *  the Cherokee Phoenix newspaper archives. */
+export const CHEROKEE_MONTH_NAMES_SYLLABARY = [
+  'ᏚᏃᎸᏔᏂ',    // Cold Moon
+  'ᎧᎦᎵ',        // Bony Moon
+  'ᎠᏅᏱ',        // Windy Moon
+  'ᎧᏩᏂ',        // Flower Moon
+  'ᎠᏂᏍᎦᏍᎬᎢ',  // Planting Moon
+  'ᏕᎭᎷᏱ',      // Green Corn Moon
+  'ᎫᏰᏉᏂ',      // Ripe Corn Moon
+  'ᎦᎶᏂᎢ',      // Fruit Moon
+  'ᏚᎵᎢᏍᏗ',    // Nut Moon
+  'ᏚᏂᏅᏗ',      // Harvest Moon
+  'ᏄᏓᏕᏆ',      // Trading Moon
+  'ᎥᏍᎩᎦ',      // Snow Moon
+];
+
 /**
  * Cherokee Calendar Converter Implementation
  * 
@@ -76,9 +102,15 @@ export const cherokeeCalendar: CalendarConverter = {
   },
   
   formatDate(date: CalendarDate, format: string = 'YYYY-MM-DD'): string {
-    // Use the comprehensive formatter which has Cherokee month names
-    const { formatCalendarDate } = require('./dateFormatter');
-    return formatCalendarDate(date, format);
+    // Basic formatting — month names handled by comprehensive formatter
+    const monthStr = String(date.month).padStart(2, '0');
+    const dayStr = String(date.day).padStart(2, '0');
+    return format
+      .replace(/YYYY/g, date.year.toString())
+      .replace(/YY/g, date.year.toString().slice(-2))
+      .replace(/MM/g, monthStr)
+      .replace(/DD/g, dayStr)
+      .replace(/ERA/g, date.era || '');
   },
   
   parseDate(dateStr: string): CalendarDate | null {

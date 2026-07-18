@@ -17,7 +17,13 @@
 
 import { CalendarConverter, CalendarDate, CalendarInfo } from './types';
 import { CALENDAR_INFO } from './types';
-import { gregorianToJDN, jdnToGregorian } from './julianDayUtils';
+
+
+/** Native Persian (Farsi) month names in Perso-Arabic script */
+export const PERSIAN_MONTH_NAMES_FARSI = [
+  'فروردین', 'اردیبهشت', 'خرداد', 'تیر', 'مرداد', 'شهریور',
+  'مهر', 'آبان', 'آذر', 'دی', 'بهمن', 'اسفند'
+];
 
 // Persian epoch: March 19, 622 CE (Gregorian) = Farvardin 1, 1 SH
 // JDN of March 19, 622 CE = 1948318 (calculated using gregorianToJDN)
@@ -296,9 +302,15 @@ export const persianCalendar: CalendarConverter = {
   },
   
   formatDate(date: CalendarDate, format: string = 'YYYY-MM-DD'): string {
-    // Use the comprehensive formatter which has Persian month names
-    const { formatCalendarDate } = require('./dateFormatter');
-    return formatCalendarDate(date, format);
+    // Basic formatting — month names handled by comprehensive formatter
+    const monthStr = String(date.month).padStart(2, '0');
+    const dayStr = String(date.day).padStart(2, '0');
+    return format
+      .replace(/YYYY/g, date.year.toString())
+      .replace(/YY/g, date.year.toString().slice(-2))
+      .replace(/MM/g, monthStr)
+      .replace(/DD/g, dayStr)
+      .replace(/ERA/g, date.era || '');
   },
   
   parseDate(dateStr: string): CalendarDate | null {

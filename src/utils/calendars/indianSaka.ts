@@ -15,7 +15,14 @@
 
 import { CalendarConverter, CalendarDate, CalendarInfo } from './types';
 import { CALENDAR_INFO } from './types';
-import { gregorianToJDN, jdnToGregorian } from './julianDayUtils';
+
+
+/** Native Devanagari (संस्कृत/हिन्दी) month names for the Indian Saka calendar */
+export const SAKA_MONTH_NAMES_DEVANAGARI = [
+  'चैत्र', 'वैशाख', 'ज्येष्ठ', 'आषाढ',
+  'श्रावण', 'भाद्र', 'अश्विन', 'कार्तिक',
+  'अग्रहायण', 'पौष', 'माघ', 'फाल्गुन'
+];
 
 // Saka epoch: March 22, 78 CE (Gregorian) = Chaitra 1, 1 Saka
 // JDN of March 22, 78 CE = 1749630 (calculated)
@@ -227,9 +234,15 @@ export const indianSakaCalendar: CalendarConverter = {
   },
   
   formatDate(date: CalendarDate, format: string = 'YYYY-MM-DD'): string {
-    // Use the comprehensive formatter which has Saka month names
-    const { formatCalendarDate } = require('./dateFormatter');
-    return formatCalendarDate(date, format);
+    // Basic formatting — month names handled by comprehensive formatter
+    const monthStr = String(date.month).padStart(2, '0');
+    const dayStr = String(date.day).padStart(2, '0');
+    return format
+      .replace(/YYYY/g, date.year.toString())
+      .replace(/YY/g, date.year.toString().slice(-2))
+      .replace(/MM/g, monthStr)
+      .replace(/DD/g, dayStr)
+      .replace(/ERA/g, date.era || '');
   },
   
   parseDate(dateStr: string): CalendarDate | null {

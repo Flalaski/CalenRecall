@@ -2,7 +2,7 @@
  * Tests for error handling utilities
  */
 
-import { toUserError, handleError, ErrorMessages, ErrorType } from '../errorHandler';
+import { toUserError, handleError, ErrorMessages } from '../errorHandler';
 
 describe('errorHandler', () => {
   describe('toUserError', () => {

@@ -35,7 +35,7 @@ function ExportProfileSelector() {
   const [selectedProfileId, setSelectedProfileId] = useState<string | null>(null);
   const [currentProfileId, setCurrentProfileId] = useState<string | null>(null);
   // Get export format from window variable set by main process
-  const [exportFormat, setExportFormat] = useState<ExportFormat>(() => {
+  const [exportFormat] = useState<ExportFormat>(() => {
     return (window as any).__exportFormat || 'markdown';
   });
   const [loading, setLoading] = useState(true);

@@ -1065,6 +1065,82 @@ function createWindow() {
   });
 }
 
+// ── Layer toggle registry (registered by renderer via IPC) ──
+interface LayerToggleDefinition {
+  key: string;
+  label: string;
+  section: string;
+}
+
+let registeredLayerToggles: LayerToggleDefinition[] = [];
+
+function buildLayersSubmenu(): Electron.MenuItemConstructorOptions[] {
+  if (registeredLayerToggles.length === 0) {
+    // Fallback: no toggles registered yet
+    return [{ label: 'Loading...', enabled: false }];
+  }
+
+  const items: Electron.MenuItemConstructorOptions[] = [];
+  const sections: { section: string; items: LayerToggleDefinition[] }[] = [];
+  
+  for (const toggle of registeredLayerToggles) {
+    let section = sections.find(s => s.section === toggle.section);
+    if (!section) {
+      section = { section: toggle.section, items: [] };
+      sections.push(section);
+    }
+    section.items.push(toggle);
+  }
+
+  let firstSection = true;
+  for (const section of sections) {
+    if (!firstSection) {
+      items.push({ type: 'separator' });
+    }
+    firstSection = false;
+
+    for (const toggle of section.items) {
+      const prefKey = toggle.key as keyof Preferences;
+      items.push({
+        label: toggle.label,
+        type: 'checkbox',
+        checked: getAllPreferences()[prefKey] === true,
+        click: () => {
+          const currentPrefs = getAllPreferences();
+          const newValue = !(currentPrefs[prefKey] === true);
+          setPreference(prefKey, newValue);
+          if (mainWindow && !mainWindow.isDestroyed()) {
+            mainWindow.webContents.send('preference-updated', { key: toggle.key, value: newValue });
+          }
+          if (preferencesWindow && !preferencesWindow.isDestroyed()) {
+            preferencesWindow.webContents.send('preference-updated', { key: toggle.key, value: newValue });
+          }
+          updateMenu();
+        },
+      });
+    }
+  }
+
+  // AstroMonix toggle (not from registry — app-specific)
+  items.push({ type: 'separator' });
+  items.push({
+    label: 'Show AstroMonix.xyz Toolbar Button',
+    type: 'checkbox',
+    checked: getAllPreferences().showAstromonixToolbarButton === true,
+    click: () => {
+      const currentPrefs = getAllPreferences();
+      const newValue = !(currentPrefs.showAstromonixToolbarButton === true);
+      setPreference('showAstromonixToolbarButton', newValue);
+      if (mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.webContents.send('preference-updated', { key: 'showAstromonixToolbarButton', value: newValue });
+      }
+      updateMenu();
+    },
+  });
+
+  return items;
+}
+
 function createMenu() {
   const themes = discoverThemes();
   const currentTheme = getAllPreferences().theme || 'light';
@@ -1377,151 +1453,7 @@ function createMenu() {
     },
     {
       label: 'Layers',
-      submenu: [
-        {
-          label: 'Show Seasons',
-          type: 'checkbox',
-          checked: getAllPreferences().showSolsticesEquinoxes === true,
-          click: () => {
-            const currentPrefs = getAllPreferences();
-            const newValue = !(currentPrefs.showSolsticesEquinoxes === true);
-            setPreference('showSolsticesEquinoxes', newValue);
-            // Notify the renderer process about the change
-            if (mainWindow && !mainWindow.isDestroyed()) {
-              mainWindow.webContents.send('preference-updated', { key: 'showSolsticesEquinoxes', value: newValue });
-            }
-            // Also notify preferences window if it exists
-            if (preferencesWindow && !preferencesWindow.isDestroyed()) {
-              preferencesWindow.webContents.send('preference-updated', { key: 'showSolsticesEquinoxes', value: newValue });
-            }
-            // Update the menu to reflect the change
-            updateMenu();
-          },
-        },
-        {
-          label: 'Show Moon Phases',
-          type: 'checkbox',
-          checked: getAllPreferences().showMoonPhases === true,
-          click: () => {
-            const currentPrefs = getAllPreferences();
-            const newValue = !(currentPrefs.showMoonPhases === true);
-            setPreference('showMoonPhases', newValue);
-            // Notify the renderer process about the change
-            if (mainWindow && !mainWindow.isDestroyed()) {
-              mainWindow.webContents.send('preference-updated', { key: 'showMoonPhases', value: newValue });
-            }
-            // Also notify preferences window if it exists
-            if (preferencesWindow && !preferencesWindow.isDestroyed()) {
-              preferencesWindow.webContents.send('preference-updated', { key: 'showMoonPhases', value: newValue });
-            }
-            // Update the menu to reflect the change
-            updateMenu();
-          },
-        },
-        { type: 'separator' },
-        {
-          label: 'Show Chinese 60-Year Cycle',
-          type: 'checkbox',
-          checked: getAllPreferences().showChineseSexagenaryCycle === true,
-          click: () => {
-            const currentPrefs = getAllPreferences();
-            const newValue = !(currentPrefs.showChineseSexagenaryCycle === true);
-            setPreference('showChineseSexagenaryCycle', newValue);
-            if (mainWindow && !mainWindow.isDestroyed()) {
-              mainWindow.webContents.send('preference-updated', { key: 'showChineseSexagenaryCycle', value: newValue });
-            }
-            if (preferencesWindow && !preferencesWindow.isDestroyed()) {
-              preferencesWindow.webContents.send('preference-updated', { key: 'showChineseSexagenaryCycle', value: newValue });
-            }
-            updateMenu();
-          },
-        },
-        {
-          label: 'Show Mayan Long Count Cycles',
-          type: 'checkbox',
-          checked: getAllPreferences().showMayanLongCountCycles === true,
-          click: () => {
-            const currentPrefs = getAllPreferences();
-            const newValue = !(currentPrefs.showMayanLongCountCycles === true);
-            setPreference('showMayanLongCountCycles', newValue);
-            if (mainWindow && !mainWindow.isDestroyed()) {
-              mainWindow.webContents.send('preference-updated', { key: 'showMayanLongCountCycles', value: newValue });
-            }
-            if (preferencesWindow && !preferencesWindow.isDestroyed()) {
-              preferencesWindow.webContents.send('preference-updated', { key: 'showMayanLongCountCycles', value: newValue });
-            }
-            updateMenu();
-          },
-        },
-        {
-          label: 'Show Metonic Cycle',
-          type: 'checkbox',
-          checked: getAllPreferences().showMetonicCycle === true,
-          click: () => {
-            const currentPrefs = getAllPreferences();
-            const newValue = !(currentPrefs.showMetonicCycle === true);
-            setPreference('showMetonicCycle', newValue);
-            if (mainWindow && !mainWindow.isDestroyed()) {
-              mainWindow.webContents.send('preference-updated', { key: 'showMetonicCycle', value: newValue });
-            }
-            if (preferencesWindow && !preferencesWindow.isDestroyed()) {
-              preferencesWindow.webContents.send('preference-updated', { key: 'showMetonicCycle', value: newValue });
-            }
-            updateMenu();
-          },
-        },
-        {
-          label: 'Show Mayan Calendar Round',
-          type: 'checkbox',
-          checked: getAllPreferences().showMayanCalendarRound === true,
-          click: () => {
-            const currentPrefs = getAllPreferences();
-            const newValue = !(currentPrefs.showMayanCalendarRound === true);
-            setPreference('showMayanCalendarRound', newValue);
-            if (mainWindow && !mainWindow.isDestroyed()) {
-              mainWindow.webContents.send('preference-updated', { key: 'showMayanCalendarRound', value: newValue });
-            }
-            if (preferencesWindow && !preferencesWindow.isDestroyed()) {
-              preferencesWindow.webContents.send('preference-updated', { key: 'showMayanCalendarRound', value: newValue });
-            }
-            updateMenu();
-          },
-        },
-        {
-          label: 'Show Hindu Yuga Cycles',
-          type: 'checkbox',
-          checked: getAllPreferences().showHinduYugaCycles === true,
-          click: () => {
-            const currentPrefs = getAllPreferences();
-            const newValue = !(currentPrefs.showHinduYugaCycles === true);
-            setPreference('showHinduYugaCycles', newValue);
-            if (mainWindow && !mainWindow.isDestroyed()) {
-              mainWindow.webContents.send('preference-updated', { key: 'showHinduYugaCycles', value: newValue });
-            }
-            if (preferencesWindow && !preferencesWindow.isDestroyed()) {
-              preferencesWindow.webContents.send('preference-updated', { key: 'showHinduYugaCycles', value: newValue });
-            }
-            updateMenu();
-          },
-        },
-        { type: 'separator' },
-        {
-          label: 'Show AstroMonix.xyz Toolbar Button',
-          type: 'checkbox',
-          checked: getAllPreferences().showAstromonixToolbarButton === true,
-          click: () => {
-            const currentPrefs = getAllPreferences();
-            const newValue = !(currentPrefs.showAstromonixToolbarButton === true);
-            setPreference('showAstromonixToolbarButton', newValue);
-            // Notify the renderer process about the change
-            if (mainWindow && !mainWindow.isDestroyed()) {
-              mainWindow.webContents.send('preference-updated', { key: 'showAstromonixToolbarButton', value: newValue });
-            }
-            // Update the menu to reflect the change
-            updateMenu();
-          },
-        },
-      ],
+      submenu: buildLayersSubmenu(),
     },
     {
       label: 'Window',
@@ -2093,6 +2025,13 @@ app.whenReady().then(() => {
   // Handle menu update requests (called when preferences change or themes are added)
   ipcMain.handle('update-application-menu', () => {
     console.log('[Main] Menu update requested via IPC');
+    updateMenu();
+  });
+
+  // Handle layer toggle registration from renderer (single source of truth)
+  ipcMain.handle('register-layer-toggles', (_event, toggles: LayerToggleDefinition[]) => {
+    console.log(`[Main] Registered ${toggles.length} layer toggles from renderer`);
+    registeredLayerToggles = toggles;
     updateMenu();
   });
 

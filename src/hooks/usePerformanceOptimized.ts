@@ -3,7 +3,7 @@
  * Supports ultra-high refresh rate monitors (120Hz, 144Hz, 240Hz, etc.)
  */
 
-import { useRef, useCallback, useEffect, useMemo } from 'react';
+import { useRef, useCallback, useEffect } from 'react';
 import { globalTaskScheduler } from '../utils/performance/taskScheduler';
 import { globalStyleBatcher } from '../utils/performance/styleBatcher';
 import { globalAnimationManager } from '../utils/performance/animationManager';
@@ -171,7 +171,7 @@ export function useThrottledCallback<T extends (...args: any[]) => any>(
   useEffect(() => {
     refreshRateRef.current = displayRefreshRate.getOptimalThrottleFPS();
     
-    const unsubscribe = displayRefreshRate.onRefreshRateChange((rate) => {
+    const unsubscribe = displayRefreshRate.onRefreshRateChange(() => {
       refreshRateRef.current = displayRefreshRate.getOptimalThrottleFPS();
     });
 

@@ -1,8 +1,8 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { useVirtualScroll } from '../utils/useVirtualScroll';
-import { JournalEntry, TimeRange } from '../types';
+import { JournalEntry, TimeRange, Preferences } from '../types';
 import { deleteJournalEntry } from '../services/journalService';
-import { formatDate, parseISODate } from '../utils/dateUtils';
+import { formatDate, formatTime, parseISODate } from '../utils/dateUtils';
 import { playNewEntrySound } from '../utils/audioUtils';
 import { useCalendar } from '../contexts/CalendarContext';
 import { useEntries } from '../contexts/EntriesContext';
@@ -225,9 +225,6 @@ export default function JournalList({
       // Clear selection and exit bulk edit mode
       setSelectedEntryIds(new Set());
       setBulkEditMode(false);
-      
-      // Reload entries
-      loadEntries();
       
       // Trigger refresh event
       window.dispatchEvent(new CustomEvent('journalEntrySaved'));

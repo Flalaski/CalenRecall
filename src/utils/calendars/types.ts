@@ -194,7 +194,7 @@ export const CALENDAR_INFO: Record<CalendarSystem, CalendarInfo> = {
     name: 'Mayan Haab\'',
     nativeName: 'Haab\'',
     type: 'solar',
-    months: 18,
+    months: 19, // 18 regular + Wayeb' (5 nameless days at year end)
     daysInYear: 365,
     eraStart: -3114,
     eraName: '',
@@ -213,7 +213,7 @@ export const CALENDAR_INFO: Record<CalendarSystem, CalendarInfo> = {
   cherokee: {
     name: 'Cherokee',
     nativeName: 'ᎠᏂᏴᏫᏯᎢ',
-    type: 'lunisolar',
+    type: 'solar', // Modern 12-month adaptation aligned with Gregorian
     months: 12,
     daysInYear: { min: 365, max: 366 },
     eraStart: 1,
@@ -234,7 +234,7 @@ export const CALENDAR_INFO: Record<CalendarSystem, CalendarInfo> = {
     name: 'Aztec Xiuhpohualli',
     nativeName: 'Xiuhpohualli',
     type: 'solar',
-    months: 18,
+    months: 19, // 18 months + Nemontemi (5 nameless days)
     daysInYear: 365, // 18 months × 20 days + 5 Nemontemi days
     eraStart: -3114,
     eraName: '',
