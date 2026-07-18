@@ -132,6 +132,28 @@ function App() {
     init();
   }, [setEntries, setIsLoading]);
 
+  // NAVIGATION: When selectedDate changes, ensure the target year is in cache.
+  // If not loaded yet, fetch it via JDN range query and update entries.
+  const prevNavYearRef = useRef<number>(0);
+  useEffect(() => {
+    const year = selectedDate.getFullYear();
+    if (prevNavYearRef.current === 0) {
+      prevNavYearRef.current = year;
+      return; // Skip first run (handled by init)
+    }
+    if (year === prevNavYearRef.current) return;
+
+    const loadYearIfMissing = async () => {
+      if (!entryCache.isYearLoaded(year)) {
+        const direction: 1 | -1 = year > prevNavYearRef.current ? 1 : -1;
+        await entryCache.ensureYearLoaded(year, direction);
+        setEntries(entryCache.getAllEntries());
+      }
+      prevNavYearRef.current = year;
+    };
+    loadYearIfMissing();
+  }, [selectedDate, setEntries]);
+
   // Optimized function to update specific preference without full reload
   // Memoized with useCallback so IPC listener always has the latest version
   const updateSpecificPreference = useCallback(async (key: string, value: any) => {
