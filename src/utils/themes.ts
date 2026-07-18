@@ -147,6 +147,22 @@ const BUILT_IN_THEME_METADATA: Record<string, Omit<ThemeInfo, 'name'>> = {
   'stellar-echo': {
     displayName: 'Stellar Echo',
     description: 'Cosmic space theme with stellar echoes and celestial aesthetics'
+  },
+  'football': {
+    displayName: 'Football',
+    description: 'American football field aesthetic with green gridiron patterns, white yard-line borders, and orange goalpost accents - for sports enthusiasts'
+  },
+  'galactic-basic': {
+    displayName: 'Galactic Basic',
+    description: 'Sci-fi holographic interface with cyan neon, scanline overlays, and dark space backgrounds - inspired by retro-futuristic control panels'
+  },
+  'out-there': {
+    displayName: 'Out There',
+    description: 'Deep space exploration aesthetic with subtle green/cyan glow effects and cosmic backgrounds - adventurous and mysterious'
+  },
+  'the-real-world': {
+    displayName: 'The Real World',
+    description: 'Early 90s retro OS/2 Warp-inspired theme with monospace fonts, teal-green accent bars, beveled borders, and beige panel backgrounds - pure 1990s desktop nostalgia'
   }
 };
 

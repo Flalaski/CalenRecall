@@ -600,8 +600,10 @@ class PerfTrail {
         } catch { /* URL params not available */ }
       }
 
-      // Priority 5: Persistent preference from Electron
-      this._checkPersistentPreference();
+      // Priority 5: Persistent preference from Electron (fire-and-forget from constructor)
+      this._checkPersistentPreference().catch(() => {
+        // Preference check failed — stay at current state
+      });
     } catch (e) {
       // Fail-safe: ensure PerfTrail is disabled in hostile environments
       this._enabled = false;

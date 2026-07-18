@@ -38,9 +38,9 @@ interface HistoryEntry {
 }
 
 // Electron-specific budget overrides.
-// CANONICAL SOURCE: src/utils/performance/perfTrailBudgets.ts — always edit there first.
-// When adding a budget here, verify it matches the canonical value.
-// To validate: grep both files for each key and compare.
+// CANONICAL SOURCE: src/utils/performance/perfTrailBudgets.ts — always edit there first,
+// then mirror changes here. The import path is outside electron/ rootDir, so we maintain
+// a verified copy. Run: grep -f <(grep '^\s\|' src/utils/performance/perfTrailBudgets.ts) <(grep '^\s\|' electron/utils/perfTrail.ts)
 const ELECTRON_BUDGETS: Record<string, number> = {
   'db-query': 50,
   'db-write': 100,

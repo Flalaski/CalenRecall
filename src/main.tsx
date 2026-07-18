@@ -95,17 +95,9 @@ const initGlobalTooltips = () => {
 // EXTREME PERFORMANCE: Enable performance mode by default
 // This disables all animations and visual effects for maximum speed
 if (typeof document !== 'undefined') {
-  // Check for prefers-reduced-motion (accessibility)
-  const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  
   // Enable performance mode for maximum speed
-  // Can be disabled via preference if needed
+  // Also respect prefers-reduced-motion accessibility setting
   document.documentElement.classList.add('performance-mode');
-  
-  // Also respect system preference
-  if (prefersReducedMotion) {
-    document.documentElement.classList.add('performance-mode');
-  }
 }
 
 // Ensure tooltips render above the cursor

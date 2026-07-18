@@ -12,7 +12,9 @@
  * ```
  */
 
-const isDev = process.env.NODE_ENV === 'development' || !require('electron').app.isPackaged;
+import { app } from 'electron';
+
+const isDev = process.env.NODE_ENV === 'development' || !app.isPackaged;
 const DEBUG_ENABLED = process.env.DEBUG === 'true' || isDev;
 
 /**

@@ -394,6 +394,7 @@ const THEME_METADATA: Record<string, { displayName: string }> = {
   'stellar-echo': { displayName: 'Stellar Echo' },
   'tabletop': { displayName: 'Tabletop' },
   'football': { displayName: 'Football' },
+  'out-there': { displayName: 'Out There' },
 };
 
 /**

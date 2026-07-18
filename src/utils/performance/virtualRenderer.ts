@@ -197,6 +197,26 @@ class VirtualRenderer<T> {
   }
 
   /**
+   * Register a sentinel element with the IntersectionObserver.
+   * Call this for each DOM element that should trigger visibility updates.
+   * The element must have a data-index attribute set to the item index.
+   */
+  observeElement(element: HTMLElement): void {
+    if (this.observer) {
+      this.observer.observe(element);
+    }
+  }
+
+  /**
+   * Unregister a sentinel element from the IntersectionObserver.
+   */
+  unobserveElement(element: HTMLElement): void {
+    if (this.observer) {
+      this.observer.unobserve(element);
+    }
+  }
+
+  /**
    * Get total height for scroll container
    */
   getTotalHeight(): number {
