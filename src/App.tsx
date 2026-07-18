@@ -25,6 +25,12 @@ import { LAYER_TOGGLES } from './utils/layerToggleRegistry';
 import { differenceInDays, differenceInYears, differenceInMonths, addDays, addWeeks, addMonths, addYears } from 'date-fns';
 import './App.css';
 
+// Loading screen exit choreography: brief hold on the completed constellation,
+// then a graceful fade-out. Total post-ready time = HOLD + FADE (~1.5s vs the
+// previous static 3s hold that ended with an abrupt cut to the app).
+const LOADING_READY_HOLD_MS = 900;
+const LOADING_FADE_OUT_MS = 600;
+
 function App() {
   const { setEntries, isLoading, setIsLoading } = useEntries();
   const { setCalendar } = useCalendar();
@@ -39,6 +45,7 @@ function App() {
   const [showSearch, setShowSearch] = useState(false);
   const [loadingProgress, setLoadingProgress] = useState(0);
   const [loadingMessage, setLoadingMessage] = useState('Initializing...');
+  const [loadingExiting, setLoadingExiting] = useState(false);
   const [totalEntryCount, setTotalEntryCount] = useState<number | undefined>(undefined);
   const [backgroundImagePath, setBackgroundImagePath] = useState<string | null>(null);
   const [showExportModal, setShowExportModal] = useState(false);
@@ -109,25 +116,30 @@ function App() {
         setLoadingProgress(90);
         setLoadingMessage('Indexing entries...');
 
+        // AESTHETIC/SPEED BALANCE: hold briefly on the completed constellation,
+        // then fade out gracefully (previously a static 3s hold + abrupt cut).
+        const finishLoading = () => {
+          setLoadingProgress(100);
+          setLoadingMessage('Ready!');
+          setTimeout(() => {
+            setLoadingExiting(true);
+            setTimeout(() => setIsLoading(false), LOADING_FADE_OUT_MS);
+          }, LOADING_READY_HOLD_MS);
+        };
+
         if ('requestIdleCallback' in window) {
           requestIdleCallback(() => {
             setLoadingProgress(95);
             setLoadingMessage('Finalizing timeline...');
             requestIdleCallback(() => {
-              setLoadingProgress(100);
-              setLoadingMessage('Ready!');
-              setTimeout(() => setIsLoading(false), 3000);
+              finishLoading();
             }, { timeout: 100 });
           }, { timeout: 100 });
         } else {
           setTimeout(() => {
             setLoadingProgress(95);
             setLoadingMessage('Finalizing timeline...');
-            setTimeout(() => {
-              setLoadingProgress(100);
-              setLoadingMessage('Ready!');
-              setTimeout(() => setIsLoading(false), 3000);
-            }, 200);
+            setTimeout(finishLoading, 200);
           }, 200);
         }
 
@@ -863,7 +875,10 @@ function App() {
     // EXTREME PERFORMANCE: Instant update (no debounce delay)
     rafIdRef.current = requestAnimationFrame(() => {
       if (pendingDateRef.current) {
-        setSelectedDate(pendingDateRef.current);
+        const nextDate = pendingDateRef.current;
+        // DEDUPE: a same-time Date is a new object reference — without this
+        // functional bail-out, no-op navigations triggered a full re-render cascade.
+        setSelectedDate((prev) => (prev.getTime() === nextDate.getTime() ? prev : nextDate));
         pendingDateRef.current = null;
       }
       navigationTimeoutRef.current = null;
@@ -1412,7 +1427,7 @@ function App() {
 
   // Show loading screen while entries are being preloaded or preferences are loading
   if (isLoading || !preferencesLoaded) {
-    return <LoadingScreen progress={loadingProgress} message={loadingMessage} totalEntryCount={totalEntryCount} />;
+    return <LoadingScreen progress={loadingProgress} message={loadingMessage} totalEntryCount={totalEntryCount} exiting={loadingExiting} />;
   }
 
   return (

@@ -9,6 +9,7 @@ interface LoadingScreenProps {
   progress?: number;
   message?: string;
   totalEntryCount?: number; // Total entry count for efficient crystal size calculation
+  exiting?: boolean; // When true, plays the graceful fade-out exit animation
 }
 
 // Constants for loading screen configuration
@@ -905,7 +906,7 @@ function generateNebulaPattern(width: number, height: number): string {
 }
 
 
-export default function LoadingScreen({ progress, message = 'Loading your journal...', totalEntryCount }: LoadingScreenProps) {
+export default function LoadingScreen({ progress, message = 'Loading your journal...', totalEntryCount, exiting = false }: LoadingScreenProps) {
   const { entries } = useEntries();
   const [polarityPhase, setPolarityPhase] = useState(0);
   const [rotationAngle, setRotationAngle] = useState(0); // Track infinity rotation angle
@@ -1256,7 +1257,7 @@ export default function LoadingScreen({ progress, message = 'Loading your journa
   }, [gradientCache]);
 
   return (
-    <div className="loading-screen">
+    <div className={`loading-screen${exiting ? ' loading-screen--exiting' : ''}`}>
       {/* MS-DOS style deep space background */}
       <div className="space-background">
         {nebulaPattern && (

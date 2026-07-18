@@ -124,6 +124,17 @@ export default function NavigationBar({
     onDateChangeRef.current = onDateChange;
   }, [onDateChange]);
 
+  // FIX: App commits setSelectedDate inside requestAnimationFrame, so the
+  // `selectedDate` prop lags dispatched navigations by up to a frame. Rapid
+  // keypresses/clicks previously computed the same target date from the stale
+  // prop, silently dropping keystrokes (confirmed via duplicate nav-date-change
+  // perf checkpoints). This ref tracks the last dispatched target so consecutive
+  // navigations compound correctly; it resets once the prop catches up.
+  const pendingNavDateRef = useRef<Date | null>(null);
+  useEffect(() => {
+    pendingNavDateRef.current = null;
+  }, [selectedDate]);
+
   // Helper function to populate date input fields from selectedDate
   // All calendar conversions go through JDN (Julian Day Number), ensuring
   // that the day/K'in values represent the same moment in time across all calendars
@@ -241,6 +252,9 @@ export default function NavigationBar({
     // Play tier-aware navigation sound with direction and shift distinction
     playTierNavigationSound(viewMode, direction, shiftPressed);
     
+    // Base on the last dispatched target (if any) so rapid clicks compound
+    // instead of recomputing from a stale prop (see pendingNavDateRef).
+    const baseDate = pendingNavDateRef.current ?? selectedDate;
     let newDate: Date;
     const multiplier = direction === 'next' ? 1 : -1;
     // If shift is pressed, multiply the jump by 3 for faster navigation
@@ -248,23 +262,24 @@ export default function NavigationBar({
 
     switch (viewMode) {
       case 'decade':
-        newDate = addYears(selectedDate, multiplier * 10 * shiftMultiplier);
+        newDate = addYears(baseDate, multiplier * 10 * shiftMultiplier);
         break;
       case 'year':
-        newDate = addYears(selectedDate, multiplier * shiftMultiplier);
+        newDate = addYears(baseDate, multiplier * shiftMultiplier);
         break;
       case 'month':
-        newDate = addMonths(selectedDate, multiplier * shiftMultiplier);
+        newDate = addMonths(baseDate, multiplier * shiftMultiplier);
         break;
       case 'week':
-        newDate = addWeeks(selectedDate, multiplier * shiftMultiplier);
+        newDate = addWeeks(baseDate, multiplier * shiftMultiplier);
         break;
       case 'day':
-        newDate = addDays(selectedDate, multiplier * shiftMultiplier);
+        newDate = addDays(baseDate, multiplier * shiftMultiplier);
         break;
       default:
-        newDate = selectedDate;
+        newDate = baseDate;
     }
+    pendingNavDateRef.current = newDate;
     onDateChange(newDate);
     // Populate date fields after navigation (only if user is not typing)
     // Use setTimeout to ensure state has updated
@@ -348,6 +363,7 @@ export default function NavigationBar({
     perfTrail.start('nav-today');
     playNavigationSound();
     const today = new Date();
+    pendingNavDateRef.current = today;
     onDateChange(today);
     perfTrail.end('nav-today');
     // Populate date fields after navigation (only if user is not typing)
@@ -1426,7 +1442,9 @@ export default function NavigationBar({
       if (e.key.toLowerCase() === 't') {
         e.preventDefault();
         playNavigationSound();
-        onDateChangeRef.current(new Date());
+        const today = new Date();
+        pendingNavDateRef.current = today;
+        onDateChangeRef.current(today);
         return;
       }
 
@@ -1436,9 +1454,11 @@ export default function NavigationBar({
         const direction = e.key === 'ArrowLeft' ? 'prev' : 'next';
         const shiftPressed = e.shiftKey;
         
-        // Get current state from refs/closure
+        // Get current state from refs/closure. Base on the last dispatched
+        // target so rapid keypresses compound instead of being dropped
+        // (App commits selectedDate in rAF — the prop can lag by a frame).
         const currentViewMode = viewMode;
-        const currentSelectedDate = selectedDate;
+        const currentSelectedDate = pendingNavDateRef.current ?? selectedDate;
         
         // Play tier-aware navigation sound with direction and shift distinction
         playTierNavigationSound(currentViewMode, direction, shiftPressed);
@@ -1466,6 +1486,7 @@ export default function NavigationBar({
           default:
             newDate = currentSelectedDate;
         }
+        pendingNavDateRef.current = newDate;
         onDateChange(newDate);
         // Populate date fields after keyboard navigation (only if user is not typing)
         // Use setTimeout to ensure state has updated

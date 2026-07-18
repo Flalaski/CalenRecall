@@ -124,6 +124,24 @@
   }
 }
 
+/* Graceful exit — cinematic fade with a gentle zoom-through before the app
+   is revealed (replaces an abrupt unmount). Duration must match
+   LOADING_FADE_OUT_MS in App.tsx. */
+.loading-screen--exiting {
+  animation: loadingFadeOut 0.6s ease-out forwards;
+}
+
+@keyframes loadingFadeOut {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(1.04);
+  }
+}
+
 .loading-content {
   text-align: center;
   color: white;

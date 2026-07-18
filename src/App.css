@@ -10,6 +10,18 @@
   isolation: isolate; /* Create new stacking context */
   box-sizing: border-box;
   max-width: 100%;
+  /* Gentle reveal after the loading screen fades out — completes the
+     splash exit choreography (fade-out → fade-in) instead of a hard cut */
+  animation: appReveal 0.45s ease-out;
+}
+
+@keyframes appReveal {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 .profile-name-display {

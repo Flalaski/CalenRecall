@@ -19,6 +19,19 @@ interface EntriesContextType {
 
 const EntriesContext = createContext<EntriesContextType | undefined>(undefined);
 
+/**
+ * Compute a change-detection hash for an entries array.
+ * For large arrays, samples first 10 + last 10 + length (fast, adequate).
+ */
+function computeEntriesHash(list: JournalEntry[]): string {
+  if (list.length > 1000) {
+    const first = list.slice(0, 10).map(e => `${e.id || 'new'}-${e.date}`).join('|');
+    const last = list.slice(-10).map(e => `${e.id || 'new'}-${e.date}`).join('|');
+    return `${first}|...|${last}|${list.length}`;
+  }
+  return list.map(e => `${e.id || 'new'}-${e.date}`).join('|');
+}
+
 export function EntriesProvider({ children }: { children: ReactNode }) {
   const [entries, setEntries] = useState<JournalEntry[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -29,6 +42,31 @@ export function EntriesProvider({ children }: { children: ReactNode }) {
 
   // Store previous lookup in ref to maintain stability
   const lookupRef = useRef<EntryLookup | null>(null);
+
+  // Always-current entries array for event handlers / incremental mutations.
+  // Synced on every commit; mutation helpers also update it eagerly so
+  // back-to-back mutations (before React commits) see the latest data.
+  const entriesRef = useRef<JournalEntry[]>([]);
+  useEffect(() => {
+    entriesRef.current = entries;
+  }, [entries]);
+
+  // Sync hash refs so the entryLookup useMemo recognizes `next` as already
+  // reflected in lookupRef (mutated incrementally) and skips a full rebuild.
+  const syncHashRefs = useCallback((next: JournalEntry[]) => {
+    prevEntriesLengthRef.current = next.length;
+    prevEntriesHashRef.current = computeEntriesHash(next);
+  }, []);
+
+  // STALE-MEMO FIX: after mutating the lookup in place, shallow-clone it so
+  // its reference changes. Consumers key useMemo/useCallback on the lookup
+  // reference — without this bump, incremental mutations left memoized view
+  // data (year/decade pixel maps, entry lists) permanently stale.
+  const bumpLookup = useCallback(() => {
+    if (lookupRef.current) {
+      lookupRef.current = { ...lookupRef.current };
+    }
+  }, []);
   
   // Build stable lookup structure - only rebuild when entries actually change
   const entryLookup = useMemo(() => {
@@ -45,15 +83,7 @@ export function EntriesProvider({ children }: { children: ReactNode }) {
     
     // Create a simple hash from entry IDs and dates to detect changes
     // Use a more efficient hash calculation for large arrays
-    let entriesHash: string;
-    if (entries.length > 1000) {
-      // For large arrays, use a faster hash (first 10 + last 10 + length)
-      const first = entries.slice(0, 10).map(e => `${e.id || 'new'}-${e.date}`).join('|');
-      const last = entries.slice(-10).map(e => `${e.id || 'new'}-${e.date}`).join('|');
-      entriesHash = `${first}|...|${last}|${entries.length}`;
-    } else {
-      entriesHash = entries.map(e => `${e.id || 'new'}-${e.date}`).join('|');
-    }
+    const entriesHash = computeEntriesHash(entries);
     
     // Only rebuild if entries actually changed (not just reference)
     if (entriesHash === prevEntriesHashRef.current && 
@@ -86,120 +116,100 @@ export function EntriesProvider({ children }: { children: ReactNode }) {
 
   // OPTIMIZATION: Incremental lookup mutation — add entry to lookup in O(1)
   // instead of triggering full O(n) rebuild on every mutation.
-  // Mutates lookupRef.current in-place, then syncs hash refs so useMemo returns it directly.
+  // Mutates lookupRef.current in-place, bumps its reference so consumer memos
+  // recompute, then syncs hash refs so useMemo skips the full rebuild.
   const addEntry = useCallback((entry: JournalEntry) => {
-    // Mutate lookup in-place (O(1))
+    // Mutate lookup in-place (O(1)), then bump reference for memo invalidation
     if (lookupRef.current) {
       addEntryToLookup(lookupRef.current, entry, 0);
+      bumpLookup();
     }
-    setEntries(prev => {
-      const next = [...prev, entry];
-      // Sync hash refs so useMemo returns existing (already-mutated) lookup
-      prevEntriesLengthRef.current = next.length;
-      prevEntriesHashRef.current = next.length > 1000
-        ? `${next.slice(0,10).map(e=>`${e.id||'new'}-${e.date}`).join('|')}|...|${next.slice(-10).map(e=>`${e.id||'new'}-${e.date}`).join('|')}|${next.length}`
-        : next.map(e => `${e.id || 'new'}-${e.date}`).join('|');
-      return next;
-    });
-  }, []);
+    const next = [...entriesRef.current, entry];
+    entriesRef.current = next;
+    syncHashRefs(next);
+    setEntries(next);
+  }, [bumpLookup, syncHashRefs]);
 
   const updateEntry = useCallback((updatedEntry: JournalEntry) => {
-    // Find old entry to remove from lookup, then add updated
+    // Find the old version from the authoritative entries list — works for
+    // every tier. (The previous byDateString-only search missed week/month/
+    // year/decade entries and entries whose date changed, forcing an O(n)
+    // full-map scan fallback.)
     if (lookupRef.current) {
-      const oldEntry = lookupRef.current.byDateString.get(updatedEntry.date)
-        ?.find(e => e.id === updatedEntry.id);
+      const oldEntry = entriesRef.current.find(e => e.id === updatedEntry.id);
       if (oldEntry) {
         updateEntryInLookup(lookupRef.current, oldEntry, updatedEntry, 0);
       } else {
-        // Fallback: old entry not found in byDateString, try removing by ID
+        // Fallback: old entry unknown — remove by ID scan, then add
         removeEntryFromLookup(lookupRef.current, updatedEntry.id!);
         addEntryToLookup(lookupRef.current, updatedEntry, 0);
       }
+      bumpLookup();
     }
-    setEntries(prev => {
-      const next = prev.map(entry => entry.id === updatedEntry.id ? updatedEntry : entry);
-      // Sync hash refs
-      prevEntriesLengthRef.current = next.length;
-      prevEntriesHashRef.current = next.length > 1000
-        ? `${next.slice(0,10).map(e=>`${e.id||'new'}-${e.date}`).join('|')}|...|${next.slice(-10).map(e=>`${e.id||'new'}-${e.date}`).join('|')}|${next.length}`
-        : next.map(e => `${e.id || 'new'}-${e.date}`).join('|');
-      return next;
-    });
-  }, []);
+    const next = entriesRef.current.map(entry => entry.id === updatedEntry.id ? updatedEntry : entry);
+    entriesRef.current = next;
+    syncHashRefs(next);
+    setEntries(next);
+  }, [bumpLookup, syncHashRefs]);
 
   const removeEntry = useCallback((entryId: number) => {
-    // Remove from lookup in-place (O(1))
+    // Targeted O(1) removal using the entry object as a hint (falls back to
+    // a full scan inside removeEntryFromLookup only if the hint is stale)
     if (lookupRef.current) {
-      removeEntryFromLookup(lookupRef.current, entryId);
+      const entryHint = entriesRef.current.find(e => e.id === entryId);
+      removeEntryFromLookup(lookupRef.current, entryId, entryHint, 0);
+      bumpLookup();
     }
-    setEntries(prev => {
-      const next = prev.filter(entry => entry.id !== entryId);
-      // Sync hash refs
-      prevEntriesLengthRef.current = next.length;
-      prevEntriesHashRef.current = next.length > 1000
-        ? `${next.slice(0,10).map(e=>`${e.id||'new'}-${e.date}`).join('|')}|...|${next.slice(-10).map(e=>`${e.id||'new'}-${e.date}`).join('|')}|${next.length}`
-        : next.map(e => `${e.id || 'new'}-${e.date}`).join('|');
-      return next;
-    });
-  }, []);
+    const next = entriesRef.current.filter(entry => entry.id !== entryId);
+    entriesRef.current = next;
+    syncHashRefs(next);
+    setEntries(next);
+  }, [bumpLookup, syncHashRefs]);
 
   // Listen for saved entry events — use incremental update instead of full reload
   useEffect(() => {
     const handleEntrySaved = async (e: Event) => {
       const detail = (e as CustomEvent).detail;
       
-      // If we have saved entry data, update the lookup incrementally (O(1))
+      // If we have saved entry data, update the lookup incrementally (O(1)).
+      // NOTE: lookup mutations happen OUTSIDE setEntries — updater functions
+      // can be double-invoked (React StrictMode), which previously added the
+      // entry to the lookup twice.
       if (detail?.entry) {
         const entry = detail.entry as JournalEntry;
         if (entry.id) {
-          // Check if this is an update or new entry by looking in current entries
-          setEntries(prev => {
-            const exists = prev.some(e => e.id === entry.id);
-            if (exists) {
-              // Update existing — mutate lookup in-place
-              if (lookupRef.current) {
-                // Find old version
-                const oldEntry = prev.find(e => e.id === entry.id);
-                if (oldEntry) {
-                  updateEntryInLookup(lookupRef.current, oldEntry, entry, 0);
-                }
-              }
-              const next = prev.map(e => e.id === entry.id ? entry : e);
-              prevEntriesLengthRef.current = next.length;
-              prevEntriesHashRef.current = next.length > 1000
-                ? `${next.slice(0,10).map(e=>`${e.id||'new'}-${e.date}`).join('|')}|...|${next.slice(-10).map(e=>`${e.id||'new'}-${e.date}`).join('|')}|${next.length}`
-                : next.map(e => `${e.id || 'new'}-${e.date}`).join('|');
-              return next;
+          const prev = entriesRef.current;
+          const oldEntry = prev.find(en => en.id === entry.id);
+          if (lookupRef.current) {
+            if (oldEntry) {
+              updateEntryInLookup(lookupRef.current, oldEntry, entry, 0);
             } else {
-              // New entry — add to lookup in-place
-              if (lookupRef.current) {
-                addEntryToLookup(lookupRef.current, entry, 0);
-              }
-              const next = [...prev, entry];
-              prevEntriesLengthRef.current = next.length;
-              prevEntriesHashRef.current = next.length > 1000
-                ? `${next.slice(0,10).map(e=>`${e.id||'new'}-${e.date}`).join('|')}|...|${next.slice(-10).map(e=>`${e.id||'new'}-${e.date}`).join('|')}|${next.length}`
-                : next.map(e => `${e.id || 'new'}-${e.date}`).join('|');
-              return next;
+              addEntryToLookup(lookupRef.current, entry, 0);
             }
-          });
+            bumpLookup();
+          }
+          const next = oldEntry
+            ? prev.map(en => (en.id === entry.id ? entry : en))
+            : [...prev, entry];
+          entriesRef.current = next;
+          syncHashRefs(next);
+          setEntries(next);
         }
         return;
       }
       
-      // Deleted entry — remove from lookup in-place
+      // Deleted entry — targeted removal via entry hint
       if (detail?.deleted && detail?.entryId) {
+        const prev = entriesRef.current;
         if (lookupRef.current) {
-          removeEntryFromLookup(lookupRef.current, detail.entryId);
+          const entryHint = prev.find(en => en.id === detail.entryId);
+          removeEntryFromLookup(lookupRef.current, detail.entryId, entryHint, 0);
+          bumpLookup();
         }
-        setEntries(prev => {
-          const next = prev.filter(e => e.id !== detail.entryId);
-          prevEntriesLengthRef.current = next.length;
-          prevEntriesHashRef.current = next.length > 1000
-            ? `${next.slice(0,10).map(e=>`${e.id||'new'}-${e.date}`).join('|')}|...|${next.slice(-10).map(e=>`${e.id||'new'}-${e.date}`).join('|')}|${next.length}`
-            : next.map(e => `${e.id || 'new'}-${e.date}`).join('|');
-          return next;
-        });
+        const next = prev.filter(en => en.id !== detail.entryId);
+        entriesRef.current = next;
+        syncHashRefs(next);
+        setEntries(next);
         return;
       }
       
@@ -219,7 +229,7 @@ export function EntriesProvider({ children }: { children: ReactNode }) {
     return () => {
       window.removeEventListener('journalEntrySaved', handleEntrySaved);
     };
-  }, []);
+  }, [bumpLookup, syncHashRefs]);
 
   // OPTIMIZATION: Memoize context value to prevent unnecessary re-renders
   // Only recreate when actual values change

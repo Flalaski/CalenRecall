@@ -1,5 +1,5 @@
 import { JournalEntry, TimeRange } from '../types';
-import { parseISODate, formatDate, getWeekStart } from './dateUtils';
+import { parseISODate, formatDate, getWeekStart, createDate } from './dateUtils';
 
 /** Day-of-week type used for weekStartsOn parameter */
 type WeekStartDay = 0 | 1 | 2 | 3 | 4 | 5 | 6;
@@ -459,11 +459,85 @@ export function addEntryToLookup(
 }
 
 /**
- * Remove a single entry from an existing EntryLookup (O(number of maps) ≈ O(1)).
- * Searches all Maps/Sets for the entry with the given ID and removes it.
+ * Remove an entry by ID from a specific keyed bucket. Returns true if found.
+ * Cleans up empty buckets (and their companion Set key when provided).
+ */
+function removeByIdFromBucket<K>(
+  map: Map<K, JournalEntry[]>,
+  key: K,
+  entryId: number,
+  companionSet?: Set<K>
+): boolean {
+  const arr = map.get(key);
+  if (!arr) return false;
+  const idx = arr.findIndex(e => e.id === entryId);
+  if (idx === -1) return false;
+  arr.splice(idx, 1);
+  if (arr.length === 0) {
+    map.delete(key);
+    companionSet?.delete(key);
+  }
+  return true;
+}
+
+/**
+ * Targeted O(1) removal when the entry object is known — computes the exact
+ * bucket keys from the entry instead of scanning every map/key. Returns false
+ * if the entry wasn't found where expected (stale hint) so the caller can
+ * fall back to the full scan.
+ */
+function removeEntryTargeted(
+  lookup: EntryLookup,
+  entry: JournalEntry,
+  weekStartsOn: WeekStartDay
+): boolean {
+  if (entry.id === undefined) return false;
+  const entryId = entry.id;
+  const { entryYear, monthKey, decadeStart, dateStr } = extractEntryDateParts(entry);
+  switch (entry.timeRange) {
+    case 'day': {
+      if (!removeByIdFromBucket(lookup.byDateString, dateStr, entryId, lookup.hasEntryDates)) return false;
+      removeByIdFromBucket(lookup.byDayForYear, entryYear, entryId);
+      removeByIdFromBucket(lookup.byDayForMonth, monthKey, entryId);
+      removeByIdFromBucket(lookup.byDateWithTime, dateStr, entryId);
+      return true;
+    }
+    case 'week': {
+      const weekStart = getWeekStart(parseISODate(dateStr), weekStartsOn);
+      if (!removeByIdFromBucket(lookup.byWeekStart, formatDate(weekStart), entryId, lookup.hasWeekEntryWeeks)) return false;
+      removeByIdFromBucket(lookup.byWeekForYear, weekStart.getFullYear(), entryId);
+      return true;
+    }
+    case 'month':
+      return removeByIdFromBucket(lookup.byMonth, monthKey, entryId, lookup.hasMonthEntryMonths);
+    case 'year':
+      return removeByIdFromBucket(lookup.byYear, entryYear, entryId, lookup.hasYearEntryYears);
+    case 'decade':
+      return removeByIdFromBucket(lookup.byDecade, decadeStart, entryId, lookup.hasDecadeEntryDecades);
+    default:
+      return false;
+  }
+}
+
+/**
+ * Remove a single entry from an existing EntryLookup.
+ * FAST PATH: when `entryHint` is provided (the entry object being removed),
+ * its exact bucket keys are computed and removal is O(1). Without a hint —
+ * or if the hint is stale — falls back to scanning all Maps/Sets (O(n)).
  * If a Map key becomes empty after removal, the key is cleaned up.
  */
-export function removeEntryFromLookup(lookup: EntryLookup, entryId: number): void {
+export function removeEntryFromLookup(
+  lookup: EntryLookup,
+  entryId: number,
+  entryHint?: JournalEntry,
+  weekStartsOn: WeekStartDay = 0
+): void {
+  // Targeted O(1) removal when the entry object is known
+  if (entryHint && entryHint.id === entryId) {
+    if (removeEntryTargeted(lookup, entryHint, weekStartsOn)) return;
+    // Hint was stale (entry not in expected buckets) — fall through to scan
+  }
+
   // Helper to remove entry by ID from an array, return true if found
   const removeFromArray = (arr: JournalEntry[]): boolean => {
     const idx = arr.findIndex(e => e.id === entryId);
@@ -518,6 +592,8 @@ export function removeEntryFromLookup(lookup: EntryLookup, entryId: number): voi
 /**
  * Update an entry in the lookup (remove old + add new).
  * More efficient than full rebuild when editing a single entry.
+ * Passes the old entry as a removal hint so the removal is targeted O(1)
+ * instead of a full-map scan.
  */
 export function updateEntryInLookup(
   lookup: EntryLookup,
@@ -526,7 +602,7 @@ export function updateEntryInLookup(
   weekStartsOn: WeekStartDay = 0
 ): void {
   if (oldEntry.id !== undefined) {
-    removeEntryFromLookup(lookup, oldEntry.id);
+    removeEntryFromLookup(lookup, oldEntry.id, oldEntry, weekStartsOn);
   }
   addEntryToLookup(lookup, newEntry, weekStartsOn);
 }
@@ -540,7 +616,7 @@ export function updateEntryInLookup(
 export function getAllEntriesForYearOptimized(
   lookup: EntryLookup,
   year: number,
-  _weekStartsOn: WeekStartDay = 0,
+  weekStartsOn: WeekStartDay = 0,
   excludeDayEntries: boolean = false
 ): JournalEntry[] {
   const results: JournalEntry[] = [];
@@ -581,6 +657,19 @@ export function getAllEntriesForYearOptimized(
     results.push(...weekEntries);
   }
 
+  // CORRECTNESS: a week starting in late December of the previous year can
+  // overlap the first days of this year — byWeekForYear attributes it to its
+  // start year, so check that single candidate week explicitly (O(1)).
+  if (lookup.byWeekStart.size > 0) {
+    const jan1WeekStart = getWeekStart(createDate(year, 0, 1), weekStartsOn);
+    if (jan1WeekStart.getFullYear() < year) {
+      const crossYearWeekEntries = lookup.byWeekStart.get(formatDate(jan1WeekStart));
+      if (crossYearWeekEntries) {
+        results.push(...crossYearWeekEntries);
+      }
+    }
+  }
+
   return results;
 }
 
@@ -592,7 +681,7 @@ export function getAllEntriesForMonthOptimized(
   lookup: EntryLookup,
   year: number,
   month: number,
-  _weekStartsOn: WeekStartDay = 0
+  weekStartsOn: WeekStartDay = 0
 ): JournalEntry[] {
   const results: JournalEntry[] = [];
   const monthKey = `${year}-${String(month + 1).padStart(2, '0')}`;
@@ -623,33 +712,26 @@ export function getAllEntriesForMonthOptimized(
   }
 
   // Add week entries that overlap with this month
-  // OPTIMIZATION: Use byWeekForYear to scope search to this year's weeks only
-  // instead of scanning ALL week starts across all years
-  const monthStart = new Date(year, month, 1);
-  const monthEnd = new Date(year, month + 1, 0);
-  monthEnd.setHours(23, 59, 59, 999);
-
-  const yearWeekEntries = lookup.byWeekForYear.get(year);
-  if (yearWeekEntries && yearWeekEntries.length > 0) {
-    // Get unique week keys from the index (we need the original week start dates)
-    // Use hasWeekEntryWeeks to find which weeks overlap with this month
-    for (const weekKey of lookup.hasWeekEntryWeeks) {
-      const weekDate = parseISODate(weekKey);
-      const weekYear = weekDate.getFullYear();
-      // Only check weeks belonging to this year
-      if (weekYear !== year) continue;
-      const weekStart = weekDate;
-      const weekEnd = new Date(weekStart);
-      weekEnd.setDate(weekEnd.getDate() + 6);
-      weekEnd.setHours(23, 59, 59, 999);
-
-      // Check if week overlaps with month
-      if (weekStart <= monthEnd && weekEnd >= monthStart) {
-        const weekEntryList = lookup.byWeekStart.get(weekKey);
-        if (weekEntryList) {
-          results.push(...weekEntryList);
-        }
+  // OPTIMIZATION: Derive the ≤6 candidate week-start keys directly (a month
+  // overlaps at most 6 weeks) instead of scanning EVERY week key in the
+  // dataset with a Date parse per key — previously O(total weeks) per month,
+  // ×12 per year-view computation. Each candidate is one O(1) Map lookup.
+  // CORRECTNESS FIX: also catches weeks starting in late December of the
+  // previous year that overlap this month — the old year-scoped scan skipped
+  // them (`weekYear !== year`), so their entries never appeared in January.
+  if (lookup.byWeekStart.size > 0) {
+    // createDate is century-safe (plain `new Date(50, 0, 1)` maps year 50 → 1950)
+    const monthStart = createDate(year, month, 1);
+    const monthEnd = new Date(monthStart);
+    monthEnd.setMonth(monthEnd.getMonth() + 1);
+    monthEnd.setDate(0); // roll back to the last day of `month`
+    const cursor = getWeekStart(monthStart, weekStartsOn);
+    while (cursor <= monthEnd) {
+      const weekEntryList = lookup.byWeekStart.get(formatDate(cursor));
+      if (weekEntryList) {
+        results.push(...weekEntryList);
       }
+      cursor.setDate(cursor.getDate() + 7);
     }
   }
 

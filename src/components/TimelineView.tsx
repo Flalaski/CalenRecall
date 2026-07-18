@@ -17,6 +17,39 @@ import { getAllMacroCycles, type YugaType } from '../utils/calendars/macroCycleU
 import perfTrail from '../utils/performance/perfTrail';
 import './TimelineView.css';
 
+// Stable empty array returned by view-data memos when their view mode is inactive.
+// Module-level so the reference never changes (prevents downstream memo invalidation).
+const EMPTY_VIEW_DATA: never[] = [];
+
+/**
+ * Split entries into priority-tier-first order and sort each group by date.
+ * Uses decorate-sort-undecorate so each date is parsed ONCE (O(n) parses)
+ * instead of inside the comparator (O(n log n) parses — previously ~7,000
+ * parseISODate calls per year cell, ×10 in decade view).
+ * Very large sets skip sorting entirely (priority entries are already first).
+ */
+function prioritizeAndSortEntries(
+  entries: JournalEntry[],
+  priorityTier: TimeRange,
+  maxEntries: number
+): JournalEntry[] {
+  const priority: JournalEntry[] = [];
+  const other: JournalEntry[] = [];
+  for (const entry of entries) {
+    (entry.timeRange === priorityTier ? priority : other).push(entry);
+  }
+  if (entries.length > maxEntries) {
+    // Very large set: skip sorting, keep priority entries first
+    return [...priority, ...other].slice(0, maxEntries);
+  }
+  const sortByDate = (group: JournalEntry[]): JournalEntry[] =>
+    group
+      .map((entry) => ({ t: parseISODate(entry.date).getTime(), entry }))
+      .sort((a, b) => a.t - b.t)
+      .map((decorated) => decorated.entry);
+  return [...sortByDate(priority), ...sortByDate(other)];
+}
+
 interface TimelineViewProps {
   selectedDate: Date;
   viewMode: TimeRange;
@@ -393,49 +426,10 @@ function TimelineView({
     // Each pixel represents one entry, colored using crystal colors
     const pixels: string[] = [];
     
-    // OPTIMIZATION: Prioritize entries from current tier first
-    const prioritizedEntries = prioritizeEntriesByTier(yearEntries, priorityTier);
-    
-    // OPTIMIZATION: For performance, limit to first 360 entries instead of sorting all
-    // If there are many entries, we'll sample them rather than processing all
-    const maxEntriesToProcess = Math.min(prioritizedEntries.length, totalPixels * 2); // Process up to 2x pixels worth
-    
-    // Only sort if we have a reasonable number of entries
-    // IMPORTANT: Sort within each tier group to preserve prioritization
-    let entriesToUse: JournalEntry[];
-    if (prioritizedEntries.length <= maxEntriesToProcess) {
-      // Sort entries by date while preserving tier priority
-      // Split into priority and other groups, sort each, then combine
-      const priorityTierEntries: JournalEntry[] = [];
-      const otherTierEntries: JournalEntry[] = [];
-      
-      for (const entry of prioritizedEntries) {
-        if (entry.timeRange === priorityTier) {
-          priorityTierEntries.push(entry);
-        } else {
-          otherTierEntries.push(entry);
-        }
-      }
-      
-      // Sort each group by date
-      priorityTierEntries.sort((a, b) => {
-        const dateA = parseISODate(a.date);
-        const dateB = parseISODate(b.date);
-        return dateA.getTime() - dateB.getTime();
-      });
-      
-      otherTierEntries.sort((a, b) => {
-        const dateA = parseISODate(a.date);
-        const dateB = parseISODate(b.date);
-        return dateA.getTime() - dateB.getTime();
-      });
-      
-      // Combine with priority entries first
-      entriesToUse = [...priorityTierEntries, ...otherTierEntries];
-    } else {
-      // For very large sets, take first N entries (prioritized entries come first)
-      entriesToUse = prioritizedEntries.slice(0, maxEntriesToProcess);
-    }
+    // OPTIMIZATION: Prioritize current-tier entries, then sort each group by
+    // date via the shared helper (parses each date once, not per comparison —
+    // this map runs 10× per decade-view computation).
+    const entriesToUse = prioritizeAndSortEntries(yearEntries, priorityTier, totalPixels * 2);
     
     // Create pixel array - one entry per pixel, using crystal colors
     for (let i = 0; i < Math.min(entriesToUse.length, totalPixels); i++) {
@@ -450,7 +444,7 @@ function TimelineView({
     
     perfTrail.end('create-year-pixel-map');
     return pixels;
-  }, [prioritizeEntriesByTier]);
+  }, []);
 
   // Create pixel map for a month (7 days x 5 weeks = 35 pixels)
   // OPTIMIZED: Limit processing to avoid performance issues with many entries
@@ -469,48 +463,10 @@ function TimelineView({
     // Each pixel represents one entry, colored by time range
     const pixels: string[] = [];
     
-    // OPTIMIZATION: Prioritize entries from current tier first
-    const prioritizedEntries = prioritizeEntriesByTier(monthEntries, priorityTier);
-    
-    // OPTIMIZATION: For performance, limit processing
-    const maxEntriesToProcess = Math.min(prioritizedEntries.length, totalPixels * 2); // Process up to 2x pixels worth
-    
-    // Only sort if we have a reasonable number of entries
-    // IMPORTANT: Sort within each tier group to preserve prioritization
-    let entriesToUse: JournalEntry[];
-    if (prioritizedEntries.length <= maxEntriesToProcess) {
-      // Sort entries by date while preserving tier priority
-      // Split into priority and other groups, sort each, then combine
-      const priorityTierEntries: JournalEntry[] = [];
-      const otherTierEntries: JournalEntry[] = [];
-      
-      for (const entry of prioritizedEntries) {
-        if (entry.timeRange === priorityTier) {
-          priorityTierEntries.push(entry);
-        } else {
-          otherTierEntries.push(entry);
-        }
-      }
-      
-      // Sort each group by date
-      priorityTierEntries.sort((a, b) => {
-        const dateA = parseISODate(a.date);
-        const dateB = parseISODate(b.date);
-        return dateA.getTime() - dateB.getTime();
-      });
-      
-      otherTierEntries.sort((a, b) => {
-        const dateA = parseISODate(a.date);
-        const dateB = parseISODate(b.date);
-        return dateA.getTime() - dateB.getTime();
-      });
-      
-      // Combine with priority entries first
-      entriesToUse = [...priorityTierEntries, ...otherTierEntries];
-    } else {
-      // For very large sets, take first N entries (prioritized entries come first)
-      entriesToUse = prioritizedEntries.slice(0, maxEntriesToProcess);
-    }
+    // OPTIMIZATION: Prioritize current-tier entries, then sort each group by
+    // date via the shared helper (parses each date once, not per comparison —
+    // this map runs 12× per year-view computation).
+    const entriesToUse = prioritizeAndSortEntries(monthEntries, priorityTier, totalPixels * 2);
     
     // Create pixel array - one entry per pixel, using crystal colors
     for (let i = 0; i < Math.min(entriesToUse.length, totalPixels); i++) {
@@ -525,7 +481,7 @@ function TimelineView({
     
     perfTrail.end('create-month-pixel-map');
     return pixels;
-  }, [prioritizeEntriesByTier]);
+  }, []);
 
   const renderMonthView = () => {
     const days = getDaysInMonth(selectedDate);
@@ -541,23 +497,23 @@ function TimelineView({
     const monthEntriesWithIds = monthEntries.filter(entry => entry.id !== undefined);
     
     // OPTIMIZATION: Get week entries using lookup
-    // Only iterate through week entries if there are any week entries in the database
+    // Derive the ≤6 candidate week-start keys directly (a month overlaps at
+    // most 6 weeks) instead of scanning + date-parsing every week key in the
+    // dataset on each month render.
     const monthStart = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1);
     const monthEnd = new Date(selectedDate.getFullYear(), selectedDate.getMonth() + 1, 0);
     const weekEntriesByWeek = new Map<string, JournalEntry[]>();
     
     // OPTIMIZATION: Early return if no week entries exist
     if (entryLookup.hasWeekEntryWeeks.size > 0) {
-      // Get all week entries that overlap with this month
-      for (const [weekKey, weekEntries] of entryLookup.byWeekStart.entries()) {
-        const weekStart = parseISODate(weekKey);
-        const weekEnd = new Date(weekStart);
-        weekEnd.setDate(weekEnd.getDate() + 6);
-        
-        // Only include weeks that overlap with the current month
-        if (weekStart <= monthEnd && weekEnd >= monthStart) {
+      const weekCursor = getWeekStart(monthStart, weekStartsOn);
+      while (weekCursor <= monthEnd) {
+        const weekKey = formatDate(weekCursor);
+        const weekEntries = entryLookup.byWeekStart.get(weekKey);
+        if (weekEntries) {
           weekEntriesByWeek.set(weekKey, weekEntries);
         }
+        weekCursor.setDate(weekCursor.getDate() + 7);
       }
     }
     
@@ -1241,8 +1197,14 @@ function TimelineView({
   };
 
   // OPTIMIZATION: Memoize month data to avoid recalculating on every render
+  // GATED: only computed when year view is active. Previously this recomputed
+  // 12 months of entry prioritization + pixel maps on every date change in
+  // day/week/month/decade modes — pure wasted work (confirmed via perf trail).
   const selectedYear = selectedDate.getFullYear();
   const yearViewMonthData = useMemo(() => {
+    if (viewMode !== 'year') {
+      return EMPTY_VIEW_DATA;
+    }
     perfTrail.start('year-view-data');
     
     // OPTIMIZATION: Quick O(1) check — if no entries exist for this year,
@@ -1285,23 +1247,35 @@ function TimelineView({
     perfTrail.checkpoint('year-entries', { monthCount: 12, totalEntries: monthData.reduce((s, m) => s + m.monthEntries.length, 0) });
     perfTrail.end('year-view-data');
     return monthData;
-  }, [selectedYear, entryLookup, getAllEntriesForMonth, createMonthPixelMap, prioritizeEntriesByTier]);
+  }, [viewMode, selectedYear, entryLookup, getAllEntriesForMonth, createMonthPixelMap, prioritizeEntriesByTier]);
 
   // Helper function to render macro cycle indicators
   // Now shows cycles regardless of calendar selection when toggles are enabled
   const renderMacroCycleIndicators = (year: number, jdn: number) => {
+    // GATED: skip ALL cycle computation when no macro-cycle toggles are enabled,
+    // and only compute the cycle sets whose toggles are actually on. Previously
+    // 4 full cycle sets (incl. Chinese astronomical calcs) ran per call — 10×
+    // per decade render — even with every toggle off.
+    const wantChinese = preferences.showChineseSexagenaryCycle === true;
+    const wantMayanLC = preferences.showMayanLongCountCycles === true;
+    const wantMetonic = preferences.showMetonicCycle === true;
+    const wantMayanRound = preferences.showMayanCalendarRound === true;
+    const wantYuga = preferences.showHinduYugaCycles === true;
+    if (!wantChinese && !wantMayanLC && !wantMetonic && !wantMayanRound && !wantYuga) {
+      return null;
+    }
     perfTrail.start('macro-cycle-calc');
-    // Get cycles for all calendar types (not just current calendar)
-    const cyclesChinese = getAllMacroCycles(jdn, 'chinese', year);
-    const cyclesMayan = getAllMacroCycles(jdn, 'mayan-longcount', year);
-    const cyclesHebrew = getAllMacroCycles(jdn, 'hebrew', year);
-    const cyclesIndian = getAllMacroCycles(jdn, 'indian-saka', year);
+    // Get cycles only for the calendar types whose toggles are enabled
+    const cyclesChinese = wantChinese ? getAllMacroCycles(jdn, 'chinese', year) : null;
+    const cyclesMayan = wantMayanLC || wantMayanRound ? getAllMacroCycles(jdn, 'mayan-longcount', year) : null;
+    const cyclesHebrew = wantMetonic ? getAllMacroCycles(jdn, 'hebrew', year) : null;
+    const cyclesIndian = wantYuga ? getAllMacroCycles(jdn, 'indian-saka', year) : null;
     perfTrail.end('macro-cycle-calc');
     
     const indicators: JSX.Element[] = [];
     
     // Chinese 60-year cycle - ALWAYS show when enabled (not just for Chinese calendar)
-    if (preferences.showChineseSexagenaryCycle === true && cyclesChinese.chineseSexagenary) {
+    if (wantChinese && cyclesChinese?.chineseSexagenary) {
       const { combined, cyclePosition, branchEnglish, stem, branch } = cyclesChinese.chineseSexagenary;
       const isTransition = cyclePosition === 1; // Highlight start of cycle
       indicators.push(
@@ -1317,7 +1291,7 @@ function TimelineView({
     }
     
     // Mayan Long Count cycles - ALWAYS show when enabled
-    if (preferences.showMayanLongCountCycles === true && cyclesMayan.mayanLongCount) {
+    if (wantMayanLC && cyclesMayan?.mayanLongCount) {
       const { baktun, katun, katunCycleGlobal, daysIntoKatun, tun } = cyclesMayan.mayanLongCount;
       const isKatunTransition = daysIntoKatun < 100 || daysIntoKatun > 7100;
       const isBaktunTransition = katun === 0 && daysIntoKatun < 100;
@@ -1350,7 +1324,7 @@ function TimelineView({
     }
     
     // Metonic cycle - ALWAYS show when enabled
-    if (preferences.showMetonicCycle === true && cyclesHebrew.metonic) {
+    if (wantMetonic && cyclesHebrew?.metonic) {
       const { cyclePosition, isLeapYear } = cyclesHebrew.metonic;
       const isTransition = cyclePosition === 1 || cyclePosition === 19;
       indicators.push(
@@ -1366,7 +1340,7 @@ function TimelineView({
     }
     
     // Mayan Calendar Round - ALWAYS show when enabled
-    if (preferences.showMayanCalendarRound === true && cyclesMayan.mayanCalendarRound) {
+    if (wantMayanRound && cyclesMayan?.mayanCalendarRound) {
       const { roundNumber, yearsIntoRound } = cyclesMayan.mayanCalendarRound;
       const isTransition = yearsIntoRound === 0 || yearsIntoRound === 51;
       indicators.push(
@@ -1382,7 +1356,7 @@ function TimelineView({
     }
     
     // Hindu Yuga cycles - ALWAYS show when enabled (show current Yuga)
-    if (preferences.showHinduYugaCycles === true && cyclesIndian.hinduYuga) {
+    if (wantYuga && cyclesIndian?.hinduYuga) {
       const { yugaType, yearsIntoYuga, mahayugaNumber } = cyclesIndian.hinduYuga;
       const yugaDurations: Record<YugaType, number> = {
         'Satya': 1728000,
@@ -1503,8 +1477,12 @@ function TimelineView({
   };
 
   // OPTIMIZATION: Memoize decade year data to avoid recalculating on every render
+  // GATED: only computed when decade view is active (see yearViewMonthData note).
   const selectedYearForDecade = selectedDate.getFullYear();
   const decadeViewYearData = useMemo(() => {
+    if (viewMode !== 'decade') {
+      return EMPTY_VIEW_DATA;
+    }
     perfTrail.start('decade-view-data');
     const decadeStart = Math.floor(selectedYearForDecade / 10) * 10;
     const years = [];
@@ -1550,7 +1528,7 @@ function TimelineView({
     perfTrail.checkpoint('decade-entries', { yearCount: 10, totalEntries });
     perfTrail.end('decade-view-data');
     return result;
-  }, [selectedYearForDecade, entryLookup, getAllEntriesForYear, createYearPixelMap, prioritizeEntriesByTier]);
+  }, [viewMode, selectedYearForDecade, entryLookup, getAllEntriesForYear, createYearPixelMap, prioritizeEntriesByTier]);
 
   const renderDecadeView = () => {
     perfTrail.start('render-decade-view');
