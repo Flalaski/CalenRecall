@@ -1096,73 +1096,60 @@ export default function LoadingScreen({ progress, message = 'Loading your journa
     };
   }, []);
 
-  // Generate 3D infinity symbol segments with mathematically accurate polarity alternation
+  // Generate 3D infinity symbol segments using the lemniscate of Bernoulli.
+  // Parametric equations (true lemniscate):
+  //   x(t) = a * cos(t) / (1 + sin²(t))
+  //   y(t) = a * sin(t) * cos(t) / (1 + sin²(t))
+  // t ∈ [0, 2π] traces the full ∞ shape with a proper center pinch.
+  //
+  // Segment i uses points at t_i and t_{i+1} so adjacent segments share
+  // their boundary point exactly — no gaps at the joints.
   const infinitySegments3D = useMemo(() => {
     const segments: Array<{
       x1: number; y1: number; z1: number;
       x2: number; y2: number; z2: number;
       z: number;
-      t: number; // Store parametric parameter for polarity calculation
+      t: number;
     }> = [];
     
-    // Sample the infinity curve using proper parametric equation (lemniscate of Bernoulli)
-    // Parametric form: x = a * cos(t) / (1 + sin²(t)), y = a * sin(t) * cos(t) / (1 + sin²(t))
-    // Or alternative: x = a * sin(t), y = a * sin(t) * cos(t) / (1 + sin²(t))
-    const sampleInfinityCurve = (t: number): { x: number; y: number } => {
-      const a = LOADING_SCREEN_CONSTANTS.INFINITY_AMPLITUDE;
-      const centerX = LOADING_SCREEN_CONSTANTS.MIDPOINT_X;
-      const centerY = LOADING_SCREEN_CONSTANTS.LEFT_LOOP_CENTER.y;
-      const angle = t * Math.PI * 2; // t ∈ [0, 1] maps to angle ∈ [0, 2π]
-      
-      const sinT = Math.sin(angle);
-      const cosT = Math.cos(angle);
+    const a = LOADING_SCREEN_CONSTANTS.INFINITY_AMPLITUDE;
+    const cx = LOADING_SCREEN_CONSTANTS.MIDPOINT_X;
+    const cy = LOADING_SCREEN_CONSTANTS.LEFT_LOOP_CENTER.y;
+    // Double the segment count for smoother curve approximation
+    const numSegments = LOADING_SCREEN_CONSTANTS.INFINITY_SEGMENTS * 2;
+    
+    // Pre-compute all curve points to ensure shared endpoints
+    const points: Array<{ x: number; y: number; z: number }> = [];
+    for (let i = 0; i <= numSegments; i++) {
+      const theta = (i / numSegments) * Math.PI * 2;
+      const sinT = Math.sin(theta);
+      const cosT = Math.cos(theta);
       const sin2T = sinT * sinT;
+      const denom = 1 + sin2T;
       
-      // Lemniscate parametric equations
-      const x = a * sinT;
-      const y = (a * sinT * cosT) / (1 + sin2T);
+      // True lemniscate of Bernoulli
+      const x = a * cosT / denom;
+      const y = a * sinT * cosT / denom;
+      // Z varies smoothly with 2 full waves over the curve
+      const z = Math.sin(theta * 2) * 25;
       
-      return {
-        x: centerX + x,
-        y: centerY + y,
-      };
-    };
+      points.push({ x: cx + x, y: cy + y, z });
+    }
     
-    // Polarity alternation is calculated in infinitySegmentColors useMemo
-    // based on the parametric parameter t stored in each segment
-    
-    // Create segments with varying Z depth for true 3D structure
-    // Use fractal interpolation for mathematically perfect smooth connections
-    const numSegments = LOADING_SCREEN_CONSTANTS.INFINITY_SEGMENTS;
     for (let i = 0; i < numSegments; i++) {
-      const t1 = i / numSegments;
-      const t2 = (i + 1) / numSegments;
-      const p1 = sampleInfinityCurve(t1);
-      const p2 = sampleInfinityCurve(t2);
-      
-      // Vary Z depth along the curve - creates 3D depth
-      const z1 = Math.sin(t1 * Math.PI * 4) * 25;
-      const z2 = Math.sin(t2 * Math.PI * 4) * 25;
-      
-      // Extend segment slightly to close gaps between line tips
-      const dx = p2.x - p1.x;
-      const dy = p2.y - p1.y;
-      const extensionFactor = 1.01; // 1% extension to ensure perfect connection
-      const extendedX2 = p1.x + dx * extensionFactor;
-      const extendedY2 = p1.y + dy * extensionFactor;
-      
-      // Store the parametric midpoint for polarity calculation
-      const tMid = (t1 + t2) / 2;
+      const p1 = points[i];
+      const p2 = points[i + 1];
+      const tMid = (i + 0.5) / numSegments;
       
       segments.push({
         x1: p1.x,
         y1: p1.y,
-        z1: z1,
-        x2: extendedX2,
-        y2: extendedY2,
-        z2: z2,
-        z: (z1 + z2) / 2,
-        t: tMid, // Store parametric parameter for polarity
+        z1: p1.z,
+        x2: p2.x,
+        y2: p2.y,
+        z2: p2.z,
+        z: (p1.z + p2.z) / 2,
+        t: tMid,
       });
     }
     
@@ -1299,12 +1286,7 @@ export default function LoadingScreen({ progress, message = 'Loading your journa
             <div 
             className="camera-wrapper"
             style={{
-              transform: `
-                translateZ(${LOADING_SCREEN_CONSTANTS.CAMERA_DISTANCE}px) 
-                rotateX(${LOADING_SCREEN_CONSTANTS.CAMERA_ROTATE_X}deg) 
-                rotateY(${LOADING_SCREEN_CONSTANTS.CAMERA_ROTATE_Y}deg) 
-                scale(${LOADING_SCREEN_CONSTANTS.CAMERA_ZOOM})
-              `,
+              transform: `translateZ(${LOADING_SCREEN_CONSTANTS.CAMERA_DISTANCE}px) rotateX(${LOADING_SCREEN_CONSTANTS.CAMERA_ROTATE_X}deg) rotateY(${LOADING_SCREEN_CONSTANTS.CAMERA_ROTATE_Y}deg) scale(${LOADING_SCREEN_CONSTANTS.CAMERA_ZOOM})`,
             }}
           >
             <div className="infinity-3d-container">

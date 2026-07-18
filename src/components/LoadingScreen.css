@@ -13,6 +13,7 @@
   overflow: hidden;
   contain: layout style paint;
   will-change: transform, opacity;
+  pointer-events: none;
   /* Default polarity colors - can be overridden by themes */
   --loading-past-color: hsl(270, 70%, 60%);
   --loading-future-color: hsl(45, 85%, 55%);
@@ -108,28 +109,10 @@
   box-shadow: 
     0 0 1px #ffffff,
     0 0 2px rgba(255, 255, 255, 0.5);
-  animation: starTwinkle 3s ease-in-out infinite;
-}
-
-.star:nth-child(3n) {
-  animation-delay: 0s;
-}
-
-.star:nth-child(3n + 1) {
-  animation-delay: 1s;
-}
-
-.star:nth-child(3n + 2) {
-  animation-delay: 2s;
-}
-
-@keyframes starTwinkle {
-  0%, 100% {
-    opacity: 0.25;
-  }
-  50% {
-    opacity: 0.08;
-  }
+  /* Static opacity via inline style — no CSS animation needed.
+     The inline style already sets per-star brightness from generateStars().
+     A CSS animation here would override inline values and make all stars
+     twinkle to the same minimum, destroying brightness variety. */
 }
 
 @keyframes fadeIn {
