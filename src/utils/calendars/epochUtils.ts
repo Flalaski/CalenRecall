@@ -28,8 +28,9 @@ export function getCalendarEpoch(calendar: CalendarSystem): number {
       return 1948439;
     
     case 'hebrew':
-      // Hebrew year 1 AM, Tishrei 1 = October 7, 3761 BCE (Julian) = JDN 347997
-      return 347997;
+      // Hebrew year 1 AM, Tishrei 1 = R.D. −1373427 (D&R) = JDN 347998
+      // (standard noon-JDN convention; anchored to modern Rosh Hashanah dates)
+      return 347998;
     
     case 'persian':
       // Persian year 1 SH, Farvardin 1 = March 19, 622 CE (Gregorian) = JDN 1948318

@@ -50,6 +50,27 @@ function prioritizeAndSortEntries(
   return [...sortByDate(priority), ...sortByDate(other)];
 }
 
+/**
+ * Semantic day-type for styling (CALENRECALL_FORMATTING_ADAPTATION §5.1).
+ * Weekend is a Gregorian concept — only applied on the Gregorian calendar.
+ * NOTE: `hasDayEntries` must be DAY-TIER presence only (getDayEntriesOptimized),
+ * not inherited week/month/year/decade entries — otherwise a single month
+ * entry floods every cell with 'has-entries' and erases past/future dimming.
+ */
+function getDayType(
+  day: Date,
+  isTodayFlag: boolean,
+  hasDayEntries: boolean,
+  isGregorian: boolean
+): 'today' | 'weekend' | 'has-entries' | 'past' | 'future' {
+  if (isTodayFlag) return 'today';
+  if (isGregorian && (day.getDay() === 0 || day.getDay() === 6)) return 'weekend';
+  if (hasDayEntries) return 'has-entries';
+  const startOfToday = new Date();
+  startOfToday.setHours(0, 0, 0, 0);
+  return day < startOfToday ? 'past' : 'future';
+}
+
 interface TimelineViewProps {
   selectedDate: Date;
   viewMode: TimeRange;
@@ -579,6 +600,7 @@ function TimelineView({
                   <div
                     key={idx}
                     className={`timeline-cell day-cell ${isToday(day) ? 'today' : ''} ${isSelected(day) ? 'selected' : ''} ${hasEntries ? 'has-entries' : ''}`}
+                    data-day-type={getDayType(day, isToday(day), getDayEntriesOptimized(entryLookup, day).length > 0, calendar === 'gregorian')}
                     onClick={() => {
                       playCalendarSelectionSound();
                       onTimePeriodSelect(day, 'day');
@@ -762,6 +784,25 @@ function TimelineView({
                           <span className="week-label">
                             Week of {formatDate(weekStart, 'MMM d')}
                           </span>
+                          {/* Zone 2: per-day density strip (ADAPTATION §5.5) —
+                              O(1) lookups + precomputed crystal colors */}
+                          <div className="week-group-zone-density" aria-hidden="true">
+                            {Array.from({ length: 7 }, (_, dIdx) => {
+                              const dotDay = new Date(weekStart);
+                              dotDay.setDate(dotDay.getDate() + dIdx);
+                              const dotEntries = getDayEntriesOptimized(entryLookup, dotDay);
+                              const firstId = dotEntries[0]?.id;
+                              const dotColor = firstId !== undefined ? entryColors?.get(firstId) : undefined;
+                              return (
+                                <span
+                                  key={dIdx}
+                                  className={`week-density-dot${dotEntries.length > 0 ? ' has' : ''}`}
+                                  style={dotColor ? { background: dotColor, color: dotColor } : undefined}
+                                  title={`${dotEntries.length} ${dotEntries.length === 1 ? 'entry' : 'entries'}`}
+                                />
+                              );
+                            })}
+                          </div>
                           {weekEntries.length > 0 && (
                             <span className="week-entry-count">{weekEntries.length}</span>
                           )}
@@ -855,6 +896,7 @@ function TimelineView({
               <div
                 key={idx}
                 className={`timeline-cell day-cell week-day-cell ${isToday(day) ? 'today' : ''} ${isSelected(day) ? 'selected' : ''} ${dayEntries.length > 0 ? 'has-entries' : ''}`}
+                data-day-type={getDayType(day, isToday(day), getDayEntriesOptimized(entryLookup, day).length > 0, calendar === 'gregorian')}
                 onClick={() => {
                   playCalendarSelectionSound();
                   onTimePeriodSelect(day, 'day');
@@ -1168,6 +1210,20 @@ function TimelineView({
                       </button>
                     )}
                     <span className="time-range-badge">{entry.timeRange}</span>
+                    {/* Real-data chips (ADAPTATION §5.4): pinned / attachments / links */}
+                    {entry.pinned && (
+                      <span className="cal-chip cal-chip--active" title="Pinned entry">📌</span>
+                    )}
+                    {(entry.attachments?.length ?? 0) > 0 && (
+                      <span className="cal-chip" title={`${entry.attachments!.length} attachment${entry.attachments!.length === 1 ? '' : 's'}`}>
+                        📎 {entry.attachments!.length}
+                      </span>
+                    )}
+                    {(entry.linkedEntries?.length ?? 0) > 0 && (
+                      <span className="cal-chip" title={`${entry.linkedEntries!.length} linked ${entry.linkedEntries!.length === 1 ? 'entry' : 'entries'}`}>
+                        🔗 {entry.linkedEntries!.length}
+                      </span>
+                    )}
                     <span className="card-date">
                       {formatDate(parseISODate(entry.date), 'MMM d')}
                       {entry.hour !== undefined && entry.hour !== null && (
@@ -1416,11 +1472,16 @@ function TimelineView({
         <div className="year-grid">
           {yearViewMonthData.map((monthData, idx) => {
             const { month, monthEntries, allMonthEntries, pixelMap } = monthData;
+            const nowForPeriod = new Date();
+            const monthOrdinal = month.getFullYear() * 12 + month.getMonth();
+            const currentMonthOrdinal = nowForPeriod.getFullYear() * 12 + nowForPeriod.getMonth();
+            const monthPeriodType = monthOrdinal === currentMonthOrdinal ? 'current' : monthOrdinal < currentMonthOrdinal ? 'past' : 'future';
             
             return (
               <div
                 key={idx}
                 className={`timeline-cell month-cell ${isSelected(month) ? 'selected' : ''} ${monthEntries.length > 0 ? 'has-entries' : ''}`}
+                data-period-type={monthPeriodType}
                 onClick={() => {
                   playCalendarSelectionSound();
                   onTimePeriodSelect(month, 'month');
@@ -1556,11 +1617,15 @@ function TimelineView({
         <div className="decade-grid">
           {decadeViewYearData.map((yearData, idx) => {
             const { year, yearEntries, allYearEntries, pixelMap, yearGradientColor } = yearData;
+            const yearNum = year.getFullYear();
+            const currentYearNum = new Date().getFullYear();
+            const periodType = yearNum === currentYearNum ? 'current' : yearNum < currentYearNum ? 'past' : 'future';
             
             return (
               <div
                 key={idx}
                 className={`timeline-cell year-cell ${isSelected(year) ? 'selected' : ''} ${yearEntries.length > 0 ? 'has-entries' : ''}`}
+                data-period-type={periodType}
                 onClick={() => {
                   playCalendarSelectionSound();
                   onTimePeriodSelect(year, 'year');
@@ -1571,7 +1636,18 @@ function TimelineView({
                   className="cell-year-label"
                   style={{ color: yearGradientColor }}
                 >
-                  {year.getFullYear()}
+                  <span className="cell-year-number">{year.getFullYear()}</span>
+                  {/* Zone 3: entry-count chip (ADAPTATION §5.4/§5.8 density buckets) */}
+                  {allYearEntries.length > 0 && (
+                    <span
+                      className={`cal-chip year-count-chip cal-chip--density-${
+                        allYearEntries.length <= 2 ? 'light' : allYearEntries.length <= 5 ? 'medium' : 'heavy'
+                      }`}
+                      title={`${allYearEntries.length} ${allYearEntries.length === 1 ? 'entry' : 'entries'} in ${year.getFullYear()}`}
+                    >
+                      📝 {allYearEntries.length}
+                    </span>
+                  )}
                 </div>
                 {allYearEntries.length > 0 && (
                   <div className="year-pixel-map">

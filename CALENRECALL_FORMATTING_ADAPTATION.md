@@ -174,6 +174,12 @@ const dayType =
 
 Past/future dimming gives month view an instant "where am I in time" read — the same job the guide's gray/dim hexes do, without breaking a single theme.
 
+> **Implementation refinement (verified live)**: the `has-entries` *day-type* must test
+> **day-tier presence only** (`getDayEntriesOptimized`), not the inherited entry set —
+> otherwise a single month/year/decade entry floods every cell with `has-entries` and
+> erases the past/future dimming. The existing `.has-entries` *class* keeps its
+> inherited-entries meaning; the two layers are intentionally different signals.
+
 ### 5.2 Hover lift → compositor-only, tuned for dense grids
 
 `.timeline-cell` already declares `will-change: transform; transform: translateZ(0)`. The guide's lift translates cleanly — but in a 7×5 grid, lifted cells must layer above siblings and the transition must stay transform/shadow-only (our perf work keeps navigation at 60fps; layout-triggering hovers would regress it):
@@ -334,20 +340,19 @@ const density =
 }
 ```
 
-### 5.9 Ctrl+Enter save → genuinely missing, adopt in the editor
+### 5.9 Ctrl+Enter save → already existed; added Cmd+Enter for macOS
 
-The only guide interaction we truly lack. Add to `JournalEditor.tsx` (and `EntryEditModal.tsx`) on the content textarea:
+**Audit correction**: `handleKeyPress` in both `JournalEditor.tsx` and `EntryEditModal.tsx`
+already implemented Ctrl+Enter save (`e.key === 'Enter' && e.ctrlKey`). What was
+missing is the macOS convention. Implemented:
 
 ```tsx
-onKeyDown={(e) => {
-  if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
-    e.preventDefault();
-    handleSave();
-  }
-}}
+if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+  handleSave();
+}
 ```
 
-(`metaKey` included — the app ships on macOS too; see `entitlements.mac.plist` / build scripts.)
+(`metaKey` — the app ships on macOS too; see `entitlements.mac.plist` / build scripts.)
 
 ### 5.10 Fluid date typography → month/day cells
 
@@ -406,44 +411,57 @@ Any CSS introduced by this adaptation MUST:
 
 1. **Never hardcode a color** except as a `var()` fallback: `var(--theme-accent, #808080)`.
 2. Use only: `--theme-*` variables, `--zodiac-gradient`, per-entry colors from the `entryColors` map, or opacity/filter modulation of the above.
-3. Not use `!important` (theme override chain depends on cascade order in `themes.css`).
+3. Not use `!important` (theme override chain depends on cascade order in `themes.css`) — **except** inside `performance-mode.css` exemptions (see rule 7).
 4. Keep hover/animation effects **transform/opacity/box-shadow only** (compositor-friendly — `contain: layout style paint` is set on cells and layout-triggering hovers would break the 60fps navigation budget).
 5. New selectors go in the component's CSS file (`TimelineView.css`), not `themes.css` — themes override, components define.
 6. Test at minimum against: `classic-light`, `classic-dark`, `high-contrast`, `NEON`, `manuscript-room` (the extreme palette + serif cases).
+7. ⚠️ **CRITICAL (discovered during implementation)**: `src/performance-mode.css` is imported unconditionally and contains UNSCOPED global kill-switches — `* { opacity: 1 !important; box-shadow/text-shadow/filter: none !important }`, `* { animation/transition: none !important }`, `*:hover { transform: none !important }` — and `main.tsx` adds `.performance-mode` unconditionally. **Any new aesthetic effect is dead-on-arrival unless it adds a scoped, higher-specificity `!important` exemption to the "APPROVED AESTHETIC EXEMPTIONS" section at the end of `performance-mode.css`.** Exemptions must be compositor-only (transform/opacity) and must include a `prefers-reduced-motion` counter-rule for motion effects.
 
 ---
 
 ## 9. Implementation Checklist
 
-### Phase 1 — Tokens & chips (pure CSS, zero behavior risk)
-- [ ] Add §4.1 structural token block to `TimelineView.css`
-- [ ] Add `.cal-chip` + `.cal-chip--active` + density buckets (§5.4, §5.8)
-- [ ] Unify `.card-preview` / `.month-entry-preview` onto clamp tokens (§5.6)
-- [ ] Fluid `.cell-date` typography (§5.10)
+### Phase 1 — Tokens & chips (pure CSS, zero behavior risk) ✅ DONE
+- [x] Add §4.1 structural token block to `TimelineView.css`
+- [x] Add `.cal-chip` + `.cal-chip--active` + density buckets (§5.4, §5.8) — classes available for adoption by badges
+- [x] Unify `.card-preview` / `.month-entry-preview` onto clamp tokens (§5.6) — month view clamps at 2 lines, week view at 3
+- [x] Fluid `.cell-date` typography (§5.10) — conservative `clamp(0.8rem, 0.4vw + 0.55rem, 1rem)` to preserve the header-strip design
 
-### Phase 2 — Semantic day types
-- [ ] Compute `dayType` in `renderMonthView` / `renderWeekView` day cells (`TimelineView.tsx`, §5.1)
-- [ ] `data-day-type` CSS (opacity-based, theme-safe)
-- [ ] `data-period-type` for year cells in decade view (§7)
-- [ ] Verify against the 5 themes in §8.6
+### Phase 2 — Semantic day types ✅ DONE
+- [x] `getDayType()` module helper + `data-day-type` in `renderMonthView` / `renderWeekView` day cells (`TimelineView.tsx`, §5.1); weekend gated on `calendar === 'gregorian'`
+- [x] `data-day-type` CSS (opacity-based, theme-safe; `:not(.selected)` guards keep selection crisp; hover restores full opacity)
+- [x] `data-period-type` (`current`/`past`/`future`) for year cells in decade view (§7); current year gets a subtle `text-shadow` glow
+- [ ] Verify against the 5 themes in §8.6 (visual pass — pending user run)
 
-### Phase 3 — Hover lift
-- [ ] `.timeline-cell:hover` / `.year-cell:hover` / `.entry-card:hover` lift (§5.2)
-- [ ] Confirm no regression in perfTrail `timeline-view-render` timings while hovering during navigation
+### Phase 3 — Hover lift ✅ DONE
+- [x] `.timeline-cell:hover` lift (covers `.day-cell` and `.year-cell`): `translateZ(0) translateY(var(--cal-lift))` + `--theme-focus-ring` shadow, `z-index: 3`; `transform` added to the transition list (§5.2)
+- [ ] Confirm no regression in perfTrail `timeline-view-render` timings while hovering during navigation (pending user run)
 
-### Phase 4 — Three-zone summaries + density strips
-- [ ] Refactor `.week-entry-group-header` into three zones (§5.3)
-- [ ] `week-density-dot` strip fed by `getDayEntriesOptimized` + `entryColors` (§5.5)
-- [ ] Zone treatment for `.cell-year-label` in decade view
+### Phase 4 — Three-zone summaries + density strips ✅ DONE
+- [x] `.week-entry-group-header` refactored to gap-based three-zone flex (§5.3)
+- [x] `week-density-dot` 7-dot strip fed by `getDayEntriesOptimized` + precomputed `entryColors` (§5.5); empty dots use `--theme-text-secondary` at 0.3 opacity
+- [x] Zone treatment for `.cell-year-label` in decade view — year number + `.cal-chip` entry-count chip with §5.8 density buckets (chip resets the Bebas display font to UI font)
 
-### Phase 5 — Editor affordance
-- [ ] Ctrl/Cmd+Enter save in `JournalEditor.tsx` + `EntryEditModal.tsx` (§5.9)
+### Phase 5 — Editor affordance ✅ DONE
+- [x] ~~Ctrl+Enter~~ **Correction**: Ctrl+Enter already existed in both editors; added `metaKey` (Cmd+Enter on macOS) to `JournalEditor.tsx` + `EntryEditModal.tsx` (§5.9)
 
 ### Phase 6 — Verification
-- [ ] `npx tsc --noEmit` → 0 errors; `npx vite build` clean
-- [ ] Keyboard-navigate all five tiers with perfTrail open — no new checkpoints slower than existing budgets
-- [ ] Theme sweep (§8.6) + `weekStartsOn` = 0, 1, 6 sanity check on density strips/weekend styling
-- [ ] Non-Gregorian calendar spot-check (Hebrew 13-month leap year, Baháʼí 19+1) — no weekday/weekend mislabeling
+- [x] `npx tsc --noEmit` → 0 errors; `npx vite build` clean
+- [x] **Live browser verification (Vite dev server, 2026-07-17)**:
+  - `data-day-type` distribution on July 2026 month view: past×12, weekend×8, today×1, future×10 ✓
+  - Computed opacities: past 0.82, future 0.94, empty density dot 0.3 ✓
+  - Hover lift: `translateY(-2px)` applied and released; dimmed cells restore to opacity 1 on hover ✓
+  - Decade view `data-period-type`: 2020–2025 past @0.85, 2026 current @1.0, 2027–2029 future @0.95 ✓
+  - Splash exit: `loadingFadeOut 0.6s` animation confirmed running (was silently killed by performance-mode globals before the exemption) ✓
+  - ⚠️ Found + fixed en route: `performance-mode.css` global kill-switches were disabling ALL of the above plus the splash choreography — added the "APPROVED AESTHETIC EXEMPTIONS" section (see §8 rule 7)
+- [x] Theme sweep (§8.6) — **done live** via `data-theme` switching across classic-light / classic-dark / high-contrast / NEON / manuscript-room: `.cell-date` follows `--theme-text` per theme, density dots follow `--theme-text-secondary`, `.week-entry-count` follows `--theme-badge-active-*` (high-contrast → yellow/black, manuscript → purple/cream), dimming constant at 0.82/0.94. One false alarm: the "green .week-label" was the *minimap scale label* (intentional tier color), not the sidebar label.
+- [x] Entry-data-dependent visuals — **done live** with synthetic entries injected via `journalEntrySaved` events: 4 density dots lit with crystal colors, week-count badge rendered, decade chips show 📝 1 on every 2020s year (decade entry fans out per tier semantics) and 📝 4 on 2026 (year+decade+month+week) with correct light/medium buckets.
+- [x] Day-type refinement discovered via synthetic data: `has-entries` day-type now keyed to **day-tier entries only** — before, one month entry flooded all 31 cells and erased past/future dimming. Verified after fix: past×10, weekend×8, has-entries×3, today×1, future×9, while the inherited `.has-entries` class correctly stays at 31.
+- [x] Hardcoded month-view sidebar colors converted to theme vars with original fallbacks: `.week-entry-count` (green → `--theme-badge-active-*`), `.week-entry-group:hover` (green → `--theme-accent`), `.month-entry-tag` (blue → `--theme-badge-default-*`), `.week-label` (#555 → `--theme-text-secondary`), `.cell-date` (#333 → `--theme-text`), `.card-preview` (#666 → `--theme-text-secondary`)
+- [x] Non-Gregorian calendar spot-check — **done live** via the in-app calendar selector (17 calendars). Weekend styling auto-disabled off Gregorian by design. 🔴 **En route, a major pre-existing bug was found and fixed**: the Hebrew calendar was ~3 years wrong (2026-07-17 rendered as "27 Nisan 5789" instead of 3 Av 5786) — `hebrew.ts` used a `cyclePos % 3` heuristic instead of molad arithmetic, started the AM year at Nisan instead of Tishrei, and mis-split Cheshvan/Kislev. Rewritten with canonical Dershowitz–Reingold elapsed-days + dechiyot; epoch corrected 347997 → 347998. Verified: 9/9 modern anchors (Rosh Hashanah 5784–5787, Pesach, Yom Kippur, Tisha B'Av, Chanukah) + 15,062 round-trips across 4,000 years with 0 failures.
+- [x] Year-view month cells brought into the period-type layer (§7 "all five tiers"): past/current/future with current-month label glow — verified live (6 past / 1 current / 5 future for July 2026)
+- [x] Day-view `.card-meta` real-data chips (§5.4): 📌 pinned, 📎 attachments, 🔗 linked entries — verified live
+- [ ] `weekStartsOn` = 1, 6 sanity check — needs preference control (Electron session)
 
 ---
 

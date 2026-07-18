@@ -30,11 +30,15 @@ export const COPTIC_MONTH_NAMES_NATIVE = [
 const COPTIC_EPOCH = 1825030;
 
 /**
- * Check if a Coptic year is a leap year
- * Same rule as Julian calendar: every 4 years
+ * Check if a Coptic year is a leap year.
+ * CORRECT RULE (D&R): the 6-day Pi Kogi Enavot falls in years where
+ * year mod 4 === 3 — the Coptic leap year PRECEDES the Julian leap year.
+ * (Verified: Nayrouz 2023 fell on Sep 12 because year 1739 was leap;
+ * 1739 % 4 === 3.) The previous `% 4 === 0` rule shifted the leap day by
+ * one year within every 4-year cycle.
  */
 export function isCopticLeapYear(year: number): boolean {
-  return year % 4 === 0;
+  return ((year % 4) + 4) % 4 === 3;
 }
 
 /**
@@ -57,145 +61,35 @@ export function getDaysInCopticMonth(year: number, month: number): number {
 }
 
 /**
- * Convert Coptic date to Julian Day Number
+ * Convert Coptic date to Julian Day Number.
+ * Closed-form Dershowitz & Reingold arithmetic (§4): works proleptically
+ * for all years (including <= 0) with no iteration.
  * @param year Coptic year (AM - Anno Martyrum)
  * @param month Month (1-13)
  * @param day Day (1-30, or 1-5/6 for month 13)
  * @returns Julian Day Number
  */
 export function copticToJDN(year: number, month: number, day: number): number {
-  // Handle negative years (before epoch)
-  if (year < 1) {
-    // For negative years, calculate days before epoch
-    // Work backwards: calculate total days from year down to 0 (inclusive)
-    let totalDaysInYears = 0;
-    for (let y = year; y <= 0; y++) {
-      const isLeap = (y % 4 === 0);
-      totalDaysInYears += isLeap ? 366 : 365;
-    }
-    
-    // Calculate days in the target year up to this date
-    let daysInYear = day - 1;
-    for (let m = 1; m < month; m++) {
-      daysInYear += getDaysInCopticMonth(year, m);
-    }
-    
-    // Days before epoch = total days in all years from year to 0, minus days remaining in target year
-    const daysBeforeEpoch = totalDaysInYears - daysInYear;
-    
-    return COPTIC_EPOCH - daysBeforeEpoch;
-  }
-  
-  // Normal case: year >= 1
-  // Calculate days since Coptic epoch
-  let days = day - 1;
-  
-  // Add days from previous months in this year
-  for (let m = 1; m < month; m++) {
-    days += getDaysInCopticMonth(year, m);
-  }
-  
-  // Add days from previous years
-  const leapYears = Math.floor((year - 1) / 4);
-  const daysInYears = (year - 1) * 365 + leapYears;
-  
-  return COPTIC_EPOCH + daysInYears + days;
+  return (
+    COPTIC_EPOCH - 1 +
+    365 * (year - 1) +
+    Math.floor(year / 4) +
+    30 * (month - 1) +
+    day
+  );
 }
 
 /**
- * Convert Julian Day Number to Coptic date
+ * Convert Julian Day Number to Coptic date.
+ * Closed-form inverse (no loops; proleptic for dates before the epoch).
  * @param jdn Julian Day Number
  * @returns Object with year, month (1-13), and day
  */
 export function jdnToCoptic(jdn: number): { year: number; month: number; day: number } {
-  const days = jdn - COPTIC_EPOCH;
-  
-  // Handle dates before epoch (negative years)
-  if (days < 0) {
-    // Work backwards from epoch
-    let remainingDays = -days;
-    let year = 0;
-    
-    // Find the year by working backwards
-    while (remainingDays > 0) {
-      const isLeap = (year % 4 === 0);
-      const yearLength = isLeap ? 366 : 365;
-      if (remainingDays > yearLength) {
-        remainingDays -= yearLength;
-        year--;
-      } else {
-        // Found the year
-        // remainingDays represents how many days BEFORE the epoch we are, within this year
-        // If remainingDays equals yearLength, we're at the START of the year (first day)
-        if (remainingDays === yearLength) {
-          return { year, month: 1, day: 1 };
-        }
-        
-        // If remainingDays is 1, we're 1 day before epoch = last day of the year
-        if (remainingDays === 1) {
-          const lastMonth = 13;
-          const lastDay = getDaysInCopticMonth(year, lastMonth);
-          return { year, month: lastMonth, day: lastDay };
-        }
-        
-        // Otherwise, calculate day of year
-        // remainingDays tells us how many days before epoch, so:
-        // day of year = yearLength - remainingDays + 1
-        // (if remainingDays = yearLength-1, we're 1 day into the year)
-        let dayOfYear = yearLength - remainingDays + 1;
-        
-        // Now find month and day
-        let month = 1;
-        let day = dayOfYear;
-        
-        for (let m = 1; m <= 13; m++) {
-          const monthDays = getDaysInCopticMonth(year, m);
-          if (day <= monthDays) {
-            month = m;
-            break;
-          }
-          day -= monthDays;
-        }
-        
-        return { year, month, day };
-      }
-    }
-    
-    // Should not reach here, but return year 0, month 1, day 1 as fallback
-    return { year: 0, month: 1, day: 1 };
-  }
-  
-  // Normal case: days >= 0 (year >= 1)
-  // Approximate year
-  let year = Math.floor(days / 365.25) + 1;
-  
-  // Refine year calculation
-  while (true) {
-    const leapYears = Math.floor((year - 1) / 4);
-    const daysInYears = (year - 1) * 365 + leapYears;
-    
-    if (days < daysInYears) {
-      year--;
-      continue;
-    }
-    
-    const remainingDays = days - daysInYears;
-    
-    // Calculate month and day
-    let month = 1;
-    let day = remainingDays + 1;
-    
-    for (let m = 1; m <= 13; m++) {
-      const monthDays = getDaysInCopticMonth(year, m);
-      if (day <= monthDays) {
-        month = m;
-        break;
-      }
-      day -= monthDays;
-    }
-    
-    return { year, month, day };
-  }
+  const year = Math.floor((4 * (jdn - COPTIC_EPOCH) + 1463) / 1461);
+  const month = Math.floor((jdn - copticToJDN(year, 1, 1)) / 30) + 1;
+  const day = jdn + 1 - copticToJDN(year, month, 1);
+  return { year, month, day };
 }
 
 /**

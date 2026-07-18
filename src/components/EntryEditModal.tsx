@@ -391,7 +391,7 @@ export default function EntryEditModal({
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && e.ctrlKey) {
+    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
       handleSave();
     } else {
       // Play context-aware typing sound for printable keys

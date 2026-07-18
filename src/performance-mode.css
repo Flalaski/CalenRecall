@@ -75,3 +75,66 @@ html {
     transition: none !important;
   }
 }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   APPROVED AESTHETIC EXEMPTIONS (2026-07-17)
+   The blanket rules above silently disabled explicitly-approved features.
+   These exemptions are compositor-only (transform/opacity) and data-driven
+   — they carry no layout/paint cost and must survive performance mode.
+   Sources: splash choreography (App.tsx LOADING_* constants),
+   CALENRECALL_FORMATTING_ADAPTATION.md §5.1/§5.2/§5.5/§5.8.
+   Rule: any future aesthetic effect must add its exemption here, or it
+   will be dead-on-arrival under the global !important kill-switches.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* 1. Splash exit / app reveal choreography (opacity/transform keyframes only) */
+.loading-screen--exiting {
+  animation: loadingFadeOut 0.6s ease-out forwards !important;
+}
+.app {
+  animation: appReveal 0.45s ease-out !important;
+}
+
+/* 2. Semantic day-type / period-type dimming (static opacity — zero runtime cost) */
+.timeline-cell:not(.selected)[data-day-type="past"] { opacity: 0.82 !important; }
+.timeline-cell:not(.selected)[data-day-type="future"] { opacity: 0.94 !important; }
+.timeline-cell:not(.selected)[data-period-type="past"] { opacity: 0.85 !important; }
+.timeline-cell:not(.selected)[data-period-type="future"] { opacity: 0.95 !important; }
+.week-density-dot { opacity: 0.3 !important; }
+.week-density-dot.has { opacity: 1 !important; }
+.cal-chip--density-light { opacity: 0.75 !important; }
+.cal-chip--density-medium { opacity: 0.9 !important; }
+
+/* 2b. Current-period label glow (static single text-shadow — negligible paint) */
+.timeline-cell[data-period-type="current"] .cell-year-label,
+.timeline-cell[data-period-type="current"] .cell-month-label {
+  text-shadow: 0 0 6px currentColor !important;
+}
+
+/* 3. Hover lift — transform-only; cells are already promoted GPU layers */
+.timeline-cell {
+  transition: transform 0.2s ease-out !important; /* transform ONLY in perf mode */
+}
+.timeline-cell:hover {
+  transform: translateZ(0) translateY(var(--cal-lift, -2px)) !important;
+  opacity: 1 !important; /* restore over day-type dimming */
+}
+/* Higher specificity than the dimming rules (0,4,0 vs 0,3,0) so hovered
+   dimmed cells snap back to full crispness */
+.timeline-cell:not(.selected)[data-day-type]:hover,
+.timeline-cell:not(.selected)[data-period-type]:hover {
+  opacity: 1 !important;
+}
+
+/* Accessibility: reduced-motion users get no motion (static dimming stays) */
+@media (prefers-reduced-motion: reduce) {
+  .loading-screen--exiting,
+  .app {
+    animation: none !important;
+  }
+  .timeline-cell,
+  .timeline-cell:hover {
+    transition: none !important;
+    transform: translateZ(0) !important;
+  }
+}

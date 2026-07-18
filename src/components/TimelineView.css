@@ -1,3 +1,23 @@
+/* ═══ Fluid layout tokens (theme-neutral — colors ALWAYS come from --theme-*) ═══
+   Source: CALENRECALL_FORMATTING_ADAPTATION.md §4.1 */
+:root {
+  --cal-stack-gap: clamp(3px, 0.4vw, 6px);
+  --cal-cell-padding: clamp(4px, 0.5vw, 8px);
+  --cal-radius: 8px;
+  --cal-radius-sm: 4px;
+  --cal-radius-chip: 999px;
+
+  --cal-label-size: clamp(11px, 0.9vw, 13px);
+  --cal-entry-size: clamp(11px, 0.9vw, 14px);
+  --cal-cell-date-size: clamp(0.8rem, 0.4vw + 0.55rem, 1rem);
+
+  --cal-entry-max-lines: 3;
+  --cal-entry-line-height: 1.35;
+
+  --cal-lift: -2px;
+  --cal-lift-duration: 0.2s;
+}
+
 /* Decade view: ensure macro cycle badges always fit inside year cards */
 .decade-grid .year-card {
   container-type: size;
@@ -189,23 +209,48 @@
 }
 
 .week-entry-group:hover {
-  border-color: #4caf50;
-  box-shadow: 0 2px 4px rgba(76, 175, 80, 0.1);
+  border-color: var(--theme-accent, #4caf50);
+  box-shadow: 0 2px 4px var(--theme-focus-ring, rgba(76, 175, 80, 0.1));
 }
 
 .week-entry-group-header {
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  gap: var(--cal-stack-gap);
   margin-bottom: 0.5rem;
   padding-bottom: 0.5rem;
   border-bottom: 1px solid #f0f0f0;
 }
 
+/* Zone 2: per-day density strip (ADAPTATION §5.3 + §5.5) — dot colors come
+   from the precomputed entryColors crystal map, never from a fixed palette */
+.week-group-zone-density {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  padding: 0 4px;
+}
+
+.week-density-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--theme-text-secondary, #888);
+  opacity: 0.3;
+  flex-shrink: 0;
+}
+
+.week-density-dot.has {
+  opacity: 1;
+  box-shadow: 0 0 3px currentColor;
+}
+
 .week-label {
   font-size: 0.85rem;
   font-weight: 400;
-  color: #555;
+  color: var(--theme-text-secondary, #555);
   font-family: 'Bebas Neue', 'Impact', 'Arial Black', 'Franklin Gothic Heavy', 'Arial Narrow', sans-serif;
   letter-spacing: 0.05em;
   text-transform: uppercase;
@@ -220,8 +265,8 @@
 .week-entry-count {
   font-size: 0.75rem;
   padding: 0.2rem 0.5rem;
-  background: #4caf50;
-  color: white;
+  background: var(--theme-badge-active-bg, #4caf50);
+  color: var(--theme-badge-active-text, white);
   border-radius: 10px;
   font-weight: 600;
 }
@@ -415,13 +460,18 @@
 }
 
 .month-entry-preview {
-  font-size: 0.75rem;
+  font-size: var(--cal-entry-size);
   color: inherit;
   opacity: 0.7;
-  line-height: 1.4;
+  line-height: var(--cal-entry-line-height);
   overflow-wrap: break-word;
   word-wrap: break-word;
   word-break: break-word;
+  /* Line-clamp via shared tokens (ADAPTATION §5.6) */
+  display: -webkit-box;
+  -webkit-line-clamp: var(--cal-entry-max-lines);
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .month-entry-tags {
@@ -433,9 +483,9 @@
 .month-entry-tag {
   font-size: 0.65rem;
   padding: 0.15rem 0.4rem;
-  background: rgba(74, 144, 226, 0.1);
-  color: rgba(74, 144, 226, 0.7);
-  border: 1px solid rgba(74, 144, 226, 0.2);
+  background: var(--theme-badge-default-bg, rgba(74, 144, 226, 0.1));
+  color: var(--theme-badge-default-text, rgba(74, 144, 226, 0.7));
+  border: 1px solid transparent;
   border-radius: 12px;
   font-weight: 500;
 }
@@ -620,7 +670,7 @@
   width: 100%;
   max-width: 100%; /* Ensure it doesn't exceed parent width */
   box-sizing: border-box;
-  transition: background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+  transition: background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease, transform var(--cal-lift-duration) ease-out;
   display: flex;
   flex-direction: column; /* Stack cell-date and cell-entries vertically */
   /* Performance optimizations */
@@ -691,9 +741,12 @@
 
 .timeline-cell:hover {
   background: transparent;
-  border-color: #4a90e2;
-  box-shadow: 0 2px 8px rgba(74, 144, 226, 0.15);
-  z-index: 1;
+  border-color: var(--theme-accent, #4a90e2);
+  /* Hover lift (ADAPTATION §5.2) — compositor-only: transform + shadow */
+  transform: translateZ(0) translateY(var(--cal-lift));
+  box-shadow: 0 4px 12px var(--theme-focus-ring, rgba(74, 144, 226, 0.15));
+  opacity: 1; /* restore full opacity over day-type dimming */
+  z-index: 3; /* above .selected (2) while hovered */
 }
 
 .timeline-cell.empty-cell {
@@ -738,11 +791,65 @@
   border: 2px solid #1565c0;
 }
 
+/* ═══ Semantic day-type layer (ADAPTATION §5.1) — additive, theme-safe ═══
+   Opacity/color modulation only; today/selected/has-entries keep their rules. */
+.timeline-cell[data-day-type="weekend"] .cell-date {
+  color: var(--theme-accent, inherit);
+  opacity: 0.9;
+}
+.timeline-cell:not(.selected)[data-day-type="past"] {
+  opacity: 0.82;
+}
+.timeline-cell:not(.selected)[data-day-type="future"] {
+  opacity: 0.94;
+}
+
+/* Period-type layer for coarse tiers (§7) — decade year cells AND year-view month cells */
+.timeline-cell:not(.selected)[data-period-type="past"] {
+  opacity: 0.85;
+}
+.timeline-cell:not(.selected)[data-period-type="future"] {
+  opacity: 0.95;
+}
+.timeline-cell[data-period-type="current"] .cell-year-label,
+.timeline-cell[data-period-type="current"] .cell-month-label {
+  text-shadow: 0 0 6px currentColor;
+}
+
+/* ═══ Theme-safe metadata chips (ADAPTATION §5.4, §5.8) ═══ */
+.cal-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 1px 7px;
+  border-radius: var(--cal-radius-chip);
+  font-size: var(--cal-label-size);
+  background: var(--theme-badge-default-bg, rgba(127, 127, 127, 0.12));
+  color: var(--theme-badge-default-text, inherit);
+  border: 1px solid transparent;
+  white-space: nowrap;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.cal-chip--active {
+  background: var(--theme-badge-active-bg, rgba(127, 127, 127, 0.2));
+  color: var(--theme-badge-active-text, inherit);
+}
+.cal-chip--density-light { opacity: 0.75; }
+.cal-chip--density-medium { opacity: 0.9; }
+.cal-chip--density-heavy {
+  opacity: 1;
+  background: var(--theme-badge-active-bg, rgba(127, 127, 127, 0.2));
+  color: var(--theme-badge-active-text, inherit);
+  font-weight: 600;
+}
+
 .cell-date {
   font-weight: 400;
-  font-size: 0.9rem;
+  font-size: var(--cal-cell-date-size);
   padding: 0.25rem 0.5rem;
-  color: #333;
+  color: var(--theme-text, #333);
   border-bottom: 1px solid #f0f0f0;
   font-family: 'Bebas Neue', 'Impact', 'Arial Black', 'Franklin Gothic Heavy', 'Arial Narrow', sans-serif;
   letter-spacing: 0.05em;
@@ -1021,9 +1128,9 @@
 }
 
 .card-preview {
-  font-size: 0.75rem;
-  color: #666;
-  line-height: 1.3;
+  font-size: var(--cal-entry-size);
+  color: var(--theme-text-secondary, #666);
+  line-height: var(--cal-entry-line-height);
   margin-bottom: 0.25rem;
   margin-top: 0; /* Remove any top margin */
   overflow-wrap: break-word;
@@ -1031,11 +1138,19 @@
   word-break: normal; /* Use normal word breaking for better readability */
   width: 100%;
   max-width: 100%; /* Prevent overflow */
-  overflow: visible; /* Allow preview to expand */
   box-sizing: border-box;
   text-align: left; /* Ensure left alignment */
   white-space: normal; /* Allow text to wrap */
+  /* Line-clamp via shared tokens (ADAPTATION §5.6) */
+  display: -webkit-box;
+  -webkit-line-clamp: var(--cal-entry-max-lines);
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
+
+/* Per-view preview density (ADAPTATION §5.6) */
+.timeline-month-view { --cal-entry-max-lines: 2; }
+.timeline-week-view { --cal-entry-max-lines: 3; }
 
 .card-tags {
   display: flex;
@@ -1577,6 +1692,22 @@
     0 0 1px rgba(0, 0, 0, 0.1);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  /* Three-zone treatment (ADAPTATION §5.3): year number + count chip */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--cal-stack-gap);
+  min-width: 0;
+}
+
+/* Chips inside the display-font label reset to UI styling */
+.cell-year-label .year-count-chip {
+  font-family: system-ui, -apple-system, sans-serif;
+  text-transform: none;
+  letter-spacing: normal;
+  text-shadow: none;
+  font-size: 0.62em;
+  flex-shrink: 0;
 }
 
 .year-pixel-map {

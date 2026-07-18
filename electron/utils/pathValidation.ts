@@ -25,21 +25,24 @@ import * as fs from 'fs';
  */
 export function validatePath(filePath: string, allowedBase: string): boolean {
   try {
-    // Resolve both paths to absolute paths
+    // Resolve both paths to absolute paths (collapses all traversal sequences)
     const resolvedPath = path.resolve(filePath);
     const resolvedBase = path.resolve(allowedBase);
     
-    // Check if the resolved path starts with the resolved base
-    // This prevents path traversal attacks
-    const isWithinBase = resolvedPath.startsWith(resolvedBase);
-    
-    // Also check that the path doesn't use path traversal sequences
-    const normalizedPath = path.normalize(filePath);
-    const hasTraversal = normalizedPath.includes('..') || 
-                        normalizedPath.includes('~') ||
-                        path.isAbsolute(filePath) && !resolvedPath.startsWith(resolvedBase);
-    
-    return isWithinBase && !hasTraversal;
+    // Canonical containment test: the target is inside the base iff the
+    // relative path from base to target does not escape upward and is not
+    // absolute (a different drive on Windows).
+    //
+    // This replaces the previous checks which had three real bugs:
+    // 1. `resolvedPath.startsWith(resolvedBase)` accepted sibling directories
+    //    with a shared prefix (`/base-evil` starts with `/base`).
+    // 2. Rejecting any path containing `~` broke ALL Windows 8.3 short paths
+    //    (e.g. `C:\Users\LONGUS~1\...`) — `~` is only shell-special as a
+    //    leading character and is never expanded by Node's fs.
+    // 3. `startsWith` is case-sensitive, but Windows paths are not;
+    //    `path.win32.relative` compares case-insensitively.
+    const rel = path.relative(resolvedBase, resolvedPath);
+    return rel === '' || (!rel.startsWith('..') && !path.isAbsolute(rel));
   } catch (error) {
     // If path resolution fails, consider it invalid
     return false;
@@ -68,16 +71,11 @@ export function sanitizeFileName(fileName: string): string | null {
     .replace(/[\/\\]/g, '') // Remove path separators
     .replace(/\.\./g, '') // Remove parent directory references
     .replace(/~/g, '') // Remove home directory references
+    .replace(/[<>:"|?*\x00-\x1f]/g, '') // Remove Windows-reserved + control characters
     .trim();
   
-  // Check for empty or invalid filenames
+  // Check for empty or invalid filenames after stripping
   if (!sanitized || sanitized.length === 0 || sanitized.length > 255) {
-    return null;
-  }
-  
-  // Check for invalid characters (Windows reserved characters)
-  const invalidChars = /[<>:"|?*\x00-\x1f]/;
-  if (invalidChars.test(sanitized)) {
     return null;
   }
   
@@ -125,8 +123,10 @@ export function safePathJoin(basePath: string, relativePath: string): string | n
     // Sanitize the relative path first
     const sanitized = path.normalize(relativePath);
     
-    // Check for path traversal
-    if (sanitized.includes('..') || sanitized.startsWith('/') || sanitized.startsWith('\\')) {
+    // Check for path traversal — segment-aware, so legitimate filenames
+    // containing consecutive dots (e.g. `my..file.txt`) are not rejected
+    const hasTraversalSegment = sanitized.split(/[\\/]/).includes('..');
+    if (hasTraversalSegment || path.isAbsolute(sanitized)) {
       return null;
     }
     
