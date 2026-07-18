@@ -3,6 +3,8 @@
  * Directly uses theme colors from actual UI elements
  */
 
+import perfTrail from './performance/perfTrail';
+
 interface Shape {
   x: number;
   y: number;
@@ -310,6 +312,7 @@ export function createLavaLampCanvas(
     }
 
     if (deltaTime >= frameInterval) {
+      perfTrail.start('lava-lamp-frame');
       lastTime = currentTime - (deltaTime % frameInterval);
 
       // Clear canvas - use fillRect which is efficient and doesn't cause flashes
@@ -374,6 +377,7 @@ export function createLavaLampCanvas(
           shape.vy = Math.max(-0.25, Math.min(0.25, shape.vy));
         });
       }
+      perfTrail.end('lava-lamp-frame');
     }
 
     animationFrame = requestAnimationFrame(animate);

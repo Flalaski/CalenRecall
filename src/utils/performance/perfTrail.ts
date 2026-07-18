@@ -21,6 +21,7 @@
  */
 
 import { displayRefreshRate } from './displayRefreshRate';
+import { DEFAULT_BUDGETS, DEFAULT_THROTTLES } from './perfTrailBudgets';
 
 // ── Type Definitions ──
 
@@ -65,71 +66,8 @@ export interface PerfSnapshot {
   timestamp: string;
 }
 
-// ── Default Budgets (CalenRecall-Specific) ──
-
-const DEFAULT_BUDGETS: Record<string, number> = {
-  'app-init': 5000,
-  'load-entries': 3000,
-  'search-entries': 1000,
-  'export-entries': 10000,
-  'import-entries': 10000,
-  'calendar-render': 500,
-  'minimap-render': 300,
-  'entry-save': 500,
-  'entry-delete': 300,
-  'calendar-convert': 100,
-  'astronomy-calc': 200,
-  'theme-apply': 200,
-  'background-art': 1000,
-  'animation-frame': 33,
-  'ipc-invoke': 100,
-  'db-query': 50,
-  'db-write': 100,
-  'export-format-md': 3000,
-  'export-format-pdf': 5000,
-  'export-format-json': 2000,
-  'archive-create': 8000,
-  'profile-switch': 2000,
-  'password-verify': 200,
-  'nav-today': 50,
-  'nav-arrow': 50,
-  'nav-date-input': 100,
-  'entry-load': 200,
-  'entry-autosave': 300,
-  'prefs-save': 500,
-  'bg-color-extract': 2000,
-  'procedural-art-gen': 1500,
-  'lava-lamp-frame': 50,
-  'astronomy-new-moon': 300,
-  'astronomy-solar-term': 300,
-  'minimap-drag': 100,
-  'minimap-crystal-update': 200,
-  'calendar-month-render': 400,
-  'calendar-week-render': 300,
-  'ipc-save-entry': 500,
-  'ipc-search': 1000,
-  'ipc-export': 10000,
-  'ipc-import': 10000,
-  'ipc-backup': 8000,
-  'ipc-get-all-entries': 3000,
-};
-
-// ── Default Throttle (ms between console outputs per label) ──
-
-const DEFAULT_THROTTLE: Record<string, number> = {
-  '_default': 200,           // General spans: 5 logs/second (more responsive tracking)
-  'animation-frame': 3000,   // Fires every frame; 1 log/3s max
-  'fps': 5000,               // FPS reports: 1 log/5s
-  'ipc-invoke': 1000,        // Frequent IPC calls
-  'ipc-query': 1000,         // Frequent queries
-  'db-query': 1000,
-  'db-write': 1000,
-  'nav-arrow': 100,          // Arrow navigation: frequent, show most
-  'nav-today': 100,          // Today button: show every press
-  '__overbudget__': 1000,    // Over-budget always surfaces, but ≤1/sec
-};
-
-// ── History Cap ──
+// ── Budgets & Throttles ──
+// Imported from canonical shared source: perfTrailBudgets.ts
 
 const MAX_HISTORY = 200;
 
@@ -550,6 +488,11 @@ class PerfTrail {
   // ────────────────────────────────────────────
 
   private _emitTiming(label: string, elapsed: number, threshold: number, overBudget: boolean): void {
+    // Skip console output for sub-millisecond operations (noise reduction).
+    // Aggregation still runs, so report() always has complete data.
+    // Over-budget is always shown regardless of elapsed time.
+    if (elapsed < 0.5 && !overBudget) return;
+
     const icon = overBudget ? '⚠️' : '⏱️';
     const pct = threshold === Infinity
       ? ''
@@ -617,7 +560,7 @@ class PerfTrail {
   }
 
   private _applyDefaultThrottles(): void {
-    Object.entries(DEFAULT_THROTTLE).forEach(([label, ms]) => {
+    Object.entries(DEFAULT_THROTTLES).forEach(([label, ms]) => {
       this._logThrottleMs.set(label, ms);
     });
   }

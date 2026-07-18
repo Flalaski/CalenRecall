@@ -18,6 +18,7 @@ import { playNewEntrySound, initializeSoundEffectsCache, updateSoundEffectsCache
 import { formatDateToISO, parseISODate, createDate } from './utils/dateUtils';
 import { applyTheme, initializeTheme, applyFontSize } from './utils/themes';
 import { useEntries } from './contexts/EntriesContext';
+import { entryCache } from './utils/entryLazyLoader';
 import { useCalendar } from './contexts/CalendarContext';
 import { initializeWindowStateTracker } from './utils/windowStateTracker';
 import { differenceInDays, differenceInYears, differenceInMonths, addDays, addWeeks, addMonths, addYears } from 'date-fns';
@@ -67,80 +68,68 @@ function App() {
     return cleanup;
   }, []);
 
-  // SUPREME OPTIMIZATION: Preload all entries at startup
+  // INIT: Load all entries in a single query, seed the year-chunk cache,
+  // then signal ready. The cache makes navigation between years instant
+  // by avoiding re-fetches. Lazy-loading (JDN range queries) only triggers
+  // for years beyond the initial full load — irrelevant at current scale,
+  // critical at 10K+ entries.
   useEffect(() => {
-    if (initialLoadCompleteRef.current) {
-      return;
-    }
+    if (initialLoadCompleteRef.current) return;
 
-    const preloadAllEntries = async () => {
+    const init = async () => {
       perfTrail.start('load-entries');
       try {
-        setLoadingMessage('Loading all journal entries...');
+        setLoadingMessage('Loading journal entries...');
         setLoadingProgress(5);
-        
+
         if (window.electronAPI) {
-          // Get total entry count first (fast query) for crystal size calculation
-          const count = await (window.electronAPI as any).getEntryCount();
-          setTotalEntryCount(count);
-          
-          // Load all entries at once
+          // Single query — fastest path for current scale (~140ms for 197 entries)
           const allEntries = await window.electronAPI.getAllEntries();
-          
-          // OPTIMIZATION: Set entries only once at the end to avoid rebuilding lookup structure 50+ times
-          // Progressive visual updates are handled by LoadingScreen using progress percentage and totalEntryCount
-          // This prevents expensive entryLookup and entryColors rebuilds during loading
-          
-          // OPTIMIZATION: Set entries immediately without artificial delays
-          // Use requestIdleCallback for non-critical UI updates during loading
+          // Seed the LRU year-chunk cache so navigation is always instant
+          entryCache.seedFromArray(allEntries);
           setEntries(allEntries);
-          setLoadingProgress(90);
-          setLoadingMessage('Indexing entries...');
-          
-          // Use requestIdleCallback to allow browser to schedule indexing work
-          // This prevents blocking the main thread
-          if ('requestIdleCallback' in window) {
-            requestIdleCallback(() => {
-              setLoadingProgress(95);
-              setLoadingMessage('Finalizing timeline...');
-              
-              requestIdleCallback(() => {
-                setLoadingProgress(100);
-                setLoadingMessage('Ready!');
-                
-                // Give animations time to finish and let users appreciate the visualization
-                // This allows the infinity symbol rotation, crystal animations, and final state to be visible
-                // MAX_ANIMATION_DELAY (1s) + ornamentAppear duration (0.6s) + buffer for appreciation = 3s
-                setTimeout(() => {
-                  setIsLoading(false);
-                }, 3000); // 3 seconds to see the concluding visualization and have a moment with it
-              }, { timeout: 100 });
-            }, { timeout: 100 });
-          } else {
-            // Fallback for browsers without requestIdleCallback
-            setTimeout(() => {
-              setLoadingProgress(95);
-              setLoadingMessage('Finalizing timeline...');
-              setTimeout(() => {
-                setLoadingProgress(100);
-                setLoadingMessage('Ready!');
-                setTimeout(() => {
-                  setIsLoading(false);
-                }, 3000); // 3 seconds to see the concluding visualization and have a moment with it
-              }, 200);
-            }, 200);
-          }
+          perfTrail.checkpoint('entries-loaded', {
+            count: allEntries.length,
+            loadedYears: entryCache.getLoadedYears(),
+            chunks: entryCache.getStats().chunkCount,
+          });
+          setTotalEntryCount(allEntries.length);
         }
-        // End the load-entries span once entries are set (not waiting for animation delay)
+
+        setLoadingProgress(90);
+        setLoadingMessage('Indexing entries...');
+
+        if ('requestIdleCallback' in window) {
+          requestIdleCallback(() => {
+            setLoadingProgress(95);
+            setLoadingMessage('Finalizing timeline...');
+            requestIdleCallback(() => {
+              setLoadingProgress(100);
+              setLoadingMessage('Ready!');
+              setTimeout(() => setIsLoading(false), 3000);
+            }, { timeout: 100 });
+          }, { timeout: 100 });
+        } else {
+          setTimeout(() => {
+            setLoadingProgress(95);
+            setLoadingMessage('Finalizing timeline...');
+            setTimeout(() => {
+              setLoadingProgress(100);
+              setLoadingMessage('Ready!');
+              setTimeout(() => setIsLoading(false), 3000);
+            }, 200);
+          }, 200);
+        }
+
         perfTrail.end('load-entries');
       } catch (error) {
         perfTrail.end('load-entries');
-        console.error('Error preloading entries:', error);
+        console.error('Error during init:', error);
         setIsLoading(false);
       }
     };
 
-    preloadAllEntries();
+    init();
   }, [setEntries, setIsLoading]);
 
   // Optimized function to update specific preference without full reload
@@ -678,10 +667,10 @@ function App() {
         if (window.electronAPI) {
           const result = await window.electronAPI.importEntries(format);
           if (result.success) {
-            // Reload entries after successful import
-            const allEntries = await window.electronAPI.getAllEntries();
-            setEntries(allEntries);
-            // Show success message (you could add a toast notification here)
+            // Reload all entries and re-seed the cache after bulk import
+            const freshEntries = await window.electronAPI.getAllEntries();
+            entryCache.seedFromArray(freshEntries);
+            setEntries(freshEntries);
             console.log(`Import successful: ${result.imported} entries imported${result.skipped ? `, ${result.skipped} skipped` : ''}`);
           } else if (!result.canceled) {
             console.error('Import failed:', result.error);
@@ -798,10 +787,7 @@ function App() {
   const pendingViewModeRef = useRef<TimeRange | null>(null);
   const rafIdRef = useRef<number | null>(null);
   
-  // EXTREME PERFORMANCE: Minimal delay for instant response
-  // Reduced to 0ms for maximum responsiveness (year 2000 computer speed)
-  // Lower values = faster response, Higher values = more batching/smoother
-  const INDICATOR_MOVEMENT_DELAY = 0; // ms - EXTREME PERFORMANCE: Instant response
+  // Track time between updates to detect dragging
   const lastUpdateTimeRef = useRef<number>(0); // Track time between updates to detect dragging
   const rapidUpdateThreshold = 50; // ms - if updates come faster than this, we're dragging
 
@@ -1363,16 +1349,11 @@ function App() {
     }
     setShowUnsavedChangesMessage(false); // Hide message if visible
     
-    // SUPREME OPTIMIZATION: Reload all entries to keep context in sync
-    // This ensures the preloaded entries are always up-to-date
-    if (window.electronAPI) {
-      try {
-        const allEntries = await window.electronAPI.getAllEntries();
-        setEntries(allEntries);
-      } catch (error) {
-        console.error('Error reloading entries after save:', error);
-      }
-    }
+    // OPTIMIZATION: Entry data is already forwarded via journalEntrySaved event
+    // to EntriesContext which handles incremental lookup update (O(1)).
+    // No need for full getAllEntries() reload here anymore.
+    // Fallback: if the event listener didn't handle it, entries are still in sync
+    // because the event fires before onEntrySaved() callback.
     
     loadCurrentEntry();
     perfTrail.end('entry-save');

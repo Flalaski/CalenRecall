@@ -1,6 +1,7 @@
 export interface JournalEntry {
   id?: number;
   date: string; // ISO date string (YYYY-MM-DD) - canonical date for the time range
+  jdn?: number; // Julian Day Number — computed on save for fast date math
   timeRange: 'decade' | 'year' | 'month' | 'week' | 'day'; // Time scale for this entry
   hour?: number | null; // Optional hour (0-23), null when cleared
   minute?: number | null; // Optional minute (0-59), null when cleared

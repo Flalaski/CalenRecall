@@ -1,4 +1,5 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
+import { useVirtualScroll } from '../utils/useVirtualScroll';
 import { JournalEntry, TimeRange } from '../types';
 import { deleteJournalEntry } from '../services/journalService';
 import { formatDate, parseISODate } from '../utils/dateUtils';
@@ -32,6 +33,7 @@ export default function JournalList({
   const [bulkEditMode, setBulkEditMode] = useState(false);
   const [selectedEntryIds, setSelectedEntryIds] = useState<Set<number>>(new Set());
   const [preferences, setPreferences] = useState<Preferences>({});
+  const [showArchived, setShowArchived] = useState(false);
 
   // OPTIMIZATION: Filter entries from global context instead of querying database
   const entries = useMemo(() => {
@@ -61,6 +63,11 @@ export default function JournalList({
   // Apply filters and sorting when entries or filter settings change
   useEffect(() => {
     let filtered = [...entries];
+
+    // Filter by archive status
+    if (!showArchived) {
+      filtered = filtered.filter(entry => !entry.archived);
+    }
 
     // Filter by tags
     if (selectedTags.length > 0) {
@@ -128,12 +135,23 @@ export default function JournalList({
     });
 
     setFilteredEntries(filtered);
-  }, [entries, selectedTags, sortBy, sortOrder]);
+  }, [entries, selectedTags, sortBy, sortOrder, showArchived]);
 
   // Memoize entries with IDs for bulk edit operations
   const filteredEntriesWithIds = useMemo(() => {
     return filteredEntries.filter(entry => entry.id !== undefined);
   }, [filteredEntries]);
+
+  // Virtual scrolling for the entries list
+  const ENTRY_ITEM_HEIGHT = 120; // estimated average height of an entry card
+  const listContentRef = useRef<HTMLDivElement | null>(null);
+  const { visibleItems, containerStyle, spacerStyle } = useVirtualScroll({
+    items: filteredEntries,
+    itemHeight: ENTRY_ITEM_HEIGHT,
+    overscan: 5,
+    containerRef: listContentRef,
+    getKey: (item) => item.id ?? `entry-${item.date}-${Math.random()}`,
+  });
 
   const handleEntryClick = (entry: JournalEntry, event?: React.MouseEvent) => {
     // In bulk edit mode, clicking should toggle selection instead of selecting the entry
@@ -157,6 +175,25 @@ export default function JournalList({
       }
       return newSet;
     });
+  };
+
+  const handleArchiveEntry = async (entry: JournalEntry, archive: boolean) => {
+    if (!entry.id) return;
+    try {
+      if (window.electronAPI) {
+        if (archive) {
+          await window.electronAPI.archiveEntry(entry.id);
+        } else {
+          await window.electronAPI.unarchiveEntry(entry.id);
+        }
+        // Trigger refresh via custom event
+        window.dispatchEvent(new CustomEvent('journalEntrySaved', {
+          detail: { entry: { ...entry, archived: archive } }
+        }));
+      }
+    } catch (error) {
+      console.error(`Error ${archive ? 'archiving' : 'unarchiving'} entry:`, error);
+    }
   };
 
   const toggleSelectAll = () => {
@@ -286,6 +323,15 @@ export default function JournalList({
         <h3>Journal Entries</h3>
         <div className="journal-list-header-actions">
           {entries.length > 0 && (
+            <button
+              className={`archive-toggle-button ${showArchived ? 'active' : ''}`}
+              onClick={() => setShowArchived(!showArchived)}
+              title={showArchived ? 'Hide archived entries' : 'Show archived entries'}
+            >
+              {showArchived ? '📂 All' : '📦 Archived'}
+            </button>
+          )}
+          {entries.length > 0 && (
             <button 
               className={`bulk-edit-toggle-button ${bulkEditMode ? 'active' : ''}`}
               onClick={() => {
@@ -307,14 +353,14 @@ export default function JournalList({
           </button>
         </div>
       </div>
-      <div className="journal-list-content">
+      <div className="journal-list-content" ref={listContentRef}>
         {entries.length === 0 ? (
           <div className="journal-list-empty">
             <p>No journal entries for this {getTimeRangeLabel(viewMode).toLowerCase()}.</p>
             <p className="hint">Click "New Entry" to create one.</p>
           </div>
         ) : (
-          <>
+          <div className="journal-list-else-branch">
             {bulkEditMode && selectedEntryIds.size > 0 && (
               <div className="bulk-edit-actions">
                 <span className="bulk-edit-selected-count">
@@ -387,45 +433,73 @@ export default function JournalList({
                 </button>
               </div>
             ) : (
-              <div className="journal-entries">
-                {filteredEntries.map((entry) => (
-              <div
-                key={entry.id}
-                className={`journal-entry-item ${!bulkEditMode && selectedEntryId === entry.id ? 'selected' : ''} ${bulkEditMode && entry.id !== undefined && selectedEntryIds.has(entry.id) ? 'bulk-selected' : ''} ${bulkEditMode ? 'bulk-edit-mode' : ''}`}
-                onClick={(e) => handleEntryClick(entry, e)}
-              >
-                {bulkEditMode && entry.id !== undefined && (
-                  <div className="entry-checkbox-wrapper">
-                    <input
-                      type="checkbox"
-                      checked={selectedEntryIds.has(entry.id)}
-                      onChange={() => toggleEntrySelection(entry.id)}
-                      onClick={(e) => e.stopPropagation()}
-                    />
-                  </div>
-                )}
-                <div className="entry-item-content">
-                  <div className="entry-item-header">
-                    <div className="entry-item-title">{entry.title}</div>
-                    <div className="entry-item-meta">
-                      <span className="entry-time-range">{getTimeRangeLabel(entry.timeRange)}</span>
-                      <span className="entry-date">{formatEntryDate(entry)}</span>
+              <div className="journal-entries" style={containerStyle}>
+                {/* Spacer creates full scroll height for proper scrollbar sizing */}
+                <div style={spacerStyle} />
+                {/* Only render visible items, positioned at their calculated offset */}
+                {visibleItems.map(({ item: entry, index }) => (
+                  <div
+                    key={entry.id}
+                    className={`journal-entry-item ${entry.archived ? 'archived' : ''} ${!bulkEditMode && selectedEntryId === entry.id ? 'selected' : ''} ${bulkEditMode && entry.id !== undefined && selectedEntryIds.has(entry.id) ? 'bulk-selected' : ''} ${bulkEditMode ? 'bulk-edit-mode' : ''}`}
+                    style={{
+                      position: 'absolute',
+                      top: `${index * ENTRY_ITEM_HEIGHT}px`,
+                      left: 0,
+                      right: 0,
+                    }}
+                    onClick={(e) => handleEntryClick(entry, e)}
+                  >
+                    {bulkEditMode && entry.id !== undefined && (
+                      <div className="entry-checkbox-wrapper">
+                        <input
+                          type="checkbox"
+                          checked={selectedEntryIds.has(entry.id)}
+                          onChange={() => toggleEntrySelection(entry.id)}
+                          onClick={(e) => e.stopPropagation()}
+                        />
+                      </div>
+                    )}
+                    <div className="entry-item-content">
+                      <div className="entry-item-header">
+                        <div className="entry-item-title">
+                          {entry.title}
+                          {entry.archived && <span className="archived-badge">Archived</span>}
+                        </div>
+                        <div className="entry-item-meta">
+                          <span className="entry-time-range">{getTimeRangeLabel(entry.timeRange)}</span>
+                          <span className="entry-date">{formatEntryDate(entry)}</span>
+                        </div>
+                      </div>
+                      <div className="entry-item-preview">
+                        {entry.content.substring(0, 100)}
+                        {entry.content.length > 100 && '...'}
+                      </div>
+                      {entry.tags && entry.tags.length > 0 && (
+                        <div className="entry-item-tags">
+                          {entry.tags.map((tag, idx) => (
+                            <span key={idx} className="entry-tag">{tag}</span>
+                          ))}
+                        </div>
+                      )}
                     </div>
+                    {!bulkEditMode && entry.id !== undefined && (
+                      <div className="entry-item-actions">
+                        <button
+                          className={`archive-button ${entry.archived ? 'archived' : ''}`}
+                          onClick={async (e) => {
+                            e.stopPropagation();
+                            await handleArchiveEntry(entry, !entry.archived);
+                          }}
+                          title={entry.archived ? 'Unarchive this entry' : 'Archive this entry'}
+                        >
+                          {entry.archived ? '↩ Unarchive' : '📦 Archive'}
+                        </button>
+                      </div>
+                    )}
                   </div>
-                  <div className="entry-item-preview">
-                    {entry.content.substring(0, 100)}
-                    {entry.content.length > 100 && '...'}
-                  </div>
-                  {entry.tags && entry.tags.length > 0 && (
-                    <div className="entry-item-tags">
-                      {entry.tags.map((tag, idx) => (
-                        <span key={idx} className="entry-tag">{tag}</span>
-                      ))}
-                    </div>
-                  )}
-                </div>
+                ))}
               </div>
-            ))}
+            )}
           </div>
         )}
       </div>

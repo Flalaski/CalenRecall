@@ -528,6 +528,7 @@ function GlobalTimelineMinimap({
   // This allows approximate viewport filtering without recalculating on every drag movement
   const throttledIndicatorPositionRef = useRef<number>(50); // Default to center
   const lastThrottleUpdateRef = useRef<number>(0);
+  const lastKeyboardNavRef = useRef<number>(0);
   // OPTIMIZATION: Cache bounding rect to avoid forced reflows during drag
   const cachedBoundingRectRef = useRef<DOMRect | null>(null);
   // OPTIMIZATION: Track last drag limits to prevent unnecessary state updates
@@ -3685,6 +3686,12 @@ function GlobalTimelineMinimap({
   // Handle keyboard arrow key navigation
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Throttle keyboard navigation to ~20fps (50ms) for smooth fluidity
+      // OS key-repeat at 30/sec is too fast for smooth visual updates
+      const now = performance.now();
+      if (now - lastKeyboardNavRef.current < 50) return;
+      lastKeyboardNavRef.current = now;
+
       // Don't handle keys if user is typing in an input, textarea, or contenteditable element
       const target = e.target as HTMLElement;
       if (
@@ -4440,9 +4447,18 @@ function GlobalTimelineMinimap({
       // This ensures every blip has a corresponding visual frame for perfect synchronization
       currentOnTimePeriodSelect(clampedDate, currentViewMode);
     } else {
-      // Date hasn't changed, but still update visual smoothly for frame-by-frame movement
-      // This ensures smooth animation even when date hasn't changed yet
+      // Date hasn't changed — throttle visual updates to ~20fps (50ms)
+      // Full 60fps is unnecessary when the date (and thus any meaningful state) is identical.
+      // This reduces App.tsx re-renders from 60fps to ~20fps during sub-day drag movement.
+      lastUpdateTimeRef.current = now;
+      const THROTTLE_MS = 50;
+      if (now - lastThrottleUpdateRef.current < THROTTLE_MS) {
+        return; // Skip this frame — date unchanged, throttle not expired
+      }
+      lastThrottleUpdateRef.current = now;
+      
       currentOnTimePeriodSelect(clampedDate, currentViewMode);
+      return; // Skip redundant completion log below
     }
     
     lastUpdateTimeRef.current = now;

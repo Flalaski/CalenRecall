@@ -99,6 +99,8 @@ import {
   upsertRemoteCalendars,
   upsertRemoteEvents,
   upsertSyncState,
+  getEntriesByJdnRange,
+  getEntryCountByJdnRange,
 } from './database';
 import {
   getAllProfiles,
@@ -1128,6 +1130,19 @@ export function setupIpcHandlers() {
 
   ipcMain.handle('get-entry-count', async () => {
     return getEntryCount();
+  });
+
+  ipcMain.handle('get-entries-by-jdn-range', async (_event, startJDN: number, endJDN: number) => {
+    perfTrail.start('ipc-get-entries-by-jdn-range');
+    try {
+      return getEntriesByJdnRange(startJDN, endJDN);
+    } finally {
+      perfTrail.end('ipc-get-entries-by-jdn-range');
+    }
+  });
+
+  ipcMain.handle('get-entry-count-by-jdn-range', async (_event, startJDN: number, endJDN: number) => {
+    return getEntryCountByJdnRange(startJDN, endJDN);
   });
 
   ipcMain.handle('get-entry', async (_event, date: string, timeRange: TimeRange) => {

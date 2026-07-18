@@ -147,6 +147,12 @@ contextBridge.exposeInMainWorld('electronAPI', {
   getEntryCount: (): Promise<number> =>
     ipcRenderer.invoke('get-entry-count'),
 
+  getEntriesByJdnRange: (startJDN: number, endJDN: number): Promise<JournalEntry[]> =>
+    ipcRenderer.invoke('get-entries-by-jdn-range', startJDN, endJDN),
+
+  getEntryCountByJdnRange: (startJDN: number, endJDN: number): Promise<number> =>
+    ipcRenderer.invoke('get-entry-count-by-jdn-range', startJDN, endJDN),
+
   // Export operations
   exportEntries: (format: ExportFormat, metadata?: ExportMetadata): Promise<{ success: boolean; canceled?: boolean; error?: string; path?: string }> =>
     ipcRenderer.invoke('export-entries', format, metadata),

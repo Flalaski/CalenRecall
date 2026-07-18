@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback, memo } from 'react';
+import { useState, useEffect, useMemo, useCallback, memo, useRef } from 'react';
 import { JournalEntry, TimeRange, Preferences } from '../types';
 import { formatDate, getDaysInMonth, getDaysInWeek, isToday, getWeekStart, getZodiacColor, getZodiacGradientColor, getZodiacGradientColorForYear, parseISODate, getWeekdayLabels, formatTime } from '../utils/dateUtils';
 import { isSameDay, isSameMonth, isSameYear } from 'date-fns';
@@ -6,13 +6,13 @@ import { playCalendarSelectionSound, playEntrySelectionSound, playEditSound } fr
 import { calculateEntryColor } from '../utils/entryColorUtils';
 import { useCalendar } from '../contexts/CalendarContext';
 import { useEntries } from '../contexts/EntriesContext';
-import { dateToCalendarDate } from '../utils/calendars/calendarConverter';
-import { formatCalendarDate } from '../utils/calendars/calendarConverter';
+import { dateToCalendarDate, formatCalendarDate } from '../utils/calendars/calendarConverter';
 import { deleteJournalEntry } from '../services/journalService';
-import { buildEntryLookup, getDayEntriesOptimized, getMonthEntriesOptimized, getAllEntriesForYearOptimized, getAllEntriesForMonthOptimized } from '../utils/entryLookupUtils';
+import { buildEntryLookup, getDayEntriesOptimized, getMonthEntriesOptimized, getAllEntriesForYearOptimized, getAllEntriesForMonthOptimized, hasAnyEntriesForYear } from '../utils/entryLookupUtils';
 import { getAstronomicalEventsForRange, getAstronomicalEventLabel, type DateAstronomicalEvent } from '../utils/astronomicalEvents';
 import { gregorianToJDN } from '../utils/calendars/julianDayUtils';
-import { getAllMacroCycles, getChineseSexagenaryCycle, getMayanLongCountCycles, getMetonicCycle, getMayanCalendarRound, getHinduYugaCycle, type YugaType } from '../utils/calendars/macroCycleUtils';
+import { getAllMacroCycles, type YugaType } from '../utils/calendars/macroCycleUtils';
+import perfTrail from '../utils/performance/perfTrail';
 import './TimelineView.css';
 
 interface TimelineViewProps {
@@ -39,6 +39,10 @@ function TimelineView({
   const [selectedEntryIds, setSelectedEntryIds] = useState<Set<number>>(new Set());
   const [monthEntriesBulkEditMode, setMonthEntriesBulkEditMode] = useState(false);
   const [selectedMonthEntryIds, setSelectedMonthEntryIds] = useState<Set<number>>(new Set());
+
+  // Throttle for timeline-view-render checkpoint (fires on every React render)
+  const lastRenderLogRef = useRef<number>(0);
+  const RENDER_LOG_THROTTLE_MS = 200;
 
   // Load preferences for time format and astronomical events
   useEffect(() => {
@@ -321,10 +325,18 @@ function TimelineView({
   // OPTIMIZED: Limit processing to first N entries to avoid performance issues with thousands of entries
   // OPTIMIZATION: Prioritizes entries from the current time tier (year entries in year view)
   const createYearPixelMap = useCallback((yearEntries: JournalEntry[], priorityTier: TimeRange = 'year'): string[] => {
+    perfTrail.start('create-year-pixel-map');
+    const totalPixels = 12 * 30; // 360 pixels
+    
+    // OPTIMIZATION: Early exit if no entries (avoid full pipeline for empty years)
+    if (yearEntries.length === 0) {
+      perfTrail.end('create-year-pixel-map');
+      return new Array<string>(totalPixels).fill('transparent');
+    }
+    
     // Create a 12x30 grid (12 months, 30 days each)
     // Each pixel represents one entry, colored using crystal colors
     const pixels: string[] = [];
-    const totalPixels = 12 * 30; // 360 pixels
     
     // OPTIMIZATION: Prioritize entries from current tier first
     const prioritizedEntries = prioritizeEntriesByTier(yearEntries, priorityTier);
@@ -381,6 +393,7 @@ function TimelineView({
       pixels.push('transparent');
     }
     
+    perfTrail.end('create-year-pixel-map');
     return pixels;
   }, [prioritizeEntriesByTier]);
 
@@ -388,10 +401,18 @@ function TimelineView({
   // OPTIMIZED: Limit processing to avoid performance issues with many entries
   // OPTIMIZATION: Prioritizes entries from the current time tier (month entries in month view, year entries in year view)
   const createMonthPixelMap = useCallback((monthEntries: JournalEntry[], priorityTier: TimeRange = 'month'): string[] => {
+    perfTrail.start('create-month-pixel-map');
+    const totalPixels = 7 * 5; // 35 pixels
+    
+    // OPTIMIZATION: Early exit if no entries (avoid full pipeline for empty months)
+    if (monthEntries.length === 0) {
+      perfTrail.end('create-month-pixel-map');
+      return new Array<string>(totalPixels).fill('transparent');
+    }
+    
     // Create a 7x5 grid (7 days per week, 5 weeks max)
     // Each pixel represents one entry, colored by time range
     const pixels: string[] = [];
-    const totalPixels = 7 * 5; // 35 pixels
     
     // OPTIMIZATION: Prioritize entries from current tier first
     const prioritizedEntries = prioritizeEntriesByTier(monthEntries, priorityTier);
@@ -447,6 +468,7 @@ function TimelineView({
       pixels.push('transparent');
     }
     
+    perfTrail.end('create-month-pixel-map');
     return pixels;
   }, [prioritizeEntriesByTier]);
 
@@ -1133,12 +1155,32 @@ function TimelineView({
   // OPTIMIZATION: Memoize month data to avoid recalculating on every render
   const selectedYear = selectedDate.getFullYear();
   const yearViewMonthData = useMemo(() => {
+    perfTrail.start('year-view-data');
+    
+    // OPTIMIZATION: Quick O(1) check — if no entries exist for this year,
+    // skip the 12-month loop entirely and return empty month data directly
+    if (!hasAnyEntriesForYear(entryLookup, selectedYear)) {
+      const months = [];
+      for (let i = 0; i < 12; i++) {
+        months.push(new Date(selectedYear, i, 1));
+      }
+      const emptyMonthData = months.map((month) => ({
+        month,
+        monthEntries: [],
+        allMonthEntries: [],
+        pixelMap: new Array<string>(35).fill('transparent'),
+      }));
+      perfTrail.checkpoint('year-entries', { monthCount: 12, totalEntries: 0, earlyExit: true });
+      perfTrail.end('year-view-data');
+      return emptyMonthData;
+    }
+    
     const months = [];
     for (let i = 0; i < 12; i++) {
       months.push(new Date(selectedYear, i, 1));
     }
     
-    return months.map((month) => {
+    const monthData = months.map((month) => {
       // OPTIMIZATION: Get all entries for this month (month, year, decade)
       // and prioritize year entries since we're in year view
       const allMonthEntries = getAllEntriesForMonth(month.getFullYear(), month.getMonth());
@@ -1152,16 +1194,21 @@ function TimelineView({
         pixelMap,
       };
     });
+    perfTrail.checkpoint('year-entries', { monthCount: 12, totalEntries: monthData.reduce((s, m) => s + m.monthEntries.length, 0) });
+    perfTrail.end('year-view-data');
+    return monthData;
   }, [selectedYear, entryLookup, getAllEntriesForMonth, createMonthPixelMap, prioritizeEntriesByTier]);
 
   // Helper function to render macro cycle indicators
   // Now shows cycles regardless of calendar selection when toggles are enabled
   const renderMacroCycleIndicators = (year: number, jdn: number) => {
+    perfTrail.start('macro-cycle-calc');
     // Get cycles for all calendar types (not just current calendar)
     const cyclesChinese = getAllMacroCycles(jdn, 'chinese', year);
     const cyclesMayan = getAllMacroCycles(jdn, 'mayan-longcount', year);
     const cyclesHebrew = getAllMacroCycles(jdn, 'hebrew', year);
     const cyclesIndian = getAllMacroCycles(jdn, 'indian-saka', year);
+    perfTrail.end('macro-cycle-calc');
     
     const indicators: JSX.Element[] = [];
     
@@ -1292,6 +1339,7 @@ function TimelineView({
   };
 
   const renderYearView = () => {
+    perfTrail.start('render-year-view');
     const yearNum = selectedDate.getFullYear();
     const jdn = gregorianToJDN(yearNum, 1, 1);
     const yearMacroCycles = renderMacroCycleIndicators(yearNum, jdn);
@@ -1363,18 +1411,38 @@ function TimelineView({
         </div>
       </div>
     );
+    perfTrail.end('render-year-view');
   };
 
   // OPTIMIZATION: Memoize decade year data to avoid recalculating on every render
   const selectedYearForDecade = selectedDate.getFullYear();
   const decadeViewYearData = useMemo(() => {
+    perfTrail.start('decade-view-data');
     const decadeStart = Math.floor(selectedYearForDecade / 10) * 10;
     const years = [];
     for (let i = 0; i < 10; i++) {
       years.push(new Date(decadeStart + i, 0, 1));
     }
     
-    return years.map((year) => {
+    // OPTIMIZATION: Quick check if ANY year in this decade has entries
+    // NOTE: excludeDayEntries=true to match getAllEntriesForYear behavior (excludes day entries)
+    const decadeHasEntries = entryLookup.hasDecadeEntryDecades.has(decadeStart) || 
+      years.some((y) => hasAnyEntriesForYear(entryLookup, y.getFullYear(), true));
+    
+    if (!decadeHasEntries) {
+      const emptyResult = years.map((year) => ({
+        year,
+        yearEntries: [],
+        allYearEntries: [],
+        pixelMap: new Array<string>(360).fill('transparent'),
+        yearGradientColor: getZodiacGradientColorForYear(year.getFullYear()),
+      }));
+      perfTrail.checkpoint('decade-entries', { yearCount: 10, totalEntries: 0, earlyExit: true });
+      perfTrail.end('decade-view-data');
+      return emptyResult;
+    }
+    
+    const result = years.map((year) => {
       // OPTIMIZATION: Get all entries for this year (year, decade)
       // and prioritize decade entries since we're in decade view
       const allYearEntries = getAllEntriesForYear(year.getFullYear());
@@ -1390,9 +1458,14 @@ function TimelineView({
         yearGradientColor,
       };
     });
+    const totalEntries = result.reduce((sum, yr) => sum + yr.yearEntries.length, 0);
+    perfTrail.checkpoint('decade-entries', { yearCount: 10, totalEntries });
+    perfTrail.end('decade-view-data');
+    return result;
   }, [selectedYearForDecade, entryLookup, getAllEntriesForYear, createYearPixelMap, prioritizeEntriesByTier]);
 
   const renderDecadeView = () => {
+    perfTrail.start('render-decade-view');
     // Check if any macro cycle toggles are enabled
     const hasAnyMacroCycles = 
       preferences.showChineseSexagenaryCycle === true ||
@@ -1436,7 +1509,7 @@ function TimelineView({
                 </div>
                 {allYearEntries.length > 0 && (
                   <div className="year-pixel-map">
-                    {pixelMap.map((color, pixelIdx) => (
+                    {pixelMap.map((color: string, pixelIdx) => (
                       <div
                         key={pixelIdx}
                         className="pixel"
@@ -1481,10 +1554,18 @@ function TimelineView({
         </div>
       </div>
     );
+    perfTrail.end('render-decade-view');
   };
 
   // Loading is handled at app level via EntriesContext
   // Entries are preloaded, so no need for component-level loading state
+
+  // THROTTLED: timeline-view-render fires on every React render (~40+ times per navigation session)
+  const now = Date.now();
+  if (now - lastRenderLogRef.current > RENDER_LOG_THROTTLE_MS) {
+    lastRenderLogRef.current = now;
+    perfTrail.checkpoint('timeline-view-render', { mode: viewMode });
+  }
 
   switch (viewMode) {
     case 'decade':

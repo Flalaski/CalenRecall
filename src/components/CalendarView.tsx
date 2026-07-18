@@ -22,11 +22,13 @@ import { isSameDay, isSameMonth, isSameYear } from 'date-fns';
 import { playCalendarSelectionSound } from '../utils/audioUtils';
 import { useCalendar } from '../contexts/CalendarContext';
 import { useEntries } from '../contexts/EntriesContext';
+import perfTrail from '../utils/performance/perfTrail';
 import { dateToCalendarDate } from '../utils/calendars/calendarConverter';
 import { formatCalendarDate } from '../utils/calendars/calendarConverter';
 import { buildEntryLookup, hasEntryForDateOptimized, getEntriesWithTimeOptimized } from '../utils/entryLookupUtils';
 import { getEntryColorForDateOptimized } from '../utils/entryColorUtils';
 import { getAstronomicalEventsForRange, getAstronomicalEventLabel, type DateAstronomicalEvent } from '../utils/astronomicalEvents';
+import perfTrail from '../utils/performance/perfTrail';
 import './CalendarView.css';
 
 interface CalendarViewProps {
@@ -686,6 +688,8 @@ function CalendarView({
 
   // Loading is handled at app level via EntriesContext
   // Entries are preloaded, so no need for component-level loading state
+
+  perfTrail.checkpoint('calendar-view-render', { mode: viewMode });
 
   switch (viewMode) {
     case 'decade':

@@ -3,6 +3,8 @@
  * Generates abstract artwork based on theme colors
  */
 
+import perfTrail from './performance/perfTrail';
+
 /**
  * Extract color values from CSS computed styles
  */
@@ -96,6 +98,7 @@ function getThemeColors(): {
  * Generate a procedural abstract artwork as a data URL
  */
 export function generateProceduralArt(width: number = 1920, height: number = 1080): string {
+  perfTrail.start('procedural-art-gen');
   const colors = getThemeColors();
   const canvas = document.createElement('canvas');
   canvas.width = width;
@@ -198,6 +201,7 @@ export function generateProceduralArt(width: number = 1920, height: number = 108
   }
   ctx.putImageData(imageData, 0, 0);
 
+  perfTrail.end('procedural-art-gen');
   return canvas.toDataURL('image/png');
 }
 
@@ -206,6 +210,7 @@ export function generateProceduralArt(width: number = 1920, height: number = 108
  * This is more performant than canvas for static backgrounds
  */
 export function generateProceduralCSSGradient(): string {
+  perfTrail.start('procedural-css-gradient');
   const colors = getThemeColors();
   
   // Create multiple overlapping gradients for depth
@@ -234,6 +239,7 @@ export function generateProceduralCSSGradient(): string {
   gradients.push(`radial-gradient(circle at 80% 70%, rgba(${accentRgb[0]}, ${accentRgb[1]}, ${accentRgb[2]}, ${opacity2}) 0%, transparent 50%)`);
   gradients.push(`radial-gradient(ellipse at 50% 50%, rgba(${primaryRgb[0]}, ${primaryRgb[1]}, ${primaryRgb[2]}, ${opacity3}) 0%, transparent 70%)`);
   
+  perfTrail.end('procedural-css-gradient');
   return gradients.join(', ');
 }
 

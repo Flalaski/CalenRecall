@@ -290,9 +290,9 @@ export default function EntryEditModal({
       // Small delay to ensure database write completes
       await new Promise(resolve => setTimeout(resolve, 100));
 
-      // Trigger a custom event to refresh calendar and list
-      window.dispatchEvent(new CustomEvent('journalEntrySaved'));
-      console.log('[EntryEditModal] journalEntrySaved event dispatched');
+      // Trigger a custom event to refresh calendar and list (with saved entry data)
+      window.dispatchEvent(new CustomEvent('journalEntrySaved', { detail: { entry: updatedEntry } }));
+      console.log('[EntryEditModal] journalEntrySaved event dispatched with entry:', updatedEntry.id);
 
       // Notify parent
       if (onEntrySaved) {
@@ -329,8 +329,8 @@ export default function EntryEditModal({
 
     try {
       await deleteJournalEntry(entry.id);
-      // Trigger a custom event to refresh calendar and list
-      window.dispatchEvent(new CustomEvent('journalEntrySaved'));
+      // Trigger a custom event to refresh calendar and list (with deleted entry info)
+      window.dispatchEvent(new CustomEvent('journalEntrySaved', { detail: { deleted: true, entryId: entry.id } }));
       // Notify parent
       if (onEntrySaved) {
         onEntrySaved();
@@ -374,10 +374,10 @@ export default function EntryEditModal({
         updatedAt: new Date().toISOString(),
       };
 
-      await saveJournalEntry(duplicatedEntry);
+      const savedDuplicate = await saveJournalEntry(duplicatedEntry);
       
-      // Trigger refresh
-      window.dispatchEvent(new CustomEvent('journalEntrySaved'));
+      // Trigger refresh (with saved dup entry)
+      window.dispatchEvent(new CustomEvent('journalEntrySaved', { detail: { entry: savedDuplicate } }));
       
       if (onEntryDuplicated) {
         onEntryDuplicated();

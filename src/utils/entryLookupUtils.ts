@@ -19,6 +19,12 @@ export interface EntryLookup {
   byDecade: Map<number, JournalEntry[]>;
   // All entries with time information, indexed by date string
   byDateWithTime: Map<string, JournalEntry[]>;
+  // DAY entries indexed by year (for O(1) year lookup instead of scanning all dates)
+  byDayForYear: Map<number, JournalEntry[]>;
+  // DAY entries indexed by YYYY-MM (for O(1) month lookup instead of scanning all dates)
+  byDayForMonth: Map<string, JournalEntry[]>;
+  // WEEK entries indexed by year (for O(1) year lookup instead of scanning all week starts)
+  byWeekForYear: Map<number, JournalEntry[]>;
   // Set of date strings that have any entry
   hasEntryDates: Set<string>;
   // Set of month strings (YYYY-MM) that have month entries
@@ -48,6 +54,9 @@ export function buildEntryLookup(entries: JournalEntry[], weekStartsOn: number =
     byWeekStart: new Map(),
     byDecade: new Map(),
     byDateWithTime: new Map(),
+    byDayForYear: new Map(),
+    byDayForMonth: new Map(),
+    byWeekForYear: new Map(),
     hasEntryDates: new Set(),
     hasMonthEntryMonths: new Set(),
     hasYearEntryYears: new Set(),
@@ -93,6 +102,22 @@ export function buildEntryLookup(entries: JournalEntry[], weekStartsOn: number =
         dayEntries.push(entry);
         lookup.hasEntryDates.add(dateStr);
 
+        // Index by year for O(1) year lookups
+        let dayByYear = lookup.byDayForYear.get(entryYear);
+        if (!dayByYear) {
+          dayByYear = [];
+          lookup.byDayForYear.set(entryYear, dayByYear);
+        }
+        dayByYear.push(entry);
+
+        // Index by month key for O(1) month lookups
+        let dayByMonth = lookup.byDayForMonth.get(monthKey);
+        if (!dayByMonth) {
+          dayByMonth = [];
+          lookup.byDayForMonth.set(monthKey, dayByMonth);
+        }
+        dayByMonth.push(entry);
+
         // Track entries with time
         if (entry.hour !== undefined && entry.hour !== null) {
           let timeEntries = lookup.byDateWithTime.get(dateStr);
@@ -116,6 +141,15 @@ export function buildEntryLookup(entries: JournalEntry[], weekStartsOn: number =
         }
         weekEntries.push(entry);
         lookup.hasWeekEntryWeeks.add(weekKey);
+
+        // Index by year for O(1) year lookups (week belongs to its start-date year)
+        const weekYear = weekStart.getFullYear();
+        let weekByYear = lookup.byWeekForYear.get(weekYear);
+        if (!weekByYear) {
+          weekByYear = [];
+          lookup.byWeekForYear.set(weekYear, weekByYear);
+        }
+        weekByYear.push(entry);
         break;
       }
       case 'month': {
@@ -278,26 +312,225 @@ export function getMonthEntriesOptimized(
 }
 
 /**
- * Get week entries for a week (optimized)
+ * Quick O(1) check if a year has ANY entries across all tiers
+ * Much faster than calling getAllEntriesForYearOptimized when you only need existence
  */
-export function getWeekEntriesOptimized(
+export function hasAnyEntriesForYear(
   lookup: EntryLookup,
-  date: Date,
-  weekStartsOn: number = 0
-): JournalEntry[] {
-  const weekStart = getWeekStart(date, weekStartsOn);
-  const weekKey = formatDate(weekStart);
-  return lookup.byWeekStart.get(weekKey) || [];
+  year: number,
+  excludeDayEntries: boolean = false
+): boolean {
+  const decadeStart = Math.floor(year / 10) * 10;
+  
+  // Check decade entries (apply to all years in the decade)
+  if (lookup.hasDecadeEntryDecades.has(decadeStart)) return true;
+  // Check year entries
+  if (lookup.hasYearEntryYears.has(year)) return true;
+  // Check month entries for any month in this year
+  for (let month = 0; month < 12; month++) {
+    const monthKey = `${year}-${String(month + 1).padStart(2, '0')}`;
+    if (lookup.hasMonthEntryMonths.has(monthKey)) return true;
+  }
+  // Check day entries for this year (skip if excludeDayEntries is true)
+  if (!excludeDayEntries && lookup.byDayForYear.has(year)) return true;
+  // Check week entries for this year (skip if excludeDayEntries is true)
+  if (!excludeDayEntries && lookup.byWeekForYear.has(year)) return true;
+  
+  return false;
 }
 
 /**
- * Get year entries for a year (optimized)
+ * Extract year, month key, and decade start from an entry's date string.
+ * Avoids Date parsing for day/month/year/decade entries (uses string splitting).
+ * Shared between buildEntryLookup and incremental mutation functions.
  */
-export function getYearEntriesOptimized(
+function extractEntryDateParts(entry: JournalEntry): { entryYear: number; monthKey: string; decadeStart: number; dateStr: string } {
+  const dateStr = entry.date;
+  const isNegative = dateStr.startsWith('-');
+  const cleanDateStr = isNegative ? dateStr.substring(1) : dateStr;
+  const [yearStr, monthStr] = cleanDateStr.split('-');
+  const entryYear = isNegative ? -parseInt(yearStr, 10) : parseInt(yearStr, 10);
+  const monthKey = `${entryYear}-${monthStr}`;
+  const decadeStart = Math.floor(entryYear / 10) * 10;
+  return { entryYear, monthKey, decadeStart, dateStr };
+}
+
+/**
+ * Add a single entry to an existing EntryLookup in-place (O(1)).
+ * Avoids full O(n) rebuild when adding one entry.
+ * Mutates the lookup directly — caller should trigger React re-render via setState.
+ */
+export function addEntryToLookup(
   lookup: EntryLookup,
-  year: number
-): JournalEntry[] {
-  return lookup.byYear.get(year) || [];
+  entry: JournalEntry,
+  weekStartsOn: number = 0
+): void {
+  const { entryYear, monthKey, decadeStart, dateStr } = extractEntryDateParts(entry);
+
+  switch (entry.timeRange) {
+    case 'day': {
+      // Index by date string
+      let dayEntries = lookup.byDateString.get(dateStr);
+      if (!dayEntries) {
+        dayEntries = [];
+        lookup.byDateString.set(dateStr, dayEntries);
+      }
+      dayEntries.push(entry);
+      lookup.hasEntryDates.add(dateStr);
+
+      // Index by year
+      let dayByYear = lookup.byDayForYear.get(entryYear);
+      if (!dayByYear) {
+        dayByYear = [];
+        lookup.byDayForYear.set(entryYear, dayByYear);
+      }
+      dayByYear.push(entry);
+
+      // Index by month key
+      let dayByMonth = lookup.byDayForMonth.get(monthKey);
+      if (!dayByMonth) {
+        dayByMonth = [];
+        lookup.byDayForMonth.set(monthKey, dayByMonth);
+      }
+      dayByMonth.push(entry);
+
+      // Track entries with time
+      if (entry.hour !== undefined && entry.hour !== null) {
+        let timeEntries = lookup.byDateWithTime.get(dateStr);
+        if (!timeEntries) {
+          timeEntries = [];
+          lookup.byDateWithTime.set(dateStr, timeEntries);
+        }
+        timeEntries.push(entry);
+      }
+      break;
+    }
+    case 'week': {
+      const entryDate = parseISODate(dateStr);
+      const weekStart = getWeekStart(entryDate, weekStartsOn);
+      const weekKey = formatDate(weekStart);
+      let weekEntries = lookup.byWeekStart.get(weekKey);
+      if (!weekEntries) {
+        weekEntries = [];
+        lookup.byWeekStart.set(weekKey, weekEntries);
+      }
+      weekEntries.push(entry);
+      lookup.hasWeekEntryWeeks.add(weekKey);
+
+      // Index by year
+      const weekYear = weekStart.getFullYear();
+      let weekByYear = lookup.byWeekForYear.get(weekYear);
+      if (!weekByYear) {
+        weekByYear = [];
+        lookup.byWeekForYear.set(weekYear, weekByYear);
+      }
+      weekByYear.push(entry);
+      break;
+    }
+    case 'month': {
+      let monthEntries = lookup.byMonth.get(monthKey);
+      if (!monthEntries) {
+        monthEntries = [];
+        lookup.byMonth.set(monthKey, monthEntries);
+      }
+      monthEntries.push(entry);
+      lookup.hasMonthEntryMonths.add(monthKey);
+      break;
+    }
+    case 'year': {
+      let yearEntries = lookup.byYear.get(entryYear);
+      if (!yearEntries) {
+        yearEntries = [];
+        lookup.byYear.set(entryYear, yearEntries);
+      }
+      yearEntries.push(entry);
+      lookup.hasYearEntryYears.add(entryYear);
+      break;
+    }
+    case 'decade': {
+      let decadeEntries = lookup.byDecade.get(decadeStart);
+      if (!decadeEntries) {
+        decadeEntries = [];
+        lookup.byDecade.set(decadeStart, decadeEntries);
+      }
+      decadeEntries.push(entry);
+      lookup.hasDecadeEntryDecades.add(decadeStart);
+      break;
+    }
+  }
+}
+
+/**
+ * Remove a single entry from an existing EntryLookup (O(number of maps) ≈ O(1)).
+ * Searches all Maps/Sets for the entry with the given ID and removes it.
+ * If a Map key becomes empty after removal, the key is cleaned up.
+ */
+export function removeEntryFromLookup(lookup: EntryLookup, entryId: number): void {
+  // Helper to remove entry by ID from an array, return true if found
+  const removeFromArray = (arr: JournalEntry[]): boolean => {
+    const idx = arr.findIndex(e => e.id === entryId);
+    if (idx !== -1) {
+      arr.splice(idx, 1);
+      return true;
+    }
+    return false;
+  };
+
+  // Helper to remove entry from a Map<string, JournalEntry[]>
+  const removeFromStringMap = (map: Map<string, JournalEntry[]>, sets?: Set<string>): boolean => {
+    for (const [key, arr] of map.entries()) {
+      if (removeFromArray(arr)) {
+        if (arr.length === 0) {
+          map.delete(key);
+          sets?.delete(key);
+        }
+        return true;
+      }
+    }
+    return false;
+  };
+
+  // Helper to remove entry from a Map<number, JournalEntry[]>
+  const removeFromNumberMap = (map: Map<number, JournalEntry[]>, sets?: Set<number>): boolean => {
+    for (const [key, arr] of map.entries()) {
+      if (removeFromArray(arr)) {
+        if (arr.length === 0) {
+          map.delete(key);
+          sets?.delete(key);
+        }
+        return true;
+      }
+    }
+    return false;
+  };
+
+  // Search through all indexed Maps — returns true once found (single entry has one timeRange)
+  if (removeFromStringMap(lookup.byDateString, lookup.hasEntryDates)) return;
+  if (removeFromStringMap(lookup.byDateWithTime)) return;
+  if (removeFromStringMap(lookup.byMonth, lookup.hasMonthEntryMonths)) return;
+  if (removeFromStringMap(lookup.byWeekStart, lookup.hasWeekEntryWeeks)) return;
+  if (removeFromNumberMap(lookup.byYear, lookup.hasYearEntryYears)) return;
+  if (removeFromNumberMap(lookup.byDecade, lookup.hasDecadeEntryDecades)) return;
+  // Also remove from year-indexed day/week maps
+  if (removeFromNumberMap(lookup.byDayForYear)) return;
+  if (removeFromStringMap(lookup.byDayForMonth)) return;
+  if (removeFromNumberMap(lookup.byWeekForYear)) return;
+}
+
+/**
+ * Update an entry in the lookup (remove old + add new).
+ * More efficient than full rebuild when editing a single entry.
+ */
+export function updateEntryInLookup(
+  lookup: EntryLookup,
+  oldEntry: JournalEntry,
+  newEntry: JournalEntry,
+  weekStartsOn: number = 0
+): void {
+  if (oldEntry.id !== undefined) {
+    removeEntryFromLookup(lookup, oldEntry.id);
+  }
+  addEntryToLookup(lookup, newEntry, weekStartsOn);
 }
 
 /**
@@ -336,31 +569,18 @@ export function getAllEntriesForYearOptimized(
     }
   }
 
-  // Add day and week entries for this year (skip day entries if excludeDayEntries is true)
-  // We need to check all dates in the year - but this is still O(365) which is acceptable
-  // For better performance with thousands of entries, we iterate through byDateString
-  // and filter by year prefix
+  // Add day entries for this year via O(1) year-indexed map (instead of scanning all dates)
   if (!excludeDayEntries) {
-    for (const [dateStr, dayEntries] of lookup.byDateString.entries()) {
-      // Extract year from date string (handles negative years)
-      const isNegative = dateStr.startsWith('-');
-      const cleanDateStr = isNegative ? dateStr.substring(1) : dateStr;
-      const yearStr = cleanDateStr.split('-')[0];
-      const entryYear = isNegative ? -parseInt(yearStr, 10) : parseInt(yearStr, 10);
-      
-      if (entryYear === year) {
-        results.push(...dayEntries);
-      }
+    const dayEntries = lookup.byDayForYear.get(year);
+    if (dayEntries) {
+      results.push(...dayEntries);
     }
   }
 
-  // Add week entries that overlap with this year
-  for (const [weekKey, weekEntries] of lookup.byWeekStart.entries()) {
-    const weekDate = parseISODate(weekKey);
-    const weekYear = weekDate.getFullYear();
-    if (weekYear === year) {
-      results.push(...weekEntries);
-    }
+  // Add week entries for this year via O(1) year-indexed map (instead of scanning all week starts)
+  const weekEntries = lookup.byWeekForYear.get(year);
+  if (weekEntries) {
+    results.push(...weekEntries);
   }
 
   return results;
@@ -398,40 +618,40 @@ export function getAllEntriesForMonthOptimized(
     results.push(...decadeEntries);
   }
 
-  // Add day entries for this month
-  // OPTIMIZATION: Use prefix matching more efficiently
-  const yearMonthPrefix = `${year}-${String(month + 1).padStart(2, '0')}`;
-  const negativeYearMonthPrefix = `-${Math.abs(year)}-${String(month + 1).padStart(2, '0')}`;
-  
-  for (const [dateStr, dayEntries] of lookup.byDateString.entries()) {
-    // OPTIMIZATION: Fast prefix check first, then detailed parsing only if needed
-    if (dateStr.startsWith('-')) {
-      // Negative year - check prefix match first
-      if (dateStr.startsWith(negativeYearMonthPrefix)) {
-        results.push(...dayEntries);
-      }
-    } else {
-      // Positive year - simple prefix match
-      if (dateStr.startsWith(yearMonthPrefix)) {
-        results.push(...dayEntries);
-      }
-    }
+  // Add day entries for this month via O(1) month-indexed map (instead of scanning all dates)
+  const dayEntries = lookup.byDayForMonth.get(monthKey);
+  if (dayEntries) {
+    results.push(...dayEntries);
   }
 
   // Add week entries that overlap with this month
+  // OPTIMIZATION: Use byWeekForYear to scope search to this year's weeks only
+  // instead of scanning ALL week starts across all years
   const monthStart = new Date(year, month, 1);
   const monthEnd = new Date(year, month + 1, 0);
   monthEnd.setHours(23, 59, 59, 999);
 
-  for (const [weekKey, weekEntries] of lookup.byWeekStart.entries()) {
-    const weekStart = parseISODate(weekKey);
-    const weekEnd = new Date(weekStart);
-    weekEnd.setDate(weekEnd.getDate() + 6);
-    weekEnd.setHours(23, 59, 59, 999);
+  const yearWeekEntries = lookup.byWeekForYear.get(year);
+  if (yearWeekEntries && yearWeekEntries.length > 0) {
+    // Get unique week keys from the index (we need the original week start dates)
+    // Use hasWeekEntryWeeks to find which weeks overlap with this month
+    for (const weekKey of lookup.hasWeekEntryWeeks) {
+      const weekDate = parseISODate(weekKey);
+      const weekYear = weekDate.getFullYear();
+      // Only check weeks belonging to this year
+      if (weekYear !== year) continue;
+      const weekStart = weekDate;
+      const weekEnd = new Date(weekStart);
+      weekEnd.setDate(weekEnd.getDate() + 6);
+      weekEnd.setHours(23, 59, 59, 999);
 
-    // Check if week overlaps with month
-    if (weekStart <= monthEnd && weekEnd >= monthStart) {
-      results.push(...weekEntries);
+      // Check if week overlaps with month
+      if (weekStart <= monthEnd && weekEnd >= monthStart) {
+        const weekEntryList = lookup.byWeekStart.get(weekKey);
+        if (weekEntryList) {
+          results.push(...weekEntryList);
+        }
+      }
     }
   }
 
@@ -521,200 +741,4 @@ export function filterEntriesByDateRangeOptimized(
   }
 
   return results;
-}
-
-/**
- * Incrementally update lookup structure when an entry is added
- * This is more efficient than rebuilding the entire lookup for single entry additions
- */
-export function addEntryToLookup(
-  lookup: EntryLookup,
-  entry: JournalEntry,
-  weekStartsOn: number = 0
-): void {
-  const dateStr = entry.date;
-  
-  // Extract year and month from date string
-  const isNegative = dateStr.startsWith('-');
-  const cleanDateStr = isNegative ? dateStr.substring(1) : dateStr;
-  const [yearStr, monthStr] = cleanDateStr.split('-');
-  const entryYear = isNegative ? -parseInt(yearStr, 10) : parseInt(yearStr, 10);
-  const entryMonth = parseInt(monthStr, 10) - 1;
-  const monthKey = `${entryYear}-${monthStr}`;
-  const decadeStart = Math.floor(entryYear / 10) * 10;
-
-  switch (entry.timeRange) {
-    case 'day': {
-      let dayEntries = lookup.byDateString.get(dateStr);
-      if (!dayEntries) {
-        dayEntries = [];
-        lookup.byDateString.set(dateStr, dayEntries);
-      }
-      dayEntries.push(entry);
-      lookup.hasEntryDates.add(dateStr);
-
-      if (entry.hour !== undefined && entry.hour !== null) {
-        let timeEntries = lookup.byDateWithTime.get(dateStr);
-        if (!timeEntries) {
-          timeEntries = [];
-          lookup.byDateWithTime.set(dateStr, timeEntries);
-        }
-        timeEntries.push(entry);
-      }
-      break;
-    }
-    case 'week': {
-      const entryDate = parseISODate(dateStr);
-      const weekStart = getWeekStart(entryDate, weekStartsOn);
-      const weekKey = formatDate(weekStart);
-      let weekEntries = lookup.byWeekStart.get(weekKey);
-      if (!weekEntries) {
-        weekEntries = [];
-        lookup.byWeekStart.set(weekKey, weekEntries);
-      }
-      weekEntries.push(entry);
-      lookup.hasWeekEntryWeeks.add(weekKey);
-      break;
-    }
-    case 'month': {
-      let monthEntries = lookup.byMonth.get(monthKey);
-      if (!monthEntries) {
-        monthEntries = [];
-        lookup.byMonth.set(monthKey, monthEntries);
-      }
-      monthEntries.push(entry);
-      lookup.hasMonthEntryMonths.add(monthKey);
-      break;
-    }
-    case 'year': {
-      let yearEntries = lookup.byYear.get(entryYear);
-      if (!yearEntries) {
-        yearEntries = [];
-        lookup.byYear.set(entryYear, yearEntries);
-      }
-      yearEntries.push(entry);
-      lookup.hasYearEntryYears.add(entryYear);
-      break;
-    }
-    case 'decade': {
-      let decadeEntries = lookup.byDecade.get(decadeStart);
-      if (!decadeEntries) {
-        decadeEntries = [];
-        lookup.byDecade.set(decadeStart, decadeEntries);
-      }
-      decadeEntries.push(entry);
-      lookup.hasDecadeEntryDecades.add(decadeStart);
-      break;
-    }
-  }
-}
-
-/**
- * Incrementally update lookup structure when an entry is removed
- * Note: This requires the entry to still have its original date/timeRange
- */
-export function removeEntryFromLookup(
-  lookup: EntryLookup,
-  entry: JournalEntry,
-  weekStartsOn: number = 0
-): void {
-  const dateStr = entry.date;
-  
-  // Extract year and month from date string
-  const isNegative = dateStr.startsWith('-');
-  const cleanDateStr = isNegative ? dateStr.substring(1) : dateStr;
-  const [yearStr, monthStr] = cleanDateStr.split('-');
-  const entryYear = isNegative ? -parseInt(yearStr, 10) : parseInt(yearStr, 10);
-  const entryMonth = parseInt(monthStr, 10) - 1;
-  const monthKey = `${entryYear}-${monthStr}`;
-  const decadeStart = Math.floor(entryYear / 10) * 10;
-
-  switch (entry.timeRange) {
-    case 'day': {
-      const dayEntries = lookup.byDateString.get(dateStr);
-      if (dayEntries) {
-        const index = dayEntries.findIndex(e => e.id === entry.id);
-        if (index !== -1) {
-          dayEntries.splice(index, 1);
-          if (dayEntries.length === 0) {
-            lookup.byDateString.delete(dateStr);
-            lookup.hasEntryDates.delete(dateStr);
-          }
-        }
-      }
-
-      if (entry.hour !== undefined && entry.hour !== null) {
-        const timeEntries = lookup.byDateWithTime.get(dateStr);
-        if (timeEntries) {
-          const index = timeEntries.findIndex(e => e.id === entry.id);
-          if (index !== -1) {
-            timeEntries.splice(index, 1);
-            if (timeEntries.length === 0) {
-              lookup.byDateWithTime.delete(dateStr);
-            }
-          }
-        }
-      }
-      break;
-    }
-    case 'week': {
-      const entryDate = parseISODate(dateStr);
-      const weekStart = getWeekStart(entryDate, weekStartsOn);
-      const weekKey = formatDate(weekStart);
-      const weekEntries = lookup.byWeekStart.get(weekKey);
-      if (weekEntries) {
-        const index = weekEntries.findIndex(e => e.id === entry.id);
-        if (index !== -1) {
-          weekEntries.splice(index, 1);
-          if (weekEntries.length === 0) {
-            lookup.byWeekStart.delete(weekKey);
-            lookup.hasWeekEntryWeeks.delete(weekKey);
-          }
-        }
-      }
-      break;
-    }
-    case 'month': {
-      const monthEntries = lookup.byMonth.get(monthKey);
-      if (monthEntries) {
-        const index = monthEntries.findIndex(e => e.id === entry.id);
-        if (index !== -1) {
-          monthEntries.splice(index, 1);
-          if (monthEntries.length === 0) {
-            lookup.byMonth.delete(monthKey);
-            lookup.hasMonthEntryMonths.delete(monthKey);
-          }
-        }
-      }
-      break;
-    }
-    case 'year': {
-      const yearEntries = lookup.byYear.get(entryYear);
-      if (yearEntries) {
-        const index = yearEntries.findIndex(e => e.id === entry.id);
-        if (index !== -1) {
-          yearEntries.splice(index, 1);
-          if (yearEntries.length === 0) {
-            lookup.byYear.delete(entryYear);
-            lookup.hasYearEntryYears.delete(entryYear);
-          }
-        }
-      }
-      break;
-    }
-    case 'decade': {
-      const decadeEntries = lookup.byDecade.get(decadeStart);
-      if (decadeEntries) {
-        const index = decadeEntries.findIndex(e => e.id === entry.id);
-        if (index !== -1) {
-          decadeEntries.splice(index, 1);
-          if (decadeEntries.length === 0) {
-            lookup.byDecade.delete(decadeStart);
-            lookup.hasDecadeEntryDecades.delete(decadeStart);
-          }
-        }
-      }
-      break;
-    }
-  }
 }

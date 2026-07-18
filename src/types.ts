@@ -1,6 +1,7 @@
 export interface JournalEntry {
   id?: number;
   date: string; // ISO date string (YYYY-MM-DD) - canonical date for the time range
+  jdn?: number; // Julian Day Number (computed on save in DB, forwarded to frontend for fast date math)
   timeRange: 'decade' | 'year' | 'month' | 'week' | 'day'; // Time scale for this entry
   hour?: number | null; // Optional hour (0-23), null when cleared
   minute?: number | null; // Optional minute (0-59), null when cleared
@@ -229,6 +230,9 @@ declare global {
       deleteEntryByDateRange: (date: string, timeRange: TimeRange) => Promise<void>;
       searchEntries: (query: string) => Promise<JournalEntry[]>;
       getEntriesByRange: (range: TimeRange, value: number) => Promise<JournalEntry[]>;
+      getEntriesByJdnRange: (startJDN: number, endJDN: number) => Promise<JournalEntry[]>;
+      getEntryCount: () => Promise<number>;
+      getEntryCountByJdnRange: (startJDN: number, endJDN: number) => Promise<number>;
       getAllEntries: () => Promise<JournalEntry[]>;
       exportEntries: (
         format: ExportFormat,

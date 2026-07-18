@@ -37,7 +37,11 @@ interface HistoryEntry {
   overBudget: boolean;
 }
 
-const DEFAULT_BUDGETS: Record<string, number> = {
+// Electron-specific budget overrides.
+// CANONICAL SOURCE: src/utils/performance/perfTrailBudgets.ts — always edit there first.
+// When adding a budget here, verify it matches the canonical value.
+// To validate: grep both files for each key and compare.
+const ELECTRON_BUDGETS: Record<string, number> = {
   'db-query': 50,
   'db-write': 100,
   'ipc-invoke': 100,
@@ -57,10 +61,12 @@ const OVERBUDGET_THROTTLE_MS = 1000;
 
 class ElectronPerfTrail {
   private _enabled = false;
+  private _forceDisable = false;
+  private _forceEnable = false;
   private _spans: Map<string, SpanEntry> = new Map();
   private _aggregates: Map<string, Aggregate> = new Map();
   private _history: HistoryEntry[] = [];
-  private _budgets: Map<string, number> = new Map(DEFAULT_BUDGETS ? Object.entries(DEFAULT_BUDGETS) : []);
+  private _budgets: Map<string, number> = new Map(Object.entries(ELECTRON_BUDGETS));
   private _lastLogged: Map<string, number> = new Map();
 
   constructor() {
@@ -71,6 +77,8 @@ class ElectronPerfTrail {
 
   enable(): void { this._enabled = true; logger.log('PerfTrail enabled', undefined, 'PerfTrail'); }
   disable(): void { this._enabled = false; logger.log('PerfTrail disabled', undefined, 'PerfTrail'); }
+  forceEnable(): void { this._forceEnable = true; this._forceDisable = false; this.enable(); }
+  forceDisable(): void { this._forceDisable = true; this._forceEnable = false; this.disable(); }
   isEnabled(): boolean { return this._enabled; }
 
   budget(label: string, ms: number): void { this._budgets.set(label, ms); }
@@ -150,6 +158,10 @@ class ElectronPerfTrail {
 
   private _autoEnable(): void {
     try {
+      // Force-override takes precedence
+      if (this._forceDisable) return;
+      if (this._forceEnable) { this._enabled = true; return; }
+
       if (process.env.CALENRECALL_PERF === '1') { this._enabled = true; return; }
       if (process.env.CALENRECALL_PERF === '0') { this._enabled = false; return; }
       const { app } = require('electron');

@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef } from 'react';
 import { extractColorsFromImage, applyBackgroundColors, clearBackgroundColors } from '../utils/backgroundColorExtractor';
+import perfTrail from '../utils/performance/perfTrail';
 import './BackgroundArt.css';
 
 interface BackgroundArtProps {
@@ -46,6 +47,7 @@ export default function BackgroundArt({ backgroundImage, className = '', theme }
         img.onload = async () => {
           setImageLoadError(false);
           // Extract colors and cache them
+          perfTrail.start('bg-color-extract');
           try {
             const colors = await extractColorsFromImage(newSrc);
             extractedColorsCacheRef.current = { imageUrl: newSrc, colors };
@@ -56,6 +58,8 @@ export default function BackgroundArt({ backgroundImage, className = '', theme }
           } catch (error) {
             console.error('[BackgroundArt] Error extracting colors:', error);
             extractedColorsCacheRef.current = null;
+          } finally {
+            perfTrail.end('bg-color-extract');
           }
         };
         // Only set src if we need to load/extract

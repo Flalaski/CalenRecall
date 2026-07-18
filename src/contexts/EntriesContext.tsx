@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useEffect, useMemo, useCallback, useRef, ReactNode } from 'react';
 import { JournalEntry } from '../types';
-import { buildEntryLookup, type EntryLookup } from '../utils/entryLookupUtils';
+import { buildEntryLookup, addEntryToLookup, removeEntryFromLookup, updateEntryInLookup, type EntryLookup } from '../utils/entryLookupUtils';
 import { calculateEntryColor } from '../utils/entryColorUtils';
 
 interface EntriesContextType {
@@ -84,27 +84,128 @@ export function EntriesProvider({ children }: { children: ReactNode }) {
     return colorMap;
   }, [entries]);
 
-  // OPTIMIZATION: Memoize callback functions to prevent recreation
+  // OPTIMIZATION: Incremental lookup mutation — add entry to lookup in O(1)
+  // instead of triggering full O(n) rebuild on every mutation.
+  // Mutates lookupRef.current in-place, then syncs hash refs so useMemo returns it directly.
   const addEntry = useCallback((entry: JournalEntry) => {
-    setEntries(prev => [...prev, entry]);
+    // Mutate lookup in-place (O(1))
+    if (lookupRef.current) {
+      addEntryToLookup(lookupRef.current, entry, 0);
+    }
+    setEntries(prev => {
+      const next = [...prev, entry];
+      // Sync hash refs so useMemo returns existing (already-mutated) lookup
+      prevEntriesLengthRef.current = next.length;
+      prevEntriesHashRef.current = next.length > 1000
+        ? `${next.slice(0,10).map(e=>`${e.id||'new'}-${e.date}`).join('|')}|...|${next.slice(-10).map(e=>`${e.id||'new'}-${e.date}`).join('|')}|${next.length}`
+        : next.map(e => `${e.id || 'new'}-${e.date}`).join('|');
+      return next;
+    });
   }, []);
 
   const updateEntry = useCallback((updatedEntry: JournalEntry) => {
-    setEntries(prev => 
-      prev.map(entry => entry.id === updatedEntry.id ? updatedEntry : entry)
-    );
+    // Find old entry to remove from lookup, then add updated
+    if (lookupRef.current) {
+      const oldEntry = lookupRef.current.byDateString.get(updatedEntry.date)
+        ?.find(e => e.id === updatedEntry.id);
+      if (oldEntry) {
+        updateEntryInLookup(lookupRef.current, oldEntry, updatedEntry, 0);
+      } else {
+        // Fallback: old entry not found in byDateString, try removing by ID
+        removeEntryFromLookup(lookupRef.current, updatedEntry.id!);
+        addEntryToLookup(lookupRef.current, updatedEntry, 0);
+      }
+    }
+    setEntries(prev => {
+      const next = prev.map(entry => entry.id === updatedEntry.id ? updatedEntry : entry);
+      // Sync hash refs
+      prevEntriesLengthRef.current = next.length;
+      prevEntriesHashRef.current = next.length > 1000
+        ? `${next.slice(0,10).map(e=>`${e.id||'new'}-${e.date}`).join('|')}|...|${next.slice(-10).map(e=>`${e.id||'new'}-${e.date}`).join('|')}|${next.length}`
+        : next.map(e => `${e.id || 'new'}-${e.date}`).join('|');
+      return next;
+    });
   }, []);
 
   const removeEntry = useCallback((entryId: number) => {
-    setEntries(prev => prev.filter(entry => entry.id !== entryId));
+    // Remove from lookup in-place (O(1))
+    if (lookupRef.current) {
+      removeEntryFromLookup(lookupRef.current, entryId);
+    }
+    setEntries(prev => {
+      const next = prev.filter(entry => entry.id !== entryId);
+      // Sync hash refs
+      prevEntriesLengthRef.current = next.length;
+      prevEntriesHashRef.current = next.length > 1000
+        ? `${next.slice(0,10).map(e=>`${e.id||'new'}-${e.date}`).join('|')}|...|${next.slice(-10).map(e=>`${e.id||'new'}-${e.date}`).join('|')}|${next.length}`
+        : next.map(e => `${e.id || 'new'}-${e.date}`).join('|');
+      return next;
+    });
   }, []);
 
-  // Reload entries from database when a new entry is saved
+  // Listen for saved entry events — use incremental update instead of full reload
   useEffect(() => {
-    const handleEntrySaved = async () => {
+    const handleEntrySaved = async (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      
+      // If we have saved entry data, update the lookup incrementally (O(1))
+      if (detail?.entry) {
+        const entry = detail.entry as JournalEntry;
+        if (entry.id) {
+          // Check if this is an update or new entry by looking in current entries
+          setEntries(prev => {
+            const exists = prev.some(e => e.id === entry.id);
+            if (exists) {
+              // Update existing — mutate lookup in-place
+              if (lookupRef.current) {
+                // Find old version
+                const oldEntry = prev.find(e => e.id === entry.id);
+                if (oldEntry) {
+                  updateEntryInLookup(lookupRef.current, oldEntry, entry, 0);
+                }
+              }
+              const next = prev.map(e => e.id === entry.id ? entry : e);
+              prevEntriesLengthRef.current = next.length;
+              prevEntriesHashRef.current = next.length > 1000
+                ? `${next.slice(0,10).map(e=>`${e.id||'new'}-${e.date}`).join('|')}|...|${next.slice(-10).map(e=>`${e.id||'new'}-${e.date}`).join('|')}|${next.length}`
+                : next.map(e => `${e.id || 'new'}-${e.date}`).join('|');
+              return next;
+            } else {
+              // New entry — add to lookup in-place
+              if (lookupRef.current) {
+                addEntryToLookup(lookupRef.current, entry, 0);
+              }
+              const next = [...prev, entry];
+              prevEntriesLengthRef.current = next.length;
+              prevEntriesHashRef.current = next.length > 1000
+                ? `${next.slice(0,10).map(e=>`${e.id||'new'}-${e.date}`).join('|')}|...|${next.slice(-10).map(e=>`${e.id||'new'}-${e.date}`).join('|')}|${next.length}`
+                : next.map(e => `${e.id || 'new'}-${e.date}`).join('|');
+              return next;
+            }
+          });
+        }
+        return;
+      }
+      
+      // Deleted entry — remove from lookup in-place
+      if (detail?.deleted && detail?.entryId) {
+        if (lookupRef.current) {
+          removeEntryFromLookup(lookupRef.current, detail.entryId);
+        }
+        setEntries(prev => {
+          const next = prev.filter(e => e.id !== detail.entryId);
+          prevEntriesLengthRef.current = next.length;
+          prevEntriesHashRef.current = next.length > 1000
+            ? `${next.slice(0,10).map(e=>`${e.id||'new'}-${e.date}`).join('|')}|...|${next.slice(-10).map(e=>`${e.id||'new'}-${e.date}`).join('|')}|${next.length}`
+            : next.map(e => `${e.id || 'new'}-${e.date}`).join('|');
+          return next;
+        });
+        return;
+      }
+      
+      // Fallback: no detail data — do full reload (legacy support)
       try {
         if (window.electronAPI) {
-          // Reload all entries from database to ensure we have the latest data
           const allEntries = await window.electronAPI.getAllEntries();
           setEntries(allEntries);
         }

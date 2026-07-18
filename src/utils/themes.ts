@@ -339,6 +339,11 @@ export function getEffectiveTheme(theme: ThemeName): string {
  */
 export function applyTheme(theme: ThemeName) {
   if (typeof document === 'undefined') return;
+
+  // Lazy import perfTrail to avoid circular dependency during theme init
+  let pt: any = null;
+  try { pt = require('./performance/perfTrail').default; } catch { /* perfTrail may not be loaded yet */ }
+  if (pt) pt.start('theme-apply');
   
   // Ensure document.documentElement exists (may not be available during early initialization)
   if (!document.documentElement) {
@@ -379,8 +384,10 @@ export function applyTheme(theme: ThemeName) {
     // Force a reflow to ensure CSS is recalculated
     void document.documentElement.offsetHeight;
     
+    if (pt) pt.end('theme-apply');
   } catch (error) {
     console.error('[themes] Error applying theme:', error);
+    if (pt) pt.end('theme-apply');
     // Retry after a short delay in case of timing issues
     setTimeout(() => {
       try {

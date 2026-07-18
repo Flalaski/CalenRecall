@@ -228,15 +228,16 @@ button:active,
   contain: layout style paint;
 }
 
-/* GPU acceleration for loading screen - only when animating */
-.loading-screen,
-.startup-loading {
-  /* Optimize loading animations */
+/* GPU acceleration for loading screen — always-on because it's only shown during startup */
+.loading-screen {
   contain: layout style paint;
+  will-change: transform, opacity;
 }
 
-/* Only apply will-change when loading screen is visible/animating */
-.loading-screen.animating,
+/* Startup (static HTML) loading page — will-change only when animating */
+.startup-loading {
+  contain: layout style paint;
+}
 .startup-loading.animating {
   will-change: transform, opacity;
 }

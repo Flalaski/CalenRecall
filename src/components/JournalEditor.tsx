@@ -497,8 +497,9 @@ export default function JournalEditor({
       });
       
       console.log('[JournalEditor] 🔄 Calling saveJournalEntry IPC...');
+      let savedEntry: JournalEntry | null = null;
       try {
-        const savedEntry = await saveJournalEntry(entry);
+        savedEntry = await saveJournalEntry(entry);
         console.log('[JournalEditor] ✅ saveJournalEntry IPC call COMPLETED successfully');
         
         // Verify entry was saved with time
@@ -521,9 +522,9 @@ export default function JournalEditor({
       // Small delay to ensure database write completes
       await new Promise(resolve => setTimeout(resolve, 100));
       
-      // Trigger a custom event to refresh calendar and list
-      window.dispatchEvent(new CustomEvent('journalEntrySaved'));
-      console.log('[JournalEditor] journalEntrySaved event dispatched');
+      // Trigger a custom event to refresh calendar and list (with saved entry data)
+      window.dispatchEvent(new CustomEvent('journalEntrySaved', { detail: { entry: savedEntry } }));
+      console.log('[JournalEditor] journalEntrySaved event dispatched with entry:', savedEntry.id);
       
       // Clear form after saving if it was a new entry
       if (isNewEntry) {
