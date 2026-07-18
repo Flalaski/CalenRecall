@@ -23,7 +23,7 @@ import { useCalendar } from '../contexts/CalendarContext';
 import { useEntries } from '../contexts/EntriesContext';
 import perfTrail from '../utils/performance/perfTrail';
 import { dateToCalendarDate, formatCalendarDate } from '../utils/calendars/calendarConverter';
-import { MONTH_NAMES_SHORT } from '../utils/calendars/dateFormatter';
+import { MONTH_NAMES_SHORT, MONTH_NAMES_NATIVE } from '../utils/calendars/dateFormatter';
 import { buildEntryLookup, hasEntryForDateOptimized, getEntriesWithTimeOptimized } from '../utils/entryLookupUtils';
 import { getEntryColorForDateOptimized } from '../utils/entryColorUtils';
 import { getAstronomicalEventsForRange, getAstronomicalEventLabel, type DateAstronomicalEvent } from '../utils/astronomicalEvents';
@@ -391,6 +391,7 @@ function CalendarView({
       'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
       'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
     ];
+    const nativeMonthNames = MONTH_NAMES_NATIVE[calendar] || calendarMonthNames;
     return (
       <div className="calendar-grid year-view">
         {months.map((month, idx) => {
@@ -448,7 +449,7 @@ function CalendarView({
               style={{ '--zodiac-color': zodiacColor } as React.CSSProperties}
             >
               <div className="cell-content">
-                <div className="cell-label month-title">{calendarMonthNames[idx]}</div>
+                <div className="cell-label month-title" title={nativeMonthNames[idx]}>{calendarMonthNames[idx]}</div>
                 <div className="month-details">
                   <div className="month-days">{daysInMonth} days</div>
                   {entryCount > 0 && (
@@ -597,6 +598,7 @@ function CalendarView({
     const weekDays = getWeekdayLabels(weekStartsOn);
     // Use calendar-aware month names for week view header
     const calendarMonthNames = MONTH_NAMES_SHORT[calendar] || ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const nativeMonthNames = MONTH_NAMES_NATIVE[calendar] || calendarMonthNames;
     
     return (
       <div className="calendar-week-view">
@@ -604,12 +606,14 @@ function CalendarView({
           {weekDays.map((day, idx) => {
             const dayDate = days[idx];
             const dayNumber = dayDate.getDate();
-            const monthName = calendarMonthNames[dayDate.getMonth()];
+            const monthIdx = dayDate.getMonth();
+            const monthName = calendarMonthNames[monthIdx];
+            const nativeMonthName = nativeMonthNames[monthIdx];
             return (
               <div key={day} className="weekday-cell">
                 <div className="day-number">{dayNumber}</div>
                 <div className="day-name">{day}</div>
-                <div className="day-month">{monthName}</div>
+                <div className="day-month" title={nativeMonthName}>{monthName}</div>
               </div>
             );
           })}

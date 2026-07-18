@@ -65,14 +65,14 @@ export function getCalendarTierNames(calendar: CalendarSystem): TierNames {
       day: '日', // Rì (day)
     },
     ethiopian: {
-      decade: 'Decade', // No specific term, using approximate
+      decade: 'ዐሠርተ ዓመታት', // 'Aserta Amätat (ten years)
       year: 'ዓመት', // Amät (year)
       month: 'ወር', // Wer (month)
       week: 'ሳምንት', // Samint (week)
       day: 'ቀን', // Qen (day)
     },
     coptic: {
-      decade: 'Decade',
+      decade: 'ⲙⲛⲧⲁⲁⲥⲡⲉ', // Mentaaspe (ten-count/decade)
       year: 'ⲣⲟⲙⲡⲉ', // Rompe (year)
       month: 'ⲁⲃⲟⲧ', // Abot (month) — corrected from previously incorrect 'epagomenā' (intercalary days)
       week: 'ⲥⲁⲃⲃⲁⲧⲟⲛ', // Sabbaton (week, from Greek σάββατον)
@@ -87,10 +87,10 @@ export function getCalendarTierNames(calendar: CalendarSystem): TierNames {
     },
     bahai: {
       decade: 'Váḥid', // 19-year cycle (closest to decade concept)
-      year: 'Year', // Váḥid cycle year
-      month: 'Month', // 19 months in a year
-      week: 'Week', // 7-day week
-      day: 'Day',
+      year: 'سنة', // Sanah (year, Arabic)
+      month: 'شهر', // Shahr (month, Arabic)
+      week: 'أسبوع', // Usbu' (week, Arabic)
+      day: 'يوم', // Yawm (day, Arabic)
     },
     'thai-buddhist': {
       decade: 'ทศวรรษ', // Totsawat (decade)
@@ -121,18 +121,18 @@ export function getCalendarTierNames(calendar: CalendarSystem): TierNames {
       day: 'Kin', // Day
     },
     cherokee: {
-      decade: 'ᏍᎪᎯᏧᏈ (Decade)',
-      year: 'ᏧᏈ (Year)',
-      month: 'ᏗᎧᏁᏍᎩ (Moon)',
-      week: 'ᎯᎸᏍᎩᏴ (Week)',
-      day: 'ᎢᎦ (Day)',
+      decade: 'ᏍᎪᎯᏧᏈ', // Sgohitsukvi (ten years)
+      year: 'ᏧᏈ', // Tsukvi (year)
+      month: 'ᏗᎧᏁᏍᎩ', // Dikaneski (moon/month)
+      week: 'ᎯᎸᏍᎩᏴ', // Hilvskiyv (week)
+      day: 'ᎢᎦ', // Iga (day)
     },
     iroquois: {
-      decade: 'Decade',
-      year: 'Kashehta (Year)',
-      month: 'Eniá:ken (Moon)',
-      week: 'Week',
-      day: 'Ohneká:ron (Day)',
+      decade: 'Teia\'nikonhratshe:ri', // Ten-year period
+      year: 'Kashehta', // Year
+      month: 'Eniá:ken', // Moon
+      week: 'Ahsen Niionkwé:take', // Seven days / one week
+      day: 'Ohneká:ron', // Day
     },
     'aztec-xiuhpohualli': {
       decade: 'Xiuhmolpilli', // 52-year cycle (closest to decade concept)

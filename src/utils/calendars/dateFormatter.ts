@@ -98,6 +98,34 @@ export function getNativeMonthName(calendar: CalendarSystem, month: number): str
 const DAY_NAMES: string[] = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 const DAY_NAMES_SHORT: string[] = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
+/** Native-script day-of-week names per calendar system */
+export const DAY_NAMES_NATIVE: Record<CalendarSystem, string[]> = {
+  gregorian: DAY_NAMES,
+  julian: DAY_NAMES,
+  islamic: ['الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'],
+  hebrew: ['יום ראשון', 'יום שני', 'יום שלישי', 'יום רביעי', 'יום חמישי', 'יום שישי', 'שבת'],
+  persian: ['یکشنبه', 'دوشنبه', 'سه‌شنبه', 'چهارشنبه', 'پنجشنبه', 'جمعه', 'شنبه'],
+  chinese: ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'],
+  ethiopian: ['እሑድ', 'ሰኞ', 'ማክሰኞ', 'ረቡዕ', 'ሐሙስ', 'ዓርብ', 'ቅዳሜ'],
+  coptic: ['ⲧⲕⲩⲣⲓⲁⲕⲏ', 'ⲡⲓⲥⲛⲁⲩ', 'ⲡⲓϣⲟⲙⲧ', 'ⲡⲓϥⲧⲟⲟⲩ', 'ⲡⲓϯⲟⲩ', 'ⲡⲓⲥⲟⲟⲩ', 'ⲡⲓϣⲁϣϥ'],
+  'indian-saka': ['रविवार', 'सोमवार', 'मंगलवार', 'बुधवार', 'गुरुवार', 'शुक्रवार', 'शनिवार'],
+  bahai: ['الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'],
+  'thai-buddhist': ['วันอาทิตย์', 'วันจันทร์', 'วันอังคาร', 'วันพุธ', 'วันพฤหัสบดี', 'วันศุกร์', 'วันเสาร์'],
+  'mayan-tzolkin': DAY_NAMES,       // Tzolk'in uses 20 day-signs, not 7-day week
+  'mayan-haab': DAY_NAMES,          // Haab' uses 20-day uinals, not 7-day week
+  'mayan-longcount': DAY_NAMES,     // Long Count is positional, no week
+  cherokee: ['ᎤᎾᏙᏓᏆᏍᎬ', 'ᎤᏃᏝᎥᏍᎬ', 'ᏔᎵᏁᎢᎦ', 'ᏦᎢᏁᎢᎦ', 'ᏅᎩᏁᎢᎦ', 'ᎯᏍᎩᏁᎢᎦ', 'ᎤᎾᏙᏓᏉᏅᎯ'],
+  iroquois: DAY_NAMES,              // Haudenosaunee follow lunar cycles, not 7-day week
+  'aztec-xiuhpohualli': DAY_NAMES,  // Xiuhpohualli uses veintenas (20-day periods)
+};
+
+/** Get the native-script name for a day of week */
+export function getNativeDayName(calendar: CalendarSystem, dayOfWeek: number): string {
+  const names = DAY_NAMES_NATIVE[calendar];
+  if (!names || dayOfWeek < 0 || dayOfWeek > 6) return DAY_NAMES[dayOfWeek] || '';
+  return names[dayOfWeek];
+}
+
 /**
  * Get day of week for a date (0 = Sunday, 6 = Saturday)
  * This uses the Gregorian calendar's week structure for most calendars

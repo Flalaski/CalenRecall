@@ -11,7 +11,7 @@ import { deleteJournalEntry } from '../services/journalService';
 import { buildEntryLookup, getDayEntriesOptimized, getMonthEntriesOptimized, getAllEntriesForYearOptimized, getAllEntriesForMonthOptimized, hasAnyEntriesForYear } from '../utils/entryLookupUtils';
 import { getAstronomicalEventsForRange, getAstronomicalEventLabel, type DateAstronomicalEvent } from '../utils/astronomicalEvents';
 import { getHolidaysForRange, type HolidayEvent } from '../utils/culturalHolidays';
-import { MONTH_NAMES_SHORT } from '../utils/calendars/dateFormatter';
+import { MONTH_NAMES_SHORT, MONTH_NAMES_NATIVE } from '../utils/calendars/dateFormatter';
 import { gregorianToJDN } from '../utils/calendars/julianDayUtils';
 import { getAllMacroCycles, type YugaType } from '../utils/calendars/macroCycleUtils';
 import perfTrail from '../utils/performance/perfTrail';
@@ -856,6 +856,7 @@ function TimelineView({
     const days = getDaysInWeek(selectedDate, weekStartsOn);
     const weekDays = getWeekdayLabels(weekStartsOn);
     const monthNames = MONTH_NAMES_SHORT[calendar] || ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const nativeMonthNames = MONTH_NAMES_NATIVE[calendar] || monthNames;
     
     return (
       <div className="timeline-week-view">
@@ -864,7 +865,9 @@ function TimelineView({
             const dayDate = days[idx];
             const gradientColor = getZodiacGradientColor(dayDate);
             const dayNumber = dayDate.getDate();
-            const monthName = monthNames[dayDate.getMonth()];
+            const monthIdx = dayDate.getMonth();
+            const monthName = monthNames[monthIdx];
+            const nativeMonthName = nativeMonthNames[monthIdx];
             return (
               <div 
                 key={day} 
@@ -873,7 +876,7 @@ function TimelineView({
               >
                 <div className="day-number">{dayNumber}</div>
                 <div className="day-name">{day}</div>
-                <div className="day-month">{monthName}</div>
+                <div className="day-month" title={nativeMonthName}>{monthName}</div>
               </div>
             );
           })}
