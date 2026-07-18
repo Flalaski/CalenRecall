@@ -162,7 +162,7 @@ export function getEntryColorForDateOptimized(
   lookup: EntryLookup,
   date: Date,
   timeRange: 'decade' | 'year' | 'month' | 'week' | 'day',
-  weekStartsOn: number = 0,
+  weekStartsOn: 0 | 1 | 2 | 3 | 4 | 5 | 6 = 0,
   entryColors?: Map<number, string>
 ): string | null {
   const dateStr = formatDate(date);

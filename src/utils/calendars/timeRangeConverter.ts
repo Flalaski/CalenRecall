@@ -6,10 +6,9 @@
  */
 
 import { CalendarSystem, CalendarDate, CALENDAR_INFO } from './types';
-import { dateToCalendarDate, calendarDateToDate, formatCalendarDate } from './calendarConverter';
-import { dateToJDN, jdnToDate } from './julianDayUtils';
+import { dateToCalendarDate, formatCalendarDate } from './calendarConverter';
 import { getWeekStart, getWeekEnd, getMonthStart, getMonthEnd, getYearStart, getYearEnd, getDecadeStart, getDecadeEnd } from '../dateUtils';
-import { addDays, addWeeks, addMonths, addYears, getYear } from 'date-fns';
+import { addDays, addWeeks, addMonths, addYears } from 'date-fns';
 
 export interface TimeRangeBounds {
   start: CalendarDate;
@@ -119,7 +118,7 @@ export function navigateInCalendar(
   date: Date,
   timeRange: 'decade' | 'year' | 'month' | 'week' | 'day',
   direction: 'next' | 'prev',
-  calendar: CalendarSystem
+  _calendar: CalendarSystem
 ): Date {
   const multiplier = direction === 'next' ? 1 : -1;
   let newDate: Date;
@@ -220,7 +219,7 @@ export function getTimeRangeLabelInCalendar(
  * Some calendars don't have traditional weeks or decades
  */
 export function calendarSupportsTimeRange(
-  calendar: CalendarSystem,
+  _calendar: CalendarSystem,
   timeRange: 'decade' | 'year' | 'month' | 'week' | 'day'
 ): boolean {
   // All calendars support day, month, year

@@ -534,7 +534,7 @@ class PerfTrail {
    * 2. Electron main process (via IPC if available)
    * 3. Direct console fallback
    */
-  private _logToSinks(message: string, level: 'info' | 'warn' | 'error'): void {
+  private _logToSinks(message: string, _level: 'info' | 'warn' | 'error'): void {
     // Per original PerformanceTrail spec: ALL output goes to console.error
     // so developers can filter to 'Errors' level and see perf data + real errors together.
     console.error(message);

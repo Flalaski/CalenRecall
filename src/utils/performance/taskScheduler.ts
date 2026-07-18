@@ -52,7 +52,7 @@ class TaskScheduler {
     // Subscribe to refresh rate changes if enabled
     if (useDisplayRefreshRate) {
       this.refreshRateUnsubscribe = displayRefreshRate.onRefreshRateChange(
-        (refreshRate, frameBudget) => {
+        (_refreshRate, frameBudget) => {
           this.config.frameBudget = frameBudget * 0.8; // 20% margin
           // Recalculate average frame time based on new refresh rate
           this.averageFrameTime = frameBudget;
@@ -224,7 +224,6 @@ class TaskScheduler {
         : this.taskQueue.shift();
 
       if (task) {
-        const taskStart = performance.now();
         try {
           task.fn();
         } catch (error) {
@@ -235,7 +234,7 @@ class TaskScheduler {
       frameCount++;
     }
 
-    const frameTime = performance.now() - startTime;
+    performance.now(); // frame boundary marker
 
     // Performance measurement - create end mark and measure
     if (this.performanceObserver && typeof performance.mark !== 'undefined' && startMarkName) {

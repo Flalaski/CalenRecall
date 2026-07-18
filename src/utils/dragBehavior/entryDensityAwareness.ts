@@ -66,9 +66,7 @@ export function getEntryDensity(
 /**
  * Get time range in milliseconds for a view mode
  */
-function getTimeRangeForViewMode(centerDate: Date, viewMode: string): number {
-  const year = centerDate.getFullYear();
-  
+function getTimeRangeForViewMode(_centerDate: Date, viewMode: string): number {
   switch (viewMode) {
     case 'decade':
       return 10 * 365.25 * 24 * 60 * 60 * 1000; // ~10 years

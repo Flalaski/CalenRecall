@@ -24,9 +24,6 @@ const MAX_CHUNKS = 5;
 /** Number of buffer years to load on each side of the current year on startup */
 const INITIAL_BUFFER = 1;
 
-/** Pre-fetch this many years ahead in the navigation direction */
-const PREFETCH_AHEAD = 1;
-
 // ─── JDN Helpers ─────────────────────────────────────────────────────────────
 
 /** Get the JDN for January 1st of the given year at noon (JDN standard). */
@@ -112,6 +109,7 @@ export class EntryCache {
         return entries;
       }).catch(() => {
         this.loading.delete(year);
+        return [] as JournalEntry[];
       })
     );
   }

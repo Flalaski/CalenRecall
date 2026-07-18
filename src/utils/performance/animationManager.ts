@@ -17,7 +17,6 @@ class AnimationManager {
   private activeAnimations: Map<HTMLElement, Set<string>> = new Map();
   private animationQueue: AnimationConfig[] = [];
   private maxConcurrent = 10; // Limit concurrent animations
-  private rafId: number | null = null;
 
   /**
    * Start an animation (compositor-optimized)
@@ -117,7 +116,7 @@ class AnimationManager {
     name: string,
     keyframes: string,
     duration: number,
-    easing?: string
+    _easing?: string
   ): void {
     const style = document.createElement('style');
     style.textContent = `

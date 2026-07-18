@@ -1,6 +1,5 @@
 import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth, 
-  startOfYear, endOfYear, addDays, addWeeks, addMonths, addYears,
-  getWeek, getYear, getMonth, differenceInDays, isSameDay } from 'date-fns';
+  startOfYear, endOfYear, addDays, getYear, isSameDay } from 'date-fns';
 import { gregorianToJDN, jdnToDate } from './calendars/julianDayUtils';
 
 /**

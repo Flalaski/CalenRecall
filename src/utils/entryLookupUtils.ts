@@ -1,6 +1,8 @@
 import { JournalEntry, TimeRange } from '../types';
 import { parseISODate, formatDate, getWeekStart } from './dateUtils';
-import { isSameDay } from 'date-fns';
+
+/** Day-of-week type used for weekStartsOn parameter */
+type WeekStartDay = 0 | 1 | 2 | 3 | 4 | 5 | 6;
 
 /**
  * Optimized entry lookup structures for fast O(1) lookups
@@ -46,7 +48,7 @@ export interface EntryLookup {
  * - Only parses dates when necessary (for week calculations)
  * - Pre-allocates arrays to reduce memory allocations
  */
-export function buildEntryLookup(entries: JournalEntry[], weekStartsOn: number = 0): EntryLookup {
+export function buildEntryLookup(entries: JournalEntry[], weekStartsOn: WeekStartDay = 0): EntryLookup {
   const lookup: EntryLookup = {
     byDateString: new Map(),
     byMonth: new Map(),
@@ -87,7 +89,6 @@ export function buildEntryLookup(entries: JournalEntry[], weekStartsOn: number =
     const cleanDateStr = isNegative ? dateStr.substring(1) : dateStr;
     const [yearStr, monthStr] = cleanDateStr.split('-');
     const entryYear = isNegative ? -parseInt(yearStr, 10) : parseInt(yearStr, 10);
-    const entryMonth = parseInt(monthStr, 10) - 1; // Convert to 0-indexed
     const monthKey = `${entryYear}-${monthStr}`;
     const decadeStart = Math.floor(entryYear / 10) * 10;
 
@@ -194,7 +195,7 @@ export function buildEntryLookup(entries: JournalEntry[], weekStartsOn: number =
 export function hasEntryForDateOptimized(
   lookup: EntryLookup,
   date: Date,
-  weekStartsOn: number = 0
+  weekStartsOn: WeekStartDay = 0
 ): boolean {
   const dateStr = formatDate(date);
   const year = date.getFullYear();
@@ -239,15 +240,12 @@ export function getEntriesForDateOptimized(
   lookup: EntryLookup,
   date: Date,
   viewMode: TimeRange,
-  weekStartsOn: number = 0
+  _weekStartsOn: WeekStartDay = 0
 ): JournalEntry[] {
   const dateStr = formatDate(date);
   const year = date.getFullYear();
   const month = date.getMonth();
   const monthKey = `${year}-${String(month + 1).padStart(2, '0')}`;
-  const decadeStart = Math.floor(year / 10) * 10;
-  const weekStart = getWeekStart(date, weekStartsOn);
-  const weekKey = formatDate(weekStart);
 
   const results: JournalEntry[] = [];
 
@@ -363,7 +361,7 @@ function extractEntryDateParts(entry: JournalEntry): { entryYear: number; monthK
 export function addEntryToLookup(
   lookup: EntryLookup,
   entry: JournalEntry,
-  weekStartsOn: number = 0
+  weekStartsOn: WeekStartDay = 0
 ): void {
   const { entryYear, monthKey, decadeStart, dateStr } = extractEntryDateParts(entry);
 
@@ -525,7 +523,7 @@ export function updateEntryInLookup(
   lookup: EntryLookup,
   oldEntry: JournalEntry,
   newEntry: JournalEntry,
-  weekStartsOn: number = 0
+  weekStartsOn: WeekStartDay = 0
 ): void {
   if (oldEntry.id !== undefined) {
     removeEntryFromLookup(lookup, oldEntry.id);
@@ -542,7 +540,7 @@ export function updateEntryInLookup(
 export function getAllEntriesForYearOptimized(
   lookup: EntryLookup,
   year: number,
-  weekStartsOn: number = 0,
+  _weekStartsOn: WeekStartDay = 0,
   excludeDayEntries: boolean = false
 ): JournalEntry[] {
   const results: JournalEntry[] = [];
@@ -594,7 +592,7 @@ export function getAllEntriesForMonthOptimized(
   lookup: EntryLookup,
   year: number,
   month: number,
-  weekStartsOn: number = 0
+  _weekStartsOn: WeekStartDay = 0
 ): JournalEntry[] {
   const results: JournalEntry[] = [];
   const monthKey = `${year}-${String(month + 1).padStart(2, '0')}`;
@@ -671,7 +669,7 @@ export function filterEntriesByDateRangeOptimized(
   lookup: EntryLookup,
   startDate: Date,
   endDate: Date,
-  weekStartsOn: number = 0,
+  _weekStartsOn: WeekStartDay = 0,
   excludeDayEntries: boolean = false
 ): JournalEntry[] {
   const results: JournalEntry[] = [];
