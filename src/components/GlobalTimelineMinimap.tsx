@@ -3418,6 +3418,10 @@ function GlobalTimelineMinimap({
   const timelineDataRef = useRef(timelineData);
   const viewModeRef = useRef(viewMode);
   const selectedDateRef = useRef(selectedDate);
+  // Render-time sync: the effect-based sync below runs AFTER commit, which
+  // lags under rapid key repeat (live trace: week-step 05-03→05-10 dispatched
+  // twice instead of advancing to 05-17). Render assignment never lags.
+  selectedDateRef.current = selectedDate;
   const onTimePeriodSelectRef = useRef(onTimePeriodSelect);
   const horizontalLockedRef = useRef(horizontalLocked);
   const allScaleMarkingsRef = useRef(allScaleMarkings);
@@ -3426,6 +3430,14 @@ function GlobalTimelineMinimap({
   // Update refs when values change
   // Ref to access current entries in keyboard handler
   const entriesRef = useRef<JournalEntry[]>(entries);
+
+  // Pending keyboard-nav target for HELD-KEY navigation (OS auto-repeat at
+  // ~30/s outpaces App's rAF commit). Trusted only when BOTH:
+  //  • fresh (≤400ms) — covers commit lag, expires between user intents
+  //  • the committed date is one THIS burst dispatched (`burst` set) — so a
+  //    drag/click landing mid-burst instantly invalidates the chain instead
+  //    of teleporting the next repeat back to a stale keyboard target
+  const keyboardNavPendingRef = useRef<{ date: Date; at: number; burst: Set<number> } | null>(null);
   
   useEffect(() => {
     timelineDataRef.current = timelineData;
@@ -3689,7 +3701,7 @@ function GlobalTimelineMinimap({
       // Throttle keyboard navigation to ~20fps (50ms) for smooth fluidity
       // OS key-repeat at 30/sec is too fast for smooth visual updates
       const now = performance.now();
-      if (now - lastKeyboardNavRef.current < 50) return;
+      if (now - lastKeyboardNavRef.current < 20) return; // OS repeat @~30ms — 20ms gate catches every repeat (was 50)
       lastKeyboardNavRef.current = now;
 
       // Don't handle keys if user is typing in an input, textarea, or contenteditable element
@@ -3762,7 +3774,25 @@ function GlobalTimelineMinimap({
       }
 
       const currentViewMode = viewModeRef.current;
-      const currentSelectedDate = selectedDateRef.current;
+      // Compound from the last dispatched keyboard target while the burst is
+      // valid — held WASD auto-repeats faster than App's rAF commit, so the
+      // committed prop lags; without compounding, repeats recompute the same
+      // step and drop. Burst-validation: if the committed date is NOT one we
+      // dispatched (drag/click intervened), fall back to the committed date.
+      const committedDate = selectedDateRef.current;
+      const pendingNav = keyboardNavPendingRef.current;
+      const pendingValid =
+        pendingNav !== null &&
+        Date.now() - pendingNav.at < 400 &&
+        pendingNav.burst.has(committedDate.getTime());
+      const currentSelectedDate = pendingValid ? pendingNav.date : committedDate;
+      // Chain bursts: reuse the burst set while valid, else start a new one
+      // anchored at the base we are about to compound from
+      const trackDispatch = (dispatched: Date) => {
+        const burst = pendingValid && pendingNav ? pendingNav.burst : new Set<number>([currentSelectedDate.getTime()]);
+        burst.add(dispatched.getTime());
+        keyboardNavPendingRef.current = { date: dispatched, at: Date.now(), burst };
+      };
       const currentOnTimePeriodSelect = onTimePeriodSelectRef.current;
 
       if (isLeft || isRight) {
@@ -3795,6 +3825,7 @@ function GlobalTimelineMinimap({
         // This ensures audio matches the actual visual movement of the indicator
         isKeyboardNavigationRef.current = true;
         wasArrowKeyNavigationRef.current = isArrowKey; // Track if this was an arrow key (not WASD)
+        trackDispatch(newDate);
         currentOnTimePeriodSelect(newDate, currentViewMode);
       } else if (isUp || isDown) {
         // Change time scale (zoom in/out)
@@ -3818,6 +3849,9 @@ function GlobalTimelineMinimap({
             weekStartsOn
           );
           
+          // Zoom changes the focused date (magnetization) — track it so a
+          // held A/D immediately after compounds from the zoomed position
+          trackDispatch(magnetizedDate);
           currentOnTimePeriodSelect(magnetizedDate, newViewMode);
         } else if (isDown && currentIndex > 0) {
           // Zoom out (less detail)
@@ -3827,6 +3861,7 @@ function GlobalTimelineMinimap({
           // Sound will play when viewMode actually changes (via useEffect below)
           isKeyboardViewModeChangeRef.current = true;
           
+          trackDispatch(currentSelectedDate);
           currentOnTimePeriodSelect(currentSelectedDate, newViewMode);
         }
       }

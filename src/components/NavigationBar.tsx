@@ -26,6 +26,14 @@ interface NavigationBarProps {
   onOpenSearch?: () => void;
 }
 
+/**
+ * How long a dispatched-but-not-yet-committed navigation target may serve as
+ * the base for the next keypress. App commits selectedDate in a rAF (≤ ~2
+ * frames ≈ 33ms); 400ms comfortably covers commit + effect timing while being
+ * far shorter than any gap between distinct user intents.
+ */
+const NAV_PENDING_FRESH_MS = 400;
+
 export default function NavigationBar({
   viewMode,
   onViewModeChange,
@@ -125,16 +133,44 @@ export default function NavigationBar({
     onDateChangeRef.current = onDateChange;
   }, [onDateChange]);
 
-  // FIX: App commits setSelectedDate inside requestAnimationFrame, so the
-  // `selectedDate` prop lags dispatched navigations by up to a frame. Rapid
-  // keypresses/clicks previously computed the same target date from the stale
-  // prop, silently dropping keystrokes (confirmed via duplicate nav-date-change
-  // perf checkpoints). This ref tracks the last dispatched target so consecutive
-  // navigations compound correctly; it resets once the prop catches up.
-  const pendingNavDateRef = useRef<Date | null>(null);
-  useEffect(() => {
-    pendingNavDateRef.current = null;
-  }, [selectedDate]);
+  // FIX (v2): App commits setSelectedDate inside requestAnimationFrame, so the
+  // `selectedDate` prop lags dispatched navigations by up to a frame — rapid
+  // keypresses must compound from the last dispatched target or steps get
+  // dropped. v1 kept that target until the prop changed, which could leave a
+  // STALE target behind (live trace: "next day" from 2026-05-19 produced
+  // 2026-07-19, compounding from a minutes-old pending date). v2 trusts the
+  // pending target only while FRESH — wide enough to cover the rAF commit
+  // lag, far too short to ever span distinct user intents.
+  const selectedDatePropRef = useRef(selectedDate);
+  selectedDatePropRef.current = selectedDate; // render-time sync — never lags
+
+  const pendingNavRef = useRef<{ date: Date; at: number; burst: Set<number> } | null>(null);
+  const getNavBaseDate = useCallback((): Date => {
+    const pending = pendingNavRef.current;
+    const committed = selectedDatePropRef.current;
+    // Burst validation: only compound if the committed date is one this burst
+    // dispatched — a foreign navigation (minimap drag, cell click) instantly
+    // breaks the chain instead of resurrecting a stale keyboard target
+    if (
+      pending &&
+      Date.now() - pending.at < NAV_PENDING_FRESH_MS &&
+      pending.burst.has(committed.getTime())
+    ) {
+      return pending.date;
+    }
+    return committed;
+  }, []);
+  const setNavPending = useCallback((date: Date) => {
+    const prev = pendingNavRef.current;
+    const committed = selectedDatePropRef.current;
+    const chainValid =
+      prev &&
+      Date.now() - prev.at < NAV_PENDING_FRESH_MS &&
+      prev.burst.has(committed.getTime());
+    const burst = chainValid && prev ? prev.burst : new Set<number>([committed.getTime()]);
+    burst.add(date.getTime());
+    pendingNavRef.current = { date, at: Date.now(), burst };
+  }, []);
 
   // Helper function to populate date input fields from selectedDate
   // All calendar conversions go through JDN (Julian Day Number), ensuring
@@ -253,9 +289,8 @@ export default function NavigationBar({
     // Play tier-aware navigation sound with direction and shift distinction
     playTierNavigationSound(viewMode, direction, shiftPressed);
     
-    // Base on the last dispatched target (if any) so rapid clicks compound
-    // instead of recomputing from a stale prop (see pendingNavDateRef).
-    const baseDate = pendingNavDateRef.current ?? selectedDate;
+    // Base on the last dispatched target ONLY while fresh (see pendingNavRef)
+    const baseDate = getNavBaseDate();
     let newDate: Date;
     const multiplier = direction === 'next' ? 1 : -1;
     // If shift is pressed, multiply the jump by 3 for faster navigation
@@ -280,7 +315,7 @@ export default function NavigationBar({
       default:
         newDate = baseDate;
     }
-    pendingNavDateRef.current = newDate;
+    setNavPending(newDate);
     onDateChange(newDate);
     // Populate date fields after navigation (only if user is not typing)
     // Use setTimeout to ensure state has updated
@@ -364,7 +399,7 @@ export default function NavigationBar({
     perfTrail.start('nav-today');
     playNavigationSound();
     const today = new Date();
-    pendingNavDateRef.current = today;
+    setNavPending(today);
     onDateChange(today);
     perfTrail.end('nav-today');
     // Populate date fields after navigation (only if user is not typing)
@@ -1444,7 +1479,7 @@ export default function NavigationBar({
         e.preventDefault();
         playNavigationSound();
         const today = new Date();
-        pendingNavDateRef.current = today;
+        setNavPending(today);
         onDateChangeRef.current(today);
         return;
       }
@@ -1456,10 +1491,10 @@ export default function NavigationBar({
         const shiftPressed = e.shiftKey;
         
         // Get current state from refs/closure. Base on the last dispatched
-        // target so rapid keypresses compound instead of being dropped
-        // (App commits selectedDate in rAF — the prop can lag by a frame).
+        // target ONLY while fresh — covers rAF commit lag without ever
+        // compounding from a stale target (see pendingNavRef).
         const currentViewMode = viewMode;
-        const currentSelectedDate = pendingNavDateRef.current ?? selectedDate;
+        const currentSelectedDate = getNavBaseDate();
         
         // Play tier-aware navigation sound with direction and shift distinction
         playTierNavigationSound(currentViewMode, direction, shiftPressed);
@@ -1487,7 +1522,7 @@ export default function NavigationBar({
           default:
             newDate = currentSelectedDate;
         }
-        pendingNavDateRef.current = newDate;
+        setNavPending(newDate);
         onDateChange(newDate);
         // Populate date fields after keyboard navigation (only if user is not typing)
         // Use setTimeout to ensure state has updated
