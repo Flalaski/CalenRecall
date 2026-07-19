@@ -13,6 +13,8 @@
 
   --cal-entry-max-lines: 3;
   --cal-entry-line-height: 1.35;
+  --cal-reading-line-height: 1.55; /* full entry bodies (day view) */
+  --cal-reading-measure: 75ch;     /* comfortable line length for reading */
 
   --cal-lift: -2px;
   --cal-lift-duration: 0.2s;
@@ -1163,11 +1165,12 @@
 }
 
 .card-tag {
-  font-size: 0.65rem;
-  padding: 0.15rem 0.4rem;
-  background: #e3f2fd;
-  color: #1976d2;
-  border-radius: 12px;
+  font-size: var(--cal-label-size);
+  padding: 0.15rem 0.45rem;
+  background: var(--theme-badge-default-bg, #e3f2fd);
+  color: var(--theme-badge-default-text, #1976d2);
+  border-radius: var(--cal-radius-chip);
+  font-weight: 500;
 }
 
 .timeline-day-view {
@@ -1387,7 +1390,7 @@
 .card-title-full {
   font-weight: 400;
   font-size: 1.1rem;
-  color: #333;
+  color: var(--theme-heading, #333);
   flex: 1;
   min-width: 0; /* Allow flex item to shrink below content size */
   max-width: 100%; /* Prevent overflow */
@@ -1461,35 +1464,35 @@
 }
 
 .time-range-badge {
-  font-size: 0.7rem;
+  font-size: var(--cal-label-size);
   padding: 0.25rem 0.5rem;
-  background: #e0e0e0;
-  color: #666;
-  border-radius: 12px;
+  background: var(--theme-badge-default-bg, #e0e0e0);
+  color: var(--theme-badge-default-text, #666);
+  border-radius: var(--cal-radius-chip);
   font-weight: 600;
   text-transform: uppercase;
 }
 
 .card-date {
   font-size: 0.8rem;
-  color: #999;
+  color: var(--theme-text-secondary, #999);
 }
 
 .card-date-time {
   font-weight: 500;
-  color: #666;
+  color: var(--theme-text-secondary, #666);
 }
 
 .card-time {
   font-size: 0.8rem;
-  color: #666;
+  color: var(--theme-text-secondary, #666);
   font-weight: 500;
   white-space: nowrap;
 }
 
 .card-time-small {
   font-size: 0.7rem;
-  color: #666;
+  color: var(--theme-text-secondary, #666);
   font-weight: 500;
   white-space: nowrap;
   margin-left: auto;
@@ -1519,8 +1522,8 @@
 
 .card-content-full {
   font-size: 0.95rem;
-  line-height: 1.35; /* Tighter line height for better space usage */
-  color: #555;
+  line-height: var(--cal-reading-line-height); /* comfortable reading rhythm */
+  color: var(--theme-text, #555);
   margin-bottom: 0.35rem; /* Reduced for tighter spacing */
   margin-top: 0; /* Remove any top margin */
   padding: 0; /* Remove any padding */
@@ -1530,9 +1533,9 @@
   word-break: normal; /* Use normal word breaking instead of aggressive breaking */
   text-align: left; /* Ensure left alignment */
   width: 100%;
-  max-width: 100%; /* Prevent overflow */
+  max-width: var(--cal-reading-measure); /* readable measure on wide windows */
   box-sizing: border-box;
-  white-space: normal; /* Ensure normal wrapping */
+  white-space: pre-wrap; /* PRESERVE the author's line breaks and paragraphs */
 }
 
 /* On narrow windows, reduce content spacing */
@@ -1556,11 +1559,11 @@
 }
 
 .card-tag-full {
-  font-size: 0.75rem;
+  font-size: var(--cal-label-size);
   padding: 0.25rem 0.6rem;
-  background: #e3f2fd;
-  color: #1976d2;
-  border-radius: 16px;
+  background: var(--theme-badge-default-bg, #e3f2fd);
+  color: var(--theme-badge-default-text, #1976d2);
+  border-radius: var(--cal-radius-chip);
   font-weight: 500;
 }
 

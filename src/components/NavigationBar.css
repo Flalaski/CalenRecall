@@ -5,10 +5,18 @@
   border-bottom: 1px solid #e0e0e0;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
   position: relative;
-  z-index: 1;
+  /* Header ALWAYS paints above the minimap (z:10) and content sections (z:0).
+     Menus anchored inside inherit this context, so they clear content too. */
+  z-index: var(--z-header, 100);
   width: 100%;
   box-sizing: border-box;
-  overflow-x: hidden;
+  /* CRITICAL: `overflow-x: hidden` forces used overflow-y to `auto` (CSS spec),
+     which turned the header into a scroll container — dropdowns/popovers
+     hanging below the bar scrolled INSIDE the header instead of overlaying
+     the interface. `clip` clamps the x-axis WITHOUT creating a scroll
+     container, so overflow-y stays truly visible. */
+  overflow-x: clip;
+  overflow-y: visible;
 }
 
 .navigation-bar-top-row {
@@ -18,7 +26,9 @@
   padding: 1.25rem 2rem; /* Increased padding to give more space */
   width: 100%;
   box-sizing: border-box;
-  overflow-x: hidden;
+  /* clip (not hidden) — see .navigation-bar: popovers must escape vertically */
+  overflow-x: clip;
+  overflow-y: visible;
   min-width: 0;
   gap: 1rem; /* Add gap between left and right sections */
   min-height: 80px; /* Ensure minimum height to prevent overlaps */
@@ -238,7 +248,7 @@
   padding: 0.2rem 0.4rem;
   border-radius: 3px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  z-index: 10;
+  z-index: var(--z-header-menu, 200); /* header-menu tier (see App.css scale) */
   pointer-events: none;
   opacity: 0;
   visibility: hidden;
@@ -276,7 +286,7 @@
   background: #ffebee;
   padding: 0.2rem 0.4rem;
   border-radius: 3px;
-  z-index: 10;
+  z-index: var(--z-header-menu, 200); /* header-menu tier (see App.css scale) */
   opacity: 0;
   visibility: hidden;
   transition: opacity 0.2s, visibility 0.2s;
@@ -334,6 +344,52 @@
 .date-label-line-2 {
   white-space: nowrap;
   line-height: 1;
+}
+
+/* ── Cultural symbology (see src/utils/calendars/culturalAssets.ts) ── */
+.calendar-symbol {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.6em;
+  font-size: 1.15rem;
+  line-height: 1;
+  margin-right: 0.35rem;
+  cursor: help;
+  /* Symbols keep their scripts' natural rendering — no display-font styling */
+  font-family: 'Segoe UI', 'Segoe UI Historic', 'Segoe UI Symbol', 'Ebrima', 'Gadugi', 'Leelawadee UI', system-ui, sans-serif;
+  text-transform: none;
+  letter-spacing: normal;
+  text-shadow: none;
+}
+
+.calendar-symbology-symbol {
+  font-size: 1rem;
+  margin-right: 0.15rem;
+  font-family: 'Segoe UI', 'Segoe UI Historic', 'Segoe UI Symbol', 'Ebrima', 'Gadugi', 'Leelawadee UI', system-ui, sans-serif;
+}
+
+.cultural-swatch-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: 0.5rem;
+  vertical-align: middle;
+}
+
+.cultural-swatch {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 1px solid rgba(127, 127, 127, 0.45);
+  flex-shrink: 0;
+}
+
+.cultural-swatch-note {
+  font-size: 0.6rem;
+  color: var(--theme-text-secondary, #777);
+  margin-left: 0.25rem;
 }
 
 .calendar-selector {
@@ -696,9 +752,11 @@
   border-radius: 8px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
   padding: 0.5rem 0;
-  z-index: 1000;
+  /* Header-menu tier: above all header content; the header's own context
+     (--z-header) already lifts this above minimap + content sections */
+  z-index: var(--z-header-menu, 200);
   max-height: 80vh;
-  overflow-y: auto;
+  overflow-y: auto; /* the MENU may scroll internally — the header never does */
 }
 .layers-dropdown-header {
   padding: 0.4rem 0.75rem 0.2rem;

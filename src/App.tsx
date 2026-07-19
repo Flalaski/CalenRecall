@@ -20,6 +20,7 @@ import { applyTheme, initializeTheme, applyFontSize } from './utils/themes';
 import { useEntries } from './contexts/EntriesContext';
 import { entryCache } from './utils/entryLazyLoader';
 import { useCalendar } from './contexts/CalendarContext';
+import { applyCulturalAccents } from './utils/calendars/culturalAssets';
 import { initializeWindowStateTracker } from './utils/windowStateTracker';
 import { LAYER_TOGGLES } from './utils/layerToggleRegistry';
 import { differenceInDays, differenceInYears, differenceInMonths, addDays, addWeeks, addMonths, addYears } from 'date-fns';
@@ -33,7 +34,7 @@ const LOADING_FADE_OUT_MS = 600;
 
 function App() {
   const { setEntries, isLoading, setIsLoading } = useEntries();
-  const { setCalendar } = useCalendar();
+  const { calendar, setCalendar } = useCalendar();
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [viewMode, setViewMode] = useState<TimeRange>('month');
   const [selectedEntry, setSelectedEntry] = useState<JournalEntry | null>(null);
@@ -75,6 +76,13 @@ function App() {
     const cleanup = initializeWindowStateTracker();
     return cleanup;
   }, []);
+
+  // CULTURAL COLORS: when the layer toggle is on, blend the active calendar's
+  // documented traditional palette with the theme (via color-mix in App.css).
+  // Re-applies on calendar switch; fully removed when toggled off.
+  useEffect(() => {
+    applyCulturalAccents(calendar, preferences.culturalColors === true);
+  }, [calendar, preferences.culturalColors]);
 
   // INIT: Load all entries in a single query, seed the year-chunk cache,
   // then signal ready. The cache makes navigation between years instant

@@ -60,6 +60,14 @@ export const LAYER_TOGGLES: LayerToggleConfig[] = [
     section: 'cultural',
     defaultValue: false,
   },
+  {
+    key: 'culturalColors',
+    label: 'Cultural Colors',
+    description: "Blend each calendar system's traditional palette (documented cultural colors — e.g. wampum purple for Haudenosaunee, Maya blue, tekhelet) with the current theme's colors",
+    icon: '🎨',
+    section: 'cultural',
+    defaultValue: false,
+  },
 
   // ── Macro cycles ──
   {

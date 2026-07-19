@@ -461,7 +461,19 @@ Any CSS introduced by this adaptation MUST:
 - [x] Non-Gregorian calendar spot-check — **done live** via the in-app calendar selector (17 calendars). Weekend styling auto-disabled off Gregorian by design. 🔴 **En route, a major pre-existing bug was found and fixed**: the Hebrew calendar was ~3 years wrong (2026-07-17 rendered as "27 Nisan 5789" instead of 3 Av 5786) — `hebrew.ts` used a `cyclePos % 3` heuristic instead of molad arithmetic, started the AM year at Nisan instead of Tishrei, and mis-split Cheshvan/Kislev. Rewritten with canonical Dershowitz–Reingold elapsed-days + dechiyot; epoch corrected 347997 → 347998. Verified: 9/9 modern anchors (Rosh Hashanah 5784–5787, Pesach, Yom Kippur, Tisha B'Av, Chanukah) + 15,062 round-trips across 4,000 years with 0 failures.
 - [x] Year-view month cells brought into the period-type layer (§7 "all five tiers"): past/current/future with current-month label glow — verified live (6 past / 1 current / 5 future for July 2026)
 - [x] Day-view `.card-meta` real-data chips (§5.4): 📌 pinned, 📎 attachments, 🔗 linked entries — verified live
-- [ ] `weekStartsOn` = 1, 6 sanity check — needs preference control (Electron session)
+- [x] `weekStartsOn` = 1, 6 sanity check — **done live (2026-07-18)** by injecting a mock `window.electronAPI` via Playwright `addInitScript` before app boot (thenable-function stubs so listener registrations return cleanup functions), forcing the preference through the real code path:
+  - `weekStartsOn=1`: headers `Mon…Sun`, 2 leading empty cells (Jul 1 2026 = Wed, (3−1+7)%7=2), day-types weekend×7 + today×1 (Jul 18 is a Saturday — today outranks weekend) ✓
+  - `weekStartsOn=6`: headers `Sat Sun Mon…Fri` in month AND week views, 4 leading empties ((3−6+7)%7=4), day-type counts identical (weekend detection is grid-rotation independent, as designed) ✓
+
+**✅ CHECKLIST COMPLETE — all items verified.**
+
+### Round 7 — User-directed refinements (2026-07-18)
+- [x] **Month view declutter (user directive)**: the "Week Entries" section (and its density strip) removed from month view — week-tier entries belong to the week tier + EntryViewer period panel. Month sidebar now shows month-tier entries only. §5.5's density strip is therefore retired from month view; the CSS classes remain available if the week tier ever wants them.
+- [x] **Entry text coherence pass**:
+  - Fixed double truncation in month entry previews (`substring(0,80) + '...'` phantom ellipsis **and** CSS clamp → now full content + CSS clamp only)
+  - Day view reading body (`.card-content-full`): `white-space: pre-wrap` (author paragraphs were being collapsed!), reading line-height 1.55, 75ch readable measure, `--theme-text` color — new tokens `--cal-reading-line-height` / `--cal-reading-measure`
+  - `.card-title-full` → `--theme-heading`; `.time-range-badge` / `.card-tag` / `.card-tag-full` unified onto badge vars + pill radius + `--cal-label-size`; all date/time metadata (`.card-date`, `.card-date-time`, `.card-time`, `.card-time-small`) → `--theme-text-secondary`
+  - Verified live: week section gone, no phantom ellipsis, pre-wrap + 652px (75ch) measure computed, pill chips rendering; Jest 32/32, build clean
 
 ---
 

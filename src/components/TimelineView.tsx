@@ -517,39 +517,9 @@ function TimelineView({
     const monthEntries = entryLookup.byMonth.get(monthKey) || [];
     const monthEntriesWithIds = monthEntries.filter(entry => entry.id !== undefined);
     
-    // OPTIMIZATION: Get week entries using lookup
-    // Derive the ≤6 candidate week-start keys directly (a month overlaps at
-    // most 6 weeks) instead of scanning + date-parsing every week key in the
-    // dataset on each month render.
-    const monthStart = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1);
-    const monthEnd = new Date(selectedDate.getFullYear(), selectedDate.getMonth() + 1, 0);
-    const weekEntriesByWeek = new Map<string, JournalEntry[]>();
-    
-    // OPTIMIZATION: Early return if no week entries exist
-    if (entryLookup.hasWeekEntryWeeks.size > 0) {
-      const weekCursor = getWeekStart(monthStart, weekStartsOn);
-      while (weekCursor <= monthEnd) {
-        const weekKey = formatDate(weekCursor);
-        const weekEntries = entryLookup.byWeekStart.get(weekKey);
-        if (weekEntries) {
-          weekEntriesByWeek.set(weekKey, weekEntries);
-        }
-        weekCursor.setDate(weekCursor.getDate() + 7);
-      }
-    }
-    
-    // Get unique weeks in the month
-    const weeksInMonth: Date[] = [];
-    const seenWeeks = new Set<string>();
-    days.forEach(day => {
-      const weekStart = getWeekStart(day, weekStartsOn);
-      const weekKey = formatDate(weekStart);
-      if (!seenWeeks.has(weekKey)) {
-        seenWeeks.add(weekKey);
-        weeksInMonth.push(weekStart);
-      }
-    });
-    weeksInMonth.sort((a, b) => a.getTime() - b.getTime());
+    // NOTE: Week entries are deliberately NOT rendered in month view — the
+    // week tier (and the EntryViewer period panel) owns them. Month view's
+    // sidebar shows month-tier entries only (decluttered 2026-07-18).
     
     return (
       <div className="timeline-month-view">
@@ -749,7 +719,7 @@ function TimelineView({
                             )}
                           </div>
                           {entry.content && entry.content.length > 0 && (
-                            <span className="month-entry-preview">{entry.content.substring(0, 80)}...</span>
+                            <span className="month-entry-preview">{entry.content}</span>
                           )}
                           {entry.tags && entry.tags.length > 0 && (
                             <div className="month-entry-tags">
@@ -767,82 +737,6 @@ function TimelineView({
                 )}
               </div>
             </div>
-            
-            {weeksInMonth.length > 0 && (
-              <>
-                <div className="week-entries-header">Week Entries</div>
-                <div className="week-entries-list">
-                  {weeksInMonth.map((weekStart, weekIdx) => {
-                    const weekKey = formatDate(weekStart);
-                    const weekEntries = weekEntriesByWeek.get(weekKey) || [];
-                    const weekEnd = new Date(weekStart);
-                    weekEnd.setDate(weekEnd.getDate() + 6);
-                    
-                    return (
-                      <div key={weekIdx} className="week-entry-group">
-                        <div className="week-entry-group-header">
-                          <span className="week-label">
-                            Week of {formatDate(weekStart, 'MMM d')}
-                          </span>
-                          {/* Zone 2: per-day density strip (ADAPTATION §5.5) —
-                              O(1) lookups + precomputed crystal colors */}
-                          <div className="week-group-zone-density" aria-hidden="true">
-                            {Array.from({ length: 7 }, (_, dIdx) => {
-                              const dotDay = new Date(weekStart);
-                              dotDay.setDate(dotDay.getDate() + dIdx);
-                              const dotEntries = getDayEntriesOptimized(entryLookup, dotDay);
-                              const firstId = dotEntries[0]?.id;
-                              const dotColor = firstId !== undefined ? entryColors?.get(firstId) : undefined;
-                              return (
-                                <span
-                                  key={dIdx}
-                                  className={`week-density-dot${dotEntries.length > 0 ? ' has' : ''}`}
-                                  style={dotColor ? { background: dotColor, color: dotColor } : undefined}
-                                  title={`${dotEntries.length} ${dotEntries.length === 1 ? 'entry' : 'entries'}`}
-                                />
-                              );
-                            })}
-                          </div>
-                          {weekEntries.length > 0 && (
-                            <span className="week-entry-count">{weekEntries.length}</span>
-                          )}
-                        </div>
-                        {weekEntries.length > 0 ? (
-                          <div className="week-entry-items">
-                            {weekEntries.map((entry, eIdx) => {
-                              const entryColor = entry.id !== undefined && entryColors?.get(entry.id) || calculateEntryColor(entry);
-                              return (
-                                <div
-                                  key={eIdx}
-                                  className="week-entry-item"
-                                  onClick={() => {
-                                    playEntrySelectionSound();
-                                    onEntrySelect(entry);
-                                  }}
-                                  title={entry.title}
-                                  style={{ borderLeftColor: entryColor }}
-                                >
-                                  <div className="week-entry-header">
-                                    <span className="week-entry-title">{entry.title}</span>
-                                    {entry.hour !== undefined && entry.hour !== null && (
-                                      <span className="week-entry-time">
-                                        {formatTime(entry.hour, entry.minute, entry.second, preferences.timeFormat || '12h')}
-                                      </span>
-                                    )}
-                                  </div>
-                                </div>
-                              );
-                            })}
-                          </div>
-                        ) : (
-                          <div className="week-entry-empty">No week entries</div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              </>
-            )}
           </div>
         </div>
       </div>

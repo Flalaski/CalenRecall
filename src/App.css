@@ -15,6 +15,52 @@
   animation: appReveal 0.45s ease-out;
 }
 
+/* ═══ Stacking scale — single source of truth ═══
+   0–10   content internals (contained by their section stacking contexts:
+          .app-content / .timeline-section / .editor-section are z:0 roots)
+   10     minimap strip (below the header — header popovers must clear it)
+   100    header (.navigation-bar) — ALWAYS above scrolling content + minimap
+   200    floating menus/popovers anchored in the header
+   1000   app overlays (search overlay, entry modal, radial dial, watermark)
+   2000   high modals (export metadata)
+   10000+ system surfaces (update banner, import progress, loading screen) */
+:root {
+  --z-header: 100;
+  --z-header-menu: 200;
+}
+
+/* ═══ CULTURAL COLOR BLENDING (layer toggle: culturalColors) ═══
+   When active, culturalAssets.ts sets --cultural-primary/secondary/accent
+   for the ACTIVE calendar (documented traditional palettes) and adds
+   `.cultural-colors` to <html>. Rules below TINT the theme via color-mix()
+   — the theme always remains the majority partner, so all 34 themes keep
+   their identity. Zero impact when the toggle is off (class absent). */
+.cultural-colors .navigation-bar {
+  border-bottom: 2px solid color-mix(in srgb, var(--cultural-primary) 55%, var(--theme-accent, #808080));
+}
+.cultural-colors .date-label {
+  color: color-mix(in srgb, var(--cultural-accent) 32%, var(--theme-heading, currentColor));
+}
+.cultural-colors .calendar-select {
+  border-color: color-mix(in srgb, var(--cultural-primary) 60%, var(--theme-accent, #808080));
+}
+.cultural-colors .calendar-symbol {
+  color: color-mix(in srgb, var(--cultural-primary) 70%, var(--theme-text, currentColor));
+}
+.cultural-colors .calendar-info-panel {
+  border-top: 2px solid color-mix(in srgb, var(--cultural-primary) 45%, transparent);
+  background: color-mix(in srgb, var(--cultural-secondary) 8%, transparent);
+}
+.cultural-colors .timeline-cell.today {
+  border-color: color-mix(in srgb, var(--cultural-accent) 45%, var(--theme-accent, #2196f3));
+}
+.cultural-colors .timeline-cell[data-day-type="weekend"] .cell-date {
+  color: color-mix(in srgb, var(--cultural-accent) 40%, var(--theme-accent, inherit));
+}
+.cultural-colors .macro-cycles-container {
+  border-left: 3px solid color-mix(in srgb, var(--cultural-primary) 50%, transparent);
+}
+
 @keyframes appReveal {
   from {
     opacity: 0;

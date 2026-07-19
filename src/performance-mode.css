@@ -126,6 +126,17 @@ html {
   opacity: 1 !important;
 }
 
+/* 4. Floating header menus keep an elevation shadow — without it, an open
+   menu is indistinguishable from the content it overlays. Static shadow on
+   a rarely-open popover: negligible paint cost, essential separation cue. */
+.layers-dropdown {
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25) !important;
+}
+.date-input-helper-text,
+.date-input-error-message {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2) !important;
+}
+
 /* Accessibility: reduced-motion users get no motion (static dimming stays) */
 @media (prefers-reduced-motion: reduce) {
   .loading-screen--exiting,

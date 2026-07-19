@@ -3,10 +3,13 @@
   background: linear-gradient(to bottom, #f8f8f8, #f0f0f0);
   border-bottom: 2px solid #e0e0e0;
   position: relative;
-  z-index: 10;
+  z-index: 10; /* below the header (--z-header: 100) — see App.css scale */
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
   box-sizing: border-box;
-  overflow-x: hidden;
+  /* clip, not hidden — hidden forces overflow-y:auto (scroll trap) and would
+     cage the minimap's own hover previews (z 1001-1004) inside the strip */
+  overflow-x: clip;
+  overflow-y: visible;
 }
 
 .radial-dial {

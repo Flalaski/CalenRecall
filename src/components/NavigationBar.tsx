@@ -4,6 +4,7 @@ import { format, addMonths, addYears, addWeeks, addDays, differenceInDays, diffe
 import { playNavigationSound, playModeSelectionSound, playSettingsSound, playTabSound, playDateSubmitSound, playNavigationJourneySound, playTierNavigationSound, playEraSwitchSound, playNumberTypingSound, playTierSelectionSound } from '../utils/audioUtils';
 import { useCalendar } from '../contexts/CalendarContext';
 import { CalendarSystem, CALENDAR_INFO } from '../utils/calendars/types';
+import { CULTURAL_ASSETS, getCulturalSymbol } from '../utils/calendars/culturalAssets';
 import { getTimeRangeLabelInCalendar } from '../utils/calendars/timeRangeConverter';
 import { CALENDAR_DESCRIPTIONS } from '../utils/calendars/calendarDescriptions';
 import { createDate } from '../utils/dateUtils';
@@ -1771,6 +1772,14 @@ export default function NavigationBar({
             </div>
           </div>
           <div className="calendar-selector">
+            {/* Genuine cultural emblem for the active calendar (see culturalAssets.ts) */}
+            <span
+              className="calendar-symbol"
+              title={`${CULTURAL_ASSETS[calendar]?.symbolName ?? ''} — ${CULTURAL_ASSETS[calendar]?.symbolNote ?? ''}`}
+              aria-hidden="true"
+            >
+              {getCulturalSymbol(calendar)}
+            </span>
             <select
               value={calendar}
               onChange={(e) => {
@@ -1784,7 +1793,7 @@ export default function NavigationBar({
                 .filter(([key]) => ['gregorian', 'julian', 'islamic', 'hebrew', 'persian', 'ethiopian', 'coptic', 'indian-saka', 'cherokee', 'iroquois', 'thai-buddhist', 'bahai', 'mayan-tzolkin', 'mayan-haab', 'mayan-longcount', 'aztec-xiuhpohualli', 'chinese'].includes(key))
                 .map(([key, info]) => (
                   <option key={key} value={key}>
-                    {info.name}
+                    {getCulturalSymbol(key as CalendarSystem)} {info.name}
                   </option>
                 ))}
             </select>
@@ -1813,6 +1822,23 @@ export default function NavigationBar({
                 <div className="calendar-info-section">
                   <strong>Native Name:</strong> {calendarInfo.nativeName}
                 </div>
+                {(() => {
+                  const assets = CULTURAL_ASSETS[calendar];
+                  if (!assets) return null;
+                  return (
+                    <div className="calendar-info-section calendar-symbology">
+                      <strong>Symbology:</strong>{' '}
+                      <span className="calendar-symbology-symbol" aria-hidden="true">{assets.symbol}</span>{' '}
+                      {assets.symbolName} — {assets.symbolNote}
+                      <span className="cultural-swatch-row" title={assets.colorNote}>
+                        {[assets.colors.primary, assets.colors.secondary, assets.colors.accent].map((c) => (
+                          <span key={c} className="cultural-swatch" style={{ background: c }} />
+                        ))}
+                        <span className="cultural-swatch-note">{assets.colorNote}</span>
+                      </span>
+                    </div>
+                  );
+                })()}
                 <div className="calendar-info-section">
                   <strong>Definition:</strong> {description.definition}
                 </div>
