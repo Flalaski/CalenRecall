@@ -1116,7 +1116,12 @@ export function setupIpcHandlers() {
   });
 
   ipcMain.handle('get-entries', async (_event, startDate: string, endDate: string) => {
-    return getEntries(startDate, endDate);
+    try {
+      return getEntries(startDate, endDate);
+    } catch (error) {
+      console.error('[IPC] get-entries failed:', error);
+      return [];
+    }
   });
 
   ipcMain.handle('get-all-entries', async () => {
@@ -1129,7 +1134,12 @@ export function setupIpcHandlers() {
   });
 
   ipcMain.handle('get-entry-count', async () => {
-    return getEntryCount();
+    try {
+      return getEntryCount();
+    } catch (error) {
+      console.error('[IPC] get-entry-count failed:', error);
+      return 0;
+    }
   });
 
   ipcMain.handle('get-entries-by-jdn-range', async (_event, startJDN: number, endJDN: number) => {
@@ -1142,7 +1152,12 @@ export function setupIpcHandlers() {
   });
 
   ipcMain.handle('get-entry-count-by-jdn-range', async (_event, startJDN: number, endJDN: number) => {
-    return getEntryCountByJdnRange(startJDN, endJDN);
+    try {
+      return getEntryCountByJdnRange(startJDN, endJDN);
+    } catch (error) {
+      console.error('[IPC] get-entry-count-by-jdn-range failed:', error);
+      return 0;
+    }
   });
 
   ipcMain.handle('get-entry', async (_event, date: string, timeRange: TimeRange) => {
@@ -1153,7 +1168,12 @@ export function setupIpcHandlers() {
     if (!isValidTimeRange(timeRange)) {
       return null;
     }
-    return getEntry(date, timeRange);
+    try {
+      return getEntry(date, timeRange);
+    } catch (error) {
+      console.error('[IPC] get-entry failed:', error);
+      return null;
+    }
   });
 
   ipcMain.handle('get-entry-by-id', async (_event, id: number) => {
@@ -1161,8 +1181,13 @@ export function setupIpcHandlers() {
     if (!isValidEntryId(id)) {
       return null;
     }
-    const { getEntryById } = require('./database');
-    return getEntryById(id);
+    try {
+      const { getEntryById } = require('./database');
+      return getEntryById(id);
+    } catch (error) {
+      console.error('[IPC] get-entry-by-id failed:', error);
+      return null;
+    }
   });
 
   ipcMain.handle('get-entry-versions', async (_event, entryId: number) => {
@@ -1170,7 +1195,12 @@ export function setupIpcHandlers() {
     if (!isValidEntryId(entryId)) {
       return [];
     }
-    return getEntryVersions(entryId);
+    try {
+      return getEntryVersions(entryId);
+    } catch (error) {
+      console.error('[IPC] get-entry-versions failed:', error);
+      return [];
+    }
   });
 
   ipcMain.handle('archive-entry', async (_event, id: number) => {
@@ -1178,8 +1208,13 @@ export function setupIpcHandlers() {
     if (!isValidEntryId(id)) {
       return { success: false, error: 'Invalid entry ID' };
     }
-    archiveEntry(id);
-    return { success: true };
+    try {
+      archiveEntry(id);
+      return { success: true };
+    } catch (error) {
+      console.error('[IPC] archive-entry failed:', error);
+      return { success: false, error: String(error) };
+    }
   });
 
   ipcMain.handle('unarchive-entry', async (_event, id: number) => {
@@ -1187,12 +1222,22 @@ export function setupIpcHandlers() {
     if (!isValidEntryId(id)) {
       return { success: false, error: 'Invalid entry ID' };
     }
-    unarchiveEntry(id);
-    return { success: true };
+    try {
+      unarchiveEntry(id);
+      return { success: true };
+    } catch (error) {
+      console.error('[IPC] unarchive-entry failed:', error);
+      return { success: false, error: String(error) };
+    }
   });
 
   ipcMain.handle('get-archived-entries', async () => {
-    return getArchivedEntries();
+    try {
+      return getArchivedEntries();
+    } catch (error) {
+      console.error('[IPC] get-archived-entries failed:', error);
+      return [];
+    }
   });
 
   ipcMain.handle('pin-entry', async (_event, id: number) => {
@@ -1200,8 +1245,13 @@ export function setupIpcHandlers() {
     if (!isValidEntryId(id)) {
       return { success: false, error: 'Invalid entry ID' };
     }
-    pinEntry(id);
-    return { success: true };
+    try {
+      pinEntry(id);
+      return { success: true };
+    } catch (error) {
+      console.error('[IPC] pin-entry failed:', error);
+      return { success: false, error: String(error) };
+    }
   });
 
   ipcMain.handle('unpin-entry', async (_event, id: number) => {
@@ -1209,25 +1259,50 @@ export function setupIpcHandlers() {
     if (!isValidEntryId(id)) {
       return { success: false, error: 'Invalid entry ID' };
     }
-    unpinEntry(id);
-    return { success: true };
+    try {
+      unpinEntry(id);
+      return { success: true };
+    } catch (error) {
+      console.error('[IPC] unpin-entry failed:', error);
+      return { success: false, error: String(error) };
+    }
   });
 
   ipcMain.handle('get-pinned-entries', async () => {
-    return getPinnedEntries();
+    try {
+      return getPinnedEntries();
+    } catch (error) {
+      console.error('[IPC] get-pinned-entries failed:', error);
+      return [];
+    }
   });
 
   ipcMain.handle('get-all-templates', async () => {
-    return getAllTemplates();
+    try {
+      return getAllTemplates();
+    } catch (error) {
+      console.error('[IPC] get-all-templates failed:', error);
+      return [];
+    }
   });
 
   ipcMain.handle('get-template', async (_event, id: number) => {
-    return getTemplate(id);
+    try {
+      return getTemplate(id);
+    } catch (error) {
+      console.error('[IPC] get-template failed:', error);
+      return null;
+    }
   });
 
   ipcMain.handle('save-template', async (_event, template: EntryTemplate) => {
-    saveTemplate(template);
-    return { success: true };
+    try {
+      saveTemplate(template);
+      return { success: true };
+    } catch (error) {
+      console.error('[IPC] save-template failed:', error);
+      return { success: false, error: String(error) };
+    }
   });
 
   ipcMain.handle('delete-template', async (_event, id: number) => {
@@ -1941,7 +2016,12 @@ export function setupIpcHandlers() {
 
   // Preferences handlers
   ipcMain.handle('get-preference', async (_event, key: keyof Preferences) => {
-    return getPreference(key);
+    try {
+      return getPreference(key);
+    } catch (error) {
+      console.error('[IPC] get-preference failed:', error);
+      return null;
+    }
   });
 
   ipcMain.handle('set-preference', async (event, key: keyof Preferences, value: Preferences[keyof Preferences]) => {

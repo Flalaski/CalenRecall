@@ -1002,7 +1002,44 @@ export function initDatabase(profileId?: string) {
     console.error('[Database Init] WARNING: Time columns are missing! Running emergency migration...');
     migrateDatabase(db);
   }
-  
+
+  // ── FTS5 Full-Text Search ──
+  // Creates a virtual FTS5 table for blazing-fast full-text search on entry
+  // title + content, replacing the LIKE %query% scan that did a full table
+  // traversal on every search. Triggers keep the index in sync on INSERT,
+  // UPDATE, and DELETE.
+  try {
+    db.exec(`
+      CREATE VIRTUAL TABLE IF NOT EXISTS journal_entries_fts USING fts5(
+        title, content,
+        content=journal_entries,
+        content_rowid=id,
+        tokenize='unicode61'
+      );
+
+      -- Triggers to keep FTS index in sync
+      CREATE TRIGGER IF NOT EXISTS journal_entries_ai AFTER INSERT ON journal_entries BEGIN
+        INSERT INTO journal_entries_fts(rowid, title, content) VALUES (new.id, new.title, new.content);
+      END;
+
+      CREATE TRIGGER IF NOT EXISTS journal_entries_ad AFTER DELETE ON journal_entries BEGIN
+        INSERT INTO journal_entries_fts(journal_entries_fts, rowid, title, content) VALUES('delete', old.id, old.title, old.content);
+      END;
+
+      CREATE TRIGGER IF NOT EXISTS journal_entries_au AFTER UPDATE ON journal_entries BEGIN
+        INSERT INTO journal_entries_fts(journal_entries_fts, rowid, title, content) VALUES('delete', old.id, old.title, old.content);
+        INSERT INTO journal_entries_fts(rowid, title, content) VALUES (new.id, new.title, new.content);
+      END;
+    `);
+    console.log('[Database Init] ✅ FTS5 full-text search index created');
+
+    // Rebuild the FTS index from existing data (idempotent)
+    db.exec('INSERT INTO journal_entries_fts(journal_entries_fts) VALUES(\'rebuild\')');
+    console.log('[Database Init] ✅ FTS5 index rebuilt from existing entries');
+  } catch (err) {
+    console.warn('[Database Init] ⚠️ FTS5 creation failed (non-fatal, LIKE fallback used):', err);
+  }
+
   return db;
 }
 
@@ -2388,20 +2425,49 @@ export function deleteEntryByDateAndRange(date: string, timeRange: 'decade' | 'y
 
 export function searchEntries(query: string, includeArchived: boolean = false): JournalEntry[] {
   const database = getDatabase();
-  const searchTerm = `%${query}%`;
   const archivedClause = includeArchived ? '' : 'AND archived = 0';
-  const stmt = database.prepare(`
-    SELECT * FROM journal_entries 
-    WHERE (title LIKE ? OR content LIKE ?) ${archivedClause}
-    ORDER BY date DESC
-  `);
-  
-  const rows = stmt.all(searchTerm, searchTerm) as JournalEntryRow[];
+  let rows: JournalEntryRow[];
+
+  // FTS5 fast path — only for queries without special chars that break FTS syntax
+  const hasSpecialChars = /[^\w\s-]/u.test(query);
+  if (!hasSpecialChars && query.length > 0) {
+    try {
+      // Clean and escape the query for FTS5 (prefix matching for partial words)
+      const ftsQuery = query.trim().split(/\s+/).map(term => `"${term}"*`).join(' ');
+      const ftsStmt = database.prepare(`
+        SELECT je.* FROM journal_entries je
+        INNER JOIN journal_entries_fts fts ON je.id = fts.rowid
+        WHERE journal_entries_fts MATCH ? ${archivedClause}
+        ORDER BY date DESC
+        LIMIT 500
+      `);
+      rows = ftsStmt.all(ftsQuery) as JournalEntryRow[];
+    } catch {
+      // FTS5 query failed (e.g. syntax issue with special chars) — fall through to LIKE
+      rows = [];
+    }
+  } else {
+    rows = [];
+  }
+
+  // Fallback: LIKE scan (for short queries, special chars, or if FTS5 is unavailable)
+  if (rows.length === 0) {
+    const searchTerm = `%${query}%`;
+    const likeStmt = database.prepare(`
+      SELECT * FROM journal_entries 
+      WHERE (title LIKE ? OR content LIKE ?) ${archivedClause}
+      ORDER BY date DESC
+      LIMIT 500
+    `);
+    rows = likeStmt.all(searchTerm, searchTerm) as JournalEntryRow[];
+  }
+
   return rows.map(row => {
     const timeFields = extractTimeFields(row);
     return {
       id: row.id,
       date: row.date,
+      jdn: row.jdn ?? undefined,
       timeRange: (row.time_range || 'day') as TimeRange,
       hour: timeFields.hour,
       minute: timeFields.minute,
