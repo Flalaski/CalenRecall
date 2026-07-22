@@ -17,13 +17,12 @@ const mockElectronAPI = {
 };
 
 beforeEach(() => {
-  (global as any).window = {};
-  (global as any).window.electronAPI = mockElectronAPI;
+  (window as any).electronAPI = mockElectronAPI;
   jest.clearAllMocks();
 });
 
 afterEach(() => {
-  delete (global as any).window.electronAPI;
+  delete (window as any).electronAPI;
 });
 
 describe('getEntryForDate', () => {
@@ -37,7 +36,7 @@ describe('getEntryForDate', () => {
   });
 
   it('throws when electronAPI is not available', async () => {
-    delete (global as any).window.electronAPI;
+    delete (window as any).electronAPI;
     
     await expect(getEntryForDate(new Date(2024, 0, 15), 'day')).rejects.toThrow('Electron API not available');
   });
@@ -94,7 +93,7 @@ describe('deleteJournalEntry', () => {
   });
 
   it('throws when electronAPI is not available', async () => {
-    delete (global as any).window.electronAPI;
+    delete (window as any).electronAPI;
     await expect(deleteJournalEntry(42)).rejects.toThrow('Electron API not available');
   });
 });

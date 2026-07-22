@@ -628,6 +628,24 @@ export default function NavigationBar({
     }, 0);
   };
 
+  // Stable index-based handlers — read data-index from the element to avoid
+  // creating new closures on every render (the old handleXxx(index) pattern
+  // returned a new function each call, breaking React's prop identity check).
+  const handleFieldChangeWithIndex = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const index = parseInt(e.currentTarget.dataset.index || '0', 10);
+    handleFieldChange(index)(e);
+  }, []);
+
+  const handleDateInputKeyDownWithIndex = useCallback((e: React.KeyboardEvent<HTMLInputElement>) => {
+    const index = parseInt(e.currentTarget.dataset.index || '0', 10);
+    handleDateInputKeyDown(index)(e);
+  }, []);
+
+  const handleDateInputFocusWithIndex = useCallback((e: React.FocusEvent<HTMLInputElement>) => {
+    const index = parseInt(e.currentTarget.dataset.index || '0', 10);
+    handleDateInputFocus(index)();
+  }, []);
+
   const handleDateInputBlur = () => {
     setIsDateInputFocused(false);
     // Reset typing flag after a short delay to allow for any pending updates
@@ -1543,7 +1561,19 @@ export default function NavigationBar({
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [viewMode, selectedDate, onDateChange]); // Include dependencies for keyboard navigation
+  }, [viewMode, onDateChange]); // selectedDate intentionally omitted — handler reads live value from getNavBaseDate() ref
+
+  // Static calendar options (17 calendars) — memoized once to avoid .filter().map() every render
+  const calendarOptions = useMemo(() => {
+    const activeCalendars: CalendarSystem[] = [
+      'gregorian', 'julian', 'islamic', 'hebrew', 'persian', 'ethiopian', 'coptic',
+      'indian-saka', 'cherokee', 'iroquois', 'thai-buddhist', 'bahai',
+      'mayan-tzolkin', 'mayan-haab', 'mayan-longcount', 'aztec-xiuhpohualli', 'chinese'
+    ];
+    return activeCalendars
+      .filter(key => CALENDAR_INFO[key])
+      .map(key => [key, CALENDAR_INFO[key]] as [string, typeof CALENDAR_INFO[typeof key]]);
+  }, []);
 
   return (
     <div className="navigation-bar">
@@ -1636,9 +1666,10 @@ export default function NavigationBar({
                             className={`date-input date-input-${index} ${dateInputError ? 'error' : ''}`}
                             placeholder={field.placeholder}
                             value={fieldValue}
-                            onChange={handleFieldChange(index)}
-                            onKeyDown={handleDateInputKeyDown(index)}
-                            onFocus={handleDateInputFocus(index)}
+                            data-index={index}
+                            onChange={handleFieldChangeWithIndex}
+                            onKeyDown={handleDateInputKeyDownWithIndex}
+                            onFocus={handleDateInputFocusWithIndex}
                             onBlur={handleDateInputBlur}
                             aria-label={field.label}
                             aria-describedby="date-input-helper date-input-error"
@@ -1824,9 +1855,7 @@ export default function NavigationBar({
               className="calendar-select"
               title="Select calendar system"
             >
-              {Object.entries(CALENDAR_INFO)
-                .filter(([key]) => ['gregorian', 'julian', 'islamic', 'hebrew', 'persian', 'ethiopian', 'coptic', 'indian-saka', 'cherokee', 'iroquois', 'thai-buddhist', 'bahai', 'mayan-tzolkin', 'mayan-haab', 'mayan-longcount', 'aztec-xiuhpohualli', 'chinese'].includes(key))
-                .map(([key, info]) => (
+              {calendarOptions.map(([key, info]) => (
                   <option key={key} value={key}>
                     {getCulturalSymbol(key as CalendarSystem)} {info.name}
                   </option>

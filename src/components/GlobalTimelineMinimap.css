@@ -1439,9 +1439,7 @@
 }
 
 /* ── Distance tier: FAR (opacity < 0.35) — bare minimum ── */
-.entry-indicator.crystal-far {
-  /* no filter, no box-shadow, no animation, no pseudo-elements */
-}
+/* No .crystal-far specific rules needed — inherited base .entry-indicator is sufficient */
 
 .entry-indicator.crystal-far.use-calculated-colors {
   background: var(--gem-color) !important;

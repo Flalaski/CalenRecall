@@ -138,7 +138,6 @@ export function OnboardingFlow({
   useEffect(() => {
     if (!show || !overlayRef.current) return;
 
-    const overlay = overlayRef.current;
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         handleSkip();

@@ -39,6 +39,9 @@ release
 Trace-*.json
 Trace-*.json.gz
 
+# Large generated test profile (auto-generated, not committed)
+boundary-test-profile.json
+
 # Batch files (optional - uncomment if you don't want to track them)
 # *.bat
 

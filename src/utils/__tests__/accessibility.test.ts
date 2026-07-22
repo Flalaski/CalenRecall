@@ -10,7 +10,6 @@ import {
   getViewModeAriaLabel,
   getKeyAction,
   getTimeRangeRole,
-  announce,
   initAnnouncer,
 } from '../accessibility';
 
