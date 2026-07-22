@@ -15,6 +15,95 @@
   animation: appReveal 0.45s ease-out;
 }
 
+/* ── Navigation transition indicator ──
+   When a React startTransition is in flight (date or viewMode change),
+   a visible top-edge pulse signals that the UI is computing the next
+   view without blocking the current one. Entirely CSS-driven; no DOM
+   overhead. Disabled by prefers-reduced-motion. */
+.app[data-nav-pending]::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  z-index: calc(var(--z-header-menu, 200) + 1);
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    var(--theme-accent, #4a90e2) 25%,
+    var(--theme-badge-active, #7eb8ff) 50%,
+    var(--theme-accent, #4a90e2) 75%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+  animation: navPendingShimmer 0.7s ease-in-out infinite;
+  pointer-events: none;
+  opacity: 0.9;
+  box-shadow: 0 0 6px var(--theme-accent, #4a90e2);
+}
+
+@keyframes navPendingShimmer {
+  0%   { background-position: 150% 0; opacity: 0.3; }
+  30%  { opacity: 1; }
+  70%  { opacity: 1; }
+  100% { background-position: -50% 0; opacity: 0.3; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app[data-nav-pending]::before {
+    animation: none;
+    opacity: 0.5;
+  }
+}
+
+/* ── View Transition API animations ──
+   Directional slide+fade between navigation states. --nav-direction is
+   set before each transition: 1=forward in time (future), -1=backward
+   (past), 0=no direction (viewMode change, uses scale). The browser
+   captures the old DOM, runs React update, then animates between them.
+   Chrome 111+. Disabled by prefers-reduced-motion. */
+::view-transition-old(timeline-view) {
+  animation: vtSlideOut 0.18s cubic-bezier(0.4, 0, 1, 1) forwards;
+}
+::view-transition-new(timeline-view) {
+  animation: vtSlideIn 0.18s cubic-bezier(0, 0, 0.2, 1) forwards;
+}
+
+@keyframes vtSlideOut {
+  from {
+    opacity: 1;
+    transform: translateX(calc(var(--nav-direction, 0) * -30px)) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(calc(var(--nav-direction, 0) * 30px)) scale(0.97);
+  }
+}
+@keyframes vtSlideIn {
+  from {
+    opacity: 0;
+    transform: translateX(calc(var(--nav-direction, 0) * 30px)) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+}
+
+/* Direction=0 (viewMode change): subtle zoom+fade, no lateral movement */
+::view-transition-old(timeline-view):dir(ltr) {
+  /* dir() selector ensures we only match when direction is effectively 0
+     by using the fallback: when --nav-direction=0, calc yields 0px shift */
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-old(timeline-view),
+  ::view-transition-new(timeline-view) {
+    animation: none;
+  }
+}
+
 /* ═══ Stacking scale — single source of truth ═══
    0–10   content internals (contained by their section stacking contexts:
           .app-content / .timeline-section / .editor-section are z:0 roots)
@@ -224,6 +313,9 @@
   flex-direction: column;
   position: relative;
   z-index: 0;
+  /* Named for View Transition API — browser captures this element for
+     smooth crossfade between navigation states (see ::view-transition-*) */
+  view-transition-name: timeline-view;
 }
 
 .editor-section {

@@ -35,7 +35,7 @@ const LOADING_SCREEN_CONSTANTS = {
   CAMERA_ROTATE_Y: 0, // Rotation around Y axis (degrees) - 0 for straight on front view
   SINGULARITY_CENTER: { x: 250, y: 200 }, // Center singularity point representing present moment
   TEMPORAL_DISTANCE_SCALE: 0.8888888888888888, // How much temporal distance affects spatial position (0-1 blend factor)
-  MAX_TEMPORAL_DISTANCE_DAYS: 365 * 100, // 100 years - maximum temporal distance for scaling
+  MAX_TEMPORAL_DISTANCE_DAYS: 365 * 275, // ~275 years — covers typical profile spans without overcrowding
   CANVAS_RENDER_THRESHOLD: 500, // Use canvas rendering for 500+ entries
   VIEWPORT_CULLING_MARGIN: 100, // Extra margin for viewport culling (pixels)
   LOD_DISTANCE_THRESHOLD: 200, // Distance threshold for LOD (pixels from center)
@@ -684,10 +684,15 @@ function CrystalCanvasRenderer({
         // Base opacity from Z-depth
         const zOpacity = Math.max(0.3, 1 - Math.abs(z) / 200);
         
-        // Clamp opacity to loading progress (0-100 maps to 0-1)
-        const progressOpacity = progress !== undefined 
-          ? Math.max(0, Math.min(1, progress / 100))
-          : 1;
+        // Decouple crystal visibility from loading progress: once loading hits 90%,
+        // crystals stay at full opacity so the user can appreciate them during the
+        // extended hold window. (Previously progressOpacity = clamp(progress/100, 0, 1)
+        // caused crystals to fade in slowly, then the splash exited before they
+        // were fully visible.)
+        const crystalFullyVisible = progress !== undefined && progress >= 90;
+        const progressOpacity = crystalFullyVisible
+          ? 1 // full visibility during the crystal-appreciation window
+          : Math.max(0, Math.min(1, (progress ?? 0) / 100));
         
         // Combine Z-depth opacity with progress opacity
         const finalOpacity = zOpacity * progressOpacity;

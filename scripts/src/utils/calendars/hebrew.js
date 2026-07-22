@@ -11,7 +11,8 @@
  * Algorithm based on "Calendrical Calculations" by Dershowitz & Reingold
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.hebrewCalendar = void 0;
+exports.hebrewCalendar = exports.HEBREW_MONTH_NAMES_HEBREW = void 0;
+exports.hebrewNewYearJDN = hebrewNewYearJDN;
 exports.isHebrewLeapYear = isHebrewLeapYear;
 exports.getMonthsInHebrewYear = getMonthsInHebrewYear;
 exports.getDaysInHebrewYear = getDaysInHebrewYear;
@@ -35,7 +36,8 @@ const HEBREW_MONTH_NAMES = [
     'Adar I', // Leap month
     'Adar II' // Regular Adar in leap years
 ];
-const HEBREW_MONTH_NAMES_HEBREW = [
+/** Native Hebrew month names (incl. leap month variants) */
+exports.HEBREW_MONTH_NAMES_HEBREW = [
     'ניסן',
     'אייר',
     'סיוון',
@@ -47,12 +49,57 @@ const HEBREW_MONTH_NAMES_HEBREW = [
     'כסלו',
     'טבת',
     'שבט',
-    'אדר',
-    'אדר א',
-    'אדר ב'
+    'אדר א׳', // Leap month (Adar I)
+    'אדר ב׳', // Regular Adar in leap years (Adar II)
 ];
-// Hebrew epoch: October 7, 3761 BCE (Julian) = JDN 347997
-const HEBREW_EPOCH = 347997;
+// Hebrew epoch: 1 Tishrei 1 AM = R.D. −1373427 (Dershowitz & Reingold) =
+// JDN 347998 in the standard noon-JDN convention used by julianDayUtils.
+// Empirically anchored against modern Rosh Hashanah dates (5784 → 2023-09-16,
+// 5785 → 2024-10-03, 5786 → 2025-09-23). The previously-documented 347997
+// came from an off-by-one in proleptic negative-year Julian conversion.
+const HEBREW_EPOCH = 347998;
+/** True modulo (result always in [0, b) even for negative a) */
+function mod(a, b) {
+    return ((a % b) + b) % b;
+}
+/**
+ * Days elapsed from the Hebrew epoch to the molad-based new year of `year`,
+ * including the molad zaken / Monday-Wednesday-Friday postponement folded in.
+ * Canonical `hebrew-calendar-elapsed-days` from Dershowitz & Reingold,
+ * "Calendrical Calculations" (4th ed., §8.2).
+ * 1 lunar month = 29 days 12 h 793 parts (25920 parts/day, 13753 parts excess
+ * per month); months elapsed = ⌊(235·year − 234) / 19⌋ via the Metonic cycle.
+ */
+function hebrewCalendarElapsedDays(year) {
+    const monthsElapsed = Math.floor((235 * year - 234) / 19);
+    const partsElapsed = 12084 + 13753 * monthsElapsed;
+    let days = 29 * monthsElapsed + Math.floor(partsElapsed / 25920);
+    if (mod(3 * (days + 1), 7) < 3) {
+        days += 1; // postponement: molad on Sun/Wed/Fri (lo ADU rosh)
+    }
+    return days;
+}
+/**
+ * Additional new-year delays (dechiyot) preventing invalid year lengths
+ * (D&R `hebrew-new-year-delay`).
+ */
+function hebrewNewYearDelay(year) {
+    const ny0 = hebrewCalendarElapsedDays(year - 1);
+    const ny1 = hebrewCalendarElapsedDays(year);
+    const ny2 = hebrewCalendarElapsedDays(year + 1);
+    if (ny2 - ny1 === 356)
+        return 2; // next year would be too long
+    if (ny1 - ny0 === 382)
+        return 1; // previous year would be too short
+    return 0;
+}
+/**
+ * JDN of 1 Tishrei (Rosh Hashanah) of the given Hebrew year.
+ * Works proleptically for year <= 0 (continuous arithmetic).
+ */
+function hebrewNewYearJDN(year) {
+    return HEBREW_EPOCH + hebrewCalendarElapsedDays(year) + hebrewNewYearDelay(year);
+}
 /**
  * Check if a Hebrew year is a leap year
  * @param year Hebrew year (AM)
@@ -83,62 +130,13 @@ function getMonthsInHebrewYear(year) {
 // Cache for year lengths to avoid circular recursion
 const yearLengthCache = new Map();
 /**
- * Calculate Hebrew year length without circular dependency
- * Uses molad-based calculation to determine year type
- * This function must NEVER call getDaysInHebrewMonth to avoid recursion
+ * Calculate Hebrew year length via molad arithmetic:
+ * the exact span between consecutive Rosh Hashanah dates.
+ * (Replaces the previous `cyclePos % 3` heuristic, which accumulated
+ * ~3 years of drift by the modern era — found in granular audit 2026-07-17.)
  */
 function calculateHebrewYearLength(year) {
-    const isLeap = isHebrewLeapYear(year);
-    // Fixed month lengths (excluding variable months 8 and 9)
-    // These are known constants and don't require calling getDaysInHebrewMonth
-    const fixedMonths = [
-        30, // 1: Nisan
-        29, // 2: Iyar
-        30, // 3: Sivan
-        29, // 4: Tammuz
-        30, // 5: Av
-        29, // 6: Elul
-        30, // 7: Tishrei
-        // 8: Cheshvan (variable) - will be calculated
-        // 9: Kislev (variable) - will be calculated
-        29, // 10: Tevet
-        30, // 11: Shevat
-        isLeap ? 30 : 29, // 12: Adar I (leap) or Adar (non-leap)
-        isLeap ? 29 : 0 // 13: Adar II (only in leap years)
-    ];
-    // Sum fixed months
-    let fixedDays = 0;
-    for (let i = 0; i < fixedMonths.length; i++) {
-        fixedDays += fixedMonths[i];
-    }
-    // Use cycle position to determine year type
-    // Normalize year to positive for cycle calculation
-    let normalizedYear = year;
-    if (year < 1) {
-        // For negative years, normalize to equivalent position in 19-year cycle
-        const cycles = Math.ceil(Math.abs(year) / 19);
-        normalizedYear = year + (cycles * 19);
-        // Ensure it's positive
-        while (normalizedYear < 1) {
-            normalizedYear += 19;
-        }
-    }
-    const cyclePos = ((normalizedYear - 1) % 19) + 1;
-    // Determine year length category based on cycle position
-    // Common years: 353 (deficient), 354 (regular), 355 (complete)
-    // Leap years: 383 (deficient), 384 (regular), 385 (complete)
-    const baseLength = isLeap ? 384 : 354;
-    // Adjust based on cycle position (simplified heuristic)
-    // This is a simplified approach - a full implementation would use molad calculations
-    const adjustment = (cyclePos % 3 === 0) ? -1 : (cyclePos % 3 === 1) ? 1 : 0;
-    const targetLength = baseLength + adjustment;
-    // Ensure valid range
-    if (isLeap) {
-        return Math.max(383, Math.min(385, targetLength));
-    }
-    else {
-        return Math.max(353, Math.min(355, targetLength));
-    }
+    return hebrewNewYearJDN(year + 1) - hebrewNewYearJDN(year);
 }
 /**
  * Get the number of days in a Hebrew year
@@ -216,32 +214,19 @@ function getDaysInHebrewMonth(year, month, precomputedYearLength) {
         const length = monthLengths[month];
         let result;
         if (length === 'variable') {
-            // Use precomputed year length if provided, otherwise calculate it
-            // This prevents recursion when called from jdnToHebrew
+            // Canonical rules (D&R): year length mod 10 encodes the year type.
+            // 355/385 ("complete")  → Cheshvan 30, Kislev 30
+            // 354/384 ("regular")   → Cheshvan 29, Kislev 30
+            // 353/383 ("deficient") → Cheshvan 29, Kislev 29
+            // (The previous remainder-split produced an invalid 29/29 for regular years.)
             const yearLength = precomputedYearLength !== undefined
                 ? precomputedYearLength
                 : getDaysInHebrewYear(year);
-            // Calculate fixed month days (using known constants, not calling getDaysInHebrewMonth)
-            // Months 1-7: 30+29+30+29+30+29+30 = 207
-            // Months 10-11: 29+30 = 59
-            // Month 12: isLeap ? 30 : 29
-            // Month 13: isLeap ? 29 : 0
-            const fixedDays = 207 + 59 + (isLeap ? 30 + 29 : 29);
-            // Remaining days for variable months (Cheshvan + Kislev)
-            // Variable months total must be 57, 58, or 59 days
-            const variableDays = yearLength - fixedDays;
             if (month === 8) { // Cheshvan
-                // Cheshvan gets 29 or 30, Kislev gets the remainder
-                result = variableDays >= 59 ? 30 : 29;
+                result = mod(yearLength, 10) === 5 ? 30 : 29;
             }
             else { // Kislev (month 9)
-                // Kislev gets the remainder after Cheshvan
-                const cheshvanDays = variableDays >= 59 ? 30 : 29;
-                result = variableDays - cheshvanDays;
-                // Ensure result is valid (29 or 30)
-                if (result < 29 || result > 30) {
-                    result = 29; // Default fallback
-                }
+                result = mod(yearLength, 10) === 3 ? 29 : 30;
             }
         }
         else {
@@ -258,181 +243,68 @@ function getDaysInHebrewMonth(year, month, precomputedYearLength) {
 }
 /**
  * Convert Hebrew date to Julian Day Number
+ * Month numbering is ecclesiastical (1 = Nisan), but the AM YEAR begins at
+ * 1 Tishrei (month 7) — so Tishrei..Adar of a given AM year come BEFORE
+ * Nisan..Elul of that same year. (The previous implementation started the
+ * year at Nisan, mis-attributing half of every year.)
  * @param year Hebrew year (AM)
- * @param month Month (1-13)
+ * @param month Month (1-13, 1 = Nisan)
  * @param day Day (1-30)
  * @returns Julian Day Number
  */
 function hebrewToJDN(year, month, day) {
-    // Handle negative years (before epoch)
-    if (year < 1) {
-        // For negative years, calculate days before epoch
-        // Work backwards: calculate total days from year down to year 0 (inclusive)
-        // Then subtract the days remaining in the target year
-        // Pre-compute year length once to avoid recursion
-        const yearLength = getDaysInHebrewYear(year);
-        // Calculate days in the target year up to this date
-        // Pass precomputed year length to avoid recursion
-        let daysInYear = day - 1;
-        for (let m = 1; m < month; m++) {
-            daysInYear += getDaysInHebrewMonth(year, m, yearLength);
-        }
-        // Calculate total days in all years from year down to 0 (inclusive)
-        let totalDaysInYears = 0;
-        for (let y = year; y <= 0; y++) {
-            totalDaysInYears += getDaysInHebrewYear(y);
-        }
-        // Days before epoch = total days in all years from year to 0, minus days remaining in target year
-        const daysBeforeEpoch = totalDaysInYears - daysInYear;
-        return HEBREW_EPOCH - daysBeforeEpoch;
-    }
-    // Normal case: year >= 1
-    // Calculate days since Hebrew epoch
-    let days = day - 1;
-    // Pre-compute year length once to avoid recursion when iterating months
+    let jdn = hebrewNewYearJDN(year) + day - 1;
     const yearLength = getDaysInHebrewYear(year);
-    // Add days from previous months in this year
-    // Pass precomputed year length to avoid recursion
-    for (let m = 1; m < month; m++) {
-        days += getDaysInHebrewMonth(year, m, yearLength);
+    const lastMonth = getMonthsInHebrewYear(year);
+    if (month < 7) {
+        // Months Tishrei(7)..end of year come first, then Nisan(1)..month-1
+        for (let m = 7; m <= lastMonth; m++) {
+            jdn += getDaysInHebrewMonth(year, m, yearLength);
+        }
+        for (let m = 1; m < month; m++) {
+            jdn += getDaysInHebrewMonth(year, m, yearLength);
+        }
     }
-    // Add days from previous years
-    let yearDays = 0;
-    for (let y = 1; y < year; y++) {
-        yearDays += getDaysInHebrewYear(y);
+    else {
+        for (let m = 7; m < month; m++) {
+            jdn += getDaysInHebrewMonth(year, m, yearLength);
+        }
     }
-    days += yearDays;
-    return HEBREW_EPOCH + days;
+    return jdn;
 }
 /**
  * Convert Julian Day Number to Hebrew date
+ * O(1) year estimate from the mean year length (35975351/98496 days),
+ * refined by at most a few new-year comparisons — no year-by-year scanning.
+ * Works proleptically for dates before the epoch (continuous arithmetic).
  * @param jdn Julian Day Number
- * @returns Object with year, month (1-13), and day
+ * @returns Object with year, month (1-13, 1 = Nisan), and day
  */
 function jdnToHebrew(jdn) {
-    const days = jdn - HEBREW_EPOCH;
-    // Handle dates before epoch (negative years)
-    if (days < 0) {
-        // Work backwards from epoch
-        let remainingDays = -days;
-        let year = 0;
-        // Find the year by working backwards with safety limit
-        let iterations = 0;
-        const maxIterations = 10000; // Safety limit for very old dates
-        while (remainingDays > 0 && iterations < maxIterations) {
-            iterations++;
-            // Get year length - this should be cached and safe
-            const yearLength = getDaysInHebrewYear(year);
-            // Safety check: if yearLength is 0 or invalid, break to avoid infinite loop
-            if (yearLength <= 0 || yearLength > 400) {
-                console.warn(`Invalid Hebrew year length ${yearLength} for year ${year}`);
-                break;
-            }
-            if (remainingDays >= yearLength) {
-                remainingDays -= yearLength;
-                year--;
-                // Safety check: prevent going too far back
-                if (year < -10000) {
-                    console.warn(`Hebrew calendar conversion: year ${year} is too far back`);
-                    break;
-                }
-            }
-            else {
-                // Found the year, now find month and day
-                // Pre-compute year length once to avoid recursion
-                const yearLength = getDaysInHebrewYear(year);
-                const months = getMonthsInHebrewYear(year);
-                let month = 1;
-                let day = remainingDays; // 0-based day
-                // Calculate month and day by iterating through months
-                // Pass precomputed year length to avoid recursion
-                for (let m = 1; m <= months; m++) {
-                    const monthLength = getDaysInHebrewMonth(year, m, yearLength);
-                    // Safety check
-                    if (monthLength <= 0 || monthLength > 31) {
-                        console.warn(`Invalid Hebrew month length ${monthLength} for year ${year}, month ${m}`);
-                        break;
-                    }
-                    if (day < monthLength) {
-                        // Found the correct month
-                        month = m;
-                        break;
-                    }
-                    day -= monthLength;
-                }
-                // day is now 0-based, convert to 1-based
-                return { year, month, day: Math.max(1, Math.min(day + 1, 30)) };
-            }
+    // Mean Hebrew year = 235 lunations / 19 = 35975351/98496 days ≈ 365.2468
+    let year = Math.floor(((jdn - HEBREW_EPOCH) * 98496) / 35975351) + 1;
+    while (hebrewNewYearJDN(year) > jdn)
+        year--;
+    while (hebrewNewYearJDN(year + 1) <= jdn)
+        year++;
+    const yearLength = getDaysInHebrewYear(year);
+    const lastMonth = getMonthsInHebrewYear(year);
+    // Walk months in civil order: Tishrei(7)..lastMonth, then Nisan(1)..Elul(6)
+    let monthStart = hebrewNewYearJDN(year);
+    const civilOrder = [];
+    for (let m = 7; m <= lastMonth; m++)
+        civilOrder.push(m);
+    for (let m = 1; m <= 6; m++)
+        civilOrder.push(m);
+    for (const m of civilOrder) {
+        const monthLength = getDaysInHebrewMonth(year, m, yearLength);
+        if (jdn < monthStart + monthLength) {
+            return { year, month: m, day: jdn - monthStart + 1 };
         }
-        // Fallback if loop didn't converge or hit limit
-        if (iterations >= maxIterations) {
-            console.warn(`Hebrew calendar conversion hit iteration limit for JDN ${jdn}`);
-        }
-        return { year, month: 1, day: 1 };
+        monthStart += monthLength;
     }
-    // Normal case: days >= 0 (year >= 1)
-    // Use binary search for better performance and to avoid infinite loops
-    let lowYear = 1;
-    let highYear = Math.max(1, Math.floor(days / 350) + 10); // Upper bound estimate
-    // Binary search for the correct year
-    let year = 1;
-    let iterations = 0;
-    const maxIterations = 50;
-    while (iterations < maxIterations && lowYear <= highYear) {
-        iterations++;
-        year = Math.floor((lowYear + highYear) / 2);
-        // Calculate total days up to start of this year
-        let yearDays = 0;
-        for (let y = 1; y < year; y++) {
-            const yLen = getDaysInHebrewYear(y);
-            if (yLen <= 0 || yLen > 400) {
-                // Invalid year length, break to avoid issues
-                console.warn(`Invalid Hebrew year length ${yLen} for year ${y}`);
-                break;
-            }
-            yearDays += yLen;
-        }
-        const yearLength = getDaysInHebrewYear(year);
-        if (yearLength <= 0 || yearLength > 400) {
-            console.warn(`Invalid Hebrew year length ${yearLength} for year ${year}`);
-            break;
-        }
-        if (days < yearDays) {
-            highYear = year - 1;
-        }
-        else if (days >= yearDays + yearLength) {
-            lowYear = year + 1;
-        }
-        else {
-            // Found the correct year
-            const remainingDays = days - yearDays;
-            // Pre-compute year length once to avoid recursion
-            const yearLength = getDaysInHebrewYear(year);
-            const months = getMonthsInHebrewYear(year);
-            let month = 1;
-            let day = remainingDays; // Start with 0-based day
-            // Iterate through months to find the correct month and day
-            // Pass precomputed year length to avoid recursion
-            for (let m = 1; m <= months; m++) {
-                const monthDays = getDaysInHebrewMonth(year, m, yearLength);
-                if (monthDays <= 0 || monthDays > 31) {
-                    console.warn(`Invalid Hebrew month length ${monthDays} for year ${year}, month ${m}`);
-                    break;
-                }
-                if (day < monthDays) {
-                    // Found the correct month
-                    month = m;
-                    break;
-                }
-                day -= monthDays;
-            }
-            // Convert to 1-based day
-            return { year, month, day: Math.max(1, Math.min(day + 1, 30)) };
-        }
-    }
-    // Fallback if loop didn't converge
-    console.warn(`Hebrew calendar conversion did not converge for JDN ${jdn}, using year ${year}`);
-    return { year: Math.max(1, year), month: 1, day: 1 };
+    // Unreachable if year search is correct; clamp defensively
+    return { year, month: 6, day: 29 };
 }
 /**
  * Hebrew Calendar Converter Implementation

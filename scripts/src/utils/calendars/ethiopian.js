@@ -14,22 +14,30 @@
  * Algorithm based on "Calendrical Calculations" by Dershowitz & Reingold
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.ethiopianCalendar = void 0;
+exports.ethiopianCalendar = exports.ETHIOPIAN_MONTH_NAMES_GE_EZ = void 0;
 exports.isEthiopianLeapYear = isEthiopianLeapYear;
 exports.getDaysInEthiopianYear = getDaysInEthiopianYear;
 exports.getDaysInEthiopianMonth = getDaysInEthiopianMonth;
 exports.ethiopianToJDN = ethiopianToJDN;
 exports.jdnToEthiopian = jdnToEthiopian;
 const types_1 = require("./types");
+/** Native Ge'ez (Ethiopic) month names */
+exports.ETHIOPIAN_MONTH_NAMES_GE_EZ = [
+    'መስከረም', 'ጥቅምት', 'ኅዳር', 'ታኅሣሥ', 'ጥር', 'የካቲት',
+    'መጋቢት', 'ሚያዝያ', 'ግንቦት', 'ሰኔ', 'ሐምሌ', 'ነሐሴ', 'ጳጉሜ'
+];
 // Ethiopian epoch: August 29, 8 CE (Julian) = Meskerem 1, 1 EE
 // JDN of August 29, 8 CE (Julian) = 1724221
 const ETHIOPIAN_EPOCH = 1724221;
 /**
- * Check if an Ethiopian year is a leap year
- * Same rule as Julian calendar: every 4 years
+ * Check if an Ethiopian year is a leap year.
+ * CORRECT RULE (D&R): the 6-day Pagume falls in years where year mod 4 === 3
+ * — the Ethiopian leap year PRECEDES the Julian leap year. (Verified: 2015 EE
+ * had Pagume 6 on 2023-09-11; 2015 % 4 === 3.) The previous `% 4 === 0` rule
+ * shifted the leap day by one year within every 4-year cycle.
  */
 function isEthiopianLeapYear(year) {
-    return year % 4 === 0;
+    return ((year % 4) + 4) % 4 === 3;
 }
 /**
  * Get number of days in an Ethiopian year
@@ -50,106 +58,32 @@ function getDaysInEthiopianMonth(year, month) {
     }
 }
 /**
- * Convert Ethiopian date to Julian Day Number
+ * Convert Ethiopian date to Julian Day Number.
+ * Closed-form Dershowitz & Reingold arithmetic (§4 Coptic/Ethiopic family):
+ * works proleptically for all years (including <= 0) with no iteration.
  * @param year Ethiopian year (EE)
  * @param month Month (1-13)
  * @param day Day (1-30, or 1-5/6 for month 13)
  * @returns Julian Day Number
  */
 function ethiopianToJDN(year, month, day) {
-    // Handle negative years (before epoch)
-    if (year < 1) {
-        // For negative years, calculate days before epoch
-        // Work backwards: calculate total days from year down to 0 (inclusive)
-        let totalDaysInYears = 0;
-        for (let y = year; y <= 0; y++) {
-            const isLeap = (y % 4 === 0);
-            totalDaysInYears += isLeap ? 366 : 365;
-        }
-        // Calculate days in the target year up to this date
-        let daysInYear = day - 1;
-        for (let m = 1; m < month; m++) {
-            daysInYear += getDaysInEthiopianMonth(year, m);
-        }
-        // Days before epoch = total days in all years from year to 0, minus days remaining in target year
-        const daysBeforeEpoch = totalDaysInYears - daysInYear;
-        return ETHIOPIAN_EPOCH - daysBeforeEpoch;
-    }
-    // Normal case: year >= 1
-    // Calculate days since Ethiopian epoch
-    let days = day - 1;
-    // Add days from previous months in this year
-    for (let m = 1; m < month; m++) {
-        days += getDaysInEthiopianMonth(year, m);
-    }
-    // Add days from previous years
-    const leapYears = Math.floor((year - 1) / 4);
-    const daysInYears = (year - 1) * 365 + leapYears;
-    return ETHIOPIAN_EPOCH + daysInYears + days;
+    return (ETHIOPIAN_EPOCH - 1 +
+        365 * (year - 1) +
+        Math.floor(year / 4) +
+        30 * (month - 1) +
+        day);
 }
 /**
- * Convert Julian Day Number to Ethiopian date
+ * Convert Julian Day Number to Ethiopian date.
+ * Closed-form inverse (no loops; proleptic for dates before the epoch).
  * @param jdn Julian Day Number
  * @returns Object with year, month (1-13), and day
  */
 function jdnToEthiopian(jdn) {
-    const days = jdn - ETHIOPIAN_EPOCH;
-    // Handle dates before epoch (negative years)
-    if (days < 0) {
-        // Work backwards from epoch
-        let remainingDays = -days;
-        let year = 0;
-        // Find the year by working backwards
-        while (remainingDays > 0) {
-            const isLeap = (year % 4 === 0);
-            const yearLength = isLeap ? 366 : 365;
-            if (remainingDays > yearLength) {
-                remainingDays -= yearLength;
-                year--;
-            }
-            else {
-                // Found the year, now find month and day
-                let month = 1;
-                let day = remainingDays + 1;
-                for (let m = 1; m <= 13; m++) {
-                    const monthDays = getDaysInEthiopianMonth(year, m);
-                    if (day <= monthDays) {
-                        month = m;
-                        break;
-                    }
-                    day -= monthDays;
-                }
-                return { year, month, day };
-            }
-        }
-        // Should not reach here, but return year 0, month 1, day 1 as fallback
-        return { year: 0, month: 1, day: 1 };
-    }
-    // Normal case: days >= 0 (year >= 1)
-    // Approximate year
-    let year = Math.floor(days / 365.25) + 1;
-    // Refine year calculation
-    while (true) {
-        const leapYears = Math.floor((year - 1) / 4);
-        const daysInYears = (year - 1) * 365 + leapYears;
-        if (days < daysInYears) {
-            year--;
-            continue;
-        }
-        const remainingDays = days - daysInYears;
-        // Calculate month and day
-        let month = 1;
-        let day = remainingDays + 1;
-        for (let m = 1; m <= 13; m++) {
-            const monthDays = getDaysInEthiopianMonth(year, m);
-            if (day <= monthDays) {
-                month = m;
-                break;
-            }
-            day -= monthDays;
-        }
-        return { year, month, day };
-    }
+    const year = Math.floor((4 * (jdn - ETHIOPIAN_EPOCH) + 1463) / 1461);
+    const month = Math.floor((jdn - ethiopianToJDN(year, 1, 1)) / 30) + 1;
+    const day = jdn + 1 - ethiopianToJDN(year, month, 1);
+    return { year, month, day };
 }
 /**
  * Ethiopian Calendar Converter Implementation
@@ -172,9 +106,15 @@ exports.ethiopianCalendar = {
         return types_1.CALENDAR_INFO.ethiopian;
     },
     formatDate(date, format = 'YYYY-MM-DD') {
-        // Use the comprehensive formatter which has Ethiopian month names
-        const { formatCalendarDate } = require('./dateFormatter');
-        return formatCalendarDate(date, format);
+        // Basic formatting — month names handled by comprehensive formatter
+        const monthStr = String(date.month).padStart(2, '0');
+        const dayStr = String(date.day).padStart(2, '0');
+        return format
+            .replace(/YYYY/g, date.year.toString())
+            .replace(/YY/g, date.year.toString().slice(-2))
+            .replace(/MM/g, monthStr)
+            .replace(/DD/g, dayStr)
+            .replace(/ERA/g, date.era || '');
     },
     parseDate(dateStr) {
         const match = dateStr.match(/^(-?\d{4})-(\d{2})-(\d{2})$/);

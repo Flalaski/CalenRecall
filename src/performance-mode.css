@@ -137,11 +137,23 @@ html {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2) !important;
 }
 
+/* 5. Navigation transition indicator — a thin top-edge shimmer that signals
+   React concurrent rendering is in progress. Composition-only (opacity +
+   background-position), disappears automatically when the transition commits. */
+.app[data-nav-pending]::before {
+  animation: navPendingShimmer 0.8s ease-in-out infinite !important;
+  opacity: 1 !important;
+}
+
 /* Accessibility: reduced-motion users get no motion (static dimming stays) */
 @media (prefers-reduced-motion: reduce) {
   .loading-screen--exiting,
   .app {
     animation: none !important;
+  }
+  .app[data-nav-pending]::before {
+    animation: none !important;
+    opacity: 0.5 !important;
   }
   .timeline-cell,
   .timeline-cell:hover {

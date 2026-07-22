@@ -741,9 +741,16 @@
 }
 
 .memory-connection {
-  transition: opacity 0.3s ease, stroke-width 0.3s ease;
+  transition: opacity 0.3s ease, stroke-width 0.3s ease, d 0.15s ease-out;
   animation: connectionPulse 4s ease-in-out infinite;
-  will-change: opacity, stroke-width;
+  will-change: opacity, stroke-width, d;
+}
+
+.memory-connection.fading-out {
+  opacity: 0 !important;
+  transition: opacity 0.3s ease-out;
+  animation: none;
+  pointer-events: none;
 }
 
 .memory-connection-same-scale {
@@ -1374,43 +1381,9 @@
   width: 100%;
   height: 100%;
   transform: translateZ(0) rotate(45deg);
-  /* RESPONSIVE: Faster transitions for immediate visual feedback */
-  transition: transform 0.1s ease-out, opacity 0.1s ease-out;
   /* HIGH-PERFORMANCE: CSS containment for layout isolation */
   contain: layout style paint;
-  /* HIGH-PERFORMANCE: Compositor-friendly properties only */
-  /* will-change: transform; */ /* Only add when animating */
-  /* Optimized: Removed expensive drop-shadow filters - use box-shadow instead */
-  filter: brightness(1.1) saturate(3.5);
-  box-shadow: 
-    0 0 8px var(--gem-color),
-    0 0 20px var(--gem-color),
-    0 0 35px var(--gem-color);
-  animation: gemGlow 3s ease-in-out infinite;
-  will-change: transform, opacity, box-shadow;
-}
-
-/* Override theme background when using calculated colors */
-.entry-indicator.use-calculated-colors {
-  background: 
-    /* Noise texture overlay for active noise effect */
-    url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.1'/%3E%3C/svg%3E"),
-    /* Base vibrant gradient - using gem color tints instead of white */
-    linear-gradient(
-      135deg,
-      color-mix(in srgb, var(--gem-color) 80%, white) 0%,
-      var(--gem-color) 20%,
-      var(--gem-color) 40%,
-      color-mix(in srgb, var(--gem-color) 60%, black) 55%,
-      var(--gem-color) 70%,
-      var(--gem-color) 85%,
-      color-mix(in srgb, var(--gem-color) 70%, white) 100%
-    ) !important;
-  background-blend-mode: overlay, normal !important;
-}
-
-.entry-indicator {
-  /* Create faceted gem shape - randomized polygon based on entry properties */
+  /* Base: no filter, no box-shadow, no animation — distance tiers add effects */
   clip-path: var(--polygon-clip, polygon(
     30% 0%, 
     70% 0%, 
@@ -1421,28 +1394,63 @@
     0% 70%, 
     0% 30%
   ));
-  /* Enhanced 3D gradient for physical crystal depth - only when using calculated colors */
-  /* When not using calculated colors, theme CSS will provide the background */
-  /* Optimized: All glows use gem color, no white overlays */
-  box-shadow: 
-    /* Gradient fade glow border - all using gem color */
-    0 0 12px var(--gem-color),
-    0 0 24px var(--gem-color),
-    0 0 36px var(--gem-color),
-    0 0 48px color-mix(in srgb, var(--gem-color) 60%, transparent),
-    /* Inner lighting - using gem color tints instead of white */
-    inset 0 -6px 15px color-mix(in srgb, var(--gem-color) 40%, white),
-    inset 0 0 10px color-mix(in srgb, var(--gem-color) 30%, white),
-    /* Inner shadows - bottom depth */
-    inset 0 8px 15px color-mix(in srgb, var(--gem-color) 20%, black),
-    inset -4px -4px 12px color-mix(in srgb, var(--gem-color) 15%, black),
-    /* Side highlights for faceted look - using gem color */
-    inset 4px 4px 10px color-mix(in srgb, var(--gem-color) 35%, white),
-    inset -2px 2px 8px color-mix(in srgb, var(--gem-color) 10%, black);
+  transition: transform 0.1s ease-out, opacity 0.1s ease-out;
 }
 
+/* ── Distance tier: NEAR (opacity > 0.7) — full gem effect ── */
+.entry-indicator.crystal-near {
+  filter: brightness(1.1) saturate(3.5);
+  box-shadow: 
+    0 0 8px var(--gem-color),
+    0 0 20px var(--gem-color),
+    0 0 35px var(--gem-color);
+  animation: gemGlow 3s ease-in-out infinite;
+  will-change: transform, opacity, box-shadow;
+}
+
+.entry-indicator.crystal-near.use-calculated-colors {
+  background: 
+    linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--gem-color) 80%, white) 0%,
+      var(--gem-color) 20%,
+      var(--gem-color) 40%,
+      color-mix(in srgb, var(--gem-color) 60%, black) 55%,
+      var(--gem-color) 70%,
+      var(--gem-color) 85%,
+      color-mix(in srgb, var(--gem-color) 70%, white) 100%
+    ) !important;
+}
+
+/* ── Distance tier: MID (opacity 0.35–0.7) — simplified glow, no animation ── */
+.entry-indicator.crystal-mid {
+  filter: brightness(1.05) saturate(2);
+  box-shadow: 0 0 6px var(--gem-color);
+  /* no animation, no pseudo-elements */
+}
+
+.entry-indicator.crystal-mid.use-calculated-colors {
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--gem-color) 60%, white) 0%,
+    var(--gem-color) 40%,
+    color-mix(in srgb, var(--gem-color) 50%, black) 100%
+  ) !important;
+}
+
+/* ── Distance tier: FAR (opacity < 0.35) — bare minimum ── */
+.entry-indicator.crystal-far {
+  /* no filter, no box-shadow, no animation, no pseudo-elements */
+}
+
+.entry-indicator.crystal-far.use-calculated-colors {
+  background: var(--gem-color) !important;
+}
+
+/* ── Pseudo-elements: only for NEAR crystals (too expensive otherwise) ── */
+
 /* Soft starburst effect - using gem color instead of white */
-.entry-indicator::before {
+.entry-indicator.crystal-near::before {
   content: '';
   position: absolute;
   top: 50%;
@@ -1488,8 +1496,8 @@
   image-rendering: crisp-edges;
 }
 
-/* Additional starburst layer for depth */
-.entry-indicator::after {
+/* Additional starburst layer for depth — only NEAR crystals */
+.entry-indicator.crystal-near::after {
   content: '';
   position: absolute;
   top: 50%;
@@ -1599,9 +1607,7 @@
   }
 }
 
-.entry-indicator {
-  animation: gemGlow 3s ease-in-out infinite;
-}
+/* gemGlow now only applied via .crystal-near class (distance-tiered) */
 
 .scale-labels {
   position: absolute;

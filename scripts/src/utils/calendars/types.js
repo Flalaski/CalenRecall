@@ -61,11 +61,11 @@ exports.CALENDAR_INFO = {
         name: 'Chinese',
         nativeName: '农历',
         type: 'lunisolar',
-        months: 12, // Can have 13 in leap years
+        months: 12, // Can have 13 in leap years (with intercalary month 闰月)
         daysInYear: { min: 353, max: 385 },
         eraStart: 1,
-        eraName: 'CE',
-        leapYearRule: 'Based on solar terms and lunar months'
+        eraName: 'CE', // Note: Chinese calendar uses continuous year numbering, not era-based dating
+        leapYearRule: 'Intercalary months added when a lunar month contains no solar term (节气). Approximately every 2-3 years.'
     },
     ethiopian: {
         name: 'Ethiopian',
@@ -131,7 +131,7 @@ exports.CALENDAR_INFO = {
         name: 'Mayan Haab\'',
         nativeName: 'Haab\'',
         type: 'solar',
-        months: 18,
+        months: 19, // 18 regular + Wayeb' (5 nameless days at year end)
         daysInYear: 365,
         eraStart: -3114,
         eraName: '',
@@ -150,7 +150,7 @@ exports.CALENDAR_INFO = {
     cherokee: {
         name: 'Cherokee',
         nativeName: 'ᎠᏂᏴᏫᏯᎢ',
-        type: 'lunisolar',
+        type: 'solar', // Modern 12-month adaptation aligned with Gregorian
         months: 12,
         daysInYear: { min: 365, max: 366 },
         eraStart: 1,
@@ -171,7 +171,7 @@ exports.CALENDAR_INFO = {
         name: 'Aztec Xiuhpohualli',
         nativeName: 'Xiuhpohualli',
         type: 'solar',
-        months: 18,
+        months: 19, // 18 months + Nemontemi (5 nameless days)
         daysInYear: 365, // 18 months × 20 days + 5 Nemontemi days
         eraStart: -3114,
         eraName: '',

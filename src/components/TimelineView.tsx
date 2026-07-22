@@ -98,6 +98,7 @@ function TimelineView({
 
   // Throttle for timeline-view-render checkpoint (fires on every React render)
   const lastRenderLogRef = useRef<number>(0);
+  const lastRenderTimestampRef = useRef<number>(0);
   const RENDER_LOG_THROTTLE_MS = 200;
 
   // Load preferences for time format and astronomical events
@@ -1596,11 +1597,18 @@ function TimelineView({
   // Loading is handled at app level via EntriesContext
   // Entries are preloaded, so no need for component-level loading state
 
-  // THROTTLED: timeline-view-render fires on every React render (~40+ times per navigation session)
-  const now = Date.now();
+  // Render timing: measure ms since last render.
+  // Logging is throttled to 200ms, but timing stays accurate across
+  // suppressed renders (the timestamp always reflects the last render).
+  const now = performance.now();
+  const deltaMs = Math.round(now - lastRenderTimestampRef.current);
+  lastRenderTimestampRef.current = now;
   if (now - lastRenderLogRef.current > RENDER_LOG_THROTTLE_MS) {
+    perfTrail.checkpoint('timeline-view-render', {
+      mode: viewMode,
+      ms: deltaMs,
+    });
     lastRenderLogRef.current = now;
-    perfTrail.checkpoint('timeline-view-render', { mode: viewMode });
   }
 
   switch (viewMode) {

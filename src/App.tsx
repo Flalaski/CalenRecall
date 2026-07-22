@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback, lazy, Suspense } from 'react';
+import { useState, useEffect, useRef, useCallback, lazy, Suspense, useTransition } from 'react';
 import TimelineView from './components/TimelineView';
 import JournalEditor from './components/JournalEditor';
 import EntryViewer from './components/EntryViewer';
@@ -26,10 +26,11 @@ import { LAYER_TOGGLES } from './utils/layerToggleRegistry';
 import { differenceInDays, differenceInYears, differenceInMonths, addDays, addWeeks, addMonths, addYears } from 'date-fns';
 import './App.css';
 
-// Loading screen exit choreography: brief hold on the completed constellation,
-// then a graceful fade-out. Total post-ready time = HOLD + FADE (~1.5s vs the
-// previous static 3s hold that ended with an abrupt cut to the app).
-const LOADING_READY_HOLD_MS = 900;
+// Loading screen exit choreography: the complete constellation (infinity
+// branches, stars, nebula, and entry crystals) is fully rendered by 90%.
+// We hold for ~2s at full brightness so the user can visually appreciate
+// and track the entry crystals, then run a graceful exit.
+const LOADING_READY_HOLD_MS = 2200;
 const LOADING_FADE_OUT_MS = 600;
 
 function App() {
@@ -47,6 +48,7 @@ function App() {
   const [loadingProgress, setLoadingProgress] = useState(0);
   const [loadingMessage, setLoadingMessage] = useState('Initializing...');
   const [loadingExiting, setLoadingExiting] = useState(false);
+  const [isNavPending, startNavTransition] = useTransition();
   const [totalEntryCount, setTotalEntryCount] = useState<number | undefined>(undefined);
   const [backgroundImagePath, setBackgroundImagePath] = useState<string | null>(null);
   const [showExportModal, setShowExportModal] = useState(false);
@@ -833,15 +835,20 @@ function App() {
     }
   };
 
-  // Debounced navigation refs to prevent excessive re-renders during rapid navigation
-  const navigationTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const pendingDateRef = useRef<Date | null>(null);
-  const pendingViewModeRef = useRef<TimeRange | null>(null);
+  // Drag-aware navigation — RAF only for rapid drag sync (see handleTimePeriodSelect)
   const rafIdRef = useRef<number | null>(null);
   
   // Track time between updates to detect dragging
-  const lastUpdateTimeRef = useRef<number>(0); // Track time between updates to detect dragging
+  const lastUpdateTimeRef = useRef<number>(0);
   const rapidUpdateThreshold = 50; // ms - if updates come faster than this, we're dragging
+  
+  // Dedup: skip repeat calls with the same date+mode (key-repeat fires zoom
+  // handlers with identical targets, queuing redundant View Transitions)
+  const lastCommittedNavRef = useRef<{ date: number; mode: TimeRange } | null>(null);
+  
+  // Prevent overlapping View Transitions — the browser can only handle one
+  // capture at a time, and overlapping calls cause dropped frames at large tiers
+  const viewTransitionInFlightRef = useRef(false);
 
   // Helper function to show unsaved changes message with inactivity timer
   const showUnsavedChangesMessageWithTimer = useCallback(() => {
@@ -857,7 +864,11 @@ function App() {
     }, 369);
   }, []);
 
-  // Debounced date change handler for smooth navigation
+  // Date change handler with View Transition API — directional slide+fade.
+  // Computes navigation direction (forward/backward in time), sets a CSS
+  // custom property, then captures the old DOM → React update → slide animation.
+  // Falls back to startTransition alone when View Transitions aren't available.
+  const lastNavTimeRef = useRef<number>(Date.now());
   const handleDateChange = useCallback((date: Date) => {
     // Prevent navigation if there are unsaved changes
     if (hasUnsavedChanges) {
@@ -870,31 +881,37 @@ function App() {
       date: date.toISOString().slice(0, 10),
     });
     
-    // Debounced date change for smooth navigation
-    pendingDateRef.current = date;
+    const direction = date.getTime() > lastNavTimeRef.current ? 1
+                    : date.getTime() < lastNavTimeRef.current ? -1 : 0;
+    lastNavTimeRef.current = date.getTime();
     
-    if (navigationTimeoutRef.current) {
-      clearTimeout(navigationTimeoutRef.current);
-    }
-    if (rafIdRef.current !== null) {
-      cancelAnimationFrame(rafIdRef.current);
-    }
+    const doUpdate = () => {
+      startNavTransition(() => {
+        setSelectedDate((prev) => (prev.getTime() === date.getTime() ? prev : date));
+      });
+    };
     
-    // EXTREME PERFORMANCE: Instant update (no debounce delay)
-    rafIdRef.current = requestAnimationFrame(() => {
-      if (pendingDateRef.current) {
-        const nextDate = pendingDateRef.current;
-        // DEDUPE: a same-time Date is a new object reference — without this
-        // functional bail-out, no-op navigations triggered a full re-render cascade.
-        setSelectedDate((prev) => (prev.getTime() === nextDate.getTime() ? prev : nextDate));
-        pendingDateRef.current = null;
-      }
-      navigationTimeoutRef.current = null;
-      rafIdRef.current = null;
-    });
-  }, [hasUnsavedChanges, showUnsavedChangesMessageWithTimer]);
+    if (document.startViewTransition && !viewTransitionInFlightRef.current) {
+      viewTransitionInFlightRef.current = true;
+      document.documentElement.style.setProperty('--nav-direction', String(direction));
+      const vt = document.startViewTransition(() => doUpdate());
+      vt.finished.finally(() => { viewTransitionInFlightRef.current = false; });
+    } else if (!document.startViewTransition) {
+      doUpdate();
+    } else {
+      doUpdate(); // transition in flight — skip capture, just update state
+    }
+  }, [hasUnsavedChanges, showUnsavedChangesMessageWithTimer, startNavTransition]);
 
   const handleTimePeriodSelect = useCallback((date: Date, newViewMode: TimeRange) => {
+    // DEDUP: skip if target date+mode matches last committed navigation.
+    // Key-repeat during zoom fires this handler repeatedly with the same
+    // values — each call would otherwise queue a redundant View Transition.
+    const lastNav = lastCommittedNavRef.current;
+    if (lastNav && lastNav.date === date.getTime() && lastNav.mode === newViewMode) {
+      return;
+    }
+    
     perfTrail.checkpoint('time-period-select', {
       mode: newViewMode,
       date: date.toISOString().slice(0, 10),
@@ -905,63 +922,61 @@ function App() {
       return;
     }
     
-    hasUserInteractedRef.current = true; // Mark that user has interacted
-    // Clear selected entry when changing date/view in day view
+    hasUserInteractedRef.current = true;
     if (newViewMode === 'day') {
       setSelectedEntry(null);
     }
     
-    // Store pending updates
-    pendingDateRef.current = date;
-    pendingViewModeRef.current = newViewMode;
-    
-    // Detect if this is a rapid update (drag operation)
+    // Detect if this is a rapid update (drag operation) — drags need
+    // frame-synced synchronous rendering for smooth audio+visual feedback.
     const now = Date.now();
     const timeSinceLastUpdate = now - lastUpdateTimeRef.current;
     const isRapidUpdate = timeSinceLastUpdate < rapidUpdateThreshold;
     lastUpdateTimeRef.current = now;
     
-    // Clear any existing timeout/RAF
-    if (navigationTimeoutRef.current) {
-      clearTimeout(navigationTimeoutRef.current);
-      navigationTimeoutRef.current = null;
-    }
-    if (rafIdRef.current !== null) {
-      cancelAnimationFrame(rafIdRef.current);
-      rafIdRef.current = null;
-    }
-    
-    // For rapid updates (dragging), update immediately for perfect frame sync with audio blips
-    // For normal updates, use debounce for batching
     if (isRapidUpdate) {
-      // Immediate update via RAF for smooth frame-aligned rendering
+      // Drag: sync update via RAF for frame-aligned rendering + audio blips.
+      // No view transition — drags are continuous and don't benefit from capture.
       rafIdRef.current = requestAnimationFrame(() => {
-        if (pendingDateRef.current && pendingViewModeRef.current) {
-          setViewMode(pendingViewModeRef.current);
-          setSelectedDate(pendingDateRef.current);
-          setIsEditing(false);
-          setIsNewEntry(false);
-          pendingDateRef.current = null;
-          pendingViewModeRef.current = null;
-        }
+        setViewMode(newViewMode);
+        setSelectedDate(date);
+        setIsEditing(false);
+        setIsNewEntry(false);
         rafIdRef.current = null;
       });
+      lastCommittedNavRef.current = { date: date.getTime(), mode: newViewMode };
     } else {
-      // EXTREME PERFORMANCE: Instant update (no debounce delay)
-      rafIdRef.current = requestAnimationFrame(() => {
-        if (pendingDateRef.current && pendingViewModeRef.current) {
-          setViewMode(pendingViewModeRef.current);
-          setSelectedDate(pendingDateRef.current);
-          setIsEditing(false);
-          setIsNewEntry(false);
-          pendingDateRef.current = null;
-          pendingViewModeRef.current = null;
-        }
-        navigationTimeoutRef.current = null;
-        rafIdRef.current = null;
-      });
+      // Discrete navigation: View Transition API with directional slide.
+      // Direction is based on time movement; viewMode changes use fade only.
+      const timeDir = date.getTime() > lastNavTimeRef.current ? 1
+                    : date.getTime() < lastNavTimeRef.current ? -1 : 0;
+      lastNavTimeRef.current = date.getTime();
+      const direction = newViewMode !== viewModeRef.current ? 0 : timeDir;
+      
+      const doUpdate = () => {
+        startNavTransition(() => {
+          setViewMode(newViewMode);
+          setSelectedDate(date);
+        });
+      };
+      
+      if (document.startViewTransition && !viewTransitionInFlightRef.current) {
+        viewTransitionInFlightRef.current = true;
+        document.documentElement.style.setProperty('--nav-direction', String(direction));
+        const vt = document.startViewTransition(() => doUpdate());
+        vt.finished.finally(() => { viewTransitionInFlightRef.current = false; });
+      } else if (!document.startViewTransition) {
+        doUpdate();
+      } else {
+        // View transition already in flight — skip the DOM capture and
+        // just do the state update directly to avoid queuing frames.
+        doUpdate();
+      }
+      lastCommittedNavRef.current = { date: date.getTime(), mode: newViewMode };
+      setIsEditing(false);
+      setIsNewEntry(false);
     }
-  }, [hasUnsavedChanges, showUnsavedChangesMessageWithTimer]);
+  }, [hasUnsavedChanges, showUnsavedChangesMessageWithTimer, startNavTransition]);
 
   const handleViewModeChange = (mode: TimeRange) => {
     perfTrail.checkpoint('view-mode-change', { mode, from: viewModeRef.current });
@@ -976,7 +991,22 @@ function App() {
     if (mode === 'day') {
       setSelectedEntry(null);
     }
-    setViewMode(mode);
+    // View-mode switches use a subtle scale animation (direction=0).
+    const doUpdate = () => {
+      startNavTransition(() => {
+        setViewMode(mode);
+      });
+    };
+    if (document.startViewTransition && !viewTransitionInFlightRef.current) {
+      viewTransitionInFlightRef.current = true;
+      document.documentElement.style.setProperty('--nav-direction', '0');
+      const vt = document.startViewTransition(() => doUpdate());
+      vt.finished.finally(() => { viewTransitionInFlightRef.current = false; });
+    } else if (!document.startViewTransition) {
+      doUpdate();
+    } else {
+      doUpdate();
+    }
     setIsEditing(false);
     setIsNewEntry(false);
   };
@@ -1444,7 +1474,7 @@ function App() {
         backgroundImage={backgroundImagePath || undefined}
         theme={preferences.theme}
       />
-      <div className="app">
+      <div className="app" data-nav-pending={isNavPending ? '' : undefined}>
       <UpdateBanner />
       {currentProfile && (
         <div className="profile-name-display">

@@ -528,6 +528,12 @@ function GlobalTimelineMinimap({
   // This allows approximate viewport filtering without recalculating on every drag movement
   const throttledIndicatorPositionRef = useRef<number>(50); // Default to center
   const lastThrottleUpdateRef = useRef<number>(0);
+  // HIGH-FRAMERATE: Throttle onTimePeriodSelect dispatches to ~30fps (33ms)
+  // during continuous input (wheel + drag). Prevents 60fps+ App re-render
+  // cascades that tank framerate in dense crystal areas.
+  const lastSelectDispatchRef = useRef<number>(0);
+  const pendingSelectRef = useRef<{ date: Date; viewMode: TimeRange } | null>(null);
+  const selectRafIdRef = useRef<number | null>(null);
   const lastKeyboardNavRef = useRef<number>(0);
   // OPTIMIZATION: Cache bounding rect to avoid forced reflows during drag
   const cachedBoundingRectRef = useRef<DOMRect | null>(null);
@@ -2448,19 +2454,8 @@ function GlobalTimelineMinimap({
     const timelineEndYear = timelineData.endDate.getFullYear();
     
     // SUPREME OPTIMIZATION: Use year-based index to only process relevant entries
-    // For decade view (110 years), this reduces from checking all entries to only checking ~11 year buckets
+    // Iterate over all years within the timeline span.
     const filteredEntries: JournalEntry[] = [];
-    
-    // OPTIMIZATION: For large time ranges, pre-filter by viewport to reduce processing
-    // Calculate approximate viewport range early to skip entries far from viewport
-    // Use throttled position to avoid recalculating on every drag movement
-    const viewportMargin = viewMode === 'decade' ? 0.20 : // 20% margin for decade (more generous for early filtering)
-                          viewMode === 'year' ? 0.25 :    // 25% margin for year
-                          0.35;                           // 35% margin for smaller views
-    const approximateViewportStart = throttledIndicatorPositionRef.current - (viewportMargin * 100);
-    const approximateViewportEnd = throttledIndicatorPositionRef.current + (viewportMargin * 100);
-    const viewportStartTime = timelineStartTime + (approximateViewportStart / 100) * totalTime;
-    const viewportEndTime = timelineStartTime + (approximateViewportEnd / 100) * totalTime;
     
     // Only iterate over years that could be in range
     for (let year = timelineStartYear - 1; year <= timelineEndYear + 1; year++) {
@@ -2478,17 +2473,10 @@ function GlobalTimelineMinimap({
         continue;
       }
       
-      // OPTIMIZATION: For decade/year view, also check if year is near viewport
-      // This dramatically reduces entries processed for large time ranges
-      if (viewMode === 'decade' || viewMode === 'year') {
-        // If year is far from viewport, skip it (with some margin for entries that span years)
-        if (yearEnd < viewportStartTime - (365 * 24 * 60 * 60 * 1000) || 
-            yearStart > viewportEndTime + (365 * 24 * 60 * 60 * 1000)) {
-          continue;
-        }
-      }
       
-      // Year overlaps with timeline, add all entries from this year
+      // Year overlaps with timeline, add all entries from this year.
+      // (Viewport filtering was removed — crystals now span the full timeline
+      // with distance-based opacity in visibleEntryPositions.)
       filteredEntries.push(...yearEntries);
     }
     
@@ -2498,10 +2486,10 @@ function GlobalTimelineMinimap({
     }
     
     // OPTIMIZATION: For very large entry sets, limit processing
-    // This prevents processing thousands of entries when only a few hundred are visible
-    const maxEntriesToProcess = viewMode === 'decade' ? 500 :
-                               viewMode === 'year' ? 1000 :
-                               2000; // month/week/day can handle more
+    // Caps raised to accommodate full-timeline crystal visibility.
+    const maxEntriesToProcess = viewMode === 'decade' ? 800 :
+                               viewMode === 'year' ? 1500 :
+                               3000;
     
     if (filteredEntries.length > maxEntriesToProcess) {
       // Sample entries evenly across the timeline range
@@ -2834,48 +2822,50 @@ function GlobalTimelineMinimap({
   // Note: minimapCrystalUseDefaultColors and currentTheme are in dependencies to ensure
   // entryPositions recalculates when preference changes, even if cache reference is the same
 
-  // OPTIMIZATION: Separate viewport filtering from base entry processing
-  // This allows stable memoization of base processing while filtering by viewport separately
+  // CRYSTAL VISIBILITY: Show all entry crystals across the full timeline with
+  // distance-based opacity — near crystals glow bright, distant ones are subtle
+  // but always visible as reference points. (Previously viewport-culled to
+  // ±10-20% of current position, hiding most crystals from the user.)
   const visibleEntryPositions = useMemo(() => {
     if (entryPositions.length === 0) {
       return [];
     }
 
-    // Calculate viewport range based on current indicator position
-    // Use smaller margins for larger time ranges to reduce processing
-    const viewportMargin = viewMode === 'decade' ? 10 : 
-                          viewMode === 'year' ? 15 : 
-                          20; // Smaller margin for decade/year view
-    const visibleStartPercent = Math.max(0, currentIndicatorMetrics.position - viewportMargin);
-    const visibleEndPercent = Math.min(100, currentIndicatorMetrics.position + viewportMargin);
-    
-    // Filter to only entries in or near viewport
-    const filtered = entryPositions.filter(item => 
-      item.position >= visibleStartPercent && item.position <= visibleEndPercent
-    );
-    
-    // For decade view with many entries, limit the number rendered
-    if (viewMode === 'decade' && filtered.length > 200) {
-      // Sort by distance from center and take closest entries
-      const center = currentIndicatorMetrics.position;
-      return filtered
-        .map(item => ({ item, distance: Math.abs(item.position - center) }))
-        .sort((a, b) => a.distance - b.distance)
-        .slice(0, 200)
-        .map(({ item }) => item);
+    const center = currentIndicatorMetrics.position;
+
+    // Distance-based opacity curve: full brightness near the indicator,
+    // smooth falloff to 0.18 at the edges so distant crystals are still
+    // visible reference points but don't compete with nearby ones.
+    // Curve: cos-based smoothstep with a floor at 0.18
+    const distanceOpacity = (pos: number): number => {
+      const dist = Math.abs(pos - center) / 50; // 0..1 over the half-timeline
+      if (dist <= 0.15) return 1; // full brightness in the core zone
+      if (dist >= 1) return 0.18; // floor at edges — always visible
+      // Smooth cosine falloff: cos(t) maps [0,π] → [1,-1], remapped to [1, 0.18]
+      const t = (dist - 0.15) / 0.85; // 0..1 through the transition zone
+      const smooth = (Math.cos(t * Math.PI) + 1) / 2; // 1→0
+      return 0.18 + smooth * 0.82; // 0.18→1.0
+    };
+
+    // Global entry cap by view mode (sorted by proximity to center so the
+    // most relevant crystals are always shown even when capped)
+    const globalCap = viewMode === 'decade' ? 250 :
+                      viewMode === 'year' ? 400 :
+                      600;
+
+    let result = entryPositions.map(item => ({
+      ...item,
+      distanceOpacity: distanceOpacity(item.position),
+    }));
+
+    if (result.length > globalCap) {
+      // Sort by distance from center and keep the closest entries
+      result = result
+        .sort((a, b) => Math.abs(a.position - center) - Math.abs(b.position - center))
+        .slice(0, globalCap);
     }
-    
-    // For year view with many entries, limit rendering
-    if (viewMode === 'year' && filtered.length > 300) {
-      const center = currentIndicatorMetrics.position;
-      return filtered
-        .map(item => ({ item, distance: Math.abs(item.position - center) }))
-        .sort((a, b) => a.distance - b.distance)
-        .slice(0, 300)
-        .map(({ item }) => item);
-    }
-    
-    return filtered;
+
+    return result;
   }, [entryPositions, currentIndicatorMetrics.position, viewMode]);
 
   // Calculate viewport bounds in SVG coordinates for connection culling
@@ -2900,6 +2890,15 @@ function GlobalTimelineMinimap({
     const focusY = scaleYPositions[viewMode];
     return { x: focusX, y: focusY, scale: viewMode, level: 0, isFocus: true };
   }, [centerX, scaleYPositions, viewMode]);
+
+  // CONNECTION PERSISTENCE: Keep recently-departed connections alive for a
+  // 300ms grace period so they fade out smoothly instead of popping out.
+  // Stable keys + CSS d-transition handle the in-range flow; this handles
+  // the exit transition when a crystal moves out of connection range.
+  const departingConnectionsRef = useRef<Map<string, {
+    conn: any;
+    expiresAt: number;
+  }>>(new Map());
 
   // Calculate all connections from web nodes to entry points with performance optimizations
   // Includes entry-to-entry connections and connections to main focus web
@@ -2949,6 +2948,7 @@ function GlobalTimelineMinimap({
       targetPosition?: { x: number; y: number };
       lodLevel: string;
       connectionType: 'web' | 'entry-to-entry' | 'focus';
+      fadingOut?: boolean;
     }> = [];
 
     // Filter entries by viewport for performance
@@ -3315,6 +3315,41 @@ function GlobalTimelineMinimap({
             entryConnectionCount++;
           }
         }
+      }
+    }
+
+    // ── Connection persistence: merge departing connections for smooth fade-out ──
+    const now = performance.now();
+    const CONNECTION_FADE_MS = 300;
+    const departing = departingConnectionsRef.current;
+
+    // Refresh timestamps for currently-active connections
+    for (const c of connections) {
+      const key = c.connectionType === 'entry-to-entry' && c.targetEntry
+        ? `conn-ee-${c.entry.id || 0}-${c.targetEntry.id || 0}`
+        : c.connectionType === 'focus'
+        ? `conn-focus-${c.entry.id || 0}`
+        : `conn-web-${c.entry.id || 0}-${c.connection.strategy}`;
+      departing.set(key, { conn: c, expiresAt: now + CONNECTION_FADE_MS });
+    }
+
+    // Merge in departing connections that haven't expired yet
+    for (const [key, { conn, expiresAt }] of departing) {
+      if (expiresAt <= now) {
+        departing.delete(key);
+        continue;
+      }
+      // Check if this connection is already in the active set
+      const alreadyActive = connections.some(c => {
+        const cKey = c.connectionType === 'entry-to-entry' && c.targetEntry
+          ? `conn-ee-${c.entry.id || 0}-${c.targetEntry.id || 0}`
+          : c.connectionType === 'focus'
+          ? `conn-focus-${c.entry.id || 0}`
+          : `conn-web-${c.entry.id || 0}-${c.connection.strategy}`;
+        return cKey === key;
+      });
+      if (!alreadyActive) {
+        connections.push({ ...conn, fadingOut: true });
       }
     }
 
@@ -4057,10 +4092,27 @@ function GlobalTimelineMinimap({
           return;
       }
       
-      // Only call onTimePeriodSelect if the date actually changed
-      // This prevents infinite update loops
-      if (newDate.getTime() !== currentSelectedDate.getTime()) {
-        currentOnTimePeriodSelect(newDate, currentViewMode);
+      // Throttled dispatch: queue the latest date/viewMode and flush at ~30fps (33ms).
+      // Prevents 60-120fps App re-render cascades during wheel scrolling and drag
+      // that tank framerate in dense crystal areas.
+      const now = performance.now();
+      pendingSelectRef.current = { date: newDate, viewMode: currentViewMode };
+      
+      if (now - lastSelectDispatchRef.current >= 33) {
+        lastSelectDispatchRef.current = now;
+        const p = pendingSelectRef.current;
+        pendingSelectRef.current = null;
+        if (p) currentOnTimePeriodSelect(p.date, p.viewMode);
+      } else if (selectRafIdRef.current === null) {
+        selectRafIdRef.current = requestAnimationFrame(() => {
+          selectRafIdRef.current = null;
+          const p = pendingSelectRef.current;
+          if (p) {
+            lastSelectDispatchRef.current = performance.now();
+            pendingSelectRef.current = null;
+            currentOnTimePeriodSelect(p.date, p.viewMode);
+          }
+        });
       }
     };
 
@@ -4478,9 +4530,28 @@ function GlobalTimelineMinimap({
       // Store normalized date (day level only) for accurate comparison
       lastBlipDateRef.current = new Date(clampedDateDay);
       
-      // PERFECT SYNC: Update visual immediately in the same frame as audio blip
-      // This ensures every blip has a corresponding visual frame for perfect synchronization
-      currentOnTimePeriodSelect(clampedDate, currentViewMode);
+      // Throttled visual dispatch: ~30fps (33ms). Audio blips fire immediately
+      // for responsive feedback, but React re-renders are batched to prevent
+      // framerate drops from 60fps App → TimelineView cascades.
+      const dispatchNow = performance.now();
+      pendingSelectRef.current = { date: clampedDate, viewMode: currentViewMode };
+      
+      if (dispatchNow - lastSelectDispatchRef.current >= 33) {
+        lastSelectDispatchRef.current = dispatchNow;
+        const p = pendingSelectRef.current;
+        pendingSelectRef.current = null;
+        if (p) currentOnTimePeriodSelect(p.date, p.viewMode);
+      } else if (selectRafIdRef.current === null) {
+        selectRafIdRef.current = requestAnimationFrame(() => {
+          selectRafIdRef.current = null;
+          const p = pendingSelectRef.current;
+          if (p) {
+            lastSelectDispatchRef.current = performance.now();
+            pendingSelectRef.current = null;
+            currentOnTimePeriodSelect(p.date, p.viewMode);
+          }
+        });
+      }
     } else {
       // Date hasn't changed — throttle visual updates to ~20fps (50ms)
       // Full 60fps is unnecessary when the date (and thus any meaningful state) is identical.
@@ -5313,7 +5384,7 @@ function GlobalTimelineMinimap({
 
           {/* Adaptive fractal webbing - memory web connections */}
           <g className="memory-web-connections">
-            {memoryWebConnections.map(({ connection, entry, webNode, targetEntry, connectionType }, idx) => {
+            {memoryWebConnections.map(({ connection, entry, webNode, targetEntry, connectionType, fadingOut }, idx) => {
               // Determine color based on connection type
               let connectionColor: string;
               if (connectionType === 'entry-to-entry' && targetEntry) {
@@ -5370,7 +5441,7 @@ function GlobalTimelineMinimap({
               }
               
               // Determine connection class based on strategy
-              const connectionClass = `memory-connection memory-connection-${connection.strategy}`;
+              const connectionClass = `memory-connection memory-connection-${connection.strategy}${fadingOut ? ' fading-out' : ''}`;
               let connectionTypeClass = '';
               if (connectionType === 'focus') {
                 connectionTypeClass = 'focus-connection';
@@ -5406,13 +5477,14 @@ function GlobalTimelineMinimap({
                   dashArray = '4 2';
               }
 
-              // Generate unique key based on connection type
-              // Include index to ensure uniqueness even if multiple connections share same properties
+              // Generate stable key based on entry identity — NOT position.
+              // Stable keys let React reconcile (transition the d attribute)
+              // instead of unmounting/remounting on every indicator move.
               const connectionKey = connectionType === 'entry-to-entry' && targetEntry
-                ? `connection-${entry.id || idx}-to-${targetEntry.id || idx}-${idx}`
+                ? `conn-ee-${entry.id || idx}-${targetEntry.id || idx}`
                 : connectionType === 'focus'
-                ? `connection-${entry.id || idx}-focus-${idx}`
-                : `connection-${entry.id || idx}-web-${webNode?.x || 0}-${webNode?.y || 0}-${idx}`;
+                ? `conn-focus-${entry.id || idx}`
+                : `conn-web-${entry.id || idx}-${connection.strategy}`;
 
               return (
                 <g key={connectionKey}>
@@ -6118,7 +6190,7 @@ function GlobalTimelineMinimap({
 
         {/* Entry indicators */}
         <div className="entry-indicators">
-          {visibleEntryPositions.map(({ entry, position, color, clusterIndex, clusterSize, clusterHexX, clusterCrystalSize, verticalOffset, polygonClipPath, sides }, idx) => {
+          {visibleEntryPositions.map(({ entry, position, color, clusterIndex, clusterSize, clusterHexX, clusterCrystalSize, verticalOffset, polygonClipPath, sides, distanceOpacity }, idx) => {
             const handleClick = (e: React.MouseEvent) => {
               e.stopPropagation();
               
@@ -6197,6 +6269,12 @@ function GlobalTimelineMinimap({
             const baseYPosition = scaleYPositions[entry.timeRange];
             const yPositionPercent = (baseYPosition / minimapDimensions.height) * 100;
             
+            // Distance-tier for CSS performance: near→full gem, mid→simplified, far→bare
+            const dOpacity = distanceOpacity ?? 1;
+            const distanceTier = dOpacity > 0.7 ? 'crystal-near' :
+                                 dOpacity > 0.35 ? 'crystal-mid' :
+                                 'crystal-far';
+            
             return (
               <div
                 key={entry.id || idx}
@@ -6209,8 +6287,9 @@ function GlobalTimelineMinimap({
                   transform: isInCluster 
                     ? `translate(calc(-50% + ${horizontalOffset}px), -50%) ${isFocusedSection ? 'scale(1.4)' : 'scale(1)'}`
                     : `translate(-50%, -50%) ${isFocusedSection ? 'scale(1.4)' : 'scale(1)'}`,
+                  opacity: dOpacity,
                   zIndex: isInCluster ? (clusterIndex || 0) + 4 : (isFocusedSection ? 5 : 4),
-                  transition: 'transform 0.5s cubic-bezier(0.4, 0, 0.2, 1), z-index 0.5s ease',
+                  transition: 'transform 0.5s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.5s ease, z-index 0.5s ease',
                   // Dynamic sizing controlled by CSS variables in themes
                   // Only set explicit size for clusters (which have calculated clusterCrystalSize)
                   width: isInCluster && clusterCrystalSize !== undefined ? `${clusterCrystalSize}px` : undefined,
@@ -6236,7 +6315,7 @@ function GlobalTimelineMinimap({
                 }}
               >
                 <div
-                  className={`entry-indicator ${minimapCrystalUseDefaultColors ? 'use-calculated-colors' : ''}`}
+                  className={`entry-indicator ${distanceTier} ${minimapCrystalUseDefaultColors ? 'use-calculated-colors' : ''}`}
                   style={{
                     '--gem-color': color,
                     '--polygon-clip': polygonClipPath,
