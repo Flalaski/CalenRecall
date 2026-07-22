@@ -213,30 +213,23 @@ This will:
 - Watch for Electron file changes
 - Launch Electron automatically
 
-### Google Calendar Setup
+### Google Calendar Sync (Optional)
 
-Google Calendar sync requires a local OAuth client configuration during development.
+Google Calendar sync requires a local OAuth client configuration during development:
 
-1. In Google Cloud Console, create or select a project.
-2. Enable the Google Calendar API for that project.
-3. Configure the Google Auth Platform consent screen.
-4. If the app audience is `External`, add your Google account under test users.
-5. Create an OAuth client of type `Desktop app`.
-6. Set `GOOGLE_OAUTH_CLIENT_ID` in [.env](.env) to that desktop client ID.
-7. CalenRecall uses this loopback redirect URI for the browser callback:
+1. In Google Cloud Console, create or select a project and enable the Google Calendar API.
+2. Configure the OAuth consent screen (External); add your Google account under test users.
+3. Create an OAuth client of type **Desktop app**.
+4. Copy the client ID into `.env` as `GOOGLE_OAUTH_CLIENT_ID`.
+5. CalenRecall uses this loopback redirect URI for the browser callback:
 
 ```text
 http://127.0.0.1:53682/oauth/callback
 ```
 
-If your OAuth client configuration exposes redirect URI settings, make sure the value above is allowed. If you override the redirect URI with `GOOGLE_OAUTH_REDIRECT_URI`, the value in `.env` and the value accepted by the OAuth client must stay identical.
+If you override the redirect with `GOOGLE_OAUTH_REDIRECT_URI`, it must match what the OAuth client accepts.
 
-Important:
-- This flow is implemented as a Windows/macOS desktop OAuth flow using the system browser and PKCE.
-- `https://www.googleapis.com/auth/calendar.readonly` is a sensitive scope. Local testing is fine, but public rollout will eventually require Google OAuth verification.
-- Unverified apps using sensitive scopes can be capped at 100 new users until verification is completed.
-
-Without `GOOGLE_OAUTH_CLIENT_ID`, the Google Calendar button in Preferences will stay disabled and the app will show the exact missing configuration.
+> **Important:** `https://www.googleapis.com/auth/calendar.readonly` is a sensitive scope. Unverified apps are capped at 100 new users. Without `GOOGLE_OAUTH_CLIENT_ID`, the Google Calendar button in Preferences stays disabled.
 
 ### Building
 
@@ -273,15 +266,29 @@ npm run dist:win
 npm run dist:win:pack
 ```
 
+**Custom Inno Setup Installer:**
+
+For a fully branded installer with custom license terms and setup wizard, use the Inno Setup Compiler:
+
+```bash
+update-installer-date.bat    # stamps version + date into installer.iss
+# Then open installer.iss in Inno Setup Compiler and click Compile
+```
+
+Output goes to `installer_output\` as `CalenRecall_Setup_{version}.{date}.exe`.
+
 **Using Batch Files (Windows):**
 
 For convenience, you can also use the provided batch files:
 
-- `build-release.bat` - Builds portable .exe only
-- `build-installer.bat` - Builds installer .exe only  
-- `build-all.bat` - Builds both installer and portable
+| Batch File | Produces |
+|---|---|
+| `build-release.bat` | Portable .exe |
+| `build-installer.bat` | Electron NSIS installer .exe |
+| `build-all.bat` | Both installer + portable |
+| `update-installer-date.bat` | Stamps version + date into `installer.iss` for Inno Setup |
 
-Simply double-click the batch file or run it from the command line. The batch files will:
+Simply double-click or run from the command line. The batch files will:
 1. Check and install dependencies if needed
 2. Build the application
 3. Create the distribution files
@@ -340,57 +347,42 @@ All builds are created in the `release` directory, and the folder will automatic
 
 ### Version Management
 
-CalenRecall uses **automatic date-based versioning** that increments with each build. Versions follow the format:
+CalenRecall uses **semantic date-based versioning** that auto-increments with each build:
 
-**`YYYY.MM.DD.BUILD`**
+**`YYYY.M.DD-beta.BUILD`**
 
-For example: `2024.01.15.3` means the 3rd build on January 15, 2024.
+For example: `2026.1.14-beta.5` means the 5th build on January 14, 2026.
 
-#### How It Works
+| Component | Behavior |
+|---|---|
+| Year (`YYYY`) | From the current date |
+| Month (`M`) | From the current date (no padding) |
+| Day (`DD`) | From the current date |
+| Build (`BUILD`) | Increments per build-day; resets daily |
 
-- **Automatic**: Version is automatically incremented before each build
-- **Date-based**: Each version includes the build date (YYYY.MM.DD)
-- **Build counter**: If multiple builds happen on the same day, the build number increments (1, 2, 3, ...)
-- **New day reset**: When a new day starts, the build number resets to 1
+The version is **automatically bumped** when you run any `dist:*` script. The `.build-info.json` file (git-ignored) tracks the last build date and counter.
 
-#### Viewing Current Version
-
-```bash
-npm run version:show    # Display current version
-```
-
-#### Manual Version Bump (if needed)
-
-If you need to manually trigger a version bump without building:
+#### Commands
 
 ```bash
-npm run version:auto    # Manually trigger automatic version increment
+npm run version:show       # Display current version
+npm run version:auto       # Manually trigger version increment
 ```
 
-#### Release Workflow
+#### Release workflow
 
-The version is **automatically incremented** when you build. Simply:
+```bash
+# 1. Build (version auto-increments)
+npm run dist:win:pack
 
-1. **Build your release** (version increments automatically):
-   ```bash
-   npm run dist:win:pack  # or use build-all.bat
-   ```
+# 2. Commit the version bump
+git add package.json CHANGELOG.md
+git commit -m "release: v$(npm run version:show -s)"
 
-2. **Update CHANGELOG.md** with the changes for the new version (optional but recommended)
-
-3. **Commit the changes:**
-   ```bash
-   git add package.json CHANGELOG.md
-   git commit -m "Build version YYYY.MM.DD.BUILD"
-   ```
-
-4. **Create a git tag** (optional):
-   ```bash
-   git tag -a vYYYY.MM.DD.BUILD -m "Version YYYY.MM.DD.BUILD"
-   git push origin main --tags
-   ```
-
-The version in `package.json` is automatically used by electron-builder for the build artifacts. Build information is stored in `.build-info.json` (not tracked in git) to ensure consistent version incrementing.
+# 3. Tag and push
+git tag -a "v$(npm run version:show -s)" -m "Version $(npm run version:show -s)"
+git push origin main --tags
+```
 
 ### Testing
 
