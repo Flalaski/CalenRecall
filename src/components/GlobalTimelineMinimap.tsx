@@ -4119,6 +4119,10 @@ function GlobalTimelineMinimap({
     container.addEventListener('wheel', handleWheel, { passive: false });
     return () => {
       container.removeEventListener('wheel', handleWheel);
+      if (selectRafIdRef.current !== null) {
+        cancelAnimationFrame(selectRafIdRef.current);
+        selectRafIdRef.current = null;
+      }
     };
   }, []); // Empty deps - we use refs to access current values
 
@@ -4636,6 +4640,10 @@ function GlobalTimelineMinimap({
         cancelAnimationFrame(rafIdRef.current);
         rafIdRef.current = null;
       }
+      if (selectRafIdRef.current !== null) {
+        cancelAnimationFrame(selectRafIdRef.current);
+        selectRafIdRef.current = null;
+      }
       latestMouseEventRef.current = null;
       
       // Stop slider noise when dragging ends
@@ -4666,6 +4674,10 @@ function GlobalTimelineMinimap({
       if (rafIdRef.current !== null) {
         cancelAnimationFrame(rafIdRef.current);
         rafIdRef.current = null;
+      }
+      if (selectRafIdRef.current !== null) {
+        cancelAnimationFrame(selectRafIdRef.current);
+        selectRafIdRef.current = null;
       }
       latestMouseEventRef.current = null;
     };

@@ -806,6 +806,17 @@ function App() {
     }
   }, [selectedDate, viewMode, preferencesLoaded, preferences.restoreLastView]);
 
+  // Move loadCurrentEntry before the effect that uses it, so it can be included in deps
+  const loadCurrentEntry = useCallback(async () => {
+    try {
+      const entry = await getEntryForDate(selectedDate, viewMode);
+      setSelectedEntry(entry);
+    } catch (error) {
+      console.error('Error loading entry:', error);
+      setSelectedEntry(null);
+    }
+  }, [selectedDate, viewMode]);
+
   // Load entry for current date/viewMode when they change
   useEffect(() => {
     if (!isNewEntry && !isEditing) {
@@ -823,17 +834,7 @@ function App() {
     if (isSelectingEntryRef.current) {
       isSelectingEntryRef.current = false;
     }
-  }, [selectedDate, viewMode, isNewEntry, isEditing]);
-
-  const loadCurrentEntry = async () => {
-    try {
-      const entry = await getEntryForDate(selectedDate, viewMode);
-      setSelectedEntry(entry);
-    } catch (error) {
-      console.error('Error loading entry:', error);
-      setSelectedEntry(null);
-    }
-  };
+  }, [selectedDate, viewMode, isNewEntry, isEditing, loadCurrentEntry]);
 
   // Drag-aware navigation — RAF only for rapid drag sync (see handleTimePeriodSelect)
   const rafIdRef = useRef<number | null>(null);
@@ -978,7 +979,7 @@ function App() {
     }
   }, [hasUnsavedChanges, showUnsavedChangesMessageWithTimer, startNavTransition]);
 
-  const handleViewModeChange = (mode: TimeRange) => {
+  const handleViewModeChange = useCallback((mode: TimeRange) => {
     perfTrail.checkpoint('view-mode-change', { mode, from: viewModeRef.current });
     // Prevent navigation if there are unsaved changes
     if (hasUnsavedChanges) {
@@ -1009,7 +1010,7 @@ function App() {
     }
     setIsEditing(false);
     setIsNewEntry(false);
-  };
+  }, [hasUnsavedChanges, showUnsavedChangesMessageWithTimer, startNavTransition]);
 
   // Ref to track if entry navigation is in progress
   const isEntryNavigatingRef = useRef(false);
@@ -1321,7 +1322,7 @@ function App() {
     executeStep();
   }, [selectedDate, viewMode]);
   
-  const handleEntrySelect = (entry: JournalEntry) => {
+  const handleEntrySelect = useCallback((entry: JournalEntry) => {
     // Prevent navigation if there are unsaved changes
     if (hasUnsavedChanges) {
       showUnsavedChangesMessageWithTimer();
@@ -1339,9 +1340,9 @@ function App() {
     
     // Navigate with animated steps
     navigateToEntryWithSteps(entry);
-  };
+  }, [hasUnsavedChanges, showUnsavedChangesMessageWithTimer, navigateToEntryWithSteps]);
 
-  const handleNewEntry = () => {
+  const handleNewEntry = useCallback(() => {
     // Prevent creating new entry if there are unsaved changes
     if (hasUnsavedChanges) {
       showUnsavedChangesMessageWithTimer();
@@ -1351,7 +1352,7 @@ function App() {
     setSelectedEntry(null);
     setIsNewEntry(true);
     setIsEditing(true);
-  };
+  }, [hasUnsavedChanges, showUnsavedChangesMessageWithTimer]);
 
   // Use ref to access current handleNewEntry in keyboard handler
   const handleNewEntryRef = useRef(handleNewEntry);
@@ -1411,7 +1412,7 @@ function App() {
     };
   }, [showSearch]); // Include showSearch in deps
 
-  const handleEdit = () => {
+  const handleEdit = useCallback(() => {
     // Prevent editing if there are unsaved changes
     if (hasUnsavedChanges) {
       showUnsavedChangesMessageWithTimer();
@@ -1419,9 +1420,9 @@ function App() {
     }
     setIsEditing(true);
     setIsNewEntry(false);
-  };
+  }, [hasUnsavedChanges, showUnsavedChangesMessageWithTimer]);
 
-  const handleEntrySaved = async () => {
+  const handleEntrySaved = useCallback(async () => {
     perfTrail.start('entry-save');
     // Reload the entry after saving
     setIsEditing(false);
@@ -1442,16 +1443,16 @@ function App() {
     
     loadCurrentEntry();
     perfTrail.end('entry-save');
-  };
+  }, [loadCurrentEntry]);
 
-  const handleEditEntry = (entry: JournalEntry) => {
+  const handleEditEntry = useCallback((entry: JournalEntry) => {
     // Prevent editing if there are unsaved changes
     if (hasUnsavedChanges) {
       showUnsavedChangesMessageWithTimer();
       return;
     }
     setEditingEntry(entry);
-  };
+  }, [hasUnsavedChanges, showUnsavedChangesMessageWithTimer]);
 
   const handleModalClose = () => {
     setEditingEntry(null);
@@ -1496,7 +1497,6 @@ function App() {
       {preferences.showMinimap !== false && (
         <Suspense fallback={null}>
           <GlobalTimelineMinimap
-            key={`minimap-${preferences.minimapSize || 'medium'}`}
             selectedDate={selectedDate}
             viewMode={viewMode}
             onTimePeriodSelect={handleTimePeriodSelect}
