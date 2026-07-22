@@ -101,6 +101,7 @@
       "node_modules/**/*"
     ],
     "artifactName": "${productName}-${version}-${arch}.${ext}",
+    "afterSign": "scripts/notarize.js",
     "win": {
       "target": [
         {
@@ -143,18 +144,16 @@
       ],
       "artifactName": "${productName}-${version}-${arch}.${ext}",
       "category": "public.app-category.productivity",
-      "sign": {
-        "hardenedRuntime": true,
-        "gatekeeperAssess": false,
-        "entitlements": "build/entitlements.mac.plist",
-        "entitlementsInherit": "build/entitlements.mac.plist"
-      },
+      "hardenedRuntime": true,
+      "gatekeeperAssess": false,
+      "entitlements": "build/entitlements.mac.plist",
+      "entitlementsInherit": "build/entitlements.mac.plist",
+      "notarize": false,
       "extendInfo": {
         "NSCameraUsageDescription": "CalenRecall does not use the camera.",
         "NSMicrophoneUsageDescription": "CalenRecall does not use the microphone.",
         "NSDocumentsFolderUsageDescription": "CalenRecall needs access to export and import journal data."
-      },
-      "afterSign": "scripts/notarize.js"
+      }
     },
     "dmg": {
       "title": "${productName} ${version}",
@@ -175,8 +174,7 @@
       ],
       "window": {
         "width": 540,
-        "height": 380,
-        "title": "Install CalenRecall"
+        "height": 380
       },
       "artifactName": "${productName}-${version}-${arch}.dmg"
     }
