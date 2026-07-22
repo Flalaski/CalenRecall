@@ -45,6 +45,9 @@ boundary-test-profile.json
 # Google OAuth credentials (never commit)
 client_secret_*.json
 
+# Installer build output (large binaries, >100MB)
+installer_output/
+
 # Batch files (optional - uncomment if you don't want to track them)
 # *.bat
 
