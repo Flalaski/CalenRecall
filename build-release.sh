@@ -47,6 +47,15 @@ fi
 echo ""
 
 echo "Creating macOS distribution (DMG)..."
+
+# Unlock the login keychain so codesign can access signing certificates
+echo "Unlocking keychain for code signing..."
+if ! security unlock-keychain ~/Library/Keychains/login.keychain-db 2>/dev/null; then
+    echo "WARNING: Could not unlock keychain (you may be prompted for your password)."
+    echo "  If code signing fails, run manually: security unlock-keychain ~/Library/Keychains/login.keychain-db"
+    echo ""
+fi
+
 npm run dist:mac:dmg
 if [ $? -ne 0 ]; then
     echo "ERROR: Distribution build failed"

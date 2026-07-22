@@ -50,6 +50,17 @@ fi
 echo ""
 
 echo "Creating macOS distribution (both DMG and ZIP)..."
+
+# Unlock the login keychain so codesign can access signing certificates.
+# Without this, codesign fails with "errSecInternalComponent" even when a
+# valid Developer ID certificate is installed.
+echo "Unlocking keychain for code signing..."
+if ! security unlock-keychain ~/Library/Keychains/login.keychain-db 2>/dev/null; then
+    echo "WARNING: Could not unlock keychain (you may be prompted for your password)."
+    echo "  If code signing fails, run manually: security unlock-keychain ~/Library/Keychains/login.keychain-db"
+    echo ""
+fi
+
 # Kill any processes that might have started during build
 pkill -f electron > /dev/null 2>&1
 pkill -f node > /dev/null 2>&1

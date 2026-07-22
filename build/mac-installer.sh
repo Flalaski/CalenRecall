@@ -65,6 +65,11 @@ echo ""
 
 # --- If --sign or --notarize, sign the .app first ---
 if [ "$FLAG_SIGN" = true ] || [ "$FLAG_NOTARIZE" = true ]; then
+  echo "🔏 Unlocking keychain for code signing..."
+  if ! security unlock-keychain ~/Library/Keychains/login.keychain-db 2>/dev/null; then
+    echo "   ⚠️  Could not unlock keychain (you may be prompted for your password)"
+  fi
+
   DEV_ID_APP=${DEV_ID_APP:-"Developer ID Application: Your Name"}
   echo "🔏 Signing .app bundle with: $DEV_ID_APP"
   codesign --deep --force --options runtime \
