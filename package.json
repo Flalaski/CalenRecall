@@ -143,10 +143,12 @@
       ],
       "artifactName": "${productName}-${version}-${arch}.${ext}",
       "category": "public.app-category.productivity",
-      "hardenedRuntime": true,
-      "gatekeeperAssess": false,
-      "entitlements": "build/entitlements.mac.plist",
-      "entitlementsInherit": "build/entitlements.mac.plist",
+      "sign": {
+        "hardenedRuntime": true,
+        "gatekeeperAssess": false,
+        "entitlements": "build/entitlements.mac.plist",
+        "entitlementsInherit": "build/entitlements.mac.plist"
+      },
       "extendInfo": {
         "NSCameraUsageDescription": "CalenRecall does not use the camera.",
         "NSMicrophoneUsageDescription": "CalenRecall does not use the microphone.",
