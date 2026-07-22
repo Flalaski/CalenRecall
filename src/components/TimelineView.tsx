@@ -98,7 +98,6 @@ function TimelineView({
 
   // Throttle for timeline-view-render checkpoint (fires on every React render)
   const lastRenderLogRef = useRef<number>(0);
-  const lastRenderTimestampRef = useRef<number>(0);
   const RENDER_LOG_THROTTLE_MS = 200;
 
   // Load preferences for time format and astronomical events
@@ -505,6 +504,46 @@ function TimelineView({
     return pixels;
   }, []);
 
+  // ── BATCH month-view day-cell data ──
+  // Pre-compute entry data, gradient colors, and flags for ALL days in one pass.
+  // Without batching, each of the ~31 day cells independently calls
+  // getAllEntriesForDate (5 Map checks) + prioritizeEntriesByTier +
+  // getDayEntriesOptimized + getZodiacGradientColor — ~124 calls per month render.
+  const monthDayCellData = useMemo(() => {
+    if (viewMode !== 'month') return EMPTY_VIEW_DATA;
+    const days = getDaysInMonth(selectedDate);
+    return days.map(day => {
+      const allDayEntries = getAllEntriesForDate(day);
+      const prioritizedEntries = allDayEntries.length > 0
+        ? prioritizeEntriesByTier(allDayEntries, 'month')
+        : [];
+      const gradientColor = getZodiacGradientColor(day);
+      const dayEntriesExist = getDayEntriesOptimized(entryLookup, day).length > 0;
+      const year = day.getFullYear();
+      const month = String(day.getMonth() + 1).padStart(2, '0');
+      const dayNum = String(day.getDate()).padStart(2, '0');
+      const dayKey = `${year}-${month}-${dayNum}`;
+      return {
+        prioritizedEntries,
+        gradientColor,
+        hasEntries: prioritizedEntries.length > 0,
+        dayType: getDayType(day, isToday(day), dayEntriesExist, calendar === 'gregorian'),
+        dayEvents: astronomicalEvents.get(dayKey) || [],
+        dayHolidays: culturalHolidays.get(dayKey) || [],
+      };
+    });
+  }, [viewMode, selectedDate, entryLookup, getAllEntriesForDate, prioritizeEntriesByTier, astronomicalEvents, culturalHolidays, calendar]);
+
+  // ── Pre-compute weekday header gradients ──
+  const monthWeekdayGradients = useMemo(() => {
+    if (viewMode !== 'month') return [];
+    const weekDays = getWeekdayLabels(weekStartsOn);
+    return weekDays.map((_, dayIdx) => {
+      const d = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), dayIdx + 1);
+      return getZodiacGradientColor(d);
+    });
+  }, [viewMode, selectedDate, weekStartsOn]);
+
   const renderMonthView = () => {
     const days = getDaysInMonth(selectedDate);
     const weekDays = getWeekdayLabels(weekStartsOn);
@@ -527,79 +566,57 @@ function TimelineView({
         <div className="month-view-content">
           <div className="month-calendar-section">
             <div className="weekday-header">
-              {weekDays.map((day, dayIdx) => {
-                // Get a representative date for this weekday in the current month
-                const weekDayDate = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), dayIdx + 1);
-                const gradientColor = getZodiacGradientColor(weekDayDate);
-                return (
-                  <div 
-                    key={day} 
-                    className="weekday-cell"
-                    style={{ '--zodiac-gradient': gradientColor } as React.CSSProperties}
-                  >
-                    {day}
-                  </div>
-                );
-              })}
+              {weekDays.map((day, dayIdx) => (
+                <div 
+                  key={day} 
+                  className="weekday-cell"
+                  style={{ '--zodiac-gradient': monthWeekdayGradients[dayIdx] } as React.CSSProperties}
+                >
+                  {day}
+                </div>
+              ))}
             </div>
             <div className="timeline-grid month-grid">
               {Array(adjustedFirstDay).fill(null).map((_, idx) => (
                 <div key={`empty-${idx}`} className="timeline-cell empty-cell"></div>
               ))}
               {days.map((day, idx) => {
-                // OPTIMIZATION: Get all entries for this day (day, week, month, year, decade)
-                // and prioritize month entries since we're in month view
-                // getAllEntriesForDate has early returns when no entries exist, so this is efficient
-                const allDayEntries = getAllEntriesForDate(day);
-                // prioritizeEntriesByTier returns early if entries.length === 0
-                const prioritizedEntries = allDayEntries.length > 0 
-                  ? prioritizeEntriesByTier(allDayEntries, 'month')
-                  : [];
-                const gradientColor = getZodiacGradientColor(day);
-                const hasEntries = prioritizedEntries.length > 0;
-                
-                // Get astronomical events for this day
-                // Use local date string to match event keys
-                const year = day.getFullYear();
-                const month = String(day.getMonth() + 1).padStart(2, '0');
-                const dayNum = String(day.getDate()).padStart(2, '0');
-                const dayKey = `${year}-${month}-${dayNum}`;
-                const dayEvents = astronomicalEvents.get(dayKey) || [];
-                const dayHolidays = culturalHolidays.get(dayKey) || [];
+                const data = monthDayCellData[idx];
+                if (!data) return null;
                 
                 return (
                   <div
                     key={idx}
-                    className={`timeline-cell day-cell ${isToday(day) ? 'today' : ''} ${isSelected(day) ? 'selected' : ''} ${hasEntries ? 'has-entries' : ''}`}
-                    data-day-type={getDayType(day, isToday(day), getDayEntriesOptimized(entryLookup, day).length > 0, calendar === 'gregorian')}
+                    className={`timeline-cell day-cell ${isToday(day) ? 'today' : ''} ${isSelected(day) ? 'selected' : ''} ${data.hasEntries ? 'has-entries' : ''}`}
+                    data-day-type={data.dayType}
                     onClick={() => {
                       playCalendarSelectionSound();
                       onTimePeriodSelect(day, 'day');
                     }}
-                    style={{ '--zodiac-gradient': gradientColor } as React.CSSProperties}
+                    style={{ '--zodiac-gradient': data.gradientColor } as React.CSSProperties}
                   >
                     <div className="cell-date">{day.getDate()}</div>
-                    {dayEvents.length > 0 && (
-                      <div className="cell-astronomical-events" title={dayEvents.map(e => e.displayName).join(', ')}>
-                        {dayEvents.map((event, eIdx) => (
+                    {data.dayEvents.length > 0 && (
+                      <div className="cell-astronomical-events" title={data.dayEvents.map(e => e.displayName).join(', ')}>
+                        {data.dayEvents.map((event, eIdx) => (
                           <span key={eIdx} className="astronomical-event-icon">
                             {getAstronomicalEventLabel(event)}
                           </span>
                         ))}
                       </div>
                     )}
-                    {dayHolidays.length > 0 && (
-                      <div className="cell-holidays" title={dayHolidays.map(h => h.holiday.name).join(', ')}>
-                        {dayHolidays.slice(0, 2).map((h, hIdx) => (
+                    {data.dayHolidays.length > 0 && (
+                      <div className="cell-holidays" title={data.dayHolidays.map(h => h.holiday.name).join(', ')}>
+                        {data.dayHolidays.slice(0, 2).map((h, hIdx) => (
                           <span key={hIdx} className="holiday-icon" title={h.holiday.name}>
                             {h.holiday.icon}
                           </span>
                         ))}
                       </div>
                     )}
-                    {hasEntries && (
+                    {data.hasEntries && (
                     <div className="cell-entries">
-                      {prioritizedEntries.slice(0, 3).map((entry, eIdx) => {
+                      {data.prioritizedEntries.slice(0, 3).map((entry, eIdx) => {
                         const entryColor = entry.id !== undefined && entryColors?.get(entry.id) || calculateEntryColor(entry);
                         return (
                           <div
@@ -625,8 +642,8 @@ function TimelineView({
                           </div>
                         );
                       })}
-                      {prioritizedEntries.length > 3 && (
-                        <div className="entry-badge more-entries">+{prioritizedEntries.length - 3}</div>
+                      {data.prioritizedEntries.length > 3 && (
+                        <div className="entry-badge more-entries">+{data.prioritizedEntries.length - 3}</div>
                       )}
                     </div>
                     )}
@@ -1597,34 +1614,45 @@ function TimelineView({
   // Loading is handled at app level via EntriesContext
   // Entries are preloaded, so no need for component-level loading state
 
-  // Render timing: measure ms since last render.
-  // Logging is throttled to 200ms, but timing stays accurate across
-  // suppressed renders (the timestamp always reflects the last render).
-  const now = performance.now();
-  const deltaMs = Math.round(now - lastRenderTimestampRef.current);
-  lastRenderTimestampRef.current = now;
-  if (now - lastRenderLogRef.current > RENDER_LOG_THROTTLE_MS) {
-    perfTrail.checkpoint('timeline-view-render', {
-      mode: viewMode,
-      ms: deltaMs,
-    });
-    lastRenderLogRef.current = now;
-  }
+  // RENDER DURATION timing: measures actual wall-clock time spent in this
+  // render function call (React reconciling + our JS), NOT the idle gap
+  // between renders. The old `deltaMs` measured inter-render interval which
+  // conflated user idle time with actual work — producing spikes like 7883ms
+  // when the user simply paused between clicks.
+  const renderStartMs = performance.now();
 
+  let rendered: JSX.Element;
   switch (viewMode) {
     case 'decade':
-      return renderDecadeView();
+      rendered = renderDecadeView();
+      break;
     case 'year':
-      return renderYearView();
+      rendered = renderYearView();
+      break;
     case 'month':
-      return renderMonthView();
+      rendered = renderMonthView();
+      break;
     case 'week':
-      return renderWeekView();
+      rendered = renderWeekView();
+      break;
     case 'day':
-      return renderDayView();
+      rendered = renderDayView();
+      break;
     default:
-      return renderMonthView();
+      rendered = renderMonthView();
   }
+
+  const renderEndMs = performance.now();
+  const renderMs = Math.round(renderEndMs - renderStartMs);
+  if (renderEndMs - lastRenderLogRef.current > RENDER_LOG_THROTTLE_MS) {
+    perfTrail.checkpoint('timeline-view-render', {
+      mode: viewMode,
+      ms: renderMs,
+    });
+    lastRenderLogRef.current = renderEndMs;
+  }
+
+  return rendered;
 }
 
 // Memoize component to prevent unnecessary re-renders
