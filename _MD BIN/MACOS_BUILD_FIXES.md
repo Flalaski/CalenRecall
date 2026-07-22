@@ -52,12 +52,50 @@ Added missing entitlements to `build/entitlements.mac.plist`:
 - Preload script path resolution handles packaged app bundle structure
 - Database paths properly use `app.getPath('userData')` which is cross-platform
 
+## Build Scripts
+
+| Script | Description |
+|--------|-------------|
+| `npm run dist:mac` | Build DMG + ZIP for x64 + arm64 |
+| `npm run dist:mac:dmg` | Build DMG only |
+| `npm run dist:mac:zip` | Build ZIP only |
+| `npm run dist:mac:universal` | Build universal binary (x64+arm64) |
+| `bash build-release.sh` | Full release build (DMG + notarize + .pkg) |
+| `bash build-installer.sh` | DMG + .pkg installer build |
+| `bash build-all.sh` | DMG + ZIP + notarize + .pkg |
+| `bash build/mac-installer.sh` | Build .pkg from existing .app |
+| `bash build/mac-installer.sh --sign` | Build + sign .pkg |
+| `bash build/mac-installer.sh --notarize` | Build + sign + notarize |
+
+## Notarization
+
+CalenRecall includes a notarization script at `scripts/notarize.js` that runs automatically
+after signing when `afterSign` is configured. To use it:
+
+1. Generate an app-specific password at https://appleid.apple.com/account/manage
+2. Set environment variables:
+   ```bash
+   export APPLE_ID="your@apple.id"
+   export APPLE_ID_PASSWORD="xxxx-xxxx-xxxx-xxxx"
+   export APPLE_TEAM_ID="TEAM1234567"
+   ```
+3. Build as usual — notarization runs automatically via `afterSign` hook.
+
+The `.pkg` installer can also be notarized separately:
+```bash
+bash build/mac-installer.sh --notarize
+```
+
 ## Testing Recommendations
 
 ### 1. Build and Test
 ```bash
 npm run build
 npm run dist:mac
+```
+Or use the all-in-one release script:
+```bash
+bash build-release.sh
 ```
 
 ### 2. Check Console Logs
@@ -92,11 +130,33 @@ npm run postinstall
 - Verify database file isn't locked by another process
 - Check console for detailed error messages
 
+#### Issue: Notarization fails
+**Solution:**
+- Verify APPLE_ID, APPLE_ID_PASSWORD, APPLE_TEAM_ID are set correctly
+- Ensure the app-specific password hasn't expired
+- Run `xcrun notarytool history --apple-id "$APPLE_ID" --password "$APPLE_ID_PASSWORD" --team-id "$APPLE_TEAM_ID"` to check status
+- Check that the app bundle is properly signed: `codesign -dvvv path/to/CalenRecall.app`
+
 ### 4. Debug Mode
 To get more detailed logs, run:
 ```bash
 ELECTRON_ENABLE_LOGGING=1 npm run dev
 ```
+
+## .pkg Installer
+
+For users who prefer a `.pkg` installer (e.g., for MDM deployment or custom install locations):
+
+```bash
+# After building the .app with npm run dist:mac:dmg
+bash build/mac-installer.sh
+
+# With signing and notarization:
+bash build/mac-installer.sh --notarize
+```
+
+The `.pkg` is built using `pkgbuild` + `productbuild` with a `Distribution.xml` that supports
+macOS 12+ and both Apple Silicon & Intel architectures.
 
 Or for a built app:
 ```bash

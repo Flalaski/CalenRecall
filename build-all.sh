@@ -63,11 +63,37 @@ if [ $? -ne 0 ]; then
 fi
 echo ""
 
+# Notarize (only if credentials are configured)
+if [ -n "${APPLE_ID:-}" ] && [ -n "${APPLE_ID_PASSWORD:-}" ] && [ -n "${APPLE_TEAM_ID:-}" ]; then
+    echo "Notarizing with Apple notary service..."
+    npx node scripts/notarize.js
+    if [ $? -ne 0 ]; then
+        echo "WARNING: Notarization failed (non-fatal)"
+    fi
+    echo ""
+else
+    echo "Skipping notarization (set APPLE_ID, APPLE_ID_PASSWORD, APPLE_TEAM_ID to enable)"
+    echo ""
+fi
+
+# Build .pkg installer
+echo "Building .pkg installer..."
+if [ -f "build/mac-installer.sh" ]; then
+    bash build/mac-installer.sh
+    if [ $? -ne 0 ]; then
+        echo "WARNING: .pkg installer build failed (non-fatal)"
+    fi
+else
+    echo "Skipping .pkg installer (build/mac-installer.sh not found)"
+fi
+echo ""
+
 echo "========================================"
 echo "Build completed successfully!"
 echo "========================================"
 echo ""
-echo "Release files are in the 'release' folder."
+echo "Release files are in the 'release' folder:"
+ls -lh release/*.{dmg,zip,pkg} 2>/dev/null || ls -lh release/
 echo ""
 
 # Open the release folder

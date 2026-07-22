@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<installer-gui-script minSpecVersion="2">
+  <title>CalenRecall</title>
+  <organization>com.calenrecall</organization>
+  <domains enable_anywhere="false" enable_currentUserHome="true" enable_localSystem="true" />
+
+  <!-- Products page: brief intro + required space -->
+  <pkg-ref id="com.calenrecall.app"/>
+  <options customize="never" require-scripts="false" hostArchitectures="x86_64,arm64"/>
+
+  <!-- Welcome page -->
+  <welcome file="welcome.html" mime-type="text/html"/>
+  <license file="../LICENSE" mime-type="text/plain"/>
+  <readme file="../README.md" mime-type="text/plain"/>
+
+  <!-- Installation check: require macOS 12+ -->
+  <volume-check>
+    <allowed-os-versions>
+      <os-version min="12.0" />
+    </allowed-os-versions>
+  </volume-check>
+
+  <!-- Distribution choices -->
+  <choice id="default" title="CalenRecall" description="CalenRecall — A calendar journal for recalling memories across decades, years, months, weeks, and days.">
+    <pkg-ref id="com.calenrecall.app"/>
+  </choice>
+
+  <pkg-ref id="com.calenrecall.app" version="0" onConclusion="none">CalenRecall.pkg</pkg-ref>
+</installer-gui-script>

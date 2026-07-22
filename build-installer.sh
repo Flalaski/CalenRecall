@@ -54,11 +54,24 @@ if [ $? -ne 0 ]; then
 fi
 echo ""
 
+# Build .pkg installer
+echo "Building .pkg installer..."
+if [ -f "build/mac-installer.sh" ]; then
+    bash build/mac-installer.sh
+    if [ $? -ne 0 ]; then
+        echo "WARNING: .pkg installer build failed (non-fatal)"
+    fi
+else
+    echo "Skipping .pkg installer (build/mac-installer.sh not found)"
+fi
+echo ""
+
 echo "========================================"
 echo "Build completed successfully!"
 echo "========================================"
 echo ""
-echo "DMG installer is in the 'release' folder."
+echo "Release files are in the 'release' folder:"
+ls -lh release/*.{dmg,zip,pkg} 2>/dev/null || ls -lh release/
 echo ""
 
 # Open the release folder

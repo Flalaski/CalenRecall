@@ -1,7 +1,10 @@
 # Electron Performance Optimizations for macOS
 ## Deep-Level Performance Improvements
 
-Based on research and Electron best practices for macOS, here are critical optimizations:
+Based on research and Electron best practices for macOS, here are critical optimizations.
+
+> **Status:** Implementation tracking is at the bottom of this document.  
+> **Last updated:** July 2026
 
 ---
 
@@ -256,3 +259,26 @@ mainWindow.webContents.on('did-finish-load', () => {
 - [ ] No GPU spikes
 - [ ] App responds quickly to user input
 - [ ] No memory leaks over extended use
+
+---
+
+## ✅ Implementation Status
+
+| Component | Status | Notes |
+|-----------|--------|-------|
+| **Entitlements (JIT, unsigned memory, file access)** | ✅ Done | `build/entitlements.mac.plist` — JIT, unsigned memory, dyld, library validation, file r/w, network |
+| **Hardened runtime** | ✅ Done | `package.json` mac config |
+| **DMG target (x64 + arm64)** | ✅ Done | Dual-architecture DMG configured |
+| **ZIP target (x64 + arm64)** | ✅ Done | Secondary distributable |
+| **macOS build scripts** | ✅ Done | `build-release.sh`, `build-installer.sh`, `build-all.sh` |
+| **.pkg installer** | ✅ Done | `build/mac-installer.sh` + `build/Distribution.xml` |
+| **Notarization script** | ✅ Done | `scripts/notarize.js` with `afterSign` hook |
+| **Privacy usage descriptions** | ✅ Done | `NSCameraUsageDescription`, `NSMicrophoneUsageDescription`, `NSDocumentsFolderUsageDescription` |
+| **DMG window/icon layout** | ✅ Done | Configured with 100px icons, 540x380 window, centered layout |
+| **Frame rate limiting** | ❌ Not started | Add `mainWindow.webContents.setFrameRate(60)` in `electron/main.ts` |
+| **WebPreferences deep opts** | ❌ Not started | Add `backgroundThrottling`, `v8CacheOptions`, `spellcheck: false` |
+| **Native macOS vibrancy** | ❌ Not started | `mainWindow.setVibrancy('under-window')` for macOS |
+| **GPU/rasterization flags** | ❌ Not started | `app.commandLine.appendSwitch(...)` for renderer limits |
+| **macOS .icns icon** | ❌ Not started | No `.icns` file found — generate from `icon-1024.png` |
+| **App Store (MAS) build** | ❌ Not started | Requires additional entitlements and provisioning |
+| **CI integration** | ❌ Not started | No GitHub Actions or CI for automated macOS builds |
