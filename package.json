@@ -152,14 +152,12 @@
         "NSMicrophoneUsageDescription": "CalenRecall does not use the microphone.",
         "NSDocumentsFolderUsageDescription": "CalenRecall needs access to export and import journal data."
       },
-      "notarize": false,
       "afterSign": "scripts/notarize.js"
     },
     "dmg": {
       "title": "${productName} ${version}",
       "icon": "assets/icon-512.png",
       "iconSize": 100,
-      "background": null,
       "contents": [
         {
           "x": 130,
